@@ -1,0 +1,1925 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>health-management · LangGraph 工程图</title>
+    <style>
+      :root {
+        font-family:
+          Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: #23352e;
+        background: #f3f5f1;
+        line-height: 1.6;
+        --ink: #23352e;
+        --muted: #728176;
+        --line: #e0e7dd;
+        --green: #3c7059;
+        --orange: #a27425;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      a {
+        color: var(--green);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid #81a999;
+        outline-offset: 4px;
+      }
+      main {
+        max-width: 1370px;
+        margin: auto;
+        padding: 38px 32px 42px;
+      }
+      header {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 23px;
+        border-bottom: 1px solid var(--line);
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.7px;
+        line-height: 1.4;
+        margin: 7px 0 10px;
+        font-weight: 650;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 0;
+        line-height: 1.5;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      .eyebrow {
+        font-size: 10px;
+        color: #6f8a7a;
+        letter-spacing: 2px;
+      }
+      .intro {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stats {
+        display: flex;
+        gap: 24px;
+        padding: 17px 20px;
+        background: #e9efe5;
+        border: 1px solid #dbe5d5;
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
+      .stats b {
+        display: block;
+        font-size: 26px;
+        line-height: 1.25;
+        font-weight: 550;
+        color: #456d56;
+      }
+      .stats span {
+        font-size: 10px;
+        color: #7b917d;
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 16px 0 25px;
+        font-size: 10px;
+        color: #7c897e;
+        flex-wrap: wrap;
+      }
+      .snapshot {
+        background: #e8efe3;
+        border: 1px solid #d8e3cf;
+        color: #627b50;
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+      .skipped {
+        margin-left: auto;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 14px;
+      }
+      .section-head p {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        padding: 5px;
+        background: #e8ede5;
+        border-radius: 8px;
+      }
+      .tabs button {
+        border: none;
+        background: none;
+        color: #738170;
+        padding: 9px 14px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+      .tabs button[aria-selected="true"] {
+        background: #fff;
+        box-shadow: 0 1px 4px #23352e0b;
+        color: #315e48;
+        font-weight: 550;
+      }
+      .graph-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 20px;
+      }
+      .panel {
+        background: #fffefa;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .graph-head {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 22px;
+        border-bottom: 1px solid #e9eee5;
+      }
+      .graph-head p {
+        font-size: 10px;
+        color: #869282;
+        margin-top: 4px;
+      }
+      .graph-head code {
+        font-size: 10px;
+        color: #849280;
+      }
+      .canvas {
+        overflow: auto;
+        background: radial-gradient(#dce5d9 0.7px, transparent 0.7px);
+        background-size: 16px 16px;
+        padding: 10px 14px;
+      }
+      .canvas svg {
+        display: block;
+        width: 100%;
+        min-width: 650px;
+        height: auto;
+      }
+      .diagram-note {
+        border-top: 1px solid #edf0e8;
+        padding: 12px 20px;
+        font-size: 11px;
+        color: #8b7950;
+        background: #fffcf3;
+      }
+      .diagram-note code {
+        font-size: 10px;
+      }
+      .legend {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 13px 20px;
+        font-size: 9px;
+        color: #81917c;
+        border-top: 1px solid #edf0e8;
+      }
+      .legend i {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        margin-right: 4px;
+        vertical-align: -1px;
+        border: 1px solid #cddccc;
+      }
+      .legend .blue {
+        background: #eaf2fc;
+        border-color: #bfcfe3;
+      }
+      .legend .orange {
+        background: #fff4df;
+        border-color: #ddc497;
+      }
+      .legend .purple {
+        background: #f0edf9;
+        border-color: #d0c7e4;
+      }
+      .legend .dashed {
+        width: 22px;
+        height: 0;
+        border: none;
+        border-top: 1.5px dashed #93a18c;
+        border-radius: 0;
+        vertical-align: 3px;
+      }
+      .inspector {
+        padding: 21px;
+        height: 100%;
+        background: #fcfdf8;
+      }
+      .inspector .eyebrow {
+        font-size: 9px;
+        letter-spacing: 1px;
+      }
+      .node-kind {
+        display: inline-block;
+        font-size: 9px;
+        border: 1px solid #dce6d4;
+        color: #6c875b;
+        border-radius: 4px;
+        padding: 2px 7px;
+        margin: 11px 0 8px;
+      }
+      .inspector h2 {
+        font-size: 19px;
+        color: #375945;
+      }
+      .inspector > code {
+        font:
+          11px ui-monospace,
+          Consolas,
+          monospace;
+        display: block;
+        color: #85967b;
+        margin: 4px 0 18px;
+      }
+      .inspector p {
+        font-size: 12px;
+        color: #6d8064;
+        line-height: 1.9;
+      }
+      .inspector h3 {
+        font-size: 10px;
+        letter-spacing: 0.8px;
+        color: #8d9b83;
+        margin: 22px 0 7px;
+      }
+      .field-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .field-list code {
+        padding: 3px 6px;
+        background: #edf2e7;
+        border: 1px solid #e1e8da;
+        color: #718765;
+        border-radius: 4px;
+        font-size: 9px;
+        overflow-wrap: anywhere;
+      }
+      .source {
+        display: block;
+        margin-top: 23px;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+        color: #839573;
+      }
+      .route-rules {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #e3e9dc;
+      }
+      .rule-row {
+        font-size: 10px;
+        color: #7f916f;
+        padding: 6px 0;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .rule-row span {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #eaf0e3;
+        flex-shrink: 0;
+        font-size: 8px;
+      }
+      .rule-row code {
+        font-size: 9px;
+        margin-left: auto;
+      }
+      .edge {
+        fill: none;
+        stroke: #9ba996;
+        stroke-width: 1.65;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        marker-end: url(#arrow);
+      }
+      .edge.conditional {
+        stroke-dasharray: 5 5;
+      }
+      .edge.resume {
+        stroke: #bc9452;
+        marker-end: url(#arrow-resume);
+      }
+      .edge-label {
+        font-size: 10px;
+        fill: #7c8f71;
+      }
+      .edge-label.resume {
+        fill: #9b7a3f;
+      }
+      .node {
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      .node rect {
+        fill: #f1f6ec;
+        stroke: #cad9c0;
+        stroke-width: 1.3;
+        transition:
+          stroke 0.15s,
+          fill 0.15s;
+      }
+      .node.model rect {
+        fill: #eaf2fc;
+        stroke: #bfd1e5;
+      }
+      .node.pause rect {
+        fill: #fff5e3;
+        stroke: #ddc496;
+      }
+      .node.analysis rect {
+        fill: #f1eef9;
+        stroke: #d0c7e6;
+      }
+      .node.boundary rect {
+        fill: #edf1e8;
+        stroke: #d5decf;
+      }
+      .node.selected rect {
+        stroke: #416e56;
+        stroke-width: 2.7;
+      }
+      .node.pause.selected rect {
+        stroke: #a7792d;
+      }
+      .node:hover rect {
+        stroke-width: 2.2;
+      }
+      .node .code {
+        font:
+          12px ui-monospace,
+          Consolas,
+          monospace;
+        fill: #43613e;
+      }
+      .node.model .code {
+        fill: #58759b;
+      }
+      .node.pause .code {
+        fill: #977334;
+      }
+      .node.analysis .code {
+        fill: #7c6c9b;
+      }
+      .node .name {
+        font-size: 16px;
+        fill: #354f36;
+        font-weight: 550;
+      }
+      .node .sub {
+        font-size: 10px;
+        fill: #8b9a7f;
+      }
+      .node .pause-mark {
+        font-size: 9px;
+        fill: #a57a31;
+      }
+      .node.boundary .code {
+        font-size: 11px;
+        fill: #7f9075;
+      }
+      .section {
+        margin-top: 30px;
+      }
+      .entry-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+      }
+      .entry {
+        padding: 18px;
+        min-width: 0;
+      }
+      .entry small {
+        font-size: 9px;
+        color: #98a18d;
+      }
+      .entry code {
+        display: block;
+        font-size: 10px;
+        color: #728c60;
+        overflow-wrap: anywhere;
+        margin: 7px 0;
+      }
+      .entry-flow {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 13px 0 4px;
+      }
+      .entry-flow span {
+        font-size: 10px;
+        display: block;
+        border: 1px solid #dce6d2;
+        border-radius: 5px;
+        background: #f2f6ed;
+        padding: 7px 9px;
+      }
+      .entry-flow b {
+        font-weight: 400;
+        color: #99ad89;
+        font-size: 13px;
+      }
+      .support-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .support-head {
+        padding: 19px 22px;
+        border-bottom: 1px solid #e7ece1;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+      .support-head > span {
+        height: 27px;
+        width: 27px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #d5e1cb;
+        background: #f1f6e9;
+        border-radius: 7px;
+        font-size: 10px;
+        color: #91a777;
+      }
+      .support-head p {
+        font-size: 10px;
+        color: #9aab8a;
+        margin-top: 3px;
+      }
+      .support-body {
+        padding: 21px;
+      }
+      .support-diagram {
+        width: 100%;
+        display: block;
+        min-width: 420px;
+      }
+      .support-scroll {
+        overflow: auto;
+      }
+      .map-box {
+        fill: #f4f8ee;
+        stroke: #d1dec5;
+        stroke-width: 1.2;
+      }
+      .map-box.blue {
+        fill: #edf4ff;
+        stroke: #c1d4ed;
+      }
+      .map-box.orange {
+        fill: #fff5e5;
+        stroke: #e5d1aa;
+      }
+      .map-box.purple {
+        fill: #f3effa;
+        stroke: #d8ceea;
+      }
+      .map-title {
+        font:
+          12px ui-monospace,
+          Consolas,
+          monospace;
+        fill: #597b47;
+      }
+      .map-caption {
+        font-size: 11px;
+        fill: #91a17f;
+      }
+      .map-line {
+        fill: none;
+        stroke: #a8b59c;
+        stroke-width: 1.5;
+        marker-end: url(#arrow-map);
+      }
+      .map-annotation {
+        font-size: 9px;
+        fill: #a0ad8f;
+      }
+      .chip-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .chip-grid span {
+        display: block;
+        border: 1px solid #e0e8d6;
+        border-radius: 5px;
+        background: #f8faf3;
+        padding: 9px;
+        font-size: 10px;
+        color: #8a9f72;
+      }
+      .chip-grid code {
+        display: block;
+        font-size: 9px;
+        color: #688653;
+      }
+      .rail {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .rail > div {
+        background: #f3f7eb;
+        border: 1px solid #dce7cf;
+        border-radius: 6px;
+        padding: 10px 13px;
+        font-size: 10px;
+        color: #819b68;
+        min-width: 100px;
+        flex: 1;
+      }
+      .rail > div b {
+        font-size: 10px;
+        color: #577a42;
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+      .rail > span {
+        align-self: center;
+        color: #a7b696;
+        font-size: 13px;
+      }
+      .small-note {
+        font-size: 10px;
+        color: #95a687;
+        margin-top: 12px;
+        line-height: 1.9;
+      }
+      .internal {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 9px;
+        margin-top: 12px;
+      }
+      .internal > div {
+        padding: 11px;
+        border-radius: 5px;
+        background: #f8f6ed;
+        border: 1px solid #e9e1c8;
+        min-width: 0;
+      }
+      .internal b {
+        display: block;
+        color: #9d8b57;
+        font-size: 10px;
+        font-weight: 500;
+      }
+      .internal code {
+        font-size: 9px;
+        display: block;
+        color: #a99b77;
+        overflow-wrap: anywhere;
+      }
+      .small-heading {
+        font-size: 11px;
+        color: #7b9267;
+        margin: 19px 0 10px;
+      }
+      .routes-section {
+        padding: 20px 23px;
+      }
+      .routes-section > h3 {
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .decision {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+      }
+      .decision > div {
+        background: #f5f8ee;
+        border: 1px solid #dce7cd;
+        border-radius: 6px;
+        padding: 12px;
+      }
+      .decision b {
+        display: block;
+        font-size: 10px;
+        color: #6d8d53;
+        font-weight: 500;
+      }
+      .decision p {
+        font-size: 10px;
+        color: #9aac87;
+        margin: 4px 0 8px;
+      }
+      .decision code {
+        font-size: 11px;
+        color: #617f4b;
+      }
+      .mini-code {
+        font-size: 10px;
+        color: #8fa27b;
+        background: #f5f8ef;
+        border: 1px solid #dce6d0;
+        border-radius: 5px;
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+        margin-top: 12px;
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 26px;
+        padding-top: 17px;
+        border-top: 1px solid var(--line);
+        font-size: 9px;
+        color: #9aa88f;
+      }
+      .print-button {
+        border: 1px solid #cfdbc5;
+        background: #fffefa;
+        color: #6c8955;
+        padding: 6px 11px;
+        border-radius: 5px;
+        font-size: 10px;
+      }
+      .graph-panel[hidden] {
+        display: none;
+      }
+      .graph-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .graph-summary > div {
+        border: 1px solid #dce6d2;
+        border-radius: 6px;
+        padding: 12px 9px;
+        background: #f2f6ec;
+        color: #7d9764;
+        font-size: 10px;
+      }
+      .graph-summary b {
+        font-size: 20px;
+        color: #5b7b43;
+        display: block;
+        font-weight: 500;
+      }
+      .graph-summary span {
+        font-size: 9px;
+      }
+      .standalone-note {
+        font-size: 10px;
+        color: #a0ad95;
+        margin-top: 12px;
+      }
+      @media (max-width: 1050px) {
+        main {
+          padding: 28px 22px;
+        }
+        .graph-layout {
+          grid-template-columns: minmax(0, 1fr) 245px;
+        }
+        .inspector {
+          padding: 18px;
+        }
+        .support-grid {
+          grid-template-columns: 1fr;
+        }
+        .decision {
+          grid-template-columns: 1fr 1fr;
+        }
+        .canvas svg {
+          min-width: 630px;
+        }
+        .stats {
+          gap: 17px;
+        }
+        .entry-grid {
+          gap: 10px;
+        }
+      }
+      @media (max-width: 760px) {
+        main {
+          padding: 22px 15px;
+        }
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 15px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+        .stats {
+          width: 100%;
+          justify-content: space-around;
+        }
+        .skipped {
+          margin-left: 0;
+        }
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .tabs {
+          width: 100%;
+          justify-content: space-around;
+        }
+        .tabs button {
+          font-size: 11px;
+          padding: 8px 9px;
+        }
+        .graph-layout {
+          grid-template-columns: 1fr;
+        }
+        .inspector {
+          min-height: 0;
+        }
+        .entry-grid {
+          grid-template-columns: 1fr;
+        }
+        .entry-flow {
+          margin-top: 8px;
+        }
+        .canvas {
+          padding: 8px;
+        }
+        .canvas svg {
+          min-width: 610px;
+        }
+        .source {
+          margin-top: 15px;
+        }
+        .route-rules {
+          margin-top: 13px;
+        }
+        .field-list {
+          gap: 5px;
+        }
+        .internal {
+          grid-template-columns: 1fr;
+        }
+        .graph-head {
+          padding: 14px 15px;
+        }
+        .support-body {
+          padding: 16px;
+        }
+        .support-head {
+          padding: 16px;
+        }
+        .graph-head > code {
+          font-size: 9px;
+        }
+        .status-row {
+          gap: 8px;
+        }
+        footer {
+          flex-direction: column;
+        }
+        .legend {
+          font-size: 8px;
+          gap: 10px;
+          padding: 12px;
+        }
+        .decision {
+          grid-template-columns: 1fr 1fr;
+        }
+        .intro {
+          font-size: 11px;
+        }
+      }
+      @media print {
+        body {
+          background: white;
+        }
+        main {
+          padding: 0;
+          max-width: none;
+        }
+        .print-button,
+        .tabs {
+          display: none;
+        }
+        .graph-panel[hidden] {
+          display: block !important;
+        }
+        .graph-layout {
+          display: block;
+        }
+        .inspector {
+          display: none;
+        }
+        .graph-panel {
+          break-inside: avoid;
+          margin-bottom: 15px;
+        }
+        .canvas {
+          background: none;
+        }
+        .canvas svg {
+          min-width: 0;
+          max-height: 600px;
+        }
+        .panel {
+          box-shadow: none;
+        }
+        .support-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .support-diagram {
+          min-width: 0;
+        }
+        .section {
+          break-inside: avoid;
+        }
+        .entry-grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        header {
+          break-after: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <div class="eyebrow">CODE MAP / LANGGRAPH</div>
+          <h1>health-management · 工程 Graph</h1>
+          <p class="intro">
+            源自当前 Python 实现。点击节点，查看职责、输入输出与代码位置。
+          </p>
+        </div>
+        <div class="stats">
+          <div><b>3</b><span>独立工作流</span></div>
+          <div><b>11</b><span>业务节点</span></div>
+          <div><b>2</b><span>暂停位置</span></div>
+          <div><b>2</b><span>SQLite 文件</span></div>
+        </div>
+      </header>
+      <div class="status-row">
+        <span class="snapshot">实现快照 · 2026-10-08</span
+        ><span>已核对编译图的节点与边</span><span>自包含 · 离线可打开</span
+        ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
+        ><button class="print-button" onclick="window.print()">
+          打印 / 另存 PDF
+        </button>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <h2>三个 Graph，独立运行</h2>
+          <p>业务节点计数不包含 START / END；图中的箭头对应真实控制流。</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="选择 Graph">
+          <button
+            id="tab-chat"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-chat"
+            data-graph="chat"
+          >
+            01 记录与对话</button
+          ><button
+            id="tab-plan"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-plan"
+            data-graph="plan"
+          >
+            02 计划确认</button
+          ><button
+            id="tab-analysis"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-analysis"
+            data-graph="analysis"
+          >
+            03 规律与复盘
+          </button>
+        </div>
+      </div>
+      <div class="graph-layout">
+        <div>
+          <section
+            class="panel graph-panel"
+            id="panel-chat"
+            role="tabpanel"
+            aria-labelledby="tab-chat"
+          >
+            <div class="graph-head">
+              <div>
+                <h3>chat_graph</h3>
+                <p>自然语言 → 结构化解析 → 路由 → 保存 / 查询 → 回答</p>
+              </div>
+              <code>build_chat() · 6 节点 / 10 边</code>
+            </div>
+            <div class="canvas" id="canvas-chat"></div>
+            <div class="diagram-note">
+              clarify 在 <code>interrupt()</code> 等待补充；恢复后更新
+              State，再沿真实回边进入 parse。
+            </div>
+            <div class="legend">
+              <span><i></i>代码 / 数据操作</span
+              ><span><i class="blue"></i>模型或演示解析</span
+              ><span><i class="orange"></i>人类输入暂停</span
+              ><span><i class="dashed"></i>条件边</span>
+            </div>
+          </section>
+          <section
+            class="panel graph-panel"
+            id="panel-plan"
+            role="tabpanel"
+            aria-labelledby="tab-plan"
+            hidden
+          >
+            <div class="graph-head">
+              <div>
+                <h3>plan_graph</h3>
+                <p>草案生成 → 规则判断 / 确认 → 事务决策</p>
+              </div>
+              <code>build_plan() · 3 节点 / 4 边</code>
+            </div>
+            <div class="canvas" id="canvas-plan"></div>
+            <div class="diagram-note">
+              这是线性 Graph。自动批准 / 等待确认在 approve 内；生效 / 拒绝 /
+              过期在 activate 内，均不是额外图节点。
+            </div>
+            <div class="legend">
+              <span><i></i>代码 / 数据操作</span
+              ><span><i class="orange"></i>条件触发暂停</span>
+            </div>
+          </section>
+          <section
+            class="panel graph-panel"
+            id="panel-analysis"
+            role="tabpanel"
+            aria-labelledby="tab-analysis"
+            hidden
+          >
+            <div class="graph-head">
+              <div>
+                <h3>analysis_graph</h3>
+                <p>分析已有记录 → 生成日报或周报</p>
+              </div>
+              <code>build_analysis() · 2 节点 / 3 边</code>
+            </div>
+            <div class="canvas" id="canvas-analysis"></div>
+            <div class="diagram-note">
+              analyze / review 调用统计与规则服务；此图不调用
+              LLM，也没有人类确认暂停。
+            </div>
+            <div class="legend">
+              <span><i class="purple"></i>统计 / 复盘</span
+              ><span><i></i>线性边</span>
+            </div>
+          </section>
+        </div>
+        <aside class="panel inspector" aria-live="polite">
+          <div class="eyebrow">NODE INSPECTOR</div>
+          <span class="node-kind" id="detail-kind"></span>
+          <h2 id="detail-title"></h2>
+          <code id="detail-code"></code>
+          <p id="detail-description"></p>
+          <h3>读取 / 输入</h3>
+          <div class="field-list" id="detail-input"></div>
+          <h3>更新 / 输出</h3>
+          <div class="field-list" id="detail-output"></div>
+          <a class="source" id="detail-source" href="backend/app/graphs.py"></a>
+          <div class="route-rules" id="route-info"></div>
+        </aside>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2>入口与恢复</h2>
+            <p>
+              图选择发生在 Engine.graph_for(kind)，定时周任务复用 analysis /
+              plan。
+            </p>
+          </div>
+        </div>
+        <div class="entry-grid">
+          <div class="panel entry">
+            <small>记录、纠错、查询、偏好</small><code>POST /api/chat</code>
+            <div class="entry-flow">
+              <span>Engine.run("chat")</span><b>→</b><span>chat_graph</span>
+            </div>
+          </div>
+          <div class="panel entry">
+            <small>用户生成计划 / 周任务刷新</small
+            ><code>POST /api/plans/propose</code>
+            <div class="entry-flow">
+              <span>Engine.run("plan")</span><b>→</b><span>plan_graph</span>
+            </div>
+          </div>
+          <div class="panel entry">
+            <small>手动复盘 / 定时周复盘</small><code>POST /api/reviews</code>
+            <div class="entry-flow">
+              <span>Engine.run("analysis")</span><b>→</b
+              ><span>analysis_graph</span>
+            </div>
+          </div>
+        </div>
+        <div class="mini-code">
+          POST /api/workflows/{thread_id}/resume → 校验 interrupt_id →
+          graph_for(workflow.kind) → Command(resume=answer) · 同一个 thread_id
+        </div>
+      </section>
+
+      <section class="section panel routes-section">
+        <h3>route_chat：依次匹配，命中即返回</h3>
+        <div class="decision">
+          <div>
+            <b>① question 存在</b>
+            <p>缺失或定位不明确优先</p>
+            <code>→ clarify</code>
+          </div>
+          <div>
+            <b>② record / correct</b>
+            <p>并且 events 非空</p>
+            <code>→ persist</code>
+          </div>
+          <div>
+            <b>③ fact</b>
+            <p>并且 fact_text 存在</p>
+            <code>→ fact</code>
+          </div>
+          <div>
+            <b>④ 其余</b>
+            <p>query / advice / 空记录等</p>
+            <code>→ respond</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="section support-grid">
+        <div class="panel">
+          <div class="support-head">
+            <span>02</span>
+            <div>
+              <h2>记忆与数据</h2>
+              <p>运行状态、恢复进度与健康事实分开保存</p>
+            </div>
+          </div>
+          <div class="support-body support-scroll">
+            <svg
+              class="support-diagram"
+              viewBox="0 0 560 350"
+              role="img"
+              aria-label="State、SQLite checkpointer 和业务数据库的读写关系"
+            >
+              <defs>
+                <marker
+                  id="arrow-map"
+                  markerWidth="7"
+                  markerHeight="7"
+                  refX="6"
+                  refY="3.5"
+                  orient="auto"
+                >
+                  <path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" />
+                </marker>
+              </defs>
+              <rect
+                class="map-box"
+                x="172"
+                y="12"
+                width="216"
+                height="65"
+                rx="8"
+              />
+              <text class="map-title" x="280" y="39" text-anchor="middle">
+                Engine / 三个 Graph
+              </text>
+              <text class="map-caption" x="280" y="59" text-anchor="middle">
+                节点执行 · Repository 调用
+              </text>
+              <path class="map-line" d="M220 77V95H89V122" />
+              <path class="map-line" d="M280 77V122" />
+              <path class="map-line" d="M340 77V95H471V122" />
+              <rect
+                class="map-box blue"
+                x="6"
+                y="129"
+                width="166"
+                height="90"
+                rx="8"
+              />
+              <rect
+                class="map-box orange"
+                x="197"
+                y="129"
+                width="166"
+                height="90"
+                rx="8"
+              />
+              <rect
+                class="map-box"
+                x="388"
+                y="129"
+                width="166"
+                height="90"
+                rx="8"
+              />
+              <text class="map-title" x="89" y="157" text-anchor="middle">
+                State
+              </text>
+              <text class="map-caption" x="89" y="180" text-anchor="middle">
+                输入 / 草案 / record_ids
+              </text>
+              <text class="map-caption" x="89" y="201" text-anchor="middle">
+                节点间共享工作数据
+              </text>
+              <text class="map-title" x="280" y="157" text-anchor="middle">
+                checkpoints.db
+              </text>
+              <text class="map-caption" x="280" y="180" text-anchor="middle">
+                SqliteSaver
+              </text>
+              <text class="map-caption" x="280" y="201" text-anchor="middle">
+                按 thread_id 保存 / 恢复
+              </text>
+              <text class="map-title" x="471" y="157" text-anchor="middle">
+                health.db
+              </text>
+              <text class="map-caption" x="471" y="180" text-anchor="middle">
+                事实 / 修订 / 计划 / 规律
+              </text>
+              <text class="map-caption" x="471" y="201" text-anchor="middle">
+                Repository 跨对话读写
+              </text>
+              <path class="map-line" d="M280 219V264H143" />
+              <path class="map-line" d="M471 219V264H413" />
+              <rect
+                class="map-box orange"
+                x="9"
+                y="270"
+                width="260"
+                height="65"
+                rx="7"
+              />
+              <text class="map-title" x="139" y="296" text-anchor="middle">
+                clarify / approve
+              </text>
+              <text class="map-caption" x="139" y="317" text-anchor="middle">
+                interrupt → 同线程 resume
+              </text>
+              <rect
+                class="map-box"
+                x="293"
+                y="270"
+                width="260"
+                height="65"
+                rx="7"
+              />
+              <text class="map-title" x="423" y="296" text-anchor="middle">
+                记录 / 计划 / 分析节点
+              </text>
+              <text class="map-caption" x="423" y="317" text-anchor="middle">
+                读历史 · 写事实与推导结果
+              </text>
+            </svg>
+            <div class="chip-grid">
+              <span><code>parse / respond</code>读历史与相关事实</span
+              ><span
+                ><code>save_ready / persist / fact</code
+                >写记录、修订与长期偏好</span
+              ><span
+                ><code>prepare / activate</code>存草案、检查版本、决定生效</span
+              ><span><code>analyze / review</code>读统计、写规律与复盘</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="support-head">
+            <span>03</span>
+            <div>
+              <h2>提示词与上下文</h2>
+              <p>真实模型仅用于 Parser.model_parse 的结构化理解</p>
+            </div>
+          </div>
+          <div class="support-body">
+            <div class="chip-grid">
+              <span
+                ><code>system prompt</code>提取约束 / 单位 /
+                纠错与意图规则</span
+              ><span><code>用户输入</code>text · original · selected_id</span
+              ><span
+                ><code>当前时间 + 输出 Schema</code>now ·
+                ParseResult.model_json_schema()</span
+              ><span><code>检索记录</code>recent[:12]，来自业务数据库</span>
+            </div>
+            <h3 class="small-heading">模型模式</h3>
+            <div class="rail">
+              <div><b>messages</b>system + JSON user</div>
+              <span>→</span>
+              <div><b>HTTP 模型接口</b>/chat/completions</div>
+              <span>→</span>
+              <div><b>Pydantic</b>ParseResult 校验</div>
+            </div>
+            <h3 class="small-heading">演示模式</h3>
+            <div class="rail">
+              <div><b>demo_parse()</b>规则 / 正则解析</div>
+              <span>→</span>
+              <div><b>同一结构</b>ParseResult</div>
+              <span>→</span>
+              <div><b>Graph State</b>parsed</div>
+            </div>
+            <p class="small-note">
+              未发现
+              few-shot、向量检索或专门提示词目录。计划、规律与回答当前主要由代码模板生成。
+            </p>
+            <a class="source" href="backend/app/parser.py"
+              >backend/app/parser.py · Parser.model_parse()</a
+            >
+          </div>
+        </div>
+        <div class="panel">
+          <div class="support-head">
+            <span>04</span>
+            <div>
+              <h2>执行、校验与重试</h2>
+              <p>节点直接调用业务函数；没有 ToolNode / 模型工具循环</p>
+            </div>
+          </div>
+          <div class="support-body">
+            <div class="rail">
+              <div><b>请求指纹</b>相同 ID + 相同输入</div>
+              <span>→</span>
+              <div><b>Engine.run()</b>新运行 / 返回已存结果</div>
+              <span>→</span>
+              <div><b>写入去重</b>op_key / 修订版本</div>
+            </div>
+            <div class="internal">
+              <div>
+                <b>模型错误</b><code>timeout=45s / 输出校验</code
+                ><code>→ ValueError → HTTP 409</code>
+              </div>
+              <div>
+                <b>用户重试</b><code>同 request_id</code
+                ><code>→ checkpoint / 去重写入</code>
+              </div>
+              <div>
+                <b>后台任务</b><code>jobs · attempts &lt; 3</code
+                ><code>→ 下轮继续 / 去重通知</code>
+              </div>
+            </div>
+            <p class="small-note">
+              模型失败不自动切换到演示模式；HTTP
+              模型调用本身没有自动重试。后台任务的重试由 jobs 表记录。
+            </p>
+            <a class="source" href="backend/app/graphs.py"
+              >graphs.py · Engine.run() / resume()</a
+            >
+          </div>
+        </div>
+        <div class="panel">
+          <div class="support-head">
+            <span>05</span>
+            <div>
+              <h2>计划节点内部的分支</h2>
+              <p>仅说明节点内部逻辑，不增加编译图中的节点或边</p>
+            </div>
+          </div>
+          <div class="support-body">
+            <h3 class="small-heading">approve → approved</h3>
+            <div class="rail">
+              <div><b>无需确认</b>直接 approved=True</div>
+              <div><b>需要确认</b>interrupt → 接受 / 拒绝</div>
+            </div>
+            <h3 class="small-heading">activate → decide_plan()</h3>
+            <div class="internal">
+              <div><b>active</b><code>接受 + 基准版本仍一致</code></div>
+              <div><b>rejected</b><code>明确拒绝</code></div>
+              <div><b>stale</b><code>数据或生效计划已变化</code></div>
+            </div>
+            <p class="small-note">
+              草案比较单次与自上次确认以来的累计目标变化。首份计划或变化超过 5%
+              进入确认；该阈值是当前原型规则。
+            </p>
+            <a class="source" href="backend/app/repository.py"
+              >repository.py · Repository.decide_plan()</a
+            >
+          </div>
+        </div>
+      </section>
+      <footer>
+        <span
+          >证据：backend/app/graphs.py · parser.py · services.py · repository.py
+          · scheduler.py · main.py</span
+        ><span>工程结构快照 · 不读取个人健康数据 · 不代表一次运行轨迹</span>
+      </footer>
+      <noscript
+        ><p class="standalone-note">
+          启用 JavaScript 可显示工作流图与节点详情；此文件无外部依赖。
+        </p></noscript
+      >
+    </main>
+
+    <script type="application/json" id="graph-topology">
+      {
+        "chat": {
+          "nodes": [
+            "__start__",
+            "parse",
+            "save_ready",
+            "clarify",
+            "persist",
+            "fact",
+            "respond",
+            "__end__"
+          ],
+          "edges": [
+            ["__start__", "parse"],
+            ["parse", "save_ready"],
+            ["save_ready", "clarify", true],
+            ["save_ready", "persist", true],
+            ["save_ready", "fact", true],
+            ["save_ready", "respond", true],
+            ["clarify", "parse"],
+            ["persist", "respond"],
+            ["fact", "respond"],
+            ["respond", "__end__"]
+          ]
+        },
+        "plan": {
+          "nodes": ["__start__", "prepare", "approve", "activate", "__end__"],
+          "edges": [
+            ["__start__", "prepare"],
+            ["prepare", "approve"],
+            ["approve", "activate"],
+            ["activate", "__end__"]
+          ]
+        },
+        "analysis": {
+          "nodes": ["__start__", "analyze", "review", "__end__"],
+          "edges": [
+            ["__start__", "analyze"],
+            ["analyze", "review"],
+            ["review", "__end__"]
+          ]
+        }
+      }
+    </script>
+    <script>
+      (() => {
+        "use strict";
+        const topology = JSON.parse(
+          document.getElementById("graph-topology").textContent,
+        );
+        const definitions = {
+          __start__: {
+            name: "START",
+            kind: "入口",
+            description:
+              "由 Engine.run() 选择当前 Graph；新的工作流使用独立 thread_id。",
+            input: ["request_id", "initial State"],
+            output: ["Graph 初始状态"],
+            source: "graphs.py · Engine.run()",
+          },
+          __end__: {
+            name: "END",
+            kind: "结束",
+            description:
+              "返回回复、卡片与证据引用；Engine 保存工作流结果与对话消息。",
+            input: ["reply", "cards", "evidence_refs"],
+            output: ["workflow result", "messages"],
+            source: "graphs.py · format_result() / run()",
+          },
+          parse: {
+            name: "解析输入",
+            kind: "模型 / 演示规则",
+            description:
+              "读取相关历史，调用 Parser 提取意图和结构化事件。已有事件且追问达到两轮时清除后续问题。",
+            input: [
+              "input_text",
+              "original",
+              "selected_id",
+              "recent events",
+              "rounds",
+            ],
+            output: ["parsed: ParseResult"],
+            source: "graphs.py · Engine.parse() / parser.py",
+            tone: "model",
+            sub: "意图 + 事件 + 查询范围",
+          },
+          save_ready: {
+            name: "先保存独立记录",
+            kind: "业务代码 / 写数据库",
+            description:
+              "当 record 意图仍需追问时，先保存不属于待补充类型的独立事件，避免体重等记录被一餐的缺失阻塞。随后进入 route_chat。",
+            input: ["parsed.events", "parsed.question", "saved_indexes"],
+            output: ["record_ids", "saved_indexes", "events / revisions"],
+            source: "graphs.py · Engine.save_ready()",
+            sub: "不依赖补充的事件先落库",
+          },
+          clarify: {
+            name: "追问 / 等待补充",
+            kind: "interrupt 暂停",
+            description:
+              "暂停并输出问题，纠错歧义时可提供记录选项。Engine.resume() 校验中断 ID，用同线程 Command 恢复；此节点完成后回到 parse。",
+            input: ["parsed.question", "用户 text / event_id"],
+            output: ["input_text / original", "selected_id", "rounds + 1"],
+            source: "graphs.py · Engine.clarify() / resume()",
+            tone: "pause",
+            sub: "同 thread_id 补充后继续",
+          },
+          persist: {
+            name: "保存或修正事件",
+            kind: "业务代码 / 事务写入",
+            description:
+              "估算营养，按操作键去重保存事件；纠错时更新记录版本。数据版本变化会使现有规律过期，回答阶段重新读取当天汇总。",
+            input: ["parsed.events", "correction_id", "saved_indexes"],
+            output: ["record_ids", "events / revisions", "data_version"],
+            source: "graphs.py · Engine.persist() / repository.py",
+            sub: "营养估算 · 版本 · 去重",
+          },
+          fact: {
+            name: "保存长期事实",
+            kind: "用户明确提供的偏好",
+            description:
+              "把用户主动表达的偏好或已知限制写入 facts，来源为 user，状态为 confirmed。它不把模型推断自动确认为用户事实。",
+            input: ["parsed.fact_text", "thread_id"],
+            output: ["facts", "data_version"],
+            source: "graphs.py · Engine.fact()",
+            sub: "facts · 用户明确表达",
+          },
+          respond: {
+            name: "组织回答与证据",
+            kind: "查询 / 汇总 / 代码模板",
+            description:
+              "查询按范围取历史；记录后按当天数据生成餐食卡片与建议；没有记录时输出一般建议。当前不是一个额外的 LLM 回答节点。",
+            input: ["parsed.intent", "record_ids", "Repository 历史 / 目标"],
+            output: ["reply", "cards", "evidence_refs"],
+            source: "graphs.py · Engine.respond()",
+            sub: "当日汇总 · 历史依据",
+          },
+          prepare: {
+            name: "生成并保存草案",
+            kind: "业务代码 / 计划规则",
+            description:
+              "调用 plan_draft()，参考当前目标与近期记录生成七天安排。保存不可变草案，记录数据版本、基准计划和累计变化锚点。重放复用已保存草案。",
+            input: ["targets / 当前目标", "近期记录 / 偏好", "input_text"],
+            output: ["plan", "plan_id", "plans: pending"],
+            source: "graphs.py · Engine.prepare_plan() / services.py",
+            sub: "plan_draft() · pending",
+          },
+          approve: {
+            name: "自动批准或确认",
+            kind: "条件 interrupt 暂停",
+            description:
+              "needs_confirmation 为假时直接批准；为真时 interrupt 等待明确的布尔决定。分支位于节点函数内部，Graph 的下一节点始终是 activate。",
+            input: ["plan.needs_confirmation", "用户 approved"],
+            output: ["approved: bool"],
+            source: "graphs.py · Engine.approve_plan()",
+            tone: "pause",
+            sub: "大变化等待明确确认",
+          },
+          activate: {
+            name: "决定计划状态",
+            kind: "版本检查 / 事务决策",
+            description:
+              "调用 Repository.decide_plan()：拒绝保持原计划；接受但基准已变则过期；接受且版本一致才替换生效计划。三个结果都继续到 END。",
+            input: ["plan_id", "approved", "最新数据 / 计划版本"],
+            output: ["active / rejected / stale", "reply", "evidence_refs"],
+            source: "graphs.py · Engine.activate_plan() / repository.py",
+            sub: "active / rejected / stale",
+          },
+          analyze: {
+            name: "分析长期规律",
+            kind: "统计 / 规则模板",
+            description:
+              "调用 analyze() 读取近 28 天数据。比较睡眠与次日摄入、工作日与周末摄入；仅使用标记完整且营养齐全的数据，保存规律与证据，必要时发通知。",
+            input: ["28 天记录", "完整度 / 营养信息", "用户否认状态"],
+            output: ["analysis", "insights", "重要模式通知"],
+            source: "graphs.py · build_analysis() / services.py",
+            tone: "analysis",
+            sub: "样本量 · 覆盖率 · 限制",
+          },
+          review: {
+            name: "生成日报 / 周报",
+            kind: "统计 / 复盘模板",
+            description:
+              "调用 review() 按 period 汇总一天或七天数据，计算记录数、完整日、体重变化、睡眠与运动。保存 reviews 并返回复盘卡片。",
+            input: ["period: day / week", "健康记录 / 当前规律"],
+            output: ["cards: review", "reply", "reviews"],
+            source: "graphs.py · build_analysis() / services.py",
+            tone: "analysis",
+            sub: "1 / 7 天统计与复盘",
+          },
+        };
+        const layouts = {
+          chat: {
+            width: 1000,
+            height: 755,
+            positions: {
+              __start__: [455, 21, 130, 38],
+              parse: [410, 102, 220, 83],
+              save_ready: [410, 243, 220, 83],
+              clarify: [50, 405, 230, 83],
+              persist: [385, 405, 230, 83],
+              fact: [720, 405, 230, 83],
+              respond: [385, 565, 230, 83],
+              __end__: [435, 698, 130, 38],
+            },
+            paths: {
+              "__start__>parse": ["M520 59V102"],
+              "parse>save_ready": ["M520 185V243"],
+              "save_ready>clarify": [
+                "M470 326V357H165V405",
+                "有关键问题",
+                165,
+                383,
+              ],
+              "save_ready>persist": [
+                "M520 326V353H500V405",
+                "record / correct + events",
+                506,
+                383,
+              ],
+              "save_ready>fact": [
+                "M570 326V357H835V405",
+                "fact + fact_text",
+                835,
+                383,
+              ],
+              "save_ready>respond": [
+                "M630 284H974V607H615",
+                "query / advice / 其余",
+                857,
+                549,
+              ],
+              "clarify>parse": [
+                "M50 447H21V144H410",
+                "补充后重新解析",
+                170,
+                129,
+              ],
+              "persist>respond": ["M500 488V565", "record_ids", 550, 529],
+              "fact>respond": ["M835 488V533H615V606"],
+              "respond>__end__": ["M500 648V698"],
+            },
+          },
+          plan: {
+            width: 1000,
+            height: 640,
+            positions: {
+              __start__: [415, 20, 170, 38],
+              prepare: [345, 101, 310, 85],
+              approve: [345, 249, 310, 85],
+              activate: [345, 410, 310, 85],
+              __end__: [415, 566, 170, 38],
+            },
+            paths: {
+              "__start__>prepare": ["M500 58V101"],
+              "prepare>approve": [
+                "M500 186V249",
+                "plan + needs_confirmation",
+                680,
+                219,
+              ],
+              "approve>activate": [
+                "M500 334V410",
+                "approved = True / False",
+                677,
+                377,
+              ],
+              "activate>__end__": [
+                "M500 495V566",
+                "reply + evidence_refs",
+                658,
+                535,
+              ],
+            },
+          },
+          analysis: {
+            width: 1000,
+            height: 555,
+            positions: {
+              __start__: [415, 22, 170, 38],
+              analyze: [335, 105, 330, 85],
+              review: [335, 290, 330, 85],
+              __end__: [415, 468, 170, 38],
+            },
+            paths: {
+              "__start__>analyze": ["M500 60V105"],
+              "analyze>review": [
+                "M500 190V290",
+                "统计规律写入 insights",
+                683,
+                243,
+              ],
+              "review>__end__": [
+                "M500 375V468",
+                "复盘保存 + cards / reply",
+                705,
+                425,
+              ],
+            },
+          },
+        };
+        const ns = "http://www.w3.org/2000/svg";
+        const make = (tag, attrs = {}, text) => {
+          const el = document.createElementNS(ns, tag);
+          for (const [k, v] of Object.entries(attrs))
+            el.setAttribute(k, String(v));
+          if (text !== undefined) el.textContent = text;
+          return el;
+        };
+        let selectedGraph = "chat";
+        function select(graph, id) {
+          document
+            .querySelectorAll(".node")
+            .forEach((n) =>
+              n.classList.toggle(
+                "selected",
+                n.dataset.graph === graph && n.dataset.node === id,
+              ),
+            );
+          const d = definitions[id];
+          document.getElementById("detail-kind").textContent = d.kind;
+          document.getElementById("detail-title").textContent = d.name;
+          document.getElementById("detail-code").textContent = id;
+          document.getElementById("detail-description").textContent =
+            d.description;
+          for (const [target, items] of [
+            ["detail-input", d.input],
+            ["detail-output", d.output],
+          ]) {
+            const e = document.getElementById(target);
+            e.replaceChildren();
+            items.forEach((item) => {
+              const code = document.createElement("code");
+              code.textContent = item;
+              e.append(code);
+            });
+          }
+          const source = document.getElementById("detail-source");
+          source.textContent = "↗ " + d.source;
+          source.href =
+            "backend/app/" +
+            (id === "parse"
+              ? "parser.py"
+              : id === "activate"
+                ? "repository.py"
+                : id === "analyze" || id === "review"
+                  ? "services.py"
+                  : "graphs.py");
+          const route = document.getElementById("route-info");
+          route.replaceChildren();
+          const rows =
+            graph === "chat"
+              ? [
+                  ["关键问题优先", "clarify"],
+                  ["记录 / 纠错", "persist"],
+                  ["长期偏好", "fact"],
+                  ["查询 / 咨询", "respond"],
+                ]
+              : graph === "plan"
+                ? [
+                    ["生成草案", "prepare"],
+                    ["条件暂停确认", "approve"],
+                    ["事务与版本检查", "activate"],
+                  ]
+                : [
+                    ["统计与规则分析", "analyze"],
+                    ["日报 / 周报", "review"],
+                  ];
+          rows.forEach(([label, code], i) => {
+            const row = document.createElement("div");
+            row.className = "rule-row";
+            const number = document.createElement("span");
+            number.textContent = i + 1;
+            const name = document.createElement("div");
+            name.textContent = label;
+            const end = document.createElement("code");
+            end.textContent = code;
+            row.append(number, name, end);
+            route.append(row);
+          });
+        }
+        function render(graph) {
+          const layout = layouts[graph],
+            svg = make("svg", {
+              viewBox: `0 0 ${layout.width} ${layout.height}`,
+              role: "img",
+              "aria-label": graph + " LangGraph 工作流",
+              "data-graph-svg": graph,
+            });
+          const defs = make("defs");
+          for (const [id, color] of [
+            ["arrow", "#9ba996"],
+            ["arrow-resume", "#bc9452"],
+          ]) {
+            const marker = make("marker", {
+              id: id + "-" + graph,
+              markerWidth: 7,
+              markerHeight: 7,
+              refX: 6,
+              refY: 3.5,
+              orient: "auto",
+            });
+            marker.append(make("path", { d: "M0 0L7 3.5L0 7Z", fill: color }));
+            defs.append(marker);
+          }
+          svg.append(defs);
+          for (const [from, to, conditional] of topology[graph].edges) {
+            const [d, label, lx, ly] = layout.paths[from + ">" + to];
+            const resume = from === "clarify";
+            const path = make("path", {
+              d,
+              class:
+                "edge" +
+                (conditional ? " conditional" : "") +
+                (resume ? " resume" : ""),
+              "data-from": from,
+              "data-to": to,
+              "data-conditional": conditional ? "true" : "false",
+              style: `marker-end:url(#${resume ? "arrow-resume" : "arrow"}-${graph})`,
+            });
+            svg.append(path);
+            if (label) {
+              const group = make("g");
+              const width = Math.max(
+                90,
+                [...label].reduce(
+                  (n, c) => n + (/[\u3000-\u9fff]/.test(c) ? 10 : 5.5),
+                  0,
+                ) + 16,
+              );
+              group.append(
+                make("rect", {
+                  x: lx - width / 2,
+                  y: ly - 12,
+                  width,
+                  height: 20,
+                  rx: 4,
+                  fill: "#fffefa",
+                  opacity: 0.97,
+                }),
+              );
+              group.append(
+                make(
+                  "text",
+                  {
+                    x: lx,
+                    y: ly + 2,
+                    "text-anchor": "middle",
+                    class: "edge-label" + (resume ? " resume" : ""),
+                  },
+                  label,
+                ),
+              );
+              svg.append(group);
+            }
+          }
+          for (const id of topology[graph].nodes) {
+            const [x, y, w, h] = layout.positions[id],
+              d = definitions[id],
+              boundary = id.startsWith("__");
+            const g = make("g", {
+              class: "node " + (boundary ? "boundary" : d.tone || ""),
+              "data-node": id,
+              "data-graph": graph,
+              tabindex: 0,
+              role: "button",
+              "aria-label": id + " · " + d.name,
+            });
+            g.append(make("title", {}, id + "：" + d.description));
+            g.append(
+              make("rect", {
+                x,
+                y,
+                width: w,
+                height: h,
+                rx: boundary ? 19 : 9,
+              }),
+            );
+            if (boundary) {
+              g.append(
+                make(
+                  "text",
+                  {
+                    x: x + w / 2,
+                    y: y + 24,
+                    "text-anchor": "middle",
+                    class: "code",
+                  },
+                  d.name,
+                ),
+              );
+            } else {
+              g.append(
+                make("text", { x: x + 17, y: y + 24, class: "code" }, id),
+              );
+              g.append(
+                make("text", { x: x + 17, y: y + 48, class: "name" }, d.name),
+              );
+              g.append(
+                make("text", { x: x + 17, y: y + 68, class: "sub" }, d.sub),
+              );
+              if (d.tone === "pause") {
+                g.append(
+                  make(
+                    "text",
+                    {
+                      x: x + w - 14,
+                      y: y + 24,
+                      "text-anchor": "end",
+                      class: "pause-mark",
+                    },
+                    "Ⅱ interrupt",
+                  ),
+                );
+              }
+            }
+            g.addEventListener("click", () => select(graph, id));
+            g.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                select(graph, id);
+              }
+            });
+            svg.append(g);
+          }
+          document.getElementById("canvas-" + graph).append(svg);
+        }
+        for (const graph of Object.keys(topology)) render(graph);
+        // Scope the switcher to the page. This file makes no network requests.
+        document.querySelectorAll('[role="tab"]').forEach((button) =>
+          button.addEventListener("click", () => {
+            selectedGraph = button.dataset.graph;
+            document
+              .querySelectorAll('[role="tab"]')
+              .forEach((tab) =>
+                tab.setAttribute(
+                  "aria-selected",
+                  tab === button ? "true" : "false",
+                ),
+              );
+            for (const graph of Object.keys(topology))
+              document.getElementById("panel-" + graph).hidden =
+                graph !== selectedGraph;
+            select(
+              selectedGraph,
+              { chat: "parse", plan: "approve", analysis: "analyze" }[
+                selectedGraph
+              ],
+            );
+          }),
+        );
+        select("chat", "parse");
+      })();
+    </script>
+  </body>
+</html>

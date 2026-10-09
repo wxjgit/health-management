@@ -212,4 +212,28 @@ describe("网页核心交互", () => {
     expect(bodies[0].path).toBe("/workflows/plan1/resume");
     expect(bodies[0].body.approved).toBe(true);
   });
+
+  it("饮食反馈的可选追问不显示成必须完成的记录", async () => {
+    workflows = [{
+      thread_id: "feedback",
+      status: "waiting_input",
+      pending_input: {
+        kind: "clarification",
+        interrupt_id: "optional1",
+        optional: true,
+        question: "你觉得口味偏咸。下一餐可以少放盐。如果想复盘，这餐吃了什么？",
+        prompt: "如果想复盘，这餐吃了什么？",
+      },
+    }];
+    render(<App />);
+    await screen.findByText("可选补充：如果想复盘，这餐吃了什么？");
+    expect(screen.queryByText(/可选补充：你觉得口味偏咸/)).toBeNull();
+    expect(screen.getByLabelText("描述饮食或身体状态").getAttribute("placeholder")).toBe(
+      "可以补充，也可以说不知道或先不记…",
+    );
+    await userEvent.type(screen.getByLabelText("描述饮食或身体状态"), "不知道");
+    await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].path).toBe("/workflows/feedback/resume");
+  });
 });

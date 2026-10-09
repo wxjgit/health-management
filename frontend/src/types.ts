@@ -36,6 +36,8 @@ export type Item = {
   carbs_g: number | null;
   fat_g: number | null;
   nutrition_source: string;
+  nutrition_status?: "estimated" | "user_provided" | "partial" | "unavailable";
+  nutrition_reason?: string | null;
   uncertainty: string;
 };
 export type Event = {
@@ -93,6 +95,8 @@ export type Pending = {
   interrupt_id: string;
   kind: "clarification" | "plan_confirmation";
   question: string;
+  prompt?: string;
+  optional?: boolean;
   targets?: Targets;
   changes?: Record<string, number>;
   options?: { id: string; label: string }[];

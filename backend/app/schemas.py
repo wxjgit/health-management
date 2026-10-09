@@ -20,52 +20,139 @@ class Profile(StrictModel):
     activity: Literal['sedentary', 'light', 'moderate', 'active']
 
 
-class MealItem(StrictModel):
-    name: str = Field(min_length=1, max_length=100)
-    quantity: float | None = Field(default=None, gt=0, le=10000)
-    unit: str = Field(default='份', max_length=20)
-    size: str | None = Field(default=None, max_length=20)
-    cooking: str | None = Field(default=None, max_length=40)
+class NutritionValues(StrictModel):
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
     kcal: float | None = Field(default=None, ge=0, le=10000)
     protein_g: float | None = Field(default=None, ge=0, le=1000)
     carbs_g: float | None = Field(default=None, ge=0, le=2000)
     fat_g: float | None = Field(default=None, ge=0, le=1000)
+
+
+class MealItemDraft(NutritionValues):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    quantity: float | None = Field(default=None, gt=0, le=10000)
+    unit: str = Field(default='份', max_length=20)
+    size: str | None = Field(default=None, max_length=20)
+    cooking: str | None = Field(default=None, max_length=40)
+    nutrition_basis: Literal['consumed', 'per_100g'] = 'consumed'
     source: Literal['user', 'model_estimate', 'unknown'] = 'unknown'
     uncertainty: str = Field(default='待估算', max_length=200)
 
 
-class EventDraft(StrictModel):
+class MealItem(MealItemDraft):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class MealFeedback(StrictModel):
+    topic: Literal['salty', 'oily', 'overeating', 'hungry']
+    quote: str = Field(min_length=1, max_length=300)
+    day: date | None = None
+    stance: Literal['experience', 'question', 'denial'] = 'experience'
+    source: Literal['user_report'] = 'user_report'
+
+
+class ExtractionEvent(StrictModel):
+    """A conversation draft: required information may still be missing."""
     kind: Literal['meal', 'weight', 'sleep', 'exercise', 'cycle']
-    occurred_at: datetime
+    occurred_at: datetime | None = None
     raw_text: str = Field(min_length=1, max_length=4000)
     meal_slot: Literal['breakfast', 'lunch', 'dinner', 'snack'] | None = None
-    items: list[MealItem] = Field(default_factory=list, max_length=40)
+    items: list[MealItemDraft] = Field(default_factory=list, max_length=40)
     value: float | None = None
     quality: str | None = Field(default=None, max_length=100)
     exercise_type: str | None = Field(default=None, max_length=100)
     intensity: Literal['low', 'moderate', 'high', 'unknown'] = 'unknown'
     cycle_action: Literal['start', 'end', 'note'] | None = None
+    feedback: list[MealFeedback] = Field(default_factory=list, max_length=8)
+
+    @model_validator(mode='after')
+    def valid_known_fields(self):
+        if self.occurred_at is not None and self.occurred_at.tzinfo is None:
+            raise ValueError('发生时间必须包含时区')
+        if self.kind in ('weight', 'sleep', 'exercise') and self.value is not None:
+            limits = {'weight': (20, 400), 'sleep': (0, 1440), 'exercise': (0, 1440)}
+            lo, hi = limits[self.kind]
+            if not math.isfinite(self.value) or not lo <= self.value <= hi:
+                raise ValueError(f'{self.kind} 数值不合理')
+        return self
+
+    def missing_fields(self):
+        fields = [] if self.occurred_at is not None else ['occurred_at']
+        if self.kind == 'meal' and (not self.items or any(i.name is None for i in self.items)):
+            fields.append('items')
+        if self.kind in ('weight', 'sleep', 'exercise') and self.value is None:
+            fields.append('value')
+        if self.kind == 'cycle' and self.cycle_action is None:
+            fields.append('cycle_action')
+        return fields
+
+
+class EventDraft(ExtractionEvent):
+    """Only complete, validated events may cross the persistence boundary."""
+    occurred_at: datetime
+    items: list[MealItem] = Field(default_factory=list, max_length=40)
 
     @model_validator(mode='after')
     def valid_event(self):
-        if self.occurred_at.tzinfo is None:
-            raise ValueError('发生时间必须包含时区')
-        if self.kind == 'meal' and not self.items:
-            raise ValueError('饮食记录需要至少一个食物')
-        if self.kind in ('weight', 'sleep', 'exercise'):
-            limits = {'weight': (20, 400), 'sleep': (0, 1440), 'exercise': (0, 1440)}
-            lo, hi = limits[self.kind]
-            if self.value is None or not math.isfinite(self.value) or not lo <= self.value <= hi:
-                raise ValueError(f'{self.kind} 数值缺失或不合理')
-        if self.kind == 'cycle' and self.cycle_action is None:
-            raise ValueError('生理周期需要开始、结束或备注')
+        if self.missing_fields():
+            raise ValueError('记录缺少必需信息：' + '、'.join(self.missing_fields()))
         return self
 
 
-class ParseResult(StrictModel):
+class NutritionReference(StrictModel):
+    basis: Literal['consumed', 'per_100g']
+    values: NutritionValues
+    fingerprint: str
+
+
+class PreparedMealItem(MealItem):
+    nutrition_status: Literal['estimated', 'user_provided', 'partial', 'unavailable']
+    nutrition_sources: dict[Literal['kcal', 'protein_g', 'carbs_g', 'fat_g'],
+                            Literal['user', 'model_estimate', 'demo_fixture']] = Field(default_factory=dict)
+    nutrition_reference: NutritionReference | None = None
+    nutrition_fingerprint: str
+    nutrition_source: str
+    nutrition_reason: str | None = None
+    kcal_range: tuple[float, float] | None = None
+
+    @model_validator(mode='after')
+    def valid_nutrition(self):
+        if self.kcal_range is not None:
+            low, high = self.kcal_range
+            if (not all(math.isfinite(v) for v in self.kcal_range) or low < 0 or low > high
+                    or self.kcal is None or not low <= self.kcal <= high):
+                raise ValueError('热量范围不合理')
+        known = {key for key in ('kcal', 'protein_g', 'carbs_g', 'fat_g') if getattr(self, key) is not None}
+        if known != set(self.nutrition_sources):
+            raise ValueError('营养数值和来源必须一一对应')
+        return self
+
+
+class PreparedEvent(EventDraft):
+    items: list[PreparedMealItem] = Field(default_factory=list, max_length=40)
+
+
+class NutritionEstimate(NutritionValues):
+    index: int = Field(ge=0, le=39)
+    uncertainty: str = Field(min_length=1, max_length=200)
+
+
+class NutritionEstimates(StrictModel):
+    items: list[NutritionEstimate] = Field(default_factory=list, max_length=40)
+
+
+ClarificationField = Literal['occurred_at', 'items', 'value', 'cycle_action', 'quantity',
+                             'intensity', 'cooking', 'quality']
+
+
+class ExtractionResult(StrictModel):
     intent: Literal['record', 'correct', 'query', 'advice', 'fact']
-    events: list[EventDraft] = Field(default_factory=list, max_length=20)
+    events: list[ExtractionEvent] = Field(default_factory=list, max_length=20)
+    feedback: list[MealFeedback] = Field(default_factory=list, max_length=8)
     question: str | None = Field(default=None, max_length=300)
+    clarification_event_index: int | None = Field(default=None, ge=0, le=19)
+    clarification_item_index: int | None = Field(default=None, ge=0, le=39)
+    clarification_fields: list[ClarificationField] = Field(default_factory=list, max_length=8)
     correction_id: str | None = None
     fact_text: str | None = Field(default=None, max_length=500)
     query_start: date | None = None
@@ -82,6 +169,34 @@ class ParseResult(StrictModel):
         if self.query_start and self.query_end and self.query_start > self.query_end:
             raise ValueError('查询起止日期不正确')
         return self
+
+
+class ParseResult(ExtractionResult):
+    events: list[EventDraft] = Field(default_factory=list, max_length=20)
+
+
+class EventPatch(StrictModel):
+    """Only explicitly requested fields are applied to the checkpointed draft."""
+    occurred_at: datetime | None = None
+    items: list[MealItemDraft] | None = Field(default=None, max_length=40)
+    value: float | None = None
+    cycle_action: Literal['start', 'end', 'note'] | None = None
+    quantity: float | None = Field(default=None, gt=0, le=10000)
+    unit: str | None = Field(default=None, min_length=1, max_length=20)
+    size: str | None = Field(default=None, max_length=20)
+    intensity: Literal['low', 'moderate', 'high', 'unknown'] | None = None
+    cooking: str | None = Field(default=None, max_length=40)
+    quality: str | None = Field(default=None, max_length=100)
+    feedback: list[MealFeedback] = Field(default_factory=list, max_length=8)
+
+
+class ReplySegment(StrictModel):
+    point_id: str = Field(min_length=1, max_length=80)
+    text: str = Field(min_length=1, max_length=240)
+
+
+class ContextualReply(StrictModel):
+    segments: list[ReplySegment] = Field(min_length=1, max_length=8)
 
 
 class ChatRequest(StrictModel):

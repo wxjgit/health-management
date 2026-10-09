@@ -17,7 +17,9 @@ def dashboard(repo, day):
     totals = meal_totals(items) if items else {**dict.fromkeys(KEYS), 'unknown_items': 0, 'complete_nutrition': False, 'kcal_range': None}
     active = repo.active_plan()
     targets = active['data']['targets'] if active else None
-    remaining = {key: round(targets[key] - totals[key], 1) if totals[key] is not None else None for key in KEYS} if targets else None
+    remaining = {key: round(targets[key] - totals[key], 1)
+                 if totals[key] is not None and all(item.get(key) is not None for item in items)
+                 else None for key in KEYS} if targets else None
     weight = next((e['data']['value'] for e in events if e['kind'] == 'weight'), None)
     sleep = next((e['data']['value'] for e in events if e['kind'] == 'sleep'), None)
     exercise = sum(e['data']['value'] for e in events if e['kind'] == 'exercise')
@@ -50,10 +52,11 @@ def recommendation(repo, day=None):
         elif left < 0:
             parts.append('今天已记录摄入超过目标，下一餐仍保持规律进餐，选择容易控制分量的组合。')
     else:
-        parts.append('下一餐可用蛋白质食物、蔬菜和主食搭配；尚未确认热量目标或营养信息不足，暂不计算具体额度。')
+        reason = '尚未确认热量目标' if not today['targets'] else '当前记录存在热量未知的食物'
+        parts.append(f'下一餐可用蛋白质食物、蔬菜和主食搭配；{reason}，暂不计算具体额度。')
     if meals:
         latest = meals[0]
-        parts.append(f'参考你 {latest["day"]} 记录的“{latest["raw_text"]}”，下一餐可换一种搭配，避免当天食物过于单一。')
+        parts.append(f'参考你 {latest["day"]} 记录的“{latest["raw_text"]}”，下一餐可换一种搭配，增加食物来源的多样性。')
     if preferences:
         parts.append('选择食物时请遵守已记录偏好与限制：' + '；'.join(p['content'] for p in preferences[-3:]))
     return ' '.join(parts), [evidence(e) for e in meals[:3]]
@@ -65,6 +68,7 @@ def meal_assessment(repo, event, today):
     weights = repo.get_meta('preferences')['weights']
     components = {'energy': None, 'macros': None, 'satiety': None, 'adherence': None, 'snacking': None}
     notes = ['饱腹感、坚持性和加餐风险尚缺少个人反馈，暂不评分。']
+    notes.extend(dict.fromkeys(i['nutrition_reason'] for i in event['data']['items'] if i.get('nutrition_reason')))
     constraints = [f['content'] for f in repo.facts() if any(w in f['content'] for w in ['过敏', '不吃', '忌口', '医生'])]
     if constraints:
         notes.append('已知限制：' + '；'.join(constraints) + '。请核对实际配料；系统不能保证已完整匹配。')

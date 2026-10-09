@@ -13,8 +13,12 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, interrupt
 
 from .clock import now, date_from_text
-from .nutrition import estimate
+from .nutrition import prepare_nutrition, nutrition_summary
 from .parser import Parser
+from .drafts import check_drafts, merge_patch
+from .schemas import EventDraft, PreparedEvent
+from .conversation import reconcile_feedback, attach_feedback, wants_advice, explicitly_recording
+from .replies import make_plan, express_plan, medical_question, record_receipt
 from .repository import Repository, dump
 from .services import dashboard, evidence, recommendation, meal_assessment, analyze, review, plan_draft, archive
 
@@ -25,6 +29,24 @@ class State(TypedDict, total=False):
     original: str
     selected_id: str | None
     parsed: dict[str, Any]
+    extraction: dict[str, Any]
+    event_indexes: list[int]
+    waiting_indexes: list[int]
+    pending_event_index: int | None
+    pending_fields: list[str]
+    pending_required: bool
+    pending_item_index: int | None
+    incremental_answer: bool
+    skip_optional: bool
+    abandoned_indexes: list[int]
+    unrecorded_count: int
+    prepared_events: dict[str, dict]
+    conversation_feedback: list[dict]
+    feedback_only: bool
+    guidance_shown: bool
+    guided_topics: list[str]
+    clarification_reply: str
+    reply_plan: dict
     record_ids: list[str]
     saved_indexes: list[int]
     rounds: int
@@ -71,18 +93,133 @@ class Engine:
         return records
 
     def parse(self, state):
-        parsed = self.parser.parse(state['input_text'], self.recent(state.get('selected_id')),
-                                   state.get('selected_id'), state.get('original'))
-        if state.get('rounds', 0) >= 2 and parsed.events:
-            parsed.question = None
+        text = state['input_text']
+        abandoned = list(state.get('abandoned_indexes', []))
+        skip_optional = state.get('skip_optional', False)
+        previous_feedback = state.get('conversation_feedback', [])
+        supplied_feedback = []
+        feedback_only = state.get('feedback_only', False)
+        default_day = date_from_text(state.get('original') or text).date().isoformat()
+        if state.get('incremental_answer') and state.get('extraction'):
+            extraction = json.loads(json.dumps(state['extraction']))
+            index = state['pending_event_index']
+            cancelled = any(w in text for w in ['先不记', '不记了', '取消记录'])
+            unknown = text.strip().strip('，。,.!！') in (
+                '不知道', '我不知道', '不清楚', '我不清楚', '忘了', '我忘了', '不记得', '我不记得')
+            consulting = (wants_advice(text) and not explicitly_recording(text)
+                          and not re.search(r'\d|吃了|喝了', text))
+            if consulting or (feedback_only and (cancelled or unknown)):
+                # An optional feedback follow-up is not a mandatory logging form.
+                extraction.update(intent='advice', events=[])
+                feedback_only = False
+            elif cancelled or (unknown and state.get('pending_required')):
+                abandoned.append(index)
+            elif unknown:
+                skip_optional = True
+            else:
+                patch = self.parser.patch(text, extraction['events'][index], state['pending_fields'],
+                                          state.get('pending_item_index'))
+                supplied_feedback = patch.feedback
+                extraction['events'][index] = merge_patch(extraction['events'][index], patch,
+                                                         state['pending_fields'], text, state.get('pending_item_index'))
+                if feedback_only and extraction['events'][index].get('items'):
+                    extraction['intent'] = 'record'
+                    feedback_only = False
+            extraction.update(question=None, clarification_event_index=None,
+                              clarification_item_index=None, clarification_fields=[])
+        else:
+            parsed = self.parser.parse(text, self.recent(state.get('selected_id')),
+                                       state.get('selected_id'), state.get('original'))
+            extraction = parsed.model_dump(mode='json')
+            supplied_feedback = extraction.get('feedback', [])
+            if parsed.correction_id:
+                prior = self.repo.event(parsed.correction_id)
+                previous_feedback = prior['data'].get('feedback', []) if prior else []
+                if prior:
+                    default_day = prior['day']
+            # A model cannot introduce meal feedback from unrelated history.
+            for event in extraction['events']:
+                supplied_feedback.extend(event.get('feedback', []))
+                event['feedback'] = []
+            if any(w in text for w in ['不知道', '不清楚']):
+                skip_optional = True
+        feedback = reconcile_feedback(previous_feedback, supplied_feedback, text, default_day)
+        extraction['feedback'] = feedback
+        for event in extraction['events']:
+            event['feedback'] = []
+        attach_feedback(extraction['events'], feedback)
+        incomplete_meals_only = (extraction['events'] and all(
+            e['kind'] == 'meal' and not e.get('items') for e in extraction['events']))
+        if (not state.get('incremental_answer') and extraction['intent'] in ('record', 'advice')
+                and feedback and not explicitly_recording(text)
+                and (incomplete_meals_only or not extraction['events'])):
+            extraction['intent'] = 'advice'
+            extraction['question'] = None
+            if wants_advice(text) or medical_question(text) or not any(f['stance'] == 'experience' for f in feedback):
+                extraction['events'] = []
+                feedback_only = False
+            else:
+                feedback_only = True
+                if not extraction['events']:
+                    extraction['events'] = [{'kind': 'meal', 'occurred_at': date_from_text(text).isoformat(),
+                                             'raw_text': text, 'items': [], 'feedback': feedback}]
         intent_labels = {'record': '记录健康信息', 'correct': '纠正历史记录', 'query': '查询历史',
                          'advice': '获取建议', 'fact': '保存长期信息'}
         source = 'model' if self.settings.mode == 'model' else 'local'
-        return {'parsed': parsed.model_dump(mode='json'), 'process_trace': [
-            {'title': '理解输入', 'detail': f'识别为“{intent_labels[parsed.intent]}”，提取日期、类型和相关字段。',
+        return {'extraction': extraction, 'incremental_answer': False,
+                'conversation_feedback': feedback, 'feedback_only': feedback_only,
+                'abandoned_indexes': list(dict.fromkeys(abandoned)), 'skip_optional': skip_optional,
+                'process_trace': [
+            {'title': '理解输入', 'detail': f'识别为“{intent_labels[extraction["intent"]]}”，保留已知信息并提取待补字段。',
              'source': source},
-            {'title': '结构校验', 'detail': '使用预定义数据结构检查字段范围、时区和纠错边界。', 'source': 'local'},
         ]}
+
+    def validate_drafts(self, state):
+        checked = check_drafts(state['extraction'], state.get('rounds', 0),
+                               state.get('skip_optional', False), state.get('abandoned_indexes', []))
+        if state.get('feedback_only') and state['extraction'].get('events'):
+            checked.update(pending_event_index=0, pending_fields=['items'], pending_required=False,
+                           pending_item_index=None)
+            checked['parsed']['question'] = '如果想一起复盘，这次主要吃了什么？不知道或不想记录也可以。'
+        return {**checked, 'process_trace': self.traced(state, '结构校验',
+                '检查草稿缺失信息；完整记录通过字段范围、时区和纠错边界校验后才允许保存。')}
+
+    def prepare_nutrition(self, state):
+        parsed = state['parsed']
+        prepared = dict(state.get('prepared_events', {}))
+        if parsed['intent'] not in ('record', 'correct'):
+            return {}
+        if parsed['intent'] == 'correct':
+            if parsed.get('question'):
+                return {}
+            if len(parsed['events']) != 1 or not parsed.get('correction_id'):
+                raise ValueError('一次纠错必须唯一对应一条完整记录')
+        meals = 0
+        for index, draft in zip(state['event_indexes'], parsed['events']):
+            if index in state.get('saved_indexes', []) or index in state.get('waiting_indexes', []):
+                continue
+            validated = EventDraft.model_validate(draft).model_dump(mode='json')
+            cached = prepared.get(str(index))
+            previous = cached
+            if previous is None and parsed.get('correction_id'):
+                prior = self.repo.event(parsed['correction_id'])
+                previous = prior['data'] if prior else None
+            prepared[str(index)] = prepare_nutrition(validated, self.settings.mode,
+                self.parser.estimate_nutrition, previous=previous, user_text=state['input_text'],
+                reuse_unavailable=cached is not None)
+            meals += validated['kind'] == 'meal'
+        update = {'prepared_events': prepared}
+        if meals:
+            update['process_trace'] = self.traced(state, '营养准备',
+                '按完整食物与实际分量准备营养；保留用户数值，校验估算与来源，无法估算时保留未知原因。')
+        return update
+
+    @staticmethod
+    def prepared_record(state, index):
+        record = state.get('prepared_events', {}).get(str(index))
+        if record is None:
+            raise ValueError('记录尚未经过营养准备，不能保存')
+        return PreparedEvent.model_validate(record).model_dump(mode='json')
 
     @staticmethod
     def traced(state, title, detail):
@@ -92,13 +229,12 @@ class Engine:
         parsed = state['parsed']
         if parsed['intent'] != 'record' or not parsed.get('question'):
             return {}
-        question = parsed['question']
-        pending_kind = 'exercise' if '运动' in question else 'sleep' if '睡' in question else 'meal'
         ids = list(state.get('record_ids', []))
         indexes = list(state.get('saved_indexes', []))
-        for index, draft in enumerate(parsed['events']):
-            if draft['kind'] != pending_kind and index not in indexes:
-                saved = self.repo.save_events([estimate(draft, self.settings.mode)], f'{state["thread_id"]}:event:{index}')
+        for index, draft in zip(state['event_indexes'], parsed['events']):
+            if index not in state.get('waiting_indexes', []) and index not in indexes:
+                validated = self.prepared_record(state, index)
+                saved = self.repo.save_events([validated], f'{state["thread_id"]}:event:{index}')
                 ids.extend(saved)
                 indexes.append(index)
         return {'record_ids': ids, 'saved_indexes': indexes}
@@ -106,23 +242,45 @@ class Engine:
     def route_chat(self, state):
         parsed = state['parsed']
         if parsed.get('question'):
-            return 'clarify'
+            return 'prepare_clarification'
         if parsed['intent'] in ['record', 'correct'] and parsed['events']:
             return 'persist'
         if parsed['intent'] == 'fact' and parsed.get('fact_text'):
             return 'fact'
         return 'respond'
 
+    def prepare_clarification(self, state):
+        plan = make_plan(state.get('conversation_feedback', []), 'clarify',
+                         guided_topics=state.get('guided_topics', []),
+                         medical=medical_question(state.get('original') or state['input_text']))
+        plan['context'] = {'foods': list(dict.fromkeys(i['name'] for e in state['extraction']['events']
+                           for i in e.get('items', []) if i.get('name')))[:3]}
+        narrative, trace = express_plan(self.parser, plan)
+        reply = '\n'.join(p for p in [narrative, state['parsed']['question']] if p)
+        return {'clarification_reply': reply, 'reply_plan': plan,
+                'guidance_shown': state.get('guidance_shown', False) or bool(plan['points']),
+                'guided_topics': list(dict.fromkeys([*state.get('guided_topics', []),
+                                 *(p['topic'] for p in plan['points'] if p['role'] == 'guidance')])),
+                'process_trace': [*state.get('process_trace', []), trace] if plan['points']
+                                 else state.get('process_trace', [])}
+
     def clarify(self, state):
         parsed = state['parsed']
-        payload = {'kind': 'clarification', 'question': parsed['question'],
-                   'saved_records': len(state.get('record_ids', []))}
+        payload = {'kind': 'clarification', 'question': state.get('clarification_reply') or parsed['question'],
+                   'prompt': parsed['question'],
+                   'saved_records': len(state.get('record_ids', [])),
+                   'requested_fields': state.get('pending_fields', []),
+                   'optional': not state.get('pending_required', True)}
         if parsed['intent'] == 'correct' and not parsed.get('correction_id'):
             payload['options'] = [{'id': e['id'], 'label': f'{e["day"]} {e["raw_text"]}'} for e in self.recent()[:10]]
         answer = interrupt(payload)
         if not isinstance(answer, dict) or not isinstance(answer.get('text'), str):
             raise ValueError('需要文字补充')
         selected = answer.get('event_id') or parsed.get('correction_id') or state.get('selected_id')
+        if state.get('pending_event_index') is not None:
+            return {'original': state.get('original') or state['input_text'], 'input_text': answer['text'],
+                    'selected_id': selected, 'incremental_answer': True,
+                    'rounds': state.get('rounds', 0) + 1}
         if parsed['intent'] == 'correct':
             text = state.get('original') or state['input_text']
             if not answer.get('event_id'):
@@ -133,10 +291,13 @@ class Engine:
 
     def persist(self, state):
         parsed = state['parsed']
+        if parsed.get('question'):
+            raise ValueError('待补充的记录不能直接保存')
         ids = list(state.get('record_ids', []))
-        for index, draft in enumerate(parsed['events']):
+        for index, draft in zip(state['event_indexes'], parsed['events']):
             if index not in state.get('saved_indexes', []):
-                ids.extend(self.repo.save_events([estimate(draft, self.settings.mode)],
+                validated = self.prepared_record(state, index)
+                ids.extend(self.repo.save_events([validated],
                                                 f'{state["thread_id"]}:event:{index}', parsed.get('correction_id')))
         return {'record_ids': list(dict.fromkeys(ids)),
                 'process_trace': self.traced(state, '保存记录', f'已由本地程序写入或更新 {len(set(ids))} 条健康记录。')}
@@ -164,29 +325,51 @@ class Engine:
             for event in records:
                 if event['kind'] == 'meal':
                     cards.append(meal_assessment(self.repo, event, dashboard(self.repo, event['day'])))
-            reply = ('已修正记录并重新计算相关日期。' if parsed['intent'] == 'correct' else f'已保存 {len(records)} 条记录。')
-            if any(e['kind'] == 'meal' for e in records):
-                advice, historical = recommendation(self.repo, records[0]['day'])
-                reply += '\n' + advice
-                refs = list({r['id']: r for r in refs + historical}.values())
+            reply = record_receipt(records, corrected=parsed['intent'] == 'correct')
+            summary = nutrition_summary(records)
+            if summary:
+                reply += '\n' + summary
             if self.settings.mode == 'demo' and cards:
                 reply += '\n当前为演示模式，营养数据来自固定示例值，请勿将其当成精确摄入。'
+        elif state.get('unrecorded_count'):
+            reply = '已结束补充；缺少必需信息或已取消的记录没有保存。'
         else:
-            reply, refs = recommendation(self.repo)
+            if state.get('conversation_feedback'):
+                reply = '没有保存餐食记录。' if state.get('rounds', 0) else ''
+            elif medical_question(state['input_text']):
+                reply = make_plan([], 'advice', medical=True)['boundary']
+            else:
+                reply, refs = recommendation(self.repo)
             if self.settings.mode == 'demo':
                 reply += '\n演示解析支持常见食物、体重、睡眠、运动和周期表达；自由复杂输入请接入模型。'
         if parsed['intent'] != 'query':
             trace = list(state.get('process_trace', []))
-        trace.append({'title': '生成结果', 'detail': '由本地业务规则整理回复、卡片和可追溯依据。', 'source': 'local'})
-        return {'reply': reply, 'cards': cards, 'evidence_refs': refs, 'process_trace': trace}
+        plan = None
+        if parsed['intent'] not in ('query', 'fact') and state.get('conversation_feedback'):
+            plan = make_plan(state['conversation_feedback'], 'recorded' if state.get('record_ids') else 'advice',
+                             guided_topics=[] if wants_advice(state['input_text']) else state.get('guided_topics', []),
+                             medical=medical_question((state.get('original') or '') + state['input_text']))
+            plan['context'] = {'foods': list(dict.fromkeys(i['name'] for e in state['extraction']['events']
+                               for i in e.get('items', []) if i.get('name')))[:3]}
+            narrative, response_trace = express_plan(self.parser, plan)
+            reply = '\n'.join(p for p in [reply, narrative] if p)
+            trace.append(response_trace)
+        if state.get('unrecorded_count') and state.get('record_ids'):
+            reply += '\n缺少必需信息或已取消的记录没有保存；已完成的独立记录保留。'
+        trace.append({'title': '生成结果', 'detail': '由本地业务规则组装固定事实、经校验的表达、卡片和可追溯依据。', 'source': 'local'})
+        return {'reply': reply, 'cards': cards, 'evidence_refs': refs, 'process_trace': trace,
+                'reply_plan': plan or {}}
 
     def build_chat(self):
         graph = StateGraph(State)
-        for name in ['parse', 'save_ready', 'clarify', 'persist', 'fact', 'respond']:
+        for name in ['parse', 'validate_drafts', 'prepare_nutrition', 'save_ready', 'prepare_clarification', 'clarify', 'persist', 'fact', 'respond']:
             graph.add_node(name, getattr(self, name))
         graph.add_edge(START, 'parse')
-        graph.add_edge('parse', 'save_ready')
-        graph.add_conditional_edges('save_ready', self.route_chat, {n: n for n in ['clarify', 'persist', 'fact', 'respond']})
+        graph.add_edge('parse', 'validate_drafts')
+        graph.add_edge('validate_drafts', 'prepare_nutrition')
+        graph.add_edge('prepare_nutrition', 'save_ready')
+        graph.add_conditional_edges('save_ready', self.route_chat, {n: n for n in ['prepare_clarification', 'persist', 'fact', 'respond']})
+        graph.add_edge('prepare_clarification', 'clarify')
         graph.add_edge('clarify', 'parse')
         graph.add_edge('persist', 'respond')
         graph.add_edge('fact', 'respond')

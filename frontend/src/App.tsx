@@ -181,7 +181,11 @@ function MealCard({ card }: { card: Card }) {
               {value(card.totals[key], 1)}
               <small>{key === "kcal" ? "kcal" : "g"}</small>
             </strong>
-            <span>{labels[key]}</span>
+            <span>
+              {key === "kcal" && card.totals.unknown_items > 0
+                ? "已知热量"
+                : labels[key]}
+            </span>
           </div>
         ))}
       </div>
@@ -193,12 +197,17 @@ function MealCard({ card }: { card: Card }) {
         <div className="meal-details">
           {card.items.map((item, i) => (
             <p key={i}>
-              <b>{item.name}</b> · {item.quantity ?? "估计 1"}
-              {item.unit}
+              <b>{item.name}</b> ·{" "}
+              {item.quantity == null
+                ? "分量未知"
+                : `${item.quantity}${item.unit}`}
               <br />
               <small>
                 {item.nutrition_source} · {item.uncertainty}
               </small>
+              {item.nutrition_status === "estimated" && (
+                <small>以上为粗估值。</small>
+              )}
             </p>
           ))}
           <p>
@@ -767,7 +776,8 @@ export default function App() {
                       <div className="pending-strip">
                         <CircleHelp size={15} />
                         <span>
-                          正在补充：{currentPending.pending_input?.question}
+                          {currentPending.pending_input?.optional ? "可选补充：" : "正在补充："}
+                          {currentPending.pending_input?.prompt ?? currentPending.pending_input?.question}
                         </span>
                         <button
                           disabled={busy}
@@ -792,7 +802,7 @@ export default function App() {
                       ) && (
                         <div className="pending-strip">
                           <Clock3 size={15} />
-                          <span>还有未完成的记录，可随时继续。</span>
+                          <span>还有可继续的对话，可随时补充。</span>
                           <button onClick={() => setSelectedWorkflow(null)}>
                             继续补充
                           </button>
@@ -842,7 +852,9 @@ export default function App() {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder={
                           currentPending
-                            ? "补充一句话，继续记录…"
+                            ? currentPending.pending_input?.optional
+                              ? "可以补充，也可以说不知道或先不记…"
+                              : "补充一句话，继续记录…"
                             : "今天吃了什么？也可以记录体重、睡眠或运动…"
                         }
                         rows={2}

@@ -621,6 +621,108 @@ details[open] > summary > svg:last-child {
 .evidence button > svg {
   margin-left: auto;
 }
+.process-trace {
+  margin-top: 10px;
+  width: min(560px, 100%);
+  border-top: 1px solid #e4e9dc;
+  border-bottom: 1px solid #e4e9dc;
+  background: #fff;
+  color: #74836a;
+}
+.process-trace > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 2px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #617657;
+  list-style: none;
+}
+.process-trace > summary::-webkit-details-marker {
+  display: none;
+}
+.process-trace > summary > span,
+.process-trace > summary small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.process-trace > summary small {
+  color: #9ca993;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.process-trace[open] > summary small svg {
+  transform: rotate(180deg);
+}
+.process-note {
+  margin: 0;
+  padding: 9px 3px 5px;
+  border-top: 1px solid #edf0e8;
+  color: #929e8a;
+  font-size: 9px;
+}
+.process-trace ol {
+  margin: 0;
+  padding: 3px 3px 10px 11px;
+  list-style: none;
+}
+.process-trace li {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 8px 0 8px 1px;
+}
+.process-trace li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 25px;
+  bottom: -3px;
+  left: 7px;
+  width: 1px;
+  background: #dfe6d8;
+}
+.process-trace li b,
+.process-trace li p {
+  display: block;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.process-trace li p {
+  color: #899681;
+}
+.process-check {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border-radius: 50%;
+  color: white;
+  background: #78936a;
+}
+.process-source {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 8px;
+  background: #edf1e8;
+}
+.process-source.model {
+  color: #6c5f8d;
+  background: #f0edf7;
+}
+.process-source.local {
+  color: #56734d;
+  background: #eaf2e5;
+}
 .meal-card {
   border: 1px solid #dde6d3;
   border-radius: 8px;
@@ -697,6 +799,72 @@ details[open] > summary > svg:last-child {
   align-items: center;
   color: #8b9d7a;
   font-size: 11px;
+}
+.thinking-progress b,
+.thinking-progress small {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.process-running {
+  align-items: flex-start;
+}
+.thinking-progress {
+  width: min(520px, calc(100% - 38px));
+  padding: 11px 13px;
+  border-top: 1px solid #e3e8dc;
+  border-bottom: 1px solid #e3e8dc;
+  background: #fff;
+}
+.running-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.running-heading > small {
+  margin: 0;
+}
+.running-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 0;
+}
+.running-step > svg,
+.queued-dot {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.running-step > span:last-child {
+  display: block;
+}
+.running-step b,
+.running-step small {
+  display: block;
+}
+.running-step small {
+  margin-top: 2px;
+}
+.running-step.queued {
+  opacity: 0.55;
+}
+.queued-dot {
+  width: 8px;
+  height: 8px;
+  margin: 5px 3px 0;
+  border-radius: 50%;
+  border: 1px solid #92a288;
+}
+.thinking-progress b {
+  color: #657b59;
+  font-size: 11px;
+  font-weight: 550;
+}
+.thinking-progress small {
+  margin-top: 3px;
+  color: #9aa78f;
+  font-size: 9px;
 }
 .composer-area {
   padding: 14px 20px 14px;

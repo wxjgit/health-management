@@ -43,6 +43,7 @@ import type {
   Notice,
   Plan,
   Preferences,
+  ProcessStep,
   Profile,
   Review,
   Targets,
@@ -84,6 +85,53 @@ const examples = [
   "昨晚睡了 7 小时，睡得不错",
   "今天跑步 30 分钟，有点累",
 ];
+
+const durationText = (milliseconds: number) => {
+  const seconds = Math.max(0, Math.round(milliseconds / 1000));
+  if (seconds < 60) return `${seconds} 秒`;
+  return `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`;
+};
+
+function ProcessTrace({
+  steps,
+  durationMs,
+}: {
+  steps: ProcessStep[];
+  durationMs: number;
+}) {
+  if (!steps?.length) return null;
+  return (
+    <details className="process-trace" open>
+      <summary>
+        <span>
+          <Sparkles size={12} />
+          AI 处理过程
+        </span>
+        <small>
+          用时 {durationText(durationMs)} · {steps.length} 个阶段
+          <ChevronDown size={12} />
+        </small>
+      </summary>
+      <p className="process-note">展示可验证的执行摘要，不包含模型私有思维链。</p>
+      <ol>
+        {steps.map((step, index) => (
+          <li key={`${step.title}-${index}`}>
+            <span className="process-check"><Check size={10} /></span>
+            <div>
+              <b>
+                {step.title}
+                <span className={`process-source ${step.source}`}>
+                  {step.source === "model" ? "调用大模型" : "本地代码"}
+                </span>
+              </b>
+              <p>{step.detail}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}
 
 function EvidenceList({
   refs,
@@ -276,6 +324,8 @@ export default function App() {
   const [months, setMonths] = useState<Month[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [processingStartedAt, setProcessingStartedAt] = useState<number | null>(null);
+  const [processingElapsed, setProcessingElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -333,6 +383,16 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
   useEffect(() => {
+    if (processingStartedAt == null) {
+      setProcessingElapsed(0);
+      return;
+    }
+    const update = () => setProcessingElapsed(Date.now() - processingStartedAt);
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [processingStartedAt]);
+  useEffect(() => {
     const t = setInterval(() => {
       if (!document.hidden)
         Promise.all([
@@ -379,26 +439,31 @@ export default function App() {
     const key = `${workflow?.thread_id ?? selectedEvent ?? ""}:${text}`;
     if (lastRequest.current?.key !== key)
       lastRequest.current = { key, id: requestId() };
-    await act(async () => {
-      if (workflow?.pending_input?.kind === "clarification") {
-        await api(`/workflows/${workflow.thread_id}/resume`, "POST", {
-          request_id: lastRequest.current!.id,
-          interrupt_id: workflow.pending_input.interrupt_id,
-          text,
-        });
-      } else {
-        await api("/chat", "POST", {
-          request_id: lastRequest.current!.id,
-          text,
-          conversation_id: "main",
-          event_id: selectedEvent,
-        });
-      }
-      lastRequest.current = null;
-      setInput("");
-      setSelectedEvent(null);
-      setSelectedWorkflow(null);
-    });
+    setProcessingStartedAt(Date.now());
+    try {
+      await act(async () => {
+        if (workflow?.pending_input?.kind === "clarification") {
+          await api(`/workflows/${workflow.thread_id}/resume`, "POST", {
+            request_id: lastRequest.current!.id,
+            interrupt_id: workflow.pending_input.interrupt_id,
+            text,
+          });
+        } else {
+          await api("/chat", "POST", {
+            request_id: lastRequest.current!.id,
+            text,
+            conversation_id: "main",
+            event_id: selectedEvent,
+          });
+        }
+        lastRequest.current = null;
+        setInput("");
+        setSelectedEvent(null);
+        setSelectedWorkflow(null);
+      });
+    } finally {
+      setProcessingStartedAt(null);
+    }
   };
   const decidePlan = (workflow: Workflow, approved: boolean) =>
     act(() =>
@@ -643,10 +708,16 @@ export default function App() {
                             <MealCard key={i} card={c} />
                           ))}
                           {m.role === "assistant" && (
-                            <EvidenceList
-                              refs={m.evidence_refs}
-                              navigate={navigateEvidence}
-                            />
+                            <>
+                              <ProcessTrace
+                                steps={m.process_trace ?? []}
+                                durationMs={m.duration_ms ?? 0}
+                              />
+                              <EvidenceList
+                                refs={m.evidence_refs}
+                                navigate={navigateEvidence}
+                              />
+                            </>
                           )}
                         </div>
                         {m.role === "user" && (
@@ -668,13 +739,25 @@ export default function App() {
                         </div>
                       </div>
                     )}
-                    {busy && (
-                      <div className="thinking">
+                    {busy && processingStartedAt != null && (
+                      <div className="thinking process-running">
                         <span className="assistant-avatar">
                           <Leaf size={17} />
                         </span>
-                        <LoaderCircle size={15} className="spin" />
-                        正在解析记录、查询历史…
+                        <div className="thinking-progress">
+                          <div className="running-heading">
+                            <b>AI 处理过程</b>
+                            <small>已用时 {durationText(processingElapsed)}</small>
+                          </div>
+                          <div className="running-step active">
+                            <LoaderCircle size={13} className="spin" />
+                            <span><b>调用 {health?.model_name ?? "大模型"}</b><small>正在理解输入并生成结构化结果…</small></span>
+                          </div>
+                          <div className="running-step queued">
+                            <span className="queued-dot" />
+                            <span><b>等待本地处理</b><small>随后校验字段并执行保存或查询</small></span>
+                          </div>
+                        </div>
                       </div>
                     )}
                     <div ref={bottom} />

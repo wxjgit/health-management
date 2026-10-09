@@ -22,6 +22,11 @@ export type Health = {
   scheduler_enabled: boolean;
 };
 export type Evidence = { id: string; date: string; kind: string; text: string };
+export type ProcessStep = {
+  title: string;
+  detail: string;
+  source: "model" | "local";
+};
 export type Item = {
   name: string;
   quantity: number | null;
@@ -80,6 +85,8 @@ export type Message = {
   text: string;
   cards: Card[];
   evidence_refs: Evidence[];
+  process_trace: ProcessStep[];
+  duration_ms: number;
   created_at: string;
 };
 export type Pending = {
@@ -97,6 +104,8 @@ export type Workflow = {
   reply: string;
   cards: Card[];
   evidence_refs: Evidence[];
+  process_trace: ProcessStep[];
+  duration_ms: number;
   pending_input?: Pending;
 };
 export type Plan = {

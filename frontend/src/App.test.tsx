@@ -7,6 +7,7 @@ let bodies: { path: string; body: Record<string, unknown> }[];
 let failOnce: boolean;
 let workflows: unknown[];
 let records: unknown[];
+let chatMessages: unknown[];
 
 const emptyDay = {
   date: "2026-10-08",
@@ -34,6 +35,7 @@ beforeEach(() => {
   failOnce = false;
   workflows = [];
   records = [];
+  chatMessages = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string, options?: RequestInit) => {
@@ -63,7 +65,7 @@ beforeEach(() => {
         },
         "/profile": null,
         "/dashboard": emptyDay,
-        "/messages": [],
+        "/messages": chatMessages,
         "/events": records,
         "/trends": [],
         "/plans": [],
@@ -95,6 +97,40 @@ beforeEach(() => {
 });
 
 describe("网页核心交互", () => {
+  it("展示可核验的 AI 处理阶段摘要", async () => {
+    chatMessages = [
+      {
+        id: "assistant-1",
+        role: "assistant",
+        text: "已保存 1 条记录。",
+        cards: [],
+        evidence_refs: [],
+        created_at: "2026-10-09T08:00:00+08:00",
+        process_trace: [
+          {
+            title: "理解输入",
+            detail: "识别为记录健康信息。",
+            source: "model",
+          },
+          {
+            title: "保存记录",
+            detail: "由本地程序写入健康记录。",
+            source: "local",
+          },
+        ],
+        duration_ms: 7330,
+      },
+    ];
+    render(<App />);
+    await screen.findByText("AI 处理过程");
+    expect(
+      screen.getByText("展示可验证的执行摘要，不包含模型私有思维链。"),
+    ).toBeTruthy();
+    expect(screen.getByText("理解输入")).toBeTruthy();
+    expect(screen.getByText("保存记录")).toBeTruthy();
+    expect(screen.getByText("用时 7 秒 · 2 个阶段")).toBeTruthy();
+  });
+
   it("展示真实空状态，点击示例只填入，不产生记录", async () => {
     render(<App />);
     await screen.findByText("今天，从一句话开始。");

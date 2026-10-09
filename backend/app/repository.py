@@ -44,7 +44,8 @@ class Repository:
             CREATE TABLE IF NOT EXISTS messages (
                 id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, conversation_id TEXT NOT NULL,
                 role TEXT NOT NULL, text TEXT NOT NULL, cards TEXT NOT NULL,
-                evidence_refs TEXT NOT NULL, created_at TEXT NOT NULL);
+                evidence_refs TEXT NOT NULL, created_at TEXT NOT NULL,
+                process_trace TEXT NOT NULL DEFAULT '[]', duration_ms INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS facts (
                 id TEXT PRIMARY KEY, content TEXT NOT NULL, source TEXT NOT NULL,
                 source_event TEXT, status TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -66,6 +67,12 @@ class Repository:
                 month TEXT PRIMARY KEY, data TEXT NOT NULL, created_at TEXT NOT NULL);
             PRAGMA user_version=1;
         ''')
+        message_columns = {row['name'] for row in self.conn.execute('PRAGMA table_info(messages)').fetchall()}
+        if 'process_trace' not in message_columns:
+            self.conn.execute("ALTER TABLE messages ADD COLUMN process_trace TEXT NOT NULL DEFAULT '[]'")
+        if 'duration_ms' not in message_columns:
+            self.conn.execute('ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0')
+        self.conn.execute('PRAGMA user_version=3')
         self.conn.commit()
         if self.get_meta('preferences') is None:
             self.set_meta('preferences', Preferences().model_dump())
@@ -179,12 +186,17 @@ class Repository:
 
     def messages(self, conversation_id='main', limit=100):
         rows = self.conn.execute('SELECT * FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT ?', (conversation_id, limit)).fetchall()
-        return [{**dict(r), 'cards': json.loads(r['cards']), 'evidence_refs': json.loads(r['evidence_refs'])} for r in reversed(rows)]
+        return [{**dict(r), 'cards': json.loads(r['cards']), 'evidence_refs': json.loads(r['evidence_refs']),
+                 'process_trace': json.loads(r['process_trace'])} for r in reversed(rows)]
 
-    def message(self, message_id, thread_id, role, text, cards=None, evidence=None, conversation='main'):
+    def message(self, message_id, thread_id, role, text, cards=None, evidence=None, conversation='main',
+                process_trace=None, duration_ms=0):
         with self.lock, self.conn:
-            self.conn.execute('INSERT OR IGNORE INTO messages VALUES (?,?,?,?,?,?,?,?)',
-                              (message_id, thread_id, conversation, role, text, dump(cards or []), dump(evidence or []), stamp()))
+            self.conn.execute('''INSERT OR IGNORE INTO messages
+                (id,thread_id,conversation_id,role,text,cards,evidence_refs,created_at,process_trace,duration_ms)
+                VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                (message_id, thread_id, conversation, role, text, dump(cards or []), dump(evidence or []),
+                 stamp(), dump(process_trace or []), max(0, int(duration_ms))))
 
     def receipt(self, request_id):
         row = self.conn.execute('SELECT * FROM receipts WHERE request_id=?', (request_id,)).fetchone()

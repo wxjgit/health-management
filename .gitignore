@@ -12,5 +12,5 @@ frontend/dist/
 .npm-cache/
 *.tsbuildinfo
 pytest-cache-files-*/
-pytest-codex-*/
+pytest-*/
 

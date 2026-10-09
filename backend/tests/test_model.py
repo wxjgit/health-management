@@ -27,8 +27,13 @@ def test_model_schema_is_checked_and_secrets_are_not_exposed(model_settings, mon
     with TestClient(create_app(model_settings)) as client:
         result = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '体重65公斤'})
         assert result.status_code == 200, result.text
+        assert result.json()['duration_ms'] >= 0
+        assert [step['source'] for step in result.json()['process_trace']] == ['model', 'local', 'local', 'local']
+        assert result.json()['process_trace'][0]['title'] == '理解输入'
         assert client.get('/api/events').json()[0]['data']['value'] == 65
         assert client.get('/api/health').json()['mode'] == 'model'
+        assert client.get('/api/messages').json()[-1]['process_trace'] == result.json()['process_trace']
+        assert client.get('/api/messages').json()[-1]['duration_ms'] == result.json()['duration_ms']
         assert 'test-only-key' not in client.get('/api/data/export').text
 
 

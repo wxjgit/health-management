@@ -2,6 +2,7 @@ import hashlib
 import json
 import re
 import sqlite3
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, TypedDict
 from threading import RLock
@@ -35,6 +36,7 @@ class State(TypedDict, total=False):
     approved: bool
     period: str
     analysis: list[dict]
+    process_trace: list[dict]
 
 
 def fingerprint(value):
@@ -73,7 +75,18 @@ class Engine:
                                    state.get('selected_id'), state.get('original'))
         if state.get('rounds', 0) >= 2 and parsed.events:
             parsed.question = None
-        return {'parsed': parsed.model_dump(mode='json')}
+        intent_labels = {'record': '记录健康信息', 'correct': '纠正历史记录', 'query': '查询历史',
+                         'advice': '获取建议', 'fact': '保存长期信息'}
+        source = 'model' if self.settings.mode == 'model' else 'local'
+        return {'parsed': parsed.model_dump(mode='json'), 'process_trace': [
+            {'title': '理解输入', 'detail': f'识别为“{intent_labels[parsed.intent]}”，提取日期、类型和相关字段。',
+             'source': source},
+            {'title': '结构校验', 'detail': '使用预定义数据结构检查字段范围、时区和纠错边界。', 'source': 'local'},
+        ]}
+
+    @staticmethod
+    def traced(state, title, detail):
+        return [*state.get('process_trace', []), {'title': title, 'detail': detail, 'source': 'local'}]
 
     def save_ready(self, state):
         parsed = state['parsed']
@@ -125,11 +138,12 @@ class Engine:
             if index not in state.get('saved_indexes', []):
                 ids.extend(self.repo.save_events([estimate(draft, self.settings.mode)],
                                                 f'{state["thread_id"]}:event:{index}', parsed.get('correction_id')))
-        return {'record_ids': list(dict.fromkeys(ids))}
+        return {'record_ids': list(dict.fromkeys(ids)),
+                'process_trace': self.traced(state, '保存记录', f'已由本地程序写入或更新 {len(set(ids))} 条健康记录。')}
 
     def fact(self, state):
         self.repo.save_fact(state['thread_id'], state['parsed']['fact_text'])
-        return {}
+        return {'process_trace': self.traced(state, '保存长期信息', '已由本地程序保存用户明确表达的偏好或限制。')}
 
     def respond(self, state):
         parsed = state['parsed']
@@ -140,6 +154,7 @@ class Engine:
                                        parsed.get('query_kind'), parsed.get('query_search'), limit=100)
             refs = [evidence(e) for e in records]
             reply = '\n'.join(f'{e["day"]} · {e["raw_text"]}' for e in records) if records else '这个范围没有原始记录。超过一年后的信息请查看月度摘要，无法还原某一餐。'
+            trace = self.traced(state, '查询本地数据', f'按模型提取的条件检索到 {len(records)} 条记录。')
         elif parsed['intent'] == 'fact':
             reply = '已保存为你明确提供的长期信息，后续建议会参考它：' + parsed['fact_text']
         elif state.get('record_ids'):
@@ -160,7 +175,10 @@ class Engine:
             reply, refs = recommendation(self.repo)
             if self.settings.mode == 'demo':
                 reply += '\n演示解析支持常见食物、体重、睡眠、运动和周期表达；自由复杂输入请接入模型。'
-        return {'reply': reply, 'cards': cards, 'evidence_refs': refs}
+        if parsed['intent'] != 'query':
+            trace = list(state.get('process_trace', []))
+        trace.append({'title': '生成结果', 'detail': '由本地业务规则整理回复、卡片和可追溯依据。', 'source': 'local'})
+        return {'reply': reply, 'cards': cards, 'evidence_refs': refs, 'process_trace': trace}
 
     def build_chat(self):
         graph = StateGraph(State)
@@ -227,7 +245,8 @@ class Engine:
         pending = state.get('__interrupt__')
         result = {'thread_id': thread_id, 'status': 'waiting_input' if pending else 'completed',
                   'reply': state.get('reply', ''), 'cards': state.get('cards', []),
-                  'evidence_refs': state.get('evidence_refs', [])}
+                  'evidence_refs': state.get('evidence_refs', []),
+                  'process_trace': state.get('process_trace', [])}
         if pending:
             result['pending_input'] = {'interrupt_id': pending[0].id, **pending[0].value}
             result['reply'] = pending[0].value['question']
@@ -235,6 +254,7 @@ class Engine:
 
     def run(self, kind, request_id, request_data, initial, conversation='main'):
         with self.lock:
+            started = time.perf_counter()
             fp = fingerprint({'kind': kind, 'data': request_data})
             existing = self.repo.workflow_by_request(request_id)
             if existing:
@@ -253,8 +273,10 @@ class Engine:
             try:
                 state = self.graph_for(kind).invoke(invocation, {'configurable': {'thread_id': thread_id}})
                 result = self.format_result(thread_id, state)
+                result['duration_ms'] = round((time.perf_counter() - started) * 1000)
                 self.repo.workflow_result(thread_id, result)
-                self.repo.message(thread_id + ':reply', thread_id, 'assistant', result['reply'], result['cards'], result['evidence_refs'], conversation)
+                self.repo.message(thread_id + ':reply', thread_id, 'assistant', result['reply'], result['cards'],
+                                  result['evidence_refs'], conversation, result['process_trace'], result['duration_ms'])
                 return result
             except Exception:
                 self.repo.workflow_result(thread_id, {'thread_id': thread_id, 'status': 'failed', 'reply': '处理失败，可使用原请求重试。'})
@@ -262,6 +284,7 @@ class Engine:
 
     def resume(self, thread_id, payload):
         with self.lock:
+            started = time.perf_counter()
             fp = fingerprint(payload)
             receipt = self.repo.receipt(payload['request_id'])
             if receipt:
@@ -287,9 +310,11 @@ class Engine:
             self.repo.message(payload['request_id'], thread_id, 'user', display)
             state = self.graph_for(workflow['kind']).invoke(Command(resume=answer), {'configurable': {'thread_id': thread_id}})
             result = self.format_result(thread_id, state)
+            result['duration_ms'] = round((time.perf_counter() - started) * 1000)
             self.repo.workflow_result(thread_id, result)
             self.repo.save_receipt(payload['request_id'], thread_id, fp, result)
-            self.repo.message(payload['request_id'] + ':reply', thread_id, 'assistant', result['reply'], result['cards'], result['evidence_refs'])
+            self.repo.message(payload['request_id'] + ':reply', thread_id, 'assistant', result['reply'], result['cards'],
+                              result['evidence_refs'], process_trace=result['process_trace'], duration_ms=result['duration_ms'])
             return result
 
     def purge_checkpoints(self):

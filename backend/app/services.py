@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from .clock import now, stamp
 from .nutrition import KEYS, meal_totals
+from .targets import default_targets
 
 
 def evidence(event):
@@ -149,12 +150,25 @@ def review(repo, period='week', end=None):
     return data
 
 
-def plan_draft(repo, targets, note=''):
+def plan_draft(repo, targets, note='', target_source='manual', suggestion_fingerprint=None):
     active = repo.active_plan()
     current_targets = active['data']['targets'] if active else None
-    targets = targets or current_targets
-    if targets is None:
-        raise ValueError('请先填写你希望采用的热量与营养目标；当前原型不会仅凭体重自动计算目标。')
+    target_metadata = None
+    if targets is None and current_targets and target_source != 'system_default':
+        targets = current_targets
+        target_source = active['data'].get('target_source', 'manual')
+        target_metadata = active['data'].get('target_metadata')
+    elif targets is None or target_source == 'system_default':
+        suggestion = default_targets(repo)
+        if suggestion['status'] != 'ready':
+            raise ValueError(suggestion['reason'])
+        if suggestion_fingerprint and suggestion_fingerprint != suggestion['fingerprint']:
+            raise ValueError('基础资料或限制已变化，请刷新并重新采用系统默认；你的手动目标没有被覆盖。')
+        if targets is not None and targets != suggestion['targets']:
+            raise ValueError('提交值不是当前系统默认；修改过的目标请作为手动目标提交。')
+        targets = suggestion['targets']
+        target_source = 'system_default'
+        target_metadata = suggestion
     anchor = active['data'].get('confirmed_anchor', current_targets) if active else targets
     change = {key: round((targets[key] - current_targets[key]) / max(current_targets[key], 1) * 100, 1) for key in targets} if current_targets else {}
     cumulative = {key: abs(targets[key] - anchor[key]) / max(anchor[key], 1) * 100 for key in targets}
@@ -179,11 +193,14 @@ def plan_draft(repo, targets, note=''):
         schedule.append({'date': day, 'food': food, 'exercise': activity})
     return {
         'targets': targets, 'schedule': schedule, 'next_meal': recommendation(repo)[0],
-        'tomorrow_focus': schedule[0]['food'], 'notes': note or '数值目标由你提供；安排参考近期记录，不把缺失数据当成零。',
+        'tomorrow_focus': schedule[0]['food'], 'notes': note or (
+            '目标是根据基础档案生成的可编辑初始估算，不是精确测量或医疗处方；未按期望日期倒推热量。'
+            if target_source == 'system_default' else '数值目标由你提供；安排参考近期记录，不把缺失数据当成零。'),
+        'target_source': target_source, 'target_metadata': target_metadata,
         'changes': change, 'needs_confirmation': needs_confirmation,
         'confirmed_anchor': targets if needs_confirmation else anchor,
         'data_version': repo.version(), 'base_plan_id': active['id'] if active else None,
-        'evidence_refs': [evidence(e) for e in recent[:12]], 'strategy_version': 'user-targets-v1',
+        'evidence_refs': [evidence(e) for e in recent[:12]], 'strategy_version': 'editable-targets-v2',
     }
 
 

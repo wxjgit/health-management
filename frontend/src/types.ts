@@ -13,6 +13,17 @@ export type Profile = {
   goal_weight_kg: number;
   goal_date: string;
   activity: "sedentary" | "light" | "moderate" | "active";
+  nutrition_context?: "unspecified" | "general" | "pregnant" | "breastfeeding" | "clinical";
+};
+export type DefaultTargets = {
+  status: "ready" | "needs_profile" | "unavailable";
+  targets: Targets | null;
+  reason: string;
+  basis: string;
+  fingerprint: string;
+  formula_version: string;
+  warnings: string[];
+  sources: { title: string; url: string }[];
 };
 export type Health = {
   mode: "model" | "demo";
@@ -97,6 +108,9 @@ export type Pending = {
   question: string;
   prompt?: string;
   optional?: boolean;
+  target_source?: "manual" | "system_default";
+  target_basis?: string | null;
+  target_warnings?: string[];
   targets?: Targets;
   changes?: Record<string, number>;
   options?: { id: string; label: string }[];
@@ -126,6 +140,8 @@ export type Plan = {
     changes: Record<string, number>;
     data_version: number;
     needs_confirmation: boolean;
+    target_source?: "manual" | "system_default";
+    target_metadata?: DefaultTargets | null;
   };
 };
 export type Insight = {

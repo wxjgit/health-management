@@ -33,6 +33,7 @@ import { api, requestId } from "./api";
 import type {
   Card,
   Daily,
+  DefaultTargets,
   Event,
   Evidence,
   Fact,
@@ -319,6 +320,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("chat");
   const [health, setHealth] = useState<Health | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [defaultTargets, setDefaultTargets] = useState<DefaultTargets | null>(null);
   const [today, setToday] = useState<Daily | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -346,7 +348,7 @@ export default function App() {
   const lastRequest = useRef<{ key: string; id: string } | null>(null);
 
   const refresh = useCallback(async () => {
-    const [h, p, d, m, e, t, pl, i, r, n, w, pr, f, mo] = await Promise.all([
+    const [h, p, d, m, e, t, pl, i, r, n, w, pr, f, mo, dt] = await Promise.all([
       api<Health>("/health"),
       api<Profile | null>("/profile"),
       api<Daily>("/dashboard"),
@@ -361,9 +363,11 @@ export default function App() {
       api<Preferences>("/preferences"),
       api<Fact[]>("/facts"),
       api<Month[]>("/monthly-summaries"),
+      api<DefaultTargets>("/targets/default"),
     ]);
     setHealth(h);
     setProfile(p);
+    setDefaultTargets(dt);
     setToday(d);
     setMessages(m);
     setEvents(e);
@@ -976,6 +980,8 @@ export default function App() {
             {tab === "plans" && (
               <Plans
                 active={activePlan}
+                defaults={defaultTargets}
+                openProfile={() => setEditProfile(true)}
                 plans={plans}
                 pending={pending.filter(
                   (w) => w.pending_input?.kind === "plan_confirmation",
@@ -1493,6 +1499,8 @@ function History({
 
 function Plans({
   active,
+  defaults,
+  openProfile,
   plans,
   pending,
   busy,
@@ -1501,10 +1509,12 @@ function Plans({
   navigate,
 }: {
   active?: Plan;
+  defaults: DefaultTargets | null;
+  openProfile: () => void;
   plans: Plan[];
   pending: Workflow[];
   busy: boolean;
-  generate: (body: { targets?: Targets; note?: string }) => void;
+  generate: (body: { targets?: Targets; note?: string; target_source?: "manual" | "system_default"; suggestion_fingerprint?: string }) => void;
   decide: (w: Workflow, approved: boolean) => void;
   navigate: (id: string) => void;
 }) {
@@ -1513,16 +1523,35 @@ function Plans({
     protein_g: "",
     carbs_g: "",
     fat_g: "",
-    exercise_minutes: "120",
+    exercise_minutes: "",
   });
+  const [dirty, setDirty] = useState(false);
+  const [usingDefaults, setUsingDefaults] = useState(false);
+  const appliedActive = useRef<string | undefined>(undefined);
+  const fill = (targets: Targets) => Object.fromEntries(
+    Object.entries(targets).map(([k, v]) => [k, String(v)]),
+  );
   useEffect(() => {
-    if (active)
-      setFields(
-        Object.fromEntries(
-          Object.entries(active.data.targets).map(([k, v]) => [k, String(v)]),
-        ),
-      );
-  }, [active?.id]);
+    if (active) {
+      if (appliedActive.current !== active.id) {
+        setFields(fill(active.data.targets));
+        setDirty(false);
+        setUsingDefaults(false);
+      }
+      appliedActive.current = active.id;
+      return;
+    }
+    appliedActive.current = undefined;
+    if (!dirty) {
+      if (defaults?.status === "ready" && defaults.targets) {
+        setFields(fill(defaults.targets));
+        setUsingDefaults(true);
+      } else {
+        setFields({ kcal: "", protein_g: "", carbs_g: "", fat_g: "", exercise_minutes: "" });
+        setUsingDefaults(false);
+      }
+    }
+  }, [active?.id, defaults?.fingerprint, defaults?.status, dirty]);
   return (
     <div className="plans-page">
       {pending.map((w) => (
@@ -1531,6 +1560,9 @@ function Plans({
             <span className="tag">待你确认</span>
             <h2>新的计划已准备好</h2>
             <p>{w.pending_input?.question}</p>
+            {w.pending_input?.target_source === "system_default" && (
+              <p className="small-note">系统初始估算，可修改，不是医疗处方。{w.pending_input.target_warnings?.join(" ")}</p>
+            )}
             <div className="target-chips">
               {Object.entries(w.pending_input?.targets ?? {}).map(([k, v]) => (
                 <span key={k}>
@@ -1578,15 +1610,45 @@ function Plans({
             <Target size={18} />
           </div>
           <p className="muted">
-            填写你希望采用的目标。第一版不根据期望周期强行倒推热量，营养折算应与总热量大致一致。
+            系统根据基础档案自动填入默认目标，你可以直接使用或自行修改。已有生效目标不会被重新估算覆盖。
           </p>
+          <div className="target-estimate">
+            <span className="tiny-tag">{usingDefaults ? "系统默认 · 可修改" : dirty ? "手动编辑" : active ? "当前生效目标" : "等待基础资料"}</span>
+            {defaults?.status === "ready" ? (
+              <>
+                <button type="button" className="text-button" disabled={busy} onClick={() => {
+                  if (!defaults.targets) return;
+                  setFields(fill(defaults.targets));
+                  setDirty(false);
+                  setUsingDefaults(true);
+                }}>恢复系统默认</button>
+                <details>
+                  <summary>查看默认估算依据</summary>
+                  <p className="muted">{defaults.reason}。{defaults.basis}</p>
+                  {defaults.warnings.map((warning) => <p className="small-note" key={warning}>{warning}</p>)}
+                  <div className="target-sources">{defaults.sources.map((source) => (
+                    <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+                  ))}</div>
+                </details>
+              </>
+            ) : (
+              <>
+                <p className="muted">{defaults?.reason ?? "正在读取默认目标…"}你也可以填写专业建议或自定目标。</p>
+                <button type="button" className="text-button" disabled={busy} onClick={openProfile}>
+                  {defaults?.status === "needs_profile" ? "建立或补全基础档案" : "检查基础档案"}
+                </button>
+              </>
+            )}
+          </div>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               generate({
-                targets: Object.fromEntries(
+                targets: active && !dirty && !usingDefaults ? undefined : Object.fromEntries(
                   Object.entries(fields).map(([k, v]) => [k, Number(v)]),
                 ) as Targets,
+                target_source: usingDefaults ? "system_default" : "manual",
+                suggestion_fingerprint: usingDefaults ? defaults?.fingerprint : undefined,
               });
             }}
           >
@@ -1597,6 +1659,7 @@ function Plans({
                   <div>
                     <input
                       type="number"
+                      aria-label={labels[k]}
                       min={k === "kcal" ? 1 : 0}
                       max={
                         k === "kcal"
@@ -1610,9 +1673,11 @@ function Plans({
                       step="1"
                       required
                       value={fields[k]}
-                      onChange={(e) =>
-                        setFields({ ...fields, [k]: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setFields({ ...fields, [k]: e.target.value });
+                        setDirty(true);
+                        setUsingDefaults(false);
+                      }}
                     />
                     <span>
                       {k === "kcal"
@@ -2033,12 +2098,13 @@ function ProfileModal({
 }) {
   const [form, setForm] = useState<Record<string, string>>({
     age: profile ? String(profile.age) : "",
-    sex: profile?.sex ?? "female",
+    sex: profile?.sex ?? "",
     height_cm: profile ? String(profile.height_cm) : "",
     weight_kg: profile ? String(profile.weight_kg) : "",
     goal_weight_kg: profile ? String(profile.goal_weight_kg) : "",
     goal_date: profile?.goal_date ?? "",
     activity: profile?.activity ?? "light",
+    nutrition_context: profile?.nutrition_context ?? "unspecified",
   });
   const field = (
     k: string,
@@ -2095,6 +2161,7 @@ function ProfileModal({
               goal_weight_kg: Number(form.goal_weight_kg),
               goal_date: form.goal_date,
               activity: form.activity as Profile["activity"],
+              nutrition_context: form.nutrition_context as Profile["nutrition_context"],
             });
           }}
         >
@@ -2103,9 +2170,11 @@ function ProfileModal({
             <label>
               性别
               <select
+                required
                 value={form.sex}
                 onChange={(e) => setForm({ ...form, sex: e.target.value })}
               >
+                <option value="" disabled>请选择，用于公式系数</option>
                 <option value="female">女性</option>
                 <option value="male">男性</option>
                 <option value="other">其他</option>
@@ -2136,6 +2205,16 @@ function ProfileModal({
               <option value="light">轻度活动</option>
               <option value="moderate">中等活动</option>
               <option value="active">活动较多</option>
+            </select>
+          </label>
+          <label>
+            营养估算适用情况
+            <select value={form.nutrition_context} onChange={(e) => setForm({ ...form, nutrition_context: e.target.value })}>
+              <option value="unspecified">尚未说明（采用前需核对适用范围）</option>
+              <option value="general">一般情况，无特殊营养需求</option>
+              <option value="pregnant">孕期</option>
+              <option value="breastfeeding">哺乳期</option>
+              <option value="clinical">有疾病或需专业营养指导</option>
             </select>
           </label>
           <button className="primary" disabled={busy}>

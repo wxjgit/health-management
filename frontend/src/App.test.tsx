@@ -8,6 +8,14 @@ let failOnce: boolean;
 let workflows: unknown[];
 let records: unknown[];
 let chatMessages: unknown[];
+let storedPlans: unknown[];
+let defaultTargets: Record<string, unknown>;
+
+const suggestedValues = { kcal: 2100, protein_g: 105, carbs_g: 262, fat_g: 70, exercise_minutes: 150 };
+const readyDefaults = () => ({
+  status: "ready", targets: suggestedValues, reason: "温和减重起点", basis: "基于基础档案的本地公式估算。",
+  fingerprint: "a".repeat(64), formula_version: "mifflin-editable-defaults-v1", warnings: [], sources: [],
+});
 
 const emptyDay = {
   date: "2026-10-08",
@@ -36,6 +44,9 @@ beforeEach(() => {
   workflows = [];
   records = [];
   chatMessages = [];
+  storedPlans = [];
+  defaultTargets = { status: "needs_profile", targets: null, reason: "建立基础档案后自动填入目标。",
+    basis: "", fingerprint: "0".repeat(64), warnings: [], sources: [] };
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string, options?: RequestInit) => {
@@ -68,7 +79,8 @@ beforeEach(() => {
         "/messages": chatMessages,
         "/events": records,
         "/trends": [],
-        "/plans": [],
+        "/plans": storedPlans,
+        "/targets/default": defaultTargets,
         "/insights": [],
         "/reviews": [],
         "/notifications": [],
@@ -235,5 +247,70 @@ describe("网页核心交互", () => {
     await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect(bodies[0].path).toBe("/workflows/feedback/resume");
+  });
+
+  it("自动填入系统默认并携带估算版本，不自动采用计划", async () => {
+    defaultTargets = readyDefaults();
+    render(<App />);
+    await screen.findByText("今天，从一句话开始。");
+    await userEvent.click(screen.getByRole("button", { name: "我的计划" }));
+    await waitFor(() => expect((screen.getByLabelText("热量") as HTMLInputElement).value).toBe("2100"));
+    expect((screen.getByLabelText("每周运动") as HTMLInputElement).value).toBe("150");
+    expect(screen.getByText("系统默认 · 可修改")).toBeTruthy();
+    expect(bodies).toHaveLength(0);
+    await userEvent.click(screen.getByRole("button", { name: "生成计划草案" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].body.target_source).toBe("system_default");
+    expect(bodies[0].body.suggestion_fingerprint).toBe("a".repeat(64));
+    expect(bodies[0].body.targets).toEqual(suggestedValues);
+  });
+
+  it("用户编辑保留为手动目标，刷新估算不覆盖，并能恢复默认", async () => {
+    defaultTargets = readyDefaults();
+    render(<App />);
+    await screen.findByText("今天，从一句话开始。");
+    await userEvent.click(screen.getByRole("button", { name: "我的计划" }));
+    const input = screen.getByLabelText("热量") as HTMLInputElement;
+    await waitFor(() => expect(input.value).toBe("2100"));
+    await userEvent.clear(input);
+    await userEvent.type(input, "1900");
+    defaultTargets = { ...readyDefaults(), fingerprint: "b".repeat(64), targets: { ...suggestedValues, kcal: 2200 } };
+    await userEvent.click(screen.getByRole("button", { name: "生成计划草案" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].body.target_source).toBe("manual");
+    expect(bodies[0].body.suggestion_fingerprint).toBeUndefined();
+    await waitFor(() => expect(screen.getByText("手动编辑")).toBeTruthy());
+    expect(input.value).toBe("1900");
+    await userEvent.click(screen.getByRole("button", { name: "恢复系统默认" }));
+    await waitFor(() => expect(input.value).toBe("2200"));
+  });
+
+  it("已有生效的自定义目标不会被系统默认覆盖", async () => {
+    defaultTargets = readyDefaults();
+    storedPlans = [{ id: "custom", status: "active", created_at: "2026-10-10", data: {
+      targets: { kcal: 1800, protein_g: 100, carbs_g: 215, fat_g: 60, exercise_minutes: 120 },
+      schedule: [], next_meal: "按实际情况安排。", tomorrow_focus: "记录。", evidence_refs: [],
+      notes: "手动目标", changes: {}, data_version: 1, needs_confirmation: false, target_source: "manual",
+    } }];
+    render(<App />);
+    await screen.findByText("今天，从一句话开始。");
+    await userEvent.click(screen.getByRole("button", { name: "我的计划" }));
+    await waitFor(() => expect((screen.getByLabelText("热量") as HTMLInputElement).value).toBe("1800"));
+    expect(screen.getByText("当前生效目标")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "生成计划草案" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].body.targets).toBeUndefined();
+    await userEvent.click(screen.getByRole("button", { name: "恢复系统默认" }));
+    expect((screen.getByLabelText("热量") as HTMLInputElement).value).toBe("2100");
+  });
+
+  it("档案缺失时引导建档，不伪造默认额度", async () => {
+    render(<App />);
+    await screen.findByText("今天，从一句话开始。");
+    await userEvent.click(screen.getByRole("button", { name: "我的计划" }));
+    expect((screen.getByLabelText("热量") as HTMLInputElement).value).toBe("");
+    await userEvent.click(screen.getByRole("button", { name: "建立或补全基础档案" }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(bodies).toHaveLength(0);
   });
 });

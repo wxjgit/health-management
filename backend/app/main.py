@@ -17,6 +17,7 @@ from .graphs import Engine
 from .schemas import Profile, ChatRequest, ResumeRequest, PlanRequest, Preferences, StrictModel
 from .scheduler import scheduler_loop
 from .services import dashboard, history_window, suggest_weights
+from .targets import default_targets
 
 
 class CompleteRequest(StrictModel):
@@ -79,6 +80,11 @@ def create_app(settings=None):
         with engine().lock:
             engine().repo.update_profile(body.model_dump(mode='json'))
         return profile()
+
+    @app.get('/api/targets/default')
+    def suggested_targets():
+        with engine().lock:
+            return default_targets(engine().repo)
 
     @app.get('/api/preferences')
     def preferences():
@@ -188,7 +194,8 @@ def create_app(settings=None):
     @app.post('/api/plans/propose')
     def propose(body: PlanRequest):
         return engine().run('plan', body.request_id, body.model_dump(),
-                            {'input_text': body.note, 'plan': {'targets': body.targets.model_dump() if body.targets else None}})
+                            {'input_text': body.note, 'plan': {'targets': body.targets.model_dump() if body.targets else None,
+                             'target_source': body.target_source, 'suggestion_fingerprint': body.suggestion_fingerprint}})
 
     @app.get('/api/reviews')
     def reviews():

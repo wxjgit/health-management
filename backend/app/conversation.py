@@ -1,14 +1,14 @@
 """User-reported meal feedback, separate from nutrition and permanent facts."""
 import re
 
-from .clock import date_from_text
+from .clock import date_from_text, local_day
 from .schemas import MealFeedback
 
 
 TOPICS = {
-    'salty': r'咸|口味(?:偏|太|比较|有点)?重|盐(?:放|加|吃)(?:得|了)?(?:太|比较|有点)?多',
+    'salty': r'咸|口味(?:偏|太|比较|较|有点)?重|盐(?:放|加|吃)(?:得|了)?(?:太|比较|有点)?多',
     'oily': r'油腻|太油|偏油|比较油|有点油',
-    'overeating': r'吃(?:得|的)?(?:太|有点)?多了|吃撑|撑了|太饱',
+    'overeating': r'吃(?:得|的)?(?:太|有点)?多了|吃撑|撑了|有点撑|很撑|太饱',
     'hungry': r'还(?:是|很)?饿|没吃饱|不饱|容易饿',
 }
 DENIAL = r'(?:不|没|没有)(?:是|觉得|感觉|那么|很|太|有点|特别|怎么|再){0,3}$'
@@ -77,7 +77,7 @@ def attach_feedback(events, feedback):
         if signal['stance'] != 'experience' or not signal['day']:
             continue
         meals = [e for e in events if e['kind'] == 'meal' and e.get('occurred_at')
-                 and e['occurred_at'][:10] == signal['day']]
+                 and local_day(e['occurred_at']) == signal['day']]
         if len(meals) == 1:
             meals[0]['feedback'] = [f for f in meals[0]['feedback'] if f['topic'] != signal['topic']]
             meals[0]['feedback'].append(signal)

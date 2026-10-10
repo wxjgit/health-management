@@ -12,7 +12,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, interrupt
 
-from .clock import now, date_from_text
+from .clock import now, date_from_text, local_day
 from .nutrition import prepare_nutrition, nutrition_summary
 from .parser import Parser
 from .drafts import check_drafts, merge_patch
@@ -103,6 +103,13 @@ class Engine:
         if state.get('incremental_answer') and state.get('extraction'):
             extraction = json.loads(json.dumps(state['extraction']))
             index = state['pending_event_index']
+            occurred_at = extraction['events'][index].get('occurred_at')
+            if occurred_at:
+                # Relative dates are anchored once, even if the answer arrives next day.
+                default_day = local_day(occurred_at)
+            if 'conversation_feedback' not in state:
+                previous_feedback = reconcile_feedback([], [], state.get('original') or
+                    extraction['events'][index]['raw_text'], default_day)
             cancelled = any(w in text for w in ['先不记', '不记了', '取消记录'])
             unknown = text.strip().strip('，。,.!！') in (
                 '不知道', '我不知道', '不清楚', '我不清楚', '忘了', '我忘了', '不记得', '我不记得')
@@ -377,7 +384,9 @@ class Engine:
         return graph.compile(checkpointer=self.checkpointer)
 
     def prepare_plan(self, state):
-        plan = plan_draft(self.repo, state.get('plan', {}).get('targets'), state.get('input_text', ''))
+        requested = state.get('plan', {})
+        plan = plan_draft(self.repo, requested.get('targets'), state.get('input_text', ''),
+                          requested.get('target_source', 'manual'), requested.get('suggestion_fingerprint'))
         plan_id = state.get('plan_id') or state['thread_id']
         self.repo.save_plan(plan_id, state['thread_id'], plan)
         # On replay after an already committed insert, reuse the persisted immutable proposal.
@@ -388,7 +397,10 @@ class Engine:
         if not plan['needs_confirmation']:
             return {'approved': True}
         answer = interrupt({'kind': 'plan_confirmation', 'question': '是否采用这份计划？确认前当前目标保持不变。',
-                            'plan_id': state['plan_id'], 'targets': plan['targets'], 'changes': plan['changes']})
+                            'plan_id': state['plan_id'], 'targets': plan['targets'], 'changes': plan['changes'],
+                            'target_source': plan.get('target_source', 'manual'),
+                            'target_basis': (plan.get('target_metadata') or {}).get('basis'),
+                            'target_warnings': (plan.get('target_metadata') or {}).get('warnings', [])})
         if not isinstance(answer, dict) or type(answer.get('approved')) is not bool:
             raise ValueError('需要明确接受或拒绝计划')
         return {'approved': answer['approved']}

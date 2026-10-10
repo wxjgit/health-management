@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from uuid import uuid4
 
 import httpx
@@ -6,9 +7,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.conversation import reconcile_feedback
+from app.conversation import reconcile_feedback, attach_feedback
+from app.clock import SHANGHAI
 from app.main import create_app
 from app.replies import check_phrasing, make_plan
+
+
+@pytest.fixture(autouse=True)
+def fixed_clock(monkeypatch):
+    clock = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
+    for module in ['app.clock', 'app.parser', 'app.graphs', 'app.services', 'app.replies']:
+        monkeypatch.setattr(module + '.now', clock)
 
 
 @pytest.fixture
@@ -273,3 +282,24 @@ def test_valid_contextual_phrasing_is_adopted_but_receipt_remains_local(settings
         assert '你说这餐炸鸡的口味有些偏咸。' in result['reply']
         assert '280 kcal' in result['reply']
         assert any(t['title'] == '针对性回应' and t['source'] == 'model' for t in result['process_trace'])
+
+
+def test_feedback_link_uses_shanghai_day_not_timestamp_prefix():
+    event = meal([{'name': '炸鸡'}])
+    event['occurred_at'] = '2026-10-08T23:00:00+00:00'
+    signal = reconcile_feedback([], [], '这餐有点咸', '2026-10-09')
+    attach_feedback([event], signal)
+    assert event['feedback'][0]['day'] == '2026-10-09'
+
+
+def test_followup_after_midnight_does_not_reinterpret_yesterday(settings, monkeypatch):
+    install_model(monkeypatch)
+    with TestClient(create_app(settings)) as client:
+        pending = chat(client, '昨天吃得有点咸')
+        monkeypatch.setattr('app.clock.now', lambda: datetime(2026, 10, 10, 12, tzinfo=SHANGHAI))
+        pending = resume(client, pending, '炸鸡，还是有点咸')
+        done = resume(client, pending, '吃了100g')
+        assert done['status'] == 'completed'
+        record = client.get('/api/events').json()[0]
+        assert record['day'] == '2026-10-08'
+        assert record['data']['feedback'][0]['day'] == '2026-10-08'

@@ -18,6 +18,7 @@ class Profile(StrictModel):
     goal_weight_kg: float = Field(ge=20, le=400)
     goal_date: date
     activity: Literal['sedentary', 'light', 'moderate', 'active']
+    nutrition_context: Literal['unspecified', 'general', 'pregnant', 'breastfeeding', 'clinical'] = 'unspecified'
 
 
 class NutritionValues(StrictModel):
@@ -233,6 +234,14 @@ class PlanRequest(StrictModel):
     request_id: str = Field(min_length=8, max_length=100)
     targets: Targets | None = None
     note: str = Field(default='', max_length=500)
+    target_source: Literal['manual', 'system_default'] = 'manual'
+    suggestion_fingerprint: str | None = Field(default=None, pattern=r'^[a-f0-9]{64}$')
+
+    @model_validator(mode='after')
+    def default_reference(self):
+        if self.target_source == 'system_default' and self.targets is not None and not self.suggestion_fingerprint:
+            raise ValueError('采用系统默认时需要对应的估算版本，请刷新目标。')
+        return self
 
 
 class Preferences(StrictModel):

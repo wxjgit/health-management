@@ -420,6 +420,27 @@
         font-size: 9px;
         fill: #a57a31;
       }
+      .node .llm-mark {
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+        fill: #fff;
+      }
+      .node.model rect.llm-badge,
+      .node.selected rect.llm-badge,
+      .node:hover rect.llm-badge {
+        fill: #6f8fb6;
+        stroke: none;
+      }
+      .llm-detail {
+        margin: -8px 0 14px;
+        padding: 7px 9px;
+        border: 1px solid #ccdaea;
+        border-radius: 5px;
+        background: #eef5fc;
+        color: #6683a5;
+        font: 9px ui-monospace, Consolas, monospace;
+      }
       .node.boundary .code {
         font-size: 11px;
         fill: #7f9075;
@@ -537,7 +558,7 @@
         fill: none;
         stroke: #a8b59c;
         stroke-width: 1.5;
-        marker-end: url(#arrow-map);
+        marker-end: none;
       }
       .map-annotation {
         font-size: 9px;
@@ -561,6 +582,453 @@
         display: block;
         font-size: 9px;
         color: #688653;
+      }
+      .memory-boundary {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .memory-card {
+        min-width: 0;
+        padding: 11px;
+        border-radius: 6px;
+        background: #f6f9f1;
+        border: 1px solid #dce6d3;
+        font-size: 10px;
+        line-height: 1.65;
+        color: #7d906f;
+      }
+      .memory-card b,
+      .memory-card code {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 9px;
+        color: #5f7d4d;
+      }
+      .memory-card.fact {
+        background: #edf5e9;
+        border-color: #cddfc4;
+      }
+      .memory-card.history {
+        background: #eef5fb;
+        border-color: #ccdae9;
+      }
+      .memory-card.excluded {
+        background: #fff7ea;
+        border-color: #ead8b5;
+      }
+      .memory-panel {
+        grid-column: 1 / -1;
+      }
+      .memory-layout {
+        display: grid;
+        grid-template-columns: minmax(560px, 1.25fr) minmax(310px, 0.75fr);
+        gap: 16px;
+      }
+      .memory-flow {
+        border: 1px solid #e0e8d8;
+        border-radius: 8px;
+        background: #fbfcf7;
+        padding: 10px;
+        overflow: auto;
+      }
+      .memory-flow svg {
+        display: block;
+        width: 100%;
+        min-width: 560px;
+        height: auto;
+      }
+      .memory-stack {
+        display: grid;
+        gap: 8px;
+      }
+      .memory-layer {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px;
+        border: 1px solid #dce6d4;
+        border-radius: 7px;
+        background: #f7faf3;
+      }
+      .memory-layer .index {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e8f0e2;
+        color: #6e8a5d;
+        font: 10px ui-monospace, Consolas, monospace;
+      }
+      .memory-layer b {
+        display: block;
+        color: #58734d;
+        font-size: 11px;
+        margin-bottom: 2px;
+      }
+      .memory-layer p {
+        color: #87987b;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .memory-layer code {
+        white-space: nowrap;
+        font-size: 8px;
+        color: #6f8565;
+        border: 1px solid #dce5d6;
+        border-radius: 4px;
+        padding: 3px 5px;
+        background: #fff;
+      }
+      .memory-layer.checkpoint {
+        background: #eef5fc;
+        border-color: #ccdaea;
+      }
+      .memory-layer.checkpoint .index {
+        background: #dfeafa;
+        color: #6685aa;
+      }
+      .memory-layer.conversation {
+        background: #fff7ea;
+        border-color: #e8d8b9;
+      }
+      .memory-layer.conversation .index {
+        background: #f7e8ca;
+        color: #9a7b44;
+      }
+      .memory-layer.archive {
+        background: #f3f0fa;
+        border-color: #d9d0e8;
+      }
+      .memory-layer.archive .index {
+        background: #e8e1f4;
+        color: #816f9e;
+      }
+      .memory-subhead {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 18px 0 9px;
+      }
+      .memory-subhead h3 {
+        color: #617c54;
+        font-size: 11px;
+      }
+      .memory-subhead span {
+        color: #98a88d;
+        font-size: 9px;
+      }
+      .memory-matrix-wrap {
+        overflow: auto;
+        border: 1px solid #e1e8da;
+        border-radius: 7px;
+      }
+      .memory-matrix {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+        background: #fffefa;
+        font-size: 9px;
+      }
+      .memory-matrix th {
+        padding: 8px 10px;
+        text-align: left;
+        color: #718565;
+        font-weight: 600;
+        background: #f1f5ec;
+        border-bottom: 1px solid #dfe7d8;
+      }
+      .memory-matrix td {
+        padding: 9px 10px;
+        vertical-align: top;
+        line-height: 1.55;
+        color: #819078;
+        border-bottom: 1px solid #edf0e9;
+      }
+      .memory-matrix tr:last-child td {
+        border-bottom: 0;
+      }
+      .memory-matrix code {
+        color: #5f7c51;
+        font-size: 9px;
+      }
+      .memory-read-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .memory-read {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #dce5d5;
+        border-radius: 6px;
+        background: #f7f9f3;
+      }
+      .memory-read b {
+        display: block;
+        color: #607c53;
+        font: 9px ui-monospace, Consolas, monospace;
+        margin-bottom: 5px;
+      }
+      .memory-read span {
+        color: #84947a;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .retention-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .retention-item {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #e4dfcf;
+        background: #faf7ef;
+      }
+      .retention-item b {
+        display: block;
+        color: #8d794b;
+        font-size: 10px;
+        margin-bottom: 3px;
+      }
+      .retention-item span {
+        display: block;
+        color: #9a8e70;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .memory-guard {
+        margin-top: 10px;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #d7e3d0;
+        background: #eef5e9;
+        color: #718665;
+        font-size: 9px;
+      }
+      .memory-guard b {
+        color: #557548;
+        white-space: nowrap;
+      }
+      .llm-call-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .llm-call {
+        border: 1px solid #cddceb;
+        border-radius: 6px;
+        background: #f2f7fd;
+        padding: 10px;
+        min-width: 0;
+      }
+      .llm-call b {
+        display: block;
+        font: 10px ui-monospace, Consolas, monospace;
+        color: #59799f;
+        margin-bottom: 4px;
+      }
+      .llm-call span {
+        display: block;
+        font-size: 9px;
+        line-height: 1.55;
+        color: #7890a8;
+      }
+      .llm-panel {
+        grid-column: 1 / -1;
+      }
+      .llm-runtime {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+        gap: 8px;
+        align-items: stretch;
+      }
+      .llm-runtime > div {
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid #ceddeb;
+        border-radius: 7px;
+        background: #f1f6fc;
+        color: #758ba2;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .llm-runtime > div b {
+        display: block;
+        color: #58789d;
+        font-size: 10px;
+        margin-bottom: 3px;
+      }
+      .llm-runtime > span {
+        align-self: center;
+        color: #8fa8bf;
+        font-size: 15px;
+      }
+      .llm-config {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 9px;
+      }
+      .llm-config code {
+        padding: 4px 7px;
+        border: 1px solid #d4e0ec;
+        border-radius: 4px;
+        background: #f7fafd;
+        color: #6e87a1;
+        font-size: 8px;
+      }
+      .llm-contract-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+      }
+      .llm-contract {
+        grid-column: span 2;
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #d3dfeb;
+        border-radius: 8px;
+        background: #fbfdff;
+      }
+      .llm-contract.wide-left {
+        grid-column: 2 / span 2;
+      }
+      .llm-contract.wide-right {
+        grid-column: 4 / span 2;
+      }
+      .llm-contract-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: flex-start;
+        padding: 11px 12px 9px;
+        background: #eef5fc;
+        border-bottom: 1px solid #dce6ef;
+      }
+      .llm-contract-head small {
+        display: block;
+        color: #8298ae;
+        font-size: 8px;
+        margin-bottom: 3px;
+      }
+      .llm-contract-head b {
+        color: #56789f;
+        font: 11px ui-monospace, Consolas, monospace;
+      }
+      .llm-risk {
+        flex-shrink: 0;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #d7c594;
+        background: #fff5de;
+        color: #917139;
+        font-size: 8px;
+      }
+      .llm-risk.fallback {
+        border-color: #cdddc5;
+        background: #edf5e9;
+        color: #67845b;
+      }
+      .llm-contract-body {
+        padding: 10px 12px 12px;
+      }
+      .llm-contract-row {
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 7px;
+        padding: 5px 0;
+        border-bottom: 1px solid #edf1f4;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .llm-contract-row:last-child {
+        border-bottom: 0;
+      }
+      .llm-contract-row b {
+        color: #718ba4;
+        font-weight: 600;
+      }
+      .llm-contract-row span {
+        color: #7f8e9d;
+        overflow-wrap: anywhere;
+      }
+      .llm-contract-row code {
+        color: #58789a;
+        font-size: 8px;
+      }
+      .llm-scenarios {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .llm-scenario {
+        padding: 10px;
+        border: 1px solid #dbe5d5;
+        border-radius: 6px;
+        background: #f7f9f3;
+        min-width: 0;
+      }
+      .llm-scenario b {
+        display: block;
+        color: #647e57;
+        font-size: 10px;
+        margin-bottom: 5px;
+      }
+      .llm-scenario code {
+        color: #6e89a3;
+        font-size: 8px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+      .llm-write-boundary {
+        display: grid;
+        grid-template-columns: auto 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        padding: 11px 13px;
+        border: 1px solid #d8e4d1;
+        border-radius: 7px;
+        background: #eef5e9;
+        font-size: 9px;
+        color: #76896c;
+      }
+      .llm-write-boundary b {
+        color: #58764b;
+      }
+      .llm-write-boundary span.arrow {
+        color: #9aac90;
+        font-size: 14px;
+      }
+      .llm-source-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .llm-source-grid a {
+        padding: 7px 8px;
+        border: 1px solid #dde6d8;
+        border-radius: 5px;
+        background: #f8faf4;
+        color: #718567;
+        font-size: 8px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .llm-source-grid b {
+        display: block;
+        color: #5d7a51;
+        font-weight: 600;
       }
       .rail {
         display: flex;
@@ -734,6 +1202,37 @@
         .decision {
           grid-template-columns: 1fr 1fr;
         }
+        .memory-boundary {
+          grid-template-columns: 1fr;
+        }
+        .memory-layout {
+          grid-template-columns: 1fr;
+        }
+        .memory-read-grid,
+        .retention-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .llm-runtime {
+          grid-template-columns: 1fr;
+        }
+        .llm-runtime > span {
+          transform: rotate(90deg);
+          justify-self: center;
+        }
+        .llm-contract-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .llm-contract,
+        .llm-contract.wide-left,
+        .llm-contract.wide-right {
+          grid-column: auto;
+        }
+        .llm-scenarios {
+          grid-template-columns: 1fr 1fr;
+        }
+        .llm-source-grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
         .canvas svg {
           min-width: 630px;
         }
@@ -831,6 +1330,18 @@
         .decision {
           grid-template-columns: 1fr 1fr;
         }
+        .llm-contract-grid,
+        .llm-scenarios,
+        .llm-source-grid {
+          grid-template-columns: 1fr;
+        }
+        .llm-write-boundary {
+          grid-template-columns: 1fr;
+        }
+        .llm-write-boundary span.arrow {
+          transform: rotate(90deg);
+          justify-self: center;
+        }
         .intro {
           font-size: 11px;
         }
@@ -900,14 +1411,14 @@
         </div>
         <div class="stats">
           <div><b>3</b><span>独立工作流</span></div>
-          <div><b>11</b><span>业务节点</span></div>
+          <div><b>14</b><span>业务节点</span></div>
+          <div><b>4</b><span>条件 LLM 节点</span></div>
           <div><b>2</b><span>暂停位置</span></div>
-          <div><b>2</b><span>SQLite 文件</span></div>
         </div>
       </header>
       <div class="status-row">
-        <span class="snapshot">实现快照 · 2026-10-08</span
-        ><span>已核对编译图的节点与边</span><span>自包含 · 离线可打开</span
+        <span class="snapshot">实现快照 · 2026-10-14</span
+        ><span>已核对编译图的节点与边</span><span>2 个 SQLite · 离线可打开</span
         ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
         ><button class="print-button" onclick="window.print()">
           打印 / 另存 PDF
@@ -958,18 +1469,18 @@
             <div class="graph-head">
               <div>
                 <h3>chat_graph</h3>
-                <p>自然语言 → 结构化解析 → 路由 → 保存 / 查询 → 回答</p>
+                <p>解析 → 草稿校验 → 营养准备 → 路由 → 保存 / 查询 → 回答</p>
               </div>
-              <code>build_chat() · 6 节点 / 10 边</code>
+              <code>build_chat() · 9 节点 / 13 边</code>
             </div>
             <div class="canvas" id="canvas-chat"></div>
             <div class="diagram-note">
-              clarify 在 <code>interrupt()</code> 等待补充；恢复后更新
-              State，再沿真实回边进入 parse。
+              蓝色节点带 <code>LLM</code> 徽标，表示模型模式下可能调用模型；
+              clarify 在 <code>interrupt()</code> 等待补充并回到 parse。
             </div>
             <div class="legend">
               <span><i></i>代码 / 数据操作</span
-              ><span><i class="blue"></i>模型或演示解析</span
+              ><span><i class="blue"></i>含条件 LLM 调用</span
               ><span><i class="orange"></i>人类输入暂停</span
               ><span><i class="dashed"></i>条件边</span>
             </div>
@@ -1028,6 +1539,7 @@
           <span class="node-kind" id="detail-kind"></span>
           <h2 id="detail-title"></h2>
           <code id="detail-code"></code>
+          <div class="llm-detail" id="detail-llm" hidden></div>
           <p id="detail-description"></p>
           <h3>读取 / 输入</h3>
           <div class="field-list" id="detail-input"></div>
@@ -1077,12 +1589,12 @@
       </section>
 
       <section class="section panel routes-section">
-        <h3>route_chat：依次匹配，命中即返回</h3>
+        <h3>route_chat：完成校验与营养准备后，依次匹配</h3>
         <div class="decision">
           <div>
             <b>① question 存在</b>
-            <p>缺失或定位不明确优先</p>
-            <code>→ clarify</code>
+            <p>先生成个性化追问表达</p>
+            <code>→ prepare_clarification</code>
           </div>
           <div>
             <b>② record / correct</b>
@@ -1103,185 +1615,278 @@
       </section>
 
       <section class="section support-grid">
-        <div class="panel">
+        <div class="panel memory-panel" id="memory-system">
           <div class="support-head">
             <span>02</span>
             <div>
-              <h2>记忆与数据</h2>
-              <p>运行状态、恢复进度与健康事实分开保存</p>
-            </div>
-          </div>
-          <div class="support-body support-scroll">
-            <svg
-              class="support-diagram"
-              viewBox="0 0 560 350"
-              role="img"
-              aria-label="State、SQLite checkpointer 和业务数据库的读写关系"
-            >
-              <defs>
-                <marker
-                  id="arrow-map"
-                  markerWidth="7"
-                  markerHeight="7"
-                  refX="6"
-                  refY="3.5"
-                  orient="auto"
-                >
-                  <path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" />
-                </marker>
-              </defs>
-              <rect
-                class="map-box"
-                x="172"
-                y="12"
-                width="216"
-                height="65"
-                rx="8"
-              />
-              <text class="map-title" x="280" y="39" text-anchor="middle">
-                Engine / 三个 Graph
-              </text>
-              <text class="map-caption" x="280" y="59" text-anchor="middle">
-                节点执行 · Repository 调用
-              </text>
-              <path class="map-line" d="M220 77V95H89V122" />
-              <path class="map-line" d="M280 77V122" />
-              <path class="map-line" d="M340 77V95H471V122" />
-              <rect
-                class="map-box blue"
-                x="6"
-                y="129"
-                width="166"
-                height="90"
-                rx="8"
-              />
-              <rect
-                class="map-box orange"
-                x="197"
-                y="129"
-                width="166"
-                height="90"
-                rx="8"
-              />
-              <rect
-                class="map-box"
-                x="388"
-                y="129"
-                width="166"
-                height="90"
-                rx="8"
-              />
-              <text class="map-title" x="89" y="157" text-anchor="middle">
-                State
-              </text>
-              <text class="map-caption" x="89" y="180" text-anchor="middle">
-                输入 / 草案 / record_ids
-              </text>
-              <text class="map-caption" x="89" y="201" text-anchor="middle">
-                节点间共享工作数据
-              </text>
-              <text class="map-title" x="280" y="157" text-anchor="middle">
-                checkpoints.db
-              </text>
-              <text class="map-caption" x="280" y="180" text-anchor="middle">
-                SqliteSaver
-              </text>
-              <text class="map-caption" x="280" y="201" text-anchor="middle">
-                按 thread_id 保存 / 恢复
-              </text>
-              <text class="map-title" x="471" y="157" text-anchor="middle">
-                health.db
-              </text>
-              <text class="map-caption" x="471" y="180" text-anchor="middle">
-                事实 / 修订 / 计划 / 规律
-              </text>
-              <text class="map-caption" x="471" y="201" text-anchor="middle">
-                Repository 跨对话读写
-              </text>
-              <path class="map-line" d="M280 219V264H143" />
-              <path class="map-line" d="M471 219V264H413" />
-              <rect
-                class="map-box orange"
-                x="9"
-                y="270"
-                width="260"
-                height="65"
-                rx="7"
-              />
-              <text class="map-title" x="139" y="296" text-anchor="middle">
-                clarify / approve
-              </text>
-              <text class="map-caption" x="139" y="317" text-anchor="middle">
-                interrupt → 同线程 resume
-              </text>
-              <rect
-                class="map-box"
-                x="293"
-                y="270"
-                width="260"
-                height="65"
-                rx="7"
-              />
-              <text class="map-title" x="423" y="296" text-anchor="middle">
-                记录 / 计划 / 分析节点
-              </text>
-              <text class="map-caption" x="423" y="317" text-anchor="middle">
-                读历史 · 写事实与推导结果
-              </text>
-            </svg>
-            <div class="chip-grid">
-              <span><code>parse / respond</code>读历史与相关事实</span
-              ><span
-                ><code>save_ready / persist / fact</code
-                >写记录、修订与长期偏好</span
-              ><span
-                ><code>prepare / activate</code>存草案、检查版本、决定生效</span
-              ><span><code>analyze / review</code>读统计、写规律与复盘</span>
-            </div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="support-head">
-            <span>03</span>
-            <div>
-              <h2>提示词与上下文</h2>
-              <p>真实模型仅用于 Parser.model_parse 的结构化理解</p>
+              <h2>记忆系统 · 写入、读取与生命周期</h2>
+              <p>没有向量库：SQLite 是事实源，按场景做有界检索；LLM 不直接写长期记忆</p>
             </div>
           </div>
           <div class="support-body">
-            <div class="chip-grid">
-              <span
-                ><code>system prompt</code>提取约束 / 单位 /
-                纠错与意图规则</span
-              ><span><code>用户输入</code>text · original · selected_id</span
-              ><span
-                ><code>当前时间 + 输出 Schema</code>now ·
-                ParseResult.model_json_schema()</span
-              ><span><code>检索记录</code>recent[:12]，来自业务数据库</span>
+            <div class="memory-layout">
+              <div class="memory-flow">
+                <svg viewBox="0 0 760 515" role="img" aria-label="记忆从用户输入经过本地写入关口进入检查点和业务数据库，再由各节点按范围读取">
+                  <defs>
+                    <marker id="memory-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                      <path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" />
+                    </marker>
+                  </defs>
+                  <text class="map-annotation" x="14" y="18">信息来源</text>
+                  <rect class="map-box" x="14" y="31" width="215" height="58" rx="7" />
+                  <rect class="map-box" x="273" y="31" width="215" height="58" rx="7" />
+                  <rect class="map-box" x="532" y="31" width="214" height="58" rx="7" />
+                  <text class="map-title" x="121" y="55" text-anchor="middle">聊天输入</text>
+                  <text class="map-caption" x="121" y="75" text-anchor="middle">记录 / 纠错 / 长期事实</text>
+                  <text class="map-title" x="380" y="55" text-anchor="middle">设置页面</text>
+                  <text class="map-caption" x="380" y="75" text-anchor="middle">基础档案 / 偏好设置</text>
+                  <text class="map-title" x="639" y="55" text-anchor="middle">业务计算</text>
+                  <text class="map-caption" x="639" y="75" text-anchor="middle">计划 / 规律 / 复盘 / 归档</text>
+
+                  <path class="map-line" d="M121 89V127" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M380 89V127" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M639 89V127" style="marker-end:url(#memory-arrow)" />
+                  <text class="map-annotation" x="14" y="117">本地写入关口</text>
+                  <rect class="map-box blue" x="14" y="128" width="215" height="72" rx="7" />
+                  <rect class="map-box" x="273" y="128" width="215" height="72" rx="7" />
+                  <rect class="map-box purple" x="532" y="128" width="214" height="72" rx="7" />
+                  <text class="map-title" x="121" y="153" text-anchor="middle">parse → validate</text>
+                  <text class="map-caption" x="121" y="173" text-anchor="middle">完整事件才交给 persist</text>
+                  <text class="map-caption" x="121" y="189" text-anchor="middle">intent=fact 才交给 fact</text>
+                  <text class="map-title" x="380" y="153" text-anchor="middle">PUT API</text>
+                  <text class="map-caption" x="380" y="176" text-anchor="middle">Pydantic 校验后覆盖 meta</text>
+                  <text class="map-title" x="639" y="153" text-anchor="middle">services / scheduler</text>
+                  <text class="map-caption" x="639" y="176" text-anchor="middle">规则计算后写派生结果</text>
+
+                  <path class="map-line" d="M82 200V248" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M168 200V224H355V248" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M380 200V248" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M639 200V224H610V248" style="marker-end:url(#memory-arrow)" />
+                  <text class="map-annotation" x="14" y="238">两套 SQLite · 职责不同</text>
+                  <rect class="map-box blue" x="14" y="249" width="220" height="125" rx="8" />
+                  <rect class="map-box" x="273" y="249" width="473" height="125" rx="8" />
+                  <text class="map-title" x="124" y="276" text-anchor="middle">checkpoints.db</text>
+                  <text class="map-caption" x="124" y="298" text-anchor="middle">State 草稿 / pending_fields</text>
+                  <text class="map-caption" x="124" y="318" text-anchor="middle">reply_plan / record_ids / rounds</text>
+                  <text class="map-caption" x="124" y="338" text-anchor="middle">按 thread_id 暂停与恢复</text>
+                  <text class="map-caption" x="124" y="358" text-anchor="middle">可删除副本 · 不是事实源</text>
+                  <text class="map-title" x="509" y="276" text-anchor="middle">health.db · source of truth</text>
+                  <text class="map-caption" x="509" y="298" text-anchor="middle">meta · profile / preferences / complete:day</text>
+                  <text class="map-caption" x="509" y="318" text-anchor="middle">facts · 用户明确长期偏好与限制</text>
+                  <text class="map-caption" x="509" y="338" text-anchor="middle">events + revisions · 已确认健康记录与版本</text>
+                  <text class="map-caption" x="509" y="358" text-anchor="middle">plans / insights / reviews / monthly_summaries</text>
+
+                  <path class="map-line" d="M124 374V407H121V426" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M430 374V403H121V426" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M510 374V426" style="marker-end:url(#memory-arrow)" />
+                  <path class="map-line" d="M640 374V403H639V426" style="marker-end:url(#memory-arrow)" />
+                  <text class="map-annotation" x="14" y="416">按用途读取，不把整库塞给模型</text>
+                  <rect class="map-box blue" x="14" y="427" width="215" height="66" rx="7" />
+                  <rect class="map-box blue" x="273" y="427" width="215" height="66" rx="7" />
+                  <rect class="map-box purple" x="532" y="427" width="214" height="66" rx="7" />
+                  <text class="map-title" x="121" y="452" text-anchor="middle">parse / resume</text>
+                  <text class="map-caption" x="121" y="474" text-anchor="middle">近期记录 + 当前线程草稿</text>
+                  <text class="map-title" x="380" y="452" text-anchor="middle">respond</text>
+                  <text class="map-caption" x="380" y="474" text-anchor="middle">场景窗口 + facts + 目标</text>
+                  <text class="map-title" x="639" y="452" text-anchor="middle">plan / analysis</text>
+                  <text class="map-caption" x="639" y="474" text-anchor="middle">近期事件 + 派生统计</text>
+                </svg>
+              </div>
+              <div class="memory-stack" aria-label="四层记忆">
+                <div class="memory-layer checkpoint">
+                  <span class="index">01</span>
+                  <div><b>当前线程状态</b><p>草稿、待补字段、追问轮次、已保存 ID；用于 interrupt / resume。</p></div>
+                  <code>State + checkpoint</code>
+                </div>
+                <div class="memory-layer conversation">
+                  <span class="index">02</span>
+                  <div><b>对话与幂等上下文</b><p>messages、workflows、receipts、operations；方便展示、重试和防重复。</p></div>
+                  <code>约 30 天</code>
+                </div>
+                <div class="memory-layer">
+                  <span class="index">03</span>
+                  <div><b>长期业务记忆</b><p>profile、preferences、facts、events、active plan；Repository 才是事实源。</p></div>
+                  <code>health.db</code>
+                </div>
+                <div class="memory-layer archive">
+                  <span class="index">04</span>
+                  <div><b>压缩归档</b><p>满一年后的完整月份转为 monthly_summaries，逐餐与逐日细节不可恢复。</p></div>
+                  <code>&gt; 1 年</code>
+                </div>
+              </div>
             </div>
-            <h3 class="small-heading">模型模式</h3>
-            <div class="rail">
-              <div><b>messages</b>system + JSON user</div>
-              <span>→</span>
-              <div><b>HTTP 模型接口</b>/chat/completions</div>
-              <span>→</span>
-              <div><b>Pydantic</b>ParseResult 校验</div>
+
+            <div class="memory-subhead">
+              <h3>什么会成为长期记忆</h3>
+              <span>“写进数据库”不等于“成为用户长期事实”</span>
             </div>
-            <h3 class="small-heading">演示模式</h3>
-            <div class="rail">
-              <div><b>demo_parse()</b>规则 / 正则解析</div>
+            <div class="memory-boundary" aria-label="长期记忆边界">
+              <div class="memory-card fact">
+                <b>facts · 跨对话语义事实</b>
+                仅用户明确说出的喜欢 / 不喜欢、过敏、忌口、长期饮食限制、医生明确要求；source=user、status=confirmed。
+              </div>
+              <div class="memory-card history">
+                <b>events · 可追溯健康历史</b>
+                完整并校验通过的饮食、体重、睡眠、运动、周期；修正写 revisions。偏咸 / 油腻 / 吃撑 / 仍饿只随对应餐食保存。
+              </div>
+              <div class="memory-card excluded">
+                <b>不进入 facts</b>
+                模型推断、营养估算、助手建议、单次体验、假设问题、未完成或取消草稿。普通消息即使暂存，也不是健康事实。
+              </div>
+            </div>
+
+            <div class="memory-subhead">
+              <h3>存储清单与清理规则</h3>
+              <span>当前实现 · 无 embedding / vectorstore / 自动相似度召回</span>
+            </div>
+            <div class="memory-matrix-wrap">
+              <table class="memory-matrix">
+                <thead><tr><th>存储</th><th>写入条件</th><th>主要读取方</th><th>保留 / 失效</th></tr></thead>
+                <tbody>
+                  <tr><td><code>facts</code></td><td>解析为 fact 且 fact_text 存在；由 fact 节点确认写入</td><td>respond、recommendation、targets、plan</td><td>无自动过期；用户可单条删除</td></tr>
+                  <tr><td><code>events + revisions</code></td><td>必需字段齐全、结构校验通过；persist / save_ready 写入</td><td>parse 纠错、dashboard、advice、plan、analysis</td><td>原始记录约 1 年；之后保留月度摘要</td></tr>
+                  <tr><td><code>meta</code></td><td>用户通过 API 保存 profile / preferences；系统写完整日和版本</td><td>目标估算、建议、计划、提醒调度</td><td>覆盖更新；当前没有自动过期</td></tr>
+                  <tr><td><code>messages</code></td><td>聊天请求、补充回答和助手结果</td><td>聊天界面；仅处理“这 / 那 / 刚才”时取最近用户消息</td><td>30 天清理；助手消息从模型事实上下文排除</td></tr>
+                  <tr><td><code>workflows / receipts / checkpoints</code></td><td>每次 run / interrupt / resume 与幂等回执</td><td>Engine 恢复流程、验证 request_id、防重复写入</td><td>完成流程 30 天；等待输入最长 366 天</td></tr>
+                  <tr><td><code>plans / insights / reviews</code></td><td>计划、规律分析和日报 / 周报生成后</td><td>计划页、趋势页、建议中的 active targets</td><td>数据版本变化使 insight 失效；非事实型派生数据</td></tr>
+                  <tr><td><code>monthly_summaries</code></td><td>调度器校验月度汇总成功后，才删除对应旧事件</td><td>超过一年后的历史概览</td><td>无自动过期；只保留月级统计</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="memory-subhead">
+              <h3>真正传给模型的记忆</h3>
+              <span>先由本地代码筛选，再发送结构化子集</span>
+            </div>
+            <div class="memory-read-grid">
+              <div class="memory-read"><b>parse</b><span>本地取近期记录，模型最多看到 recent_records[:12]；用于意图与纠错定位。</span></div>
+              <div class="memory-read"><b>respond · advice</b><span>按问题选今天 / 7 天 / 28 天窗口；最多 8 条限制、5 条偏好。</span></div>
+              <div class="memory-read"><b>指代解析</b><span>只有问题包含“这 / 那 / 刚才”时，附同会话最近 2 条用户消息；不附助手回复。</span></div>
+              <div class="memory-read"><b>plan / analysis</b><span>计划读取近期 30 条事件与 facts；分析读取 28 天结构化记录和完整度。</span></div>
+            </div>
+
+            <div class="memory-subhead">
+              <h3>生命周期</h3>
+              <span>定时 scheduler 每分钟检查，归档和上下文清理具备幂等 job 记录</span>
+            </div>
+            <div class="retention-grid">
+              <div class="retention-item"><b>30 天</b><span>清理旧 messages；已完成 / 失败 / 取消工作流及其 checkpoint、receipt 一并移除。</span></div>
+              <div class="retention-item"><b>366 天</b><span>仍在 waiting_input 的流程到期后清理，避免悬挂草稿无限保留。</span></div>
+              <div class="retention-item"><b>超过 1 年</b><span>只归档完整过期月份；摘要校验成功后删除逐条 events 和 complete:day。</span></div>
+              <div class="retention-item"><b>无自动过期</b><span>profile、preferences、facts、active plan、monthly_summaries 继续保留，直到更新或删除。</span></div>
+            </div>
+            <div class="memory-guard">
+              <b>删除防残留</b>
+              <span>删除 event 或 fact、以及完成归档时，会清空可能含副本的对话 / workflow / receipt / 派生上下文，并 purge 全部 checkpoints。</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel llm-panel" id="llm-contracts">
+          <div class="support-head">
+            <span>03</span>
+            <div>
+              <h2>LLM 调用契约 · 4 个节点，5 类任务</h2>
+              <p>同一个模型与 HTTP 客户端承担不同职责；每类任务拥有独立输入、Schema、校验和降级策略</p>
+            </div>
+          </div>
+          <div class="support-body">
+            <div class="llm-runtime" aria-label="统一模型调用链">
+              <div><b>Graph 节点</b>parse · prepare_nutrition<br />prepare_clarification · respond</div>
               <span>→</span>
-              <div><b>同一结构</b>ParseResult</div>
+              <div><b>5 个任务方法</b>model_parse · patch · estimate_nutrition<br />phrase_reply · answer_advice</div>
               <span>→</span>
-              <div><b>Graph State</b>parsed</div>
+              <div><b>统一传输层</b>Parser.model_request()<br />system prompt + JSON user</div>
+              <span>→</span>
+              <div><b>同一个模型</b>qwen3.8-max<br />DashScope /chat/completions</div>
+            </div>
+            <div class="llm-config" aria-label="模型请求公共配置">
+              <code>temperature = 0</code><code>enable_thinking = false</code><code>timeout = 45s</code>
+              <code>follow_redirects = false</code><code>非流式</code><code>无 tools / ToolNode</code>
+              <code>无 HTTP 自动重试</code><code>去除 JSON Markdown fence</code><code>Pydantic model_validate_json</code>
             </div>
             <p class="small-note">
-              未发现
-              few-shot、向量检索或专门提示词目录。计划、规律与回答当前主要由代码模板生成。
+              当前模型名以 qwen3.8-max 开头，因此五类请求都会发送 enable_thinking=false，要求直接返回结构化结果。
+              JSON Schema 被放在 user JSON 中提示模型，并未使用服务端 response_format；最终可信边界是本地 Pydantic 与业务校验。demo 模式不会调用以上五类 LLM。
             </p>
-            <a class="source" href="backend/app/parser.py"
-              >backend/app/parser.py · Parser.model_parse()</a
-            >
+
+            <div class="memory-subhead">
+              <h3>五类调用逐项说明</h3>
+              <span>“阻断”表示失败会返回 409；“可降级”表示主流程仍可完成</span>
+            </div>
+            <div class="llm-contract-grid">
+              <article class="llm-contract">
+                <div class="llm-contract-head"><div><small>parse 节点 · 首轮输入</small><b>model_parse()</b></div><span class="llm-risk">失败阻断</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>model 模式下的新聊天；记录、纠错、查询、咨询、长期事实都先经过它。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>now / text / original / selected_id / recent_records[:12] / schema</code></span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>ExtractionResult</code>：intent、事件草稿、feedback、追问字段、查询范围、fact_text。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>纠错 ID 必须来自已检索记录；反馈只接受本轮原话，随后进入 validate_drafts。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>请求、JSON 或 Schema 任一失败 → ValueError → workflow failed → HTTP 409；不切 demo。</span></div>
+                </div>
+              </article>
+              <article class="llm-contract">
+                <div class="llm-contract-head"><div><small>parse 节点 · resume 补充</small><b>patch()</b></div><span class="llm-risk">失败阻断</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>clarify 恢复后需要真正补字段时；取消、不知道或转为咨询由本地逻辑处理，不调用。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>本次回答 / checkpoint 草稿 / requested_fields / item_index / now / schema</code></span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>EventPatch</code>：只允许待补字段及本轮 feedback，不返回完整事件。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>merge_patch 只合并白名单字段；不能改已知日期和食物，也不能用历史记录补空缺。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>模型或结构化输出失败 → HTTP 409；已有草稿仍由 checkpoint 管理。</span></div>
+                </div>
+              </article>
+              <article class="llm-contract">
+                <div class="llm-contract-head"><div><small>prepare_nutrition 节点</small><b>estimate_nutrition()</b></div><span class="llm-risk fallback">可降级</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>准备保存的 meal 有明确食物和实际分量，但热量或三大营养素仍缺失。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>name / quantity / unit / size / cooking / requested_nutrients / provided_nutrients</code></span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>NutritionEstimates</code>：按 item index 返回缺失数值与 uncertainty。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>索引唯一、用户值优先、描述指纹匹配；热量与宏量能量差超过 max(50 kcal, 35%) 就拒绝。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>食物和分量照常保存；缺失营养保持 unknown / partial，并写明失败原因，不按 0 处理。</span></div>
+                </div>
+              </article>
+              <article class="llm-contract wide-left">
+                <div class="llm-contract-head"><div><small>prepare_clarification / respond 节点</small><b>phrase_reply()</b></div><span class="llm-risk fallback">可降级</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>本轮存在 salty / oily / overeating / hungry 反馈，且本地 make_plan 产生批准要点。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>plan.points / feedback 标签 / stage / context.foods[:3] / boundary / schema</code>；不读取历史聊天。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>ContextualReply</code>：每个 segment 必须保留 point_id，只负责自然表达。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>点位与顺序完全一致；检查主题锚点、长度、数字、日期、保存状态、诊疗和新增建议。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>使用本地 ACK / GUIDANCE 原文；医学或钠边界由程序追加，记录写入结果不受影响。</span></div>
+                </div>
+              </article>
+              <article class="llm-contract wide-right">
+                <div class="llm-contract-head"><div><small>respond 节点 · 普通咨询</small><b>answer_advice()</b></div><span class="llm-risk fallback">可降级</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>intent=advice，且不是医疗边界、保存回执、查询或 feedback-only 路径。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span>场景化只读 context：问题、目标、facts、今天 / 7 天 / 28 天窗口；指代时最多 2 条用户消息。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>AdviceReply.answer</code>：直接回答重点，最多两条可执行建议。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>禁止上下文外数字、诊疗结论、把不完整记录说成全天结论、把剩余额度说成必须吃满。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>按同一个 context 生成 fallback_advice；不会将失败回答写成事实或事件。</span></div>
+                </div>
+              </article>
+            </div>
+
+            <div class="memory-subhead">
+              <h3>一次请求可能经过哪些模型调用</h3>
+              <span>虚线含义：只有满足条件才调用，不是固定串行五次</span>
+            </div>
+            <div class="llm-scenarios">
+              <div class="llm-scenario"><b>新记录</b><code>model_parse → [estimate_nutrition] → [phrase_reply]</code></div>
+              <div class="llm-scenario"><b>需要追问</b><code>model_parse → [phrase_reply] → interrupt → patch → [estimate_nutrition]</code></div>
+              <div class="llm-scenario"><b>普通咨询</b><code>model_parse → answer_advice</code></div>
+              <div class="llm-scenario"><b>只有饮食反馈</b><code>model_parse → phrase_reply</code></div>
+            </div>
+            <div class="llm-write-boundary">
+              <b>模型输出</b><span>只是候选结构、估算或文字</span><span class="arrow">→</span>
+              <span><b>本地代码决定落库</b> 只有 validate_drafts + prepare_nutrition + route + Repository 可以写 events / facts；建议与润色不会成为长期事实。</span>
+            </div>
+            <div class="llm-source-grid" aria-label="LLM 调用代码位置">
+              <a href="backend/app/parser.py"><b>parser.py</b>5 个 prompt + model_request</a>
+              <a href="backend/app/graphs.py"><b>graphs.py</b>节点触发条件与失败分支</a>
+              <a href="backend/app/nutrition.py"><b>nutrition.py</b>营养候选、校验与 provenance</a>
+              <a href="backend/app/replies.py"><b>replies.py</b>反馈策略与 phrase 校验</a>
+              <a href="backend/app/advice.py"><b>advice.py</b>咨询上下文、回答校验与兜底</a>
+            </div>
           </div>
         </div>
         <div class="panel">
@@ -1302,21 +1907,21 @@
             </div>
             <div class="internal">
               <div>
-                <b>模型错误</b><code>timeout=45s / 输出校验</code
+                <b>解析模型错误</b><code>timeout=45s / 输出校验</code
                 ><code>→ ValueError → HTTP 409</code>
               </div>
               <div>
-                <b>用户重试</b><code>同 request_id</code
-                ><code>→ checkpoint / 去重写入</code>
+                <b>表达 / 建议错误</b><code>输出未过边界检查</code
+                ><code>→ 本地安全兜底</code>
               </div>
               <div>
-                <b>后台任务</b><code>jobs · attempts &lt; 3</code
-                ><code>→ 下轮继续 / 去重通知</code>
+                <b>营养估算错误</b><code>不编造营养数值</code
+                ><code>→ 保留未知与原因</code>
               </div>
             </div>
             <p class="small-note">
-              模型失败不自动切换到演示模式；HTTP
-              模型调用本身没有自动重试。后台任务的重试由 jobs 表记录。
+              初始解析失败不会自动切到演示模式；不同节点按风险采用“请求失败”、
+              “本地表达兜底”或“保留未知”。HTTP 模型调用本身没有自动重试。
             </p>
             <a class="source" href="backend/app/graphs.py"
               >graphs.py · Engine.run() / resume()</a
@@ -1355,8 +1960,8 @@
       </section>
       <footer>
         <span
-          >证据：backend/app/graphs.py · parser.py · services.py · repository.py
-          · scheduler.py · main.py</span
+          >证据：backend/app/graphs.py · parser.py · nutrition.py · replies.py ·
+          advice.py · services.py · repository.py · scheduler.py · main.py</span
         ><span>工程结构快照 · 不读取个人健康数据 · 不代表一次运行轨迹</span>
       </footer>
       <noscript
@@ -1372,7 +1977,10 @@
           "nodes": [
             "__start__",
             "parse",
+            "validate_drafts",
+            "prepare_nutrition",
             "save_ready",
+            "prepare_clarification",
             "clarify",
             "persist",
             "fact",
@@ -1381,11 +1989,14 @@
           ],
           "edges": [
             ["__start__", "parse"],
-            ["parse", "save_ready"],
-            ["save_ready", "clarify", true],
+            ["parse", "validate_drafts"],
+            ["validate_drafts", "prepare_nutrition"],
+            ["prepare_nutrition", "save_ready"],
+            ["save_ready", "prepare_clarification", true],
             ["save_ready", "persist", true],
             ["save_ready", "fact", true],
             ["save_ready", "respond", true],
+            ["prepare_clarification", "clarify"],
             ["clarify", "parse"],
             ["persist", "respond"],
             ["fact", "respond"],
@@ -1438,9 +2049,9 @@
           },
           parse: {
             name: "解析输入",
-            kind: "模型 / 演示规则",
+            kind: "条件调用 LLM",
             description:
-              "读取相关历史，调用 Parser 提取意图和结构化事件。已有事件且追问达到两轮时清除后续问题。",
+              "首次输入调用 model_parse 提取意图和事件草稿；补充回答调用 patch 只更新待补字段。演示模式改用本地规则。",
             input: [
               "input_text",
               "original",
@@ -1448,10 +2059,33 @@
               "recent events",
               "rounds",
             ],
-            output: ["parsed: ParseResult"],
+            output: ["extraction: ExtractionResult", "conversation_feedback"],
             source: "graphs.py · Engine.parse() / parser.py",
             tone: "model",
-            sub: "意图 + 事件 + 查询范围",
+            llm: "model_parse / patch",
+            sub: "LLM · 意图 + 草稿 / 增量补丁",
+          },
+          validate_drafts: {
+            name: "校验事件草稿",
+            kind: "本地结构与完整性校验",
+            description:
+              "检查缺失字段、追问轮次、放弃项、纠错边界和字段范围；把提取草稿转换为可路由的 parsed 状态。",
+            input: ["extraction", "rounds", "skip_optional", "abandoned_indexes"],
+            output: ["parsed", "event_indexes", "waiting_indexes", "pending_fields"],
+            source: "graphs.py · Engine.validate_drafts() / validation.py",
+            sub: "不调用模型 · 缺失项与边界",
+          },
+          prepare_nutrition: {
+            name: "准备营养信息",
+            kind: "条件调用 LLM",
+            description:
+              "仅对准备保存且食物和分量足够的餐食调用 estimate_nutrition。用户给出的数值优先；失败时保留未知，不编造热量。",
+            input: ["parsed.events", "event_indexes", "prepared_events", "已有记录"],
+            output: ["prepared_events", "nutrition status / source / uncertainty"],
+            source: "graphs.py · Engine.prepare_nutrition() / nutrition.py",
+            tone: "model",
+            llm: "estimate_nutrition",
+            sub: "LLM · 有食物与分量时粗估",
           },
           save_ready: {
             name: "先保存独立记录",
@@ -1462,6 +2096,18 @@
             output: ["record_ids", "saved_indexes", "events / revisions"],
             source: "graphs.py · Engine.save_ready()",
             sub: "不依赖补充的事件先落库",
+          },
+          prepare_clarification: {
+            name: "准备个性化追问",
+            kind: "条件调用 LLM",
+            description:
+              "本地 make_plan 先决定允许表达的要点；存在反馈建议时调用 phrase_reply 做自然语言改写，再与固定追问拼接。失败时使用本地表达。",
+            input: ["conversation_feedback", "guided_topics", "parsed.question", "本次食物"],
+            output: ["clarification_reply", "reply_plan", "guided_topics"],
+            source: "graphs.py · Engine.prepare_clarification() / advice.py",
+            tone: "model",
+            llm: "phrase_reply",
+            sub: "LLM · 只改写已批准要点",
           },
           clarify: {
             name: "追问 / 等待补充",
@@ -1478,11 +2124,11 @@
             name: "保存或修正事件",
             kind: "业务代码 / 事务写入",
             description:
-              "估算营养，按操作键去重保存事件；纠错时更新记录版本。数据版本变化会使现有规律过期，回答阶段重新读取当天汇总。",
-            input: ["parsed.events", "correction_id", "saved_indexes"],
+              "读取已经过营养准备的事件，按操作键去重保存；纠错时更新记录版本。数据版本变化会使现有规律过期。",
+            input: ["prepared_events", "correction_id", "saved_indexes"],
             output: ["record_ids", "events / revisions", "data_version"],
             source: "graphs.py · Engine.persist() / repository.py",
-            sub: "营养估算 · 版本 · 去重",
+            sub: "事务写入 · 版本 · 去重",
           },
           fact: {
             name: "保存长期事实",
@@ -1496,13 +2142,15 @@
           },
           respond: {
             name: "组织回答与证据",
-            kind: "查询 / 汇总 / 代码模板",
+            kind: "条件调用 LLM",
             description:
-              "查询按范围取历史；记录后按当天数据生成餐食卡片与建议；没有记录时输出一般建议。当前不是一个额外的 LLM 回答节点。",
-            input: ["parsed.intent", "record_ids", "Repository 历史 / 目标"],
+              "查询、保存回执和事实确认由本地代码生成；普通咨询会筛选结构化历史后调用 answer_advice，反馈表达可调用 phrase_reply，失败时使用本地兜底。",
+            input: ["parsed.intent", "record_ids", "筛选后的历史 / facts / 目标", "conversation_feedback"],
             output: ["reply", "cards", "evidence_refs"],
             source: "graphs.py · Engine.respond()",
-            sub: "当日汇总 · 历史依据",
+            tone: "model",
+            llm: "answer_advice / phrase_reply",
+            sub: "LLM · 普通咨询 / 反馈表达",
           },
           prepare: {
             name: "生成并保存草案",
@@ -1561,53 +2209,59 @@
         const layouts = {
           chat: {
             width: 1000,
-            height: 755,
+            height: 1010,
             positions: {
-              __start__: [455, 21, 130, 38],
-              parse: [410, 102, 220, 83],
-              save_ready: [410, 243, 220, 83],
-              clarify: [50, 405, 230, 83],
-              persist: [385, 405, 230, 83],
-              fact: [720, 405, 230, 83],
-              respond: [385, 565, 230, 83],
-              __end__: [435, 698, 130, 38],
+              __start__: [435, 20, 130, 38],
+              parse: [390, 82, 220, 78],
+              validate_drafts: [390, 197, 220, 78],
+              prepare_nutrition: [390, 312, 220, 78],
+              save_ready: [390, 427, 220, 78],
+              prepare_clarification: [35, 570, 245, 78],
+              clarify: [35, 700, 245, 78],
+              persist: [390, 570, 220, 78],
+              fact: [720, 570, 220, 78],
+              respond: [390, 815, 220, 78],
+              __end__: [435, 950, 130, 38],
             },
             paths: {
-              "__start__>parse": ["M520 59V102"],
-              "parse>save_ready": ["M520 185V243"],
-              "save_ready>clarify": [
-                "M470 326V357H165V405",
+              "__start__>parse": ["M500 58V82"],
+              "parse>validate_drafts": ["M500 160V197"],
+              "validate_drafts>prepare_nutrition": ["M500 275V312"],
+              "prepare_nutrition>save_ready": ["M500 390V427"],
+              "save_ready>prepare_clarification": [
+                "M440 505V535H158V570",
                 "有关键问题",
-                165,
-                383,
+                158,
+                553,
               ],
               "save_ready>persist": [
-                "M520 326V353H500V405",
+                "M500 505V570",
                 "record / correct + events",
-                506,
-                383,
+                605,
+                542,
               ],
               "save_ready>fact": [
-                "M570 326V357H835V405",
+                "M560 505V535H830V570",
                 "fact + fact_text",
                 835,
-                383,
+                553,
               ],
               "save_ready>respond": [
-                "M630 284H974V607H615",
+                "M610 466H975V854H610",
                 "query / advice / 其余",
-                857,
-                549,
+                867,
+                795,
               ],
+              "prepare_clarification>clarify": ["M158 648V700"],
               "clarify>parse": [
-                "M50 447H21V144H410",
+                "M35 739H14V121H390",
                 "补充后重新解析",
-                170,
-                129,
+                161,
+                106,
               ],
-              "persist>respond": ["M500 488V565", "record_ids", 550, 529],
-              "fact>respond": ["M835 488V533H615V606"],
-              "respond>__end__": ["M500 648V698"],
+              "persist>respond": ["M500 648V815", "record_ids", 545, 744],
+              "fact>respond": ["M830 648V775H610V854"],
+              "respond>__end__": ["M500 893V950"],
             },
           },
           plan: {
@@ -1690,6 +2344,9 @@
           document.getElementById("detail-kind").textContent = d.kind;
           document.getElementById("detail-title").textContent = d.name;
           document.getElementById("detail-code").textContent = id;
+          const llmDetail = document.getElementById("detail-llm");
+          llmDetail.hidden = !d.llm;
+          llmDetail.textContent = d.llm ? "LLM 条件调用 · " + d.llm : "";
           document.getElementById("detail-description").textContent =
             d.description;
           for (const [target, items] of [
@@ -1720,10 +2377,12 @@
           const rows =
             graph === "chat"
               ? [
-                  ["关键问题优先", "clarify"],
-                  ["记录 / 纠错", "persist"],
-                  ["长期偏好", "fact"],
-                  ["查询 / 咨询", "respond"],
+                  ["解析输入 · 条件 LLM", "parse"],
+                  ["草稿结构校验", "validate_drafts"],
+                  ["营养准备 · 条件 LLM", "prepare_nutrition"],
+                  ["关键问题先准备表达", "prepare_clarification"],
+                  ["记录 / 事实写入", "persist / fact"],
+                  ["查询 / 咨询 · 条件 LLM", "respond"],
                 ]
               : graph === "plan"
                 ? [
@@ -1859,6 +2518,30 @@
                 ),
               );
             } else {
+              if (d.llm) {
+                g.append(
+                  make("rect", {
+                    x: x + w - 51,
+                    y: y + 11,
+                    width: 37,
+                    height: 18,
+                    rx: 9,
+                    class: "llm-badge",
+                  }),
+                );
+                g.append(
+                  make(
+                    "text",
+                    {
+                      x: x + w - 32.5,
+                      y: y + 23.5,
+                      "text-anchor": "middle",
+                      class: "llm-mark",
+                    },
+                    "LLM",
+                  ),
+                );
+              }
               g.append(
                 make("text", { x: x + 17, y: y + 24, class: "code" }, id),
               );

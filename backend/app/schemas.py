@@ -200,6 +200,10 @@ class ContextualReply(StrictModel):
     segments: list[ReplySegment] = Field(min_length=1, max_length=8)
 
 
+class AdviceReply(StrictModel):
+    answer: str = Field(min_length=1, max_length=1200)
+
+
 class ChatRequest(StrictModel):
     request_id: str = Field(min_length=8, max_length=100)
     conversation_id: str = Field(default='main', min_length=1, max_length=100)

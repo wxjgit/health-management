@@ -4,7 +4,6 @@ __pycache__/
 *.pyc
 .env
 opencode.json
-data/
 frontend/node_modules/
 frontend/dist/
 *.log

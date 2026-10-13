@@ -19,12 +19,14 @@ from .drafts import check_drafts, merge_patch
 from .schemas import EventDraft, PreparedEvent
 from .conversation import reconcile_feedback, attach_feedback, wants_advice, explicitly_recording
 from .replies import make_plan, express_plan, medical_question, record_receipt
+from .advice import build_advice_context, validate_advice, fallback_advice, context_trace
 from .repository import Repository, dump
 from .services import dashboard, evidence, recommendation, meal_assessment, analyze, review, plan_draft, archive
 
 
 class State(TypedDict, total=False):
     thread_id: str
+    conversation_id: str
     input_text: str
     original: str
     selected_id: str | None
@@ -317,6 +319,7 @@ class Engine:
         parsed = state['parsed']
         cards = []
         refs = []
+        advice_traces = []
         if parsed['intent'] == 'query':
             records = self.repo.events(parsed.get('query_start'), parsed.get('query_end'),
                                        parsed.get('query_kind'), parsed.get('query_search'), limit=100)
@@ -345,12 +348,29 @@ class Engine:
                 reply = '没有保存餐食记录。' if state.get('rounds', 0) else ''
             elif medical_question(state['input_text']):
                 reply = make_plan([], 'advice', medical=True)['boundary']
+            elif parsed['intent'] == 'advice':
+                context, refs = build_advice_context(self.repo, state['input_text'],
+                                                     state.get('conversation_id', 'main'), state['thread_id'])
+                advice_traces.append({'title': '筛选建议上下文', 'detail': context_trace(context), 'source': 'local'})
+                try:
+                    if self.settings.mode != 'model':
+                        raise ValueError('演示模式不调用建议模型')
+                    reply = validate_advice(self.parser.answer_advice(context), context)
+                    advice_traces.append({'title': '生成个性化建议',
+                                          'detail': '模型基于筛选后的结构化记录回答；数值、完整性和医疗边界由本地规则复核。',
+                                          'source': 'model'})
+                except (ValueError, TypeError):
+                    reply = fallback_advice(context)
+                    advice_traces.append({'title': '生成个性化建议',
+                                          'detail': '模型不可用或回复未通过边界检查，使用同一上下文的本地兜底。',
+                                          'source': 'local'})
             else:
                 reply, refs = recommendation(self.repo)
             if self.settings.mode == 'demo':
                 reply += '\n演示解析支持常见食物、体重、睡眠、运动和周期表达；自由复杂输入请接入模型。'
         if parsed['intent'] != 'query':
             trace = list(state.get('process_trace', []))
+        trace.extend(advice_traces)
         plan = None
         if parsed['intent'] not in ('query', 'fact') and state.get('conversation_feedback'):
             plan = make_plan(state['conversation_feedback'], 'recorded' if state.get('record_ids') else 'advice',
@@ -369,18 +389,58 @@ class Engine:
 
     def build_chat(self):
         graph = StateGraph(State)
-        for name in ['parse', 'validate_drafts', 'prepare_nutrition', 'save_ready', 'prepare_clarification', 'clarify', 'persist', 'fact', 'respond']:
+
+        # 节点说明：这里的“调用 LLM”均指 model 模式下的条件调用；demo 模式全部使用本地规则。
+        for name in [
+            # 理解首轮输入，或把用户的补充答案合并到草稿。
+            # LLM：条件调用 model_parse() / patch()；取消、回答“不知道”等分支可由本地逻辑直接处理。
+            'parse',
+            # 校验事件草稿的必需字段、范围、时区、追问轮次和纠错边界。
+            # LLM：不调用。
+            'validate_drafts',
+            # 为即将保存的餐食准备营养信息，同时保留用户提供的数据和来源。
+            # LLM：条件调用 estimate_nutrition()；仅在分量已知且仍缺营养值时调用。
+            'prepare_nutrition',
+            # 有待补信息时，先保存不依赖本次追问的其他完整记录。
+            # LLM：不调用。
+            'save_ready',
+            # 在真正暂停前组织针对当前饮食反馈的自然追问前置语。
+            # LLM：条件调用 phrase_reply()；没有反馈要点或模型不可用时使用本地表达。
+            'prepare_clarification',
+            # 通过 interrupt() 暂停工作流，等待用户补充；恢复后回到 parse。
+            # LLM：不调用。
+            'clarify',
+            # 将已校验并完成营养准备的事件写入 events / revisions，支持纠错和幂等。
+            # LLM：不调用。
+            'persist',
+            # 将用户明确表达的长期偏好、过敏或限制写入 facts。
+            # LLM：不调用；这里只保存 parse 已提取且路由确认的 fact_text。
+            'fact',
+            # 查询历史、生成保存回执、普通咨询回答，并组装卡片和证据引用。
+            # LLM：条件调用 answer_advice()；有饮食反馈时还可能调用 phrase_reply()，其余回答走本地规则。
+            'respond',
+        ]:
             graph.add_node(name, getattr(self, name))
+
+        # 固定主干：输入解析 → 本地草稿校验 → 营养准备 → 保存前分流。
         graph.add_edge(START, 'parse')
         graph.add_edge('parse', 'validate_drafts')
         graph.add_edge('validate_drafts', 'prepare_nutrition')
         graph.add_edge('prepare_nutrition', 'save_ready')
+
+        # route_chat 按优先级选择一个分支：需要追问、保存记录、保存长期事实或直接回答。
         graph.add_conditional_edges('save_ready', self.route_chat, {n: n for n in ['prepare_clarification', 'persist', 'fact', 'respond']})
+
+        # 追问分支先准备表达，再暂停；用户补充后回到 parse 做增量提取和重新校验。
         graph.add_edge('prepare_clarification', 'clarify')
         graph.add_edge('clarify', 'parse')
+
+        # 记录和长期事实写入完成后统一进入 respond；最终回答后结束本次工作流。
         graph.add_edge('persist', 'respond')
         graph.add_edge('fact', 'respond')
         graph.add_edge('respond', END)
+
+        # checkpointer 按 thread_id 保存 State，使 clarify 的 interrupt / resume 可以跨请求恢复。
         return graph.compile(checkpointer=self.checkpointer)
 
     def prepare_plan(self, state):
@@ -458,11 +518,11 @@ class Engine:
                 if existing['status'] in ['completed', 'waiting_input']:
                     return existing['result']
                 thread_id = existing['id']
-                invocation = None if self.graph_for(kind).get_state({'configurable': {'thread_id': thread_id}}).values else {**initial, 'thread_id': thread_id, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
+                invocation = None if self.graph_for(kind).get_state({'configurable': {'thread_id': thread_id}}).values else {**initial, 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
             else:
                 thread_id = str(uuid4())
                 self.repo.register_workflow(thread_id, request_id, fp, kind)
-                invocation = {**initial, 'thread_id': thread_id, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
+                invocation = {**initial, 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
                 if kind == 'chat':
                     self.repo.message(request_id, thread_id, 'user', initial['input_text'], conversation=conversation)
             try:

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from model_helpers import planned_content
 
 
 @pytest.fixture
@@ -46,6 +47,7 @@ def mock_model(monkeypatch, extract, estimate):
             content = extract(data)
         if isinstance(content, httpx.Response):
             return content
+        content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
     monkeypatch.setattr('app.parser.httpx.Client',
@@ -53,8 +55,8 @@ def mock_model(monkeypatch, extract, estimate):
     return calls
 
 
-def chat(client, text, request_id=None):
-    response = client.post('/api/chat', json={'request_id': request_id or str(uuid4()), 'text': text})
+def chat(client, text, request_id=None, event_id=None):
+    response = client.post('/api/chat', json={'request_id': request_id or str(uuid4()), 'text': text, 'event_id': event_id})
     assert response.status_code == 200, response.text
     return response.json()
 
@@ -186,7 +188,7 @@ def test_food_or_cooking_change_recomputes_estimate(settings, monkeypatch, chang
     with TestClient(create_app(settings)) as client:
         chat(client, '昨天吃了100g炸鸡')
         record_id = client.get('/api/events').json()[0]['id']
-        chat(client, '纠正食物或做法')
+        chat(client, '纠正食物或做法', event_id=record_id)
         assert client.get('/api/events').json()[0]['version'] == 2
     assert calls['nutrition'] == 2
 
@@ -202,7 +204,7 @@ def test_unchanged_nutrition_is_reused_during_unrelated_correction(settings, mon
     with TestClient(create_app(settings)) as client:
         chat(client, '昨天吃了100g炸鸡')
         record_id = client.get('/api/events').json()[0]['id']
-        chat(client, '只补充记录备注，食物分量不变')
+        chat(client, '只补充记录备注，食物分量不变', event_id=record_id)
         assert client.get('/api/events').json()[0]['data']['items'][0]['kcal'] == 320
     assert calls['nutrition'] == 1
 
@@ -264,7 +266,7 @@ def test_repeating_same_user_value_reuses_completed_mixed_nutrition(settings, mo
     with TestClient(create_app(settings)) as client:
         chat(client, '100g食物，实际热量120kcal')
         record_id = client.get('/api/events').json()[0]['id']
-        chat(client, '确认还是100g，热量120kcal')
+        chat(client, '确认还是100g，热量120kcal', event_id=record_id)
         item = client.get('/api/events').json()[0]['data']['items'][0]
         assert item['kcal'] == 120
         assert item['protein_g'] == 8
@@ -283,7 +285,7 @@ def test_consumed_user_values_are_preserved_but_not_applied_to_new_portion(setti
     with TestClient(create_app(settings)) as client:
         chat(client, '100g炸鸡，实际热量320kcal，蛋白质20g，碳水15g，脂肪20g')
         record_id = client.get('/api/events').json()[0]['id']
-        done = chat(client, '分量改成200g')
+        done = chat(client, '分量改成200g', event_id=record_id)
         item = client.get('/api/events').json()[0]['data']['items'][0]
         assert item['kcal'] is None
         assert item['nutrition_reference']['values']['kcal'] == 320

@@ -2,13 +2,12 @@
 import re
 from datetime import timedelta
 
-from .clock import now
+from .clock import now, date_from_text
 from .services import dashboard, history_window
 
 
 TODAY_SCENES = {'today_attention', 'next_meal', 'food_choice', 'portion', 'general'}
 CONSTRAINT = re.compile(r'过敏|忌口|不吃|不能吃|医生|营养师|疾病|怀孕|孕期|哺乳')
-ANAPHORA = re.compile(r'(^|[，。！？?\s])(这|这个|这顿|那|那个|那顿|它|刚才|前面|上面|上一(?:条|顿))')
 
 
 def classify_scene(question):
@@ -45,8 +44,8 @@ def _item(item):
 
 
 def _meal(event):
-    return {'id': event['id'], 'date': event['day'], 'meal_slot': event['data'].get('meal_slot'),
-            'items': [_item(item) for item in event['data'].get('items', [])]}
+    return {'date': event['day'], 'meal_slot': event['data'].get('meal_slot'),
+            'items': [_item(item) for item in event['data'].get('items', [])[:10]]}
 
 
 def _safe_evidence(event):
@@ -59,19 +58,11 @@ def _safe_evidence(event):
             'text': '、'.join(foods) + ('等食物' if len(items) > 4 else '')}
 
 
-def _recent_user_dialogue(repo, conversation_id, thread_id, question):
-    # Raw chat is only needed to resolve anaphora. Assistant replies are never treated as facts.
-    if not ANAPHORA.search(question):
-        return []
-    candidates = [message for message in repo.messages(conversation_id, limit=12)
-                  if message['role'] == 'user' and message['thread_id'] != thread_id]
-    return [{'text': message['text'][:400]} for message in candidates[-2:]]
-
-
-def _feedback(repo, days=3):
-    start = (now().date() - timedelta(days=days - 1)).isoformat()
+def _feedback(repo, days=1, end=None):
+    end = end or now().date()
+    start = (end - timedelta(days=days - 1)).isoformat()
     signals = []
-    for event in repo.events(start=start, end=now().date().isoformat(), kind='meal', limit=30):
+    for event in repo.events(start=start, end=end.isoformat(), kind='meal', limit=30):
         for signal in event['data'].get('feedback', []):
             if signal.get('stance') == 'experience':
                 signals.append({'topic': signal['topic'], 'day': str(signal.get('day') or event['day'])})
@@ -79,63 +70,71 @@ def _feedback(repo, days=3):
 
 
 def _day_summary(day):
-    return {'date': day['date'], 'record_count': day['record_count'], 'meal_count': day['meal_count'],
+    return {'date': day['date'], 'meal_count': day['meal_count'],
             'diet_complete': day['diet_complete'], 'totals': day['totals']}
 
 
-def build_advice_context(repo, question, conversation_id='main', thread_id=None):
+def build_advice_context(repo, question, conversation_id='main', thread_id=None, *, view=None, bound=None, scope_text=None):
     """Return bounded model context and the exact local records supporting it."""
-    scene = classify_scene(question)
+    from .harness import PlanHarness
+    view = view or PlanHarness.advice_view(question, bound)
+    scene = {'none': 'general', 'weight_trend': 'weight_trend', 'meal_reference': 'meal_reference', 'diet_week': 'recent_review',
+             'diet_portion': 'portion'}.get(view, classify_scene(question))
+    context = {'question': question, 'scene': scene, 'view': view, 'now': now().isoformat()}
+    if view == 'none':
+        return context, []
+    if view == 'weight_trend':
+        days = PlanHarness.view_days(scope_text or question, view)
+        end = date_from_text(question).date()
+        window = history_window(repo, days, end)
+        context['window'] = {'start': (end - timedelta(days=days - 1)).isoformat(), 'end': end.isoformat()}
+        context['weights'] = [{'date': day['date'], 'weight_kg': day['weight_kg']}
+                              for day in window if day['weight_kg'] is not None]
+        return context, []
     facts = repo.facts()
-    constraints = [fact['content'] for fact in facts if CONSTRAINT.search(fact['content'])][-8:]
-    preferences = [fact['content'] for fact in facts if not CONSTRAINT.search(fact['content'])][-5:]
+    constraints = [fact['content'][:500] for fact in facts if CONSTRAINT.search(fact['content'])][-8:]
+    preferences = [fact['content'][:500] for fact in facts if not CONSTRAINT.search(fact['content'])][-5:]
     active = repo.active_plan()
     profile = repo.get_meta('profile')
-    context = {
-        'question': question,
-        'scene': scene,
-        'now': now().isoformat(),
-        'active_targets': active['data'].get('targets') if active else None,
+    context.update({
+        'active_targets': {k: v for k, v in active['data'].get('targets', {}).items()
+                           if k in ('kcal', 'protein_g', 'carbs_g', 'fat_g')} if active else None,
         'constraints': constraints,
         'preferences': preferences,
         'nutrition_context': profile.get('nutrition_context', 'unspecified') if profile else 'unspecified',
-        'recent_dialogue': _recent_user_dialogue(repo, conversation_id, thread_id, question),
-    }
+    })
     evidence = []
-    if scene in TODAY_SCENES:
-        current = dashboard(repo, now().date().isoformat())
-        meals = [event for event in current['events'] if event['kind'] == 'meal']
+    if view in ('diet_today', 'diet_portion'):
+        current = dashboard(repo, date_from_text(question).date().isoformat())
+        meals = [event for event in current['events'] if event['kind'] == 'meal'][:10]
         context['today'] = {
             'date': current['date'], 'meals': [_meal(event) for event in meals],
             'totals': current['totals'], 'remaining': current['remaining'],
-            'targets': current['targets'], 'meal_count': current['meal_count'],
+            'targets': {k: v for k, v in current['targets'].items()
+                        if k in ('kcal', 'protein_g', 'carbs_g', 'fat_g')} if current['targets'] else None,
+            'meal_count': current['meal_count'],
             'record_complete': current['diet_complete'],
         }
-        context['recent_feedback'] = _feedback(repo)
+        context['recent_feedback'] = _feedback(repo, end=date_from_text(question).date())
         evidence = [_safe_evidence(event) for event in meals]
-    elif scene == 'recent_review':
-        context['recent_days'] = [_day_summary(day) for day in history_window(repo, 7)
-                                  if day['record_count']]
-    elif scene == 'progress':
-        window = history_window(repo, 28)
-        context['progress'] = {
-            'weights': [{'date': day['date'], 'weight_kg': day['weight_kg']}
-                        for day in window if day['weight_kg'] is not None],
-            'complete_diet_days': [_day_summary(day) for day in window if day['diet_complete']],
-        }
-        if profile:
-            context['profile'] = {key: profile.get(key) for key in
-                                  ('age', 'height_cm', 'weight_kg', 'goal_weight_kg', 'activity',
-                                   'nutrition_context')}
+    elif view == 'diet_week':
+        days = PlanHarness.view_days(scope_text or question, view)
+        end = date_from_text(question).date()
+        context['window'] = {'start': (end - timedelta(days=days - 1)).isoformat(), 'end': end.isoformat()}
+        context['recent_days'] = [_day_summary(day) for day in history_window(repo, days, end)
+                                  if day['meal_count']]
     if scene == 'portion':
         if profile:
             context['profile'] = {key: profile.get(key) for key in
                                   ('age', 'height_cm', 'weight_kg', 'goal_weight_kg', 'activity',
                                    'nutrition_context')}
+    if bound and bound['kind'] == 'meal' and view in ('diet_today', 'diet_portion', 'meal_reference'):
+        context['resolved_records'] = [_meal(bound)]
+        evidence = list({e['id']: e for e in [*evidence, _safe_evidence(bound)]}.values())
     context['selection_policy'] = {
         'structured_records_preferred': True,
         'assistant_messages_excluded': True,
-        'dialogue_only_for_reference_resolution': True,
+        'references_resolved_locally': True,
     }
     return context, evidence
 
@@ -181,6 +180,12 @@ def validate_advice(answer, context):
 
 def fallback_advice(context):
     scene = context['scene']
+    if scene == 'meal_reference':
+        return '已定位到你指的这餐。单餐记录不能代表全天饮食；可以结合食物搭配、实际分量和饥饿感判断。'
+    if scene == 'weight_trend':
+        weights = context.get('weights', [])
+        return ('目前体重记录还不足以判断稳定趋势。' if len(weights) < 2 else
+                f'查询窗口内有 {len(weights)} 天体重记录。单日波动不适合作为调整计划的依据，可以继续观察稳定趋势。')
     if scene in TODAY_SCENES:
         today = context.get('today', {})
         meals = today.get('meals', [])
@@ -210,7 +215,7 @@ def context_trace(context):
     parts = [f'识别为 {context["scene"]} 场景']
     if today is not None:
         parts.append(f'选取今天 {today["meal_count"]} 条餐食记录')
-    if context.get('recent_dialogue'):
-        parts.append(f'为解析指代选取同一会话 {len(context["recent_dialogue"])} 条用户消息')
-    parts.append('未使用历史助手回复')
+    if context.get('resolved_records'):
+        parts.append('指代由本地绑定到单条结构化记录')
+    parts.append('未发送历史聊天原文')
     return '；'.join(parts) + '。'

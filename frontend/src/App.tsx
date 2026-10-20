@@ -334,6 +334,7 @@ export default function App() {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [months, setMonths] = useState<Month[]>([]);
   const [input, setInput] = useState("");
+  const [localOnly, setLocalOnly] = useState(() => localStorage.getItem("health-local-only") === "true");
   const [busy, setBusy] = useState(false);
   const [processingStartedAt, setProcessingStartedAt] = useState<number | null>(null);
   const [processingElapsed, setProcessingElapsed] = useState(0);
@@ -449,7 +450,9 @@ export default function App() {
     if (!input.trim() || busy) return;
     const text = input.trim(),
       workflow = currentPending;
-    const key = `${workflow?.thread_id ?? selectedEvent ?? ""}:${text}`;
+    const processingMode = localOnly || health?.local_only || workflow?.processing_mode === "local_only"
+      ? "local_only" : "model_allowed";
+    const key = `${workflow?.thread_id ?? selectedEvent ?? ""}:${processingMode}:${text}`;
     if (lastRequest.current?.key !== key)
       lastRequest.current = { key, id: requestId() };
     setProcessingStartedAt(Date.now());
@@ -460,6 +463,7 @@ export default function App() {
             request_id: lastRequest.current!.id,
             interrupt_id: workflow.pending_input.interrupt_id,
             text,
+            processing_mode: processingMode,
           });
         } else {
           await api("/chat", "POST", {
@@ -467,6 +471,7 @@ export default function App() {
             text,
             conversation_id: "main",
             event_id: selectedEvent,
+            processing_mode: processingMode,
           });
         }
         lastRequest.current = null;
@@ -577,7 +582,7 @@ export default function App() {
               className={`mode-badge ${health?.mode === "model" ? "model" : ""}`}
             >
               <i />
-              {health?.mode === "model" ? "模型已连接" : "演示模式"}
+              {localOnly || health?.local_only ? "纯本地模式" : health?.mode === "model" ? "模型已连接" : "演示模式"}
             </span>
             <button
               className="icon-button notification-toggle"
@@ -764,7 +769,9 @@ export default function App() {
                           </div>
                           <div className="running-step active">
                             <LoaderCircle size={13} className="spin" />
-                            <span><b>调用 {health?.model_name ?? "大模型"}</b><small>正在理解输入并生成结构化结果…</small></span>
+                            <span><b>{localOnly || health?.local_only || currentPending?.processing_mode === "local_only"
+                              ? "本地规则处理" : health?.mode === "model" ? `调用 ${health.model_name}` : "本地演示解析"}</b>
+                              <small>正在理解输入并检查处理范围…</small></span>
                           </div>
                           <div className="running-step queued">
                             <span className="queued-dot" />
@@ -839,6 +846,8 @@ export default function App() {
                                         .interrupt_id,
                                     event_id: o.id,
                                     text: o.label,
+                                    processing_mode: localOnly || health?.local_only || currentPending.processing_mode === "local_only"
+                                      ? "local_only" : "model_allowed",
                                   },
                                 ),
                               )
@@ -849,6 +858,25 @@ export default function App() {
                         ))}
                       </div>
                     )}
+                    <div className="model-data-notice">
+                      <label>
+                        <input type="checkbox" aria-label="纯本地模式" checked={localOnly || !!health?.local_only || currentPending?.processing_mode === "local_only"}
+                          disabled={busy || health?.local_only || currentPending?.processing_mode === "local_only"}
+                          onChange={(e) => {
+                            setLocalOnly(e.target.checked);
+                            localStorage.setItem("health-local-only", String(e.target.checked));
+                          }} />
+                        纯本地模式
+                      </label>
+                      {localOnly || health?.local_only || currentPending?.processing_mode === "local_only" ? (
+                        <p>不向外部模型发送数据。支持常见记录和本地查询；缺失营养保持未知，复杂表达请明确日期和内容。</p>
+                      ) : health?.mode === "model" ? (
+                        <details>
+                          <summary>将发送给 {health.model_provider ?? "已配置供应商"} · {health.model_name}</summary>
+                          <p>先发送本次输入、当前时间和操作状态，不附带历史记录。纠错仅发送选中或明确指代的单条记录；补充仅发送当前草稿。建议按问题发送单餐、相关日期饮食、近 7 天饮食汇总或近 28 天体重等结构化数据，饮食建议可能参考已确认偏好与限制，分量建议还可能参考基础档案。营养估算只发送本次食物与分量，回复润色只发送本次回复要点。历史聊天原文不发送。</p>
+                        </details>
+                      ) : <p>演示模式使用本地规则，营养为固定示例值。开启纯本地模式后不使用示例营养。</p>}
+                    </div>
                     <form className="composer" onSubmit={submit}>
                       <textarea
                         aria-label="描述饮食或身体状态"
@@ -1160,7 +1188,7 @@ export default function App() {
                       "长期信息已删除",
                     );
                 }}
-                health={health}
+                health={{ ...health, local_only: localOnly || health.local_only }}
               />
             )}
           </>
@@ -2076,10 +2104,12 @@ function Settings({
       </section>
       <p className="small-note">
         当前运行：
-        {health.mode === "demo"
+        {health.local_only
+          ? "纯本地模式（不向外部模型发送数据）"
+          : health.mode === "demo"
           ? "演示模式（规则解析与固定示例营养）"
           : `真实模型 · ${health.model_name}`}{" "}
-        · 模型配置保存在后端 .env。
+        · 模型配置由后端管理。
       </p>
     </div>
   );

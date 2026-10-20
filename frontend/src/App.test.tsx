@@ -10,6 +10,7 @@ let records: unknown[];
 let chatMessages: unknown[];
 let storedPlans: unknown[];
 let defaultTargets: Record<string, unknown>;
+let healthOverride: Record<string, unknown> | null;
 
 const suggestedValues = { kcal: 2100, protein_g: 105, carbs_g: 262, fat_g: 70, exercise_minutes: 150 };
 const readyDefaults = () => ({
@@ -39,6 +40,8 @@ const emptyDay = {
 };
 
 beforeEach(() => {
+  localStorage.clear();
+  healthOverride = null;
   bodies = [];
   failOnce = false;
   workflows = [];
@@ -67,7 +70,7 @@ beforeEach(() => {
         );
       }
       const data: Record<string, unknown> = {
-        "/health": {
+        "/health": healthOverride ?? {
           mode: "demo",
           today: "2026-10-08",
           timezone: "Asia/Shanghai",
@@ -109,6 +112,44 @@ beforeEach(() => {
 });
 
 describe("网页核心交互", () => {
+  it("发送前显示供应商、模型和各任务的数据范围", async () => {
+    healthOverride = { mode: "model", today: "2026-10-20", timezone: "Asia/Shanghai",
+      model_name: "test-model", model_provider: "model.test.invalid", local_only: false, scheduler_enabled: false };
+    render(<App />);
+    const summary = await screen.findByText("将发送给 model.test.invalid · test-model");
+    await userEvent.click(summary);
+    expect(screen.getByText(/先发送本次输入/).textContent).toContain("历史聊天原文不发送");
+  });
+
+  it("恢复的本地流程保持纯本地选择且不能升级", async () => {
+    workflows = [{ thread_id: "local-paused", status: "waiting_input", processing_mode: "local_only",
+      pending_input: { kind: "clarification", interrupt_id: "local-q", question: "分量多少？" } }];
+    render(<App />);
+    const toggle = await screen.findByRole("checkbox", { name: "纯本地模式" });
+    expect((toggle as HTMLInputElement).checked).toBe(true);
+    expect((toggle as HTMLInputElement).disabled).toBe(true);
+    await userEvent.type(screen.getByLabelText("描述饮食或身体状态"), "100g");
+    await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].body.processing_mode).toBe("local_only");
+  });
+
+  it("纯本地选择随请求发送，切换模式后的重试使用新的请求ID", async () => {
+    render(<App />);
+    const input = await screen.findByLabelText("描述饮食或身体状态");
+    await userEvent.type(input, "今天体重65公斤");
+    failOnce = true;
+    await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
+    await screen.findByRole("alert");
+    await userEvent.click(screen.getByRole("checkbox", { name: "纯本地模式" }));
+    expect(localStorage.getItem("health-local-only")).toBe("true");
+    await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+    expect(bodies[0].body.processing_mode).toBe("model_allowed");
+    expect(bodies[1].body.processing_mode).toBe("local_only");
+    expect(bodies[0].body.request_id).not.toBe(bodies[1].body.request_id);
+  });
+
   it("展示可核验的 AI 处理阶段摘要", async () => {
     chatMessages = [
       {

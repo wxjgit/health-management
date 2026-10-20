@@ -30,6 +30,8 @@ export type Health = {
   today: string;
   timezone: string;
   model_name: string | null;
+  model_provider?: string | null;
+  local_only?: boolean;
   scheduler_enabled: boolean;
 };
 export type Evidence = { id: string; date: string; kind: string; text: string };
@@ -125,6 +127,7 @@ export type Workflow = {
   process_trace: ProcessStep[];
   duration_ms: number;
   pending_input?: Pending;
+  processing_mode?: "model_allowed" | "local_only";
 };
 export type Plan = {
   id: string;

@@ -11,6 +11,7 @@ from app.conversation import reconcile_feedback, attach_feedback
 from app.clock import SHANGHAI
 from app.main import create_app
 from app.replies import check_phrasing, make_plan
+from model_helpers import planned_content
 
 
 @pytest.fixture(autouse=True)
@@ -58,6 +59,7 @@ def install_model(monkeypatch, parse=None, phrase=None):
             content = parse(data) if parse else {'intent': 'record', 'events': [meal()]}
         if isinstance(content, httpx.Response):
             return content
+        content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
     monkeypatch.setattr('app.parser.httpx.Client',

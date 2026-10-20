@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.clock import SHANGHAI
 from app.config import Settings
 from app.main import create_app
+from model_helpers import planned_content
 
 
 @pytest.fixture(autouse=True)
@@ -36,6 +37,7 @@ def install_model(monkeypatch, answer):
             content = {'answer': answer(data) if callable(answer) else answer}
         else:
             content = {'intent': 'advice'}
+        content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
     monkeypatch.setattr('app.parser.httpx.Client',
@@ -69,7 +71,7 @@ def ask(client, text, conversation_id='food-chat'):
     return response.json()
 
 
-def test_advice_uses_structured_today_data_and_only_user_dialogue_for_anaphora(settings, monkeypatch):
+def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkeypatch):
     reply = ('按目前记录，你今天只记了100g葱油饼，还不能判断全天是否均衡。'
              '1490 kcal是相对目标的记录差额，不需要刻意吃满；下一餐可补充蛋白质食物和蔬菜。')
     calls = install_model(monkeypatch, reply)
@@ -89,7 +91,7 @@ def test_advice_uses_structured_today_data_and_only_user_dialogue_for_anaphora(s
         assert context['today']['remaining']['kcal'] == 1490
         assert context['today']['record_complete'] is False
         assert context['today']['meals'][0]['items'][0]['nutrition_status'] == 'estimated'
-        assert context['recent_dialogue'] == [{'text': '我刚吃了100g葱油饼'}]
+        assert 'recent_dialogue' not in context
         assert 'raw_text' not in json.dumps(context, ensure_ascii=False)
         assert '旧建议' not in json.dumps(context, ensure_ascii=False)
         assert result['evidence_refs'][0]['text'] == '100g葱油饼'
@@ -104,7 +106,7 @@ def test_non_referential_question_does_not_send_raw_dialogue(settings, monkeypat
         repo = client.app.state.engine.repo
         repo.message('old-user', 'old-thread', 'user', '昨天聊了完全不同的话题', conversation='food-chat')
         ask(client, '今天吃饭需要注意什么吗')
-        assert calls['advice'][0]['context']['recent_dialogue'] == []
+        assert 'recent_dialogue' not in calls['advice'][0]['context']
 
 
 @pytest.mark.parametrize('invalid', [

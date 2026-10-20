@@ -12,4 +12,5 @@ frontend/dist/
 *.tsbuildinfo
 pytest-cache-files-*/
 pytest-*/
+tmp/harness-pytest-*/
 

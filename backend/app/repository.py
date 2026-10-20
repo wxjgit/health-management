@@ -46,6 +46,9 @@ class Repository:
                 role TEXT NOT NULL, text TEXT NOT NULL, cards TEXT NOT NULL,
                 evidence_refs TEXT NOT NULL, created_at TEXT NOT NULL,
                 process_trace TEXT NOT NULL DEFAULT '[]', duration_ms INTEGER NOT NULL DEFAULT 0);
+            CREATE TABLE IF NOT EXISTS model_calls (
+                thread_id TEXT NOT NULL, purpose TEXT NOT NULL, payload_bytes INTEGER NOT NULL,
+                created_at TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS facts (
                 id TEXT PRIMARY KEY, content TEXT NOT NULL, source TEXT NOT NULL,
                 source_event TEXT, status TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -81,6 +84,26 @@ class Repository:
 
     def close(self):
         self.conn.close()
+
+    def account_model_call(self, thread_id, purpose, payload_bytes):
+        """Reserve the workflow budget before dispatch, also for failed/retried calls.
+
+        Only metadata is kept; neither request bodies nor health text are logged.
+        """
+        with self.lock, self.conn:
+            count, size = self.conn.execute(
+                'SELECT COUNT(*), COALESCE(SUM(payload_bytes),0) FROM model_calls WHERE thread_id=?',
+                (thread_id,)).fetchone()
+            if count >= 32 or size + payload_bytes > 400000:
+                raise ValueError('本次流程已达到模型调用预算，请缩小任务或重新开始。')
+            if purpose == 'processing_plan':
+                plans = self.conn.execute(
+                    "SELECT COUNT(*) FROM model_calls WHERE thread_id=? AND purpose='processing_plan'",
+                    (thread_id,)).fetchone()[0]
+                if plans >= 4:
+                    raise ValueError('本次流程已达到重新规划上限，请明确任务后重新开始。')
+            self.conn.execute('INSERT INTO model_calls VALUES (?,?,?,?)',
+                              (thread_id, purpose, payload_bytes, stamp()))
 
     def get_meta(self, key, default=None):
         with self.lock:
@@ -188,6 +211,14 @@ class Repository:
         rows = self.conn.execute('SELECT * FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT ?', (conversation_id, limit)).fetchall()
         return [{**dict(r), 'cards': json.loads(r['cards']), 'evidence_refs': json.loads(r['evidence_refs']),
                  'process_trace': json.loads(r['process_trace'])} for r in reversed(rows)]
+
+    def previous_reference_ids(self, conversation_id, excluding_thread):
+        # Reference resolution reads only local result metadata, not chat text.
+        row = self.conn.execute(
+            "SELECT evidence_refs FROM messages WHERE conversation_id=? AND role='assistant' "
+            'AND thread_id!=? ORDER BY created_at DESC, rowid DESC LIMIT 1',
+            (conversation_id, excluding_thread)).fetchone()
+        return list(dict.fromkeys(ref['id'] for ref in json.loads(row[0])))[:5] if row else []
 
     def message(self, message_id, thread_id, role, text, cards=None, evidence=None, conversation='main',
                 process_trace=None, duration_ms=0):
@@ -306,7 +337,7 @@ class Repository:
     def erase_context(self):
         # Queries/checkpoints can contain copies of the deleted event. Clear all transient context.
         with self.lock, self.conn:
-            for table in ['messages', 'workflows', 'receipts', 'operations', 'reviews', 'notifications', 'insights']:
+            for table in ['messages', 'workflows', 'receipts', 'operations', 'reviews', 'notifications', 'insights', 'model_calls']:
                 self.conn.execute(f'DELETE FROM {table}')
             self.conn.execute("UPDATE plans SET data='{}',status='purged' WHERE status!='active'")
             for plan in self.plans():

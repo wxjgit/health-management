@@ -276,6 +276,21 @@ details[open] > summary > svg:last-child {
   border-radius: 50%;
   background: #b69a64;
 }
+.model-data-notice {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid #e2e8df;
+  border-radius: 10px;
+  color: #576652;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.model-data-notice label { display: flex; align-items: center; gap: 6px; }
+.model-data-notice input { width: auto; }
+.model-data-notice p { margin: 6px 0 0; line-height: 1.65; }
+.model-data-notice details { margin-top: 6px; }
+.model-data-notice summary { cursor: pointer; }
+
 .mode-badge.model {
   color: #4e7d53;
   background: #e9f0e0;

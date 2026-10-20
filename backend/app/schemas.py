@@ -204,11 +204,43 @@ class AdviceReply(StrictModel):
     answer: str = Field(min_length=1, max_length=1200)
 
 
+DataView = Literal['none', 'weight_trend', 'diet_today', 'diet_week', 'diet_portion', 'meal_reference']
+
+
+class PlannedAction(StrictModel):
+    """A proposal, not authority to access records or execute a write."""
+    intent: Literal['record', 'correct', 'query', 'advice', 'fact', 'clarify']
+    text: str = Field(min_length=1, max_length=4000)
+    target: Literal['selected', 'previous', 'unresolved'] = 'unresolved'
+    data_view: DataView = 'none'
+    events: list[ExtractionEvent] = Field(default_factory=list, max_length=20)
+    feedback: list[MealFeedback] = Field(default_factory=list, max_length=8)
+    question: str | None = Field(default=None, max_length=300)
+    clarification_event_index: int | None = Field(default=None, ge=0, le=19)
+    clarification_item_index: int | None = Field(default=None, ge=0, le=39)
+    clarification_fields: list[ClarificationField] = Field(default_factory=list, max_length=8)
+    fact_text: str | None = Field(default=None, max_length=500)
+    query_start: date | None = None
+    query_end: date | None = None
+    query_kind: Literal['meal', 'weight', 'sleep', 'exercise', 'cycle'] | None = None
+    query_search: str | None = Field(default=None, max_length=100)
+
+
+class ProcessingPlan(StrictModel):
+    actions: list[PlannedAction] = Field(min_length=1, max_length=4)
+
+
+class CorrectionResult(StrictModel):
+    event: ExtractionEvent | None = None
+    question: str | None = Field(default=None, max_length=300)
+
+
 class ChatRequest(StrictModel):
     request_id: str = Field(min_length=8, max_length=100)
     conversation_id: str = Field(default='main', min_length=1, max_length=100)
     text: str = Field(min_length=1, max_length=4000)
     event_id: str | None = None
+    processing_mode: Literal['model_allowed', 'local_only'] = 'model_allowed'
 
 
 class ResumeRequest(StrictModel):
@@ -217,6 +249,7 @@ class ResumeRequest(StrictModel):
     text: str | None = Field(default=None, max_length=4000)
     approved: bool | None = Field(default=None, strict=True)
     event_id: str | None = None
+    processing_mode: Literal['model_allowed', 'local_only'] | None = None
 
 
 class Targets(StrictModel):

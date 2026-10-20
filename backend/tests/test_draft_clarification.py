@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from model_helpers import planned_content
 
 
 @pytest.fixture
@@ -26,7 +27,9 @@ def mock_model(monkeypatch, handler):
             # These tests isolate extraction/patch behavior; nutrition has its own integration tests.
             return model_response({'items': [{'index': item['index'], 'uncertainty': '测试中不估算营养'}
                                              for item in data['items']]})
-        return handler(request)
+        response = handler(request)
+        content = json.loads(response.json()['choices'][0]['message']['content'])
+        return model_response(planned_content(data, content))
     monkeypatch.setattr('app.parser.httpx.Client',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(isolated_handler)))
 

@@ -1,10 +1,12 @@
 from uuid import uuid4
+import json
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from model_helpers import planned_content
 
 
 @pytest.fixture
@@ -14,8 +16,18 @@ def model_settings(tmp_path):
 
 def fake_client(monkeypatch, handler):
     original = httpx.Client
+    def wire_handler(request):
+        response = handler(request)
+        data = json.loads(json.loads(request.content)['messages'][1]['content'])
+        content = json.loads(response.json()['choices'][0]['message']['content'])
+        # Keep the forged-ID test malicious; the new plan schema must reject it.
+        if content.get('correction_id'):
+            return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps({
+                'actions': [{'intent': 'correct', 'text': data['text'], 'correction_id': content['correction_id']}]
+            })}}]})
+        return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(planned_content(data, content))}}]})
     def patched(*args, **kwargs):
-        return original(*args, **kwargs, transport=httpx.MockTransport(handler))
+        return original(*args, **kwargs, transport=httpx.MockTransport(wire_handler))
     monkeypatch.setattr('app.parser.httpx.Client', patched)
 
 

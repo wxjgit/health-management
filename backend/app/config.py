@@ -19,6 +19,7 @@ class Settings:
     model_api_key: str = ''
     model_name: str = ''
     scheduler_enabled: bool = True
+    local_only: bool = False
 
     @classmethod
     def from_env(cls):
@@ -28,6 +29,7 @@ class Settings:
             model_api_key=MODEL_API_KEY,
             model_name=MODEL_NAME,
             scheduler_enabled=os.getenv('SCHEDULER_ENABLED', 'true').lower() == 'true',
+            local_only=os.getenv('PROCESSING_MODE', 'model_allowed') == 'local_only',
         )
 
     @property

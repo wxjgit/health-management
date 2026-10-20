@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlsplit
 from typing import Literal
 from uuid import uuid4
 
@@ -68,6 +69,8 @@ def create_app(settings=None):
     @app.get('/api/health')
     def health():
         return {'status': 'ok', 'mode': settings.mode, 'model_name': settings.model_name if settings.mode == 'model' else None,
+                'model_provider': urlsplit(settings.model_base_url).hostname if settings.model_base_url else None,
+                'local_only': settings.local_only,
                 'today': now().date().isoformat(), 'timezone': 'Asia/Shanghai',
                 'version': '0.1.0', 'scheduler_enabled': settings.scheduler_enabled}
 
@@ -126,7 +129,7 @@ def create_app(settings=None):
 
     @app.post('/api/chat')
     def chat(body: ChatRequest):
-        initial = {'input_text': body.text, 'selected_id': body.event_id}
+        initial = {'input_text': body.text, 'selected_id': body.event_id, 'processing_mode': body.processing_mode}
         return engine().run('chat', body.request_id, body.model_dump(), initial, body.conversation_id)
 
     @app.get('/api/workflows')

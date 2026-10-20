@@ -122,8 +122,9 @@ def express_plan(parser, plan):
     texts = [p['text'] for p in points]
     source = 'local'
     reason = '按本地策略回应本次反馈。'
-    if points and parser.settings.mode == 'model':
+    if points and parser.mode == 'model':
         try:
+            parser.boundary.grant('contextual_reply', {'plan': plan})
             candidate = parser.phrase_reply(plan)
             texts = check_phrasing(candidate, plan)
             source = 'model'

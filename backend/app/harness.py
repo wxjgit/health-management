@@ -167,8 +167,8 @@ class ModelBoundary:
         forbid(content, {'recent_records', 'messages', 'model_api_key', 'op_key', 'created_at',
                          'correction_id', 'event_id', 'version', 'nutrition_fingerprint'})
         if purpose == 'processing_plan':
-            if set(data['interaction']) != {'selected_record', 'previous_result_count'}:
-                raise PolicyError('规划阶段只能读取操作状态。')
+            if set(data['interaction']) != {'selected_record'}:
+                raise PolicyError('规划阶段只能读取是否已选中记录。')
         if purpose == 'personalized_advice':
             forbid(data['context'], {'raw_text', 'quote', 'recent_dialogue', 'data'})
             validate_advice_payload(data['context'])
@@ -322,6 +322,7 @@ class PlanHarness:
         selected = self.selected(state)
         if selected:
             return selected
+        # Read prior-result metadata lazily, only to resolve an actual reference.
         # A model claiming "previous" is not sufficient evidence of a reference.
         if REFERENCE.search(state['input_text']) or state['input_text'].startswith('不是'):
             ids = self.previous_ids(state)
@@ -434,37 +435,45 @@ class PlanHarness:
         return actions
 
     def prepare(self, state):
+        # 这里只准备结果，不保存记录。返回：主要结果、后续任务、审核过的全部任务。
+        # 先检查用户选中的记录还在不在。
         selected = self.selected(state)
         if self.parser.mode == 'model':
-            previous_count = len(self.previous_ids(state))
+            # 先不查历史，只告诉模型当前这句话和有没有选中记录。
+            # 先登记允许发送的内容，再让模型给出处理计划。
             self.parser.boundary.grant('processing_plan', {
-                'text': state['input_text'], 'interaction': {
-                    'selected_record': bool(selected), 'previous_result_count': previous_count}})
-            plan = self.parser.plan(state['input_text'], bool(selected), previous_count)
+                'text': state['input_text'], 'interaction': {'selected_record': bool(selected)}})
+            plan = self.parser.plan(state['input_text'], bool(selected))
         else:
-            # Local parsing has no access to global history either.
+            # 本地解析不调模型；有选中记录或纠错信号时，最多找一条相关记录。
             prior = self.resolve(state, None) if selected or CORRECTION.search(state['input_text']) else None
             records = [prior] if prior else []
             result = self.parser.demo_parse(state['input_text'], records,
                                             prior['id'] if prior else None, state.get('original'))
             data = result.model_dump(mode='json', exclude={'correction_id'})
             if data['intent'] == 'correct':
+                # 本地纠错结果直接返回，不再调用模型。
                 return result, [], []
             plan = ProcessingPlan(actions=[PlannedAction(text=state['input_text'], **data)])
+        # 计划先过本地检查，不能让模型说做什么就直接做。
         actions = self.approve_plan(state, plan)
         clarification = next((a for a in actions if a.intent == 'clarify'), None)
         if clarification:
+            # 没说清楚就先问，其他任务暂不处理。
             return ExtractionResult(intent='advice', question=clarification.question or '请说明希望记录、修改或查询的内容。'), [], actions
         correction = next((a for a in actions if a.intent == 'correct'), None)
         if correction:
+            # 要修改时才找目标：先看选中记录，再按需查上轮引用。
             prior = self.resolve(state, correction)
             if not prior:
+                # 找不到唯一一条，就先问用户。
                 return ExtractionResult(intent='correct', question='要修改哪条记录？请先选择记录，或明确上一轮记录。'), [], actions
+            # 只批准把这一条的必要内容交给模型修改。
             projection = record_projection(prior)
             self.parser.boundary.grant('correct_selected', {'text': correction.text, 'record': projection})
             updated = self.parser.correct(correction.text, projection)
             if updated.event:
-                # Identity and kind are server-bound; relative dates cannot move an old record.
+                # 模型不能改记录类型；日期和编号沿用原记录。
                 if updated.event.kind != prior['kind']:
                     raise PolicyError('纠错不能改变记录类型，请另建记录。')
                 updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])
@@ -472,17 +481,23 @@ class PlanHarness:
                                       events=[updated.event] if updated.event else [],
                                       question=updated.question or (None if updated.event else '请说明这条记录要改成什么。'))
             return result, [a for a in actions if a is not correction], actions
+        # 找出新增任务；每个任务里可以有多条草稿。
         records = [a for a in actions if a.intent == 'record']
         if records:
+            # 把草稿和反馈合在一起，后面再检查、准备营养和保存。
             events = [e for a in records for e in a.events]
             result = ExtractionResult(intent='record', events=events,
                                       feedback=[f for a in records for f in a.feedback])
             if len(records) == 1:
+                # 只有一项新增任务时，直接沿用它的追问位置。
                 for key in ('question', 'clarification_event_index', 'clarification_item_index', 'clarification_fields'):
                     setattr(result, key, getattr(records[0], key))
             if not events and not result.question:
                 result.question = '你想记录哪项内容？请补充日期、类型和已知信息。'
+            # 新增先处理，其他任务留到后面。
             return result, [a for a in actions if a.intent != 'record'], actions
+        # 没有新增或修改，优先处理长期信息，否则先处理第一项。
         primary = next((a for a in actions if a.intent == 'fact'), actions[0])
+        # 去掉计划专用字段，交给后续节点。
         data = primary.model_dump(exclude={'text', 'target', 'data_view'})
         return ExtractionResult.model_validate(data), [a for a in actions if a is not primary], actions

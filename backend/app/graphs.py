@@ -519,7 +519,7 @@ class Engine:
         approved = self.harness.approve_plan(plan_state, {'actions': [action.model_dump()]})
         if approved[0].intent != 'advice':
             raise PolicyError('建议中的指代尚未明确，请选择相关记录。')
-        bound = self.harness.resolve(plan_state, action)
+        bound = self.harness.resolve(plan_state, action) if approved[0].data_view != 'none' else None
         context, refs = build_advice_context(self.repo, action.text, state.get('conversation_id', 'main'),
                                             state['thread_id'], view=approved[0].data_view, bound=bound,
                                             scope_text=source)

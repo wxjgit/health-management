@@ -962,8 +962,23 @@
       .dev-empty { padding: 20px; color: #6c7c6f; font-size: 13px; }
       .dev-state { margin-top: 24px; }
       .dev-state > h3 { font-size: 16px; margin-bottom: 12px; }
+      .state-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+      .state-summary span { padding: 4px 9px; border: 1px solid #cfe0ec; border-radius: 999px; background: #f4f9fd; color: #245878; font-size: 11px; font-weight: 650; }
+      .state-table { min-width: 1120px; table-layout: fixed; }
+      .state-table th:nth-child(1) { width: 15%; }
+      .state-table th:nth-child(2) { width: 16%; }
+      .state-table th:nth-child(3) { width: 23%; }
+      .state-table th:nth-child(4) { width: 18%; }
+      .state-table th:nth-child(5) { width: 28%; }
+      .state-table tbody tr:nth-child(even) { background: #fbfcfd; }
+      .state-table td:first-child { background: #f6fafd; }
+      .state-field { color: #0872ce; font-weight: 700; }
+      .state-runtime { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+      .state-runtime > div { padding: 12px 13px; border: 1px solid #dce6ee; border-radius: 8px; background: #f8fafc; color: #52606d; font-size: 11px; line-height: 1.65; }
+      .state-runtime b { display: block; margin-bottom: 4px; color: #263846; font-size: 12px; }
       @media (max-width: 760px) {
         .dev-columns { grid-template-columns: 1fr; gap: 0; }
+        .state-runtime { grid-template-columns: 1fr; }
         .dev-toolbar { align-items: stretch; }
         .dev-toolbar label { flex: 1 1 100%; }
         .dev-content { padding: 14px; }
@@ -1450,7 +1465,14 @@
       .site-links a { display: grid; align-items: center; height: 100%; color: #51565e; font-size: 13px; white-space: nowrap; border-bottom: 3px solid transparent; }
       .site-links a.active { color: #0871cf; border-bottom-color: #1684e8; font-weight: 650; }
       .site-meta { margin-left: auto; color: #8a8f96; font-size: 12px; white-space: nowrap; }
-      .doc-shell { width: min(1580px, 100%); margin: 0 auto; display: grid; grid-template-columns: 250px minmax(0, 1050px) 220px; align-items: start; }
+      .doc-shell {
+        width: 100%;
+        min-height: calc(100vh - 56px);
+        margin: 0;
+        display: grid;
+        grid-template-columns: clamp(220px, 14vw, 280px) minmax(0, 1fr) clamp(200px, 13vw, 250px);
+        align-items: start;
+      }
       .chapter-nav, .page-toc { position: sticky; top: 56px; height: calc(100vh - 56px); overflow: auto; scrollbar-width: thin; }
       .chapter-nav { padding: 26px 16px 40px 18px; border-right: 1px solid #e2e5e9; }
       .chapter-nav h2, .page-toc h2 { font-size: 12px; color: #555a62; margin: 0 0 13px; }
@@ -1479,6 +1501,36 @@
       .dev-card > summary { background: #f8fafc; }
       .dev-card summary code, .harness-view code { color: #0872ce; }
       .support-head > span { background: #e7f2fd; color: #0872ce; }
+      .harness-case { scroll-margin-top: 74px; }
+      .case-scene { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+      .case-scene > div { border: 1px solid #dbe5ef; border-radius: 7px; background: #f7faff; padding: 14px; min-width: 0; }
+      .case-scene h3 { font-size: 13px; margin: 0 0 7px; color: #325c85; }
+      .case-scene p, .case-scene blockquote { margin: 6px 0; font-size: 13px; color: #465a6f; line-height: 1.85; }
+      .case-scene blockquote { border-left: 3px solid #4090d6; padding-left: 10px; font-weight: 600; }
+      .case-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 13px; margin: 16px 0; border: 1px solid #dce5ee; border-radius: 7px; background: #fafcfe; }
+      .case-flow span { border: 1px solid #d4e1ec; border-radius: 5px; padding: 6px 9px; font-size: 12px; color: #425b71; }
+      .case-flow span.model { background: #eaf4ff; border-color: #bcd8f1; color: #126ab7; }
+      .case-flow b { color: #8b9dad; font-size: 13px; }
+      .case-steps { list-style: none; padding: 0; margin: 20px 0; counter-reset: harness-step; }
+      .case-step { counter-increment: harness-step; border: 1px solid #dce3ea; border-radius: 8px; padding: 18px; margin: 16px 0; min-width: 0; }
+      .case-step h3 { font-size: 16px; line-height: 1.7; color: #304d69; margin: 0 0 10px; }
+      .case-step h3::before { content: counter(harness-step, decimal-leading-zero); display: inline-block; margin-right: 10px; color: #1877ca; font: 600 15px ui-monospace, Consolas, monospace; }
+      .case-step p, .case-note { font-size: 13px; line-height: 1.9; color: #4b5d6d; margin: 10px 0; overflow-wrap: anywhere; }
+      .case-code { margin: 12px 0; border: 1px solid #dce3eb; border-radius: 6px; padding: 13px 15px; background: #f5f7fa; color: #30465b; font: 12px/1.85 ui-monospace, Consolas, "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+      .case-code code { font: inherit; color: inherit; white-space: inherit; }
+      .case-outcome { padding: 10px 13px; border-left: 3px solid #68a18a; background: #f2f8f5; color: #355f4c; font-size: 13px; line-height: 1.85; overflow-wrap: anywhere; }
+      .case-source { display: inline-block; font-size: 11px; margin: 7px 0 0; color: #0872ce; overflow-wrap: anywhere; }
+      .case-summary { padding: 14px 16px; border: 1px solid #bdd9ee; border-radius: 7px; background: #eff7ff; color: #315c80; font-size: 14px; line-height: 1.9; margin-top: 18px; }
+      @media (max-width: 760px) {
+        .case-scene { grid-template-columns: 1fr; }
+        .case-step { padding: 13px; }
+        .case-code { padding: 11px; font-size: 11px; }
+      }
+      @media print {
+        .section.harness-case { break-inside: auto; }
+        .case-step h3 { break-after: avoid; }
+        .case-code, .case-scene > div, .case-outcome { break-inside: avoid; }
+      }
       @media (max-width: 1240px) {
         .doc-shell { grid-template-columns: 220px minmax(0, 1fr); }
         .page-toc { display: none; }
@@ -1566,6 +1618,7 @@
         </div>
         <div class="nav-group"><span class="nav-label">模型与状态</span>
           <a href="#data-harness">04 · 数据访问 Harness</a>
+          <a href="#harness-case">案例 · 65kg 改成 66kg</a>
           <a href="#memory-system">05 · 记忆与存储</a>
           <a href="#prompt-system">06 · 提示词与上下文</a>
           <a href="#tool-runtime">07 · 执行与降级</a>
@@ -1603,6 +1656,7 @@
       <nav class="reading-nav" aria-label="阅读导航">
         <a href="#graph-overview">Graph 总览</a><a href="#developer-guide">节点实现手册</a>
         <a href="#state-dictionary">状态字段字典</a><a href="#data-harness">Harness 与数据访问</a>
+        <a href="#harness-case">Harness 案例与代码</a>
         <a href="#memory-system">记忆与存储</a>
       </nav>
       <div class="section-head">
@@ -1812,8 +1866,14 @@
           <div id="guide-cards"></div>
           <p id="guide-empty" class="dev-empty" hidden>没有匹配的节点或机制，可清空搜索或切换到全部说明。</p>
           <div class="dev-state" id="state-dictionary"><h3>State 状态字段字典</h3>
-            <p class="dev-intro">Graph 节点返回局部更新，由 LangGraph 合并到同一 thread_id 的状态；列表不会自动追加，节点通常自行复制旧列表再返回。checkpoint 可保存流程，但不是健康事实源，也不是外发授权。</p>
-            <div class="dev-table-wrap"><table class="dev-table"><thead><tr><th>字段 / 分组</th><th>含义与生产者</th><th>后续用途 / 持久化</th></tr></thead><tbody id="state-rows"></tbody></table></div>
+            <p class="dev-intro"><code>State</code> 是三个 Graph 共用的 <code>TypedDict(total=False)</code>：字段缺席表示“尚未设置”，不等于空值。节点只返回本次修改的字段；普通列表没有 reducer，不会自动追加，需复制旧列表后再返回。checkpoint 保存的是流程执行状态，不是健康事实源，也不授予模型外发权限。</p>
+            <div class="state-summary" aria-label="State 摘要"><span>43 个声明字段</span><span>一个字段一行</span><span>chat / plan / analysis 共用</span><span>thread_id 级 checkpoint</span></div>
+            <div class="dev-table-wrap"><table class="dev-table state-table"><thead><tr><th>字段</th><th>类型 / 初值</th><th>语义</th><th>生产者</th><th>消费者 / checkpoint 生命周期</th></tr></thead><tbody id="state-rows"></tbody></table></div>
+            <div class="state-runtime" aria-label="非 State 运行态">
+              <div><b>CallScope.grants / approved / disclosures</b>仅存在于一次 <code>Engine.invoke</code> 的内存调用域，用于授权、批准与披露；不会写入 Graph checkpoint，也不能在恢复流程时被复用。</div>
+              <div><b>model_calls</b>是 <code>health.db</code> 中的模型调用审计与预算账本，不是 State 字段；记录用途、预算、状态和摘要，不保存完整请求正文。</div>
+              <div><b>__interrupt__</b>由 LangGraph 运行时在中断结果中投影，供 <code>format_result</code> 读取交互载荷；它不是 <code>State</code> 中声明的业务字段。</div>
+            </div>
           </div>
         </div>
       </section>
@@ -1823,85 +1883,220 @@
           <span>01</span>
           <div>
             <h2>处理计划与数据 Harness</h2>
-            <p>模型提出申请；程序绑定对象、限定数据、批准每次外发。以下是节点内部调用关系，不新增 Graph 节点。</p>
+            <p>按当前源码核对：计划审批与外发授权是两层检查；包括首次 plan 在内，每次模型请求都经过同一个出口。图为节点内部调用关系，不新增 Graph 节点。</p>
           </div>
         </div>
         <div class="support-body">
           <div class="harness-diagram">
-            <svg viewBox="0 0 1120 435" role="img" aria-label="当前输入进入模型生成计划，PlanHarness本地审核后构造限定视图，ModelBoundary批准不可变的一次性请求，再由统一HTTP出口调用模型。歧义追问，越界拒绝，纯本地模式禁止模型外发。">
+            <svg viewBox="0 0 1120 480" role="img" aria-label="模型模式下，当前输入先由本地授权并经ModelBoundary检查，再通过统一HTTP出口调用plan。计划返回后本地审批；需要后续模型调用时，各节点构造限定资源并再次通过同一外发检查。查询结果留在本地返回；歧义追问，越界拒绝。纯本地模式不走模型路径。">
               <defs><marker id="harness-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" /></marker></defs>
-              <text class="map-annotation" x="20" y="25">首轮：只发送当前输入、时间和操作状态</text>
+              <text class="map-annotation" x="20" y="25">模型模式：先授权再发请求；plan 也不例外。时间、固定 task 与 Schema 由程序补充。</text>
               <rect class="map-box" x="20" y="48" width="220" height="90" rx="8" />
-              <text class="map-title" x="130" y="78" text-anchor="middle">当前输入 + 操作状态</text>
-              <text class="map-caption" x="130" y="101" text-anchor="middle">是否选中 / 上轮结果数量</text>
-              <text class="map-caption" x="130" y="121" text-anchor="middle">不含历史正文与记录 ID</text>
+              <text class="map-title" x="130" y="78" text-anchor="middle">当前输入 + 选中状态</text>
+              <text class="map-caption" x="130" y="101" text-anchor="middle">text / selected_record</text>
+              <text class="map-caption" x="130" y="121" text-anchor="middle">无历史、ID 与上轮数量</text>
               <path class="map-line" d="M240 93H298" style="marker-end:url(#harness-arrow)" />
-              <text class="map-annotation" x="250" y="81">先授权</text>
-              <rect class="map-box blue" x="300" y="48" width="220" height="90" rx="8" />
-              <text class="map-title" x="410" y="78" text-anchor="middle">LLM · plan()</text>
-              <text class="map-caption" x="410" y="101" text-anchor="middle">ProcessingPlan · 1–4 项任务</text>
-              <text class="map-caption" x="410" y="121" text-anchor="middle">多任务 / 数据申请 / 不明确</text>
+              <rect class="map-box" x="300" y="48" width="220" height="90" rx="8" />
+              <text class="map-title" x="410" y="78" text-anchor="middle">首次规划外发检查</text>
+              <text class="map-caption" x="410" y="101" text-anchor="middle">grant → approve → consume</text>
+              <text class="map-caption" x="410" y="121" text-anchor="middle">固定字段 / 指纹 / 预算</text>
               <path class="map-line" d="M520 93H578" style="marker-end:url(#harness-arrow)" />
-              <rect class="map-box" x="580" y="48" width="220" height="90" rx="8" />
-              <text class="map-title" x="690" y="78" text-anchor="middle">PlanHarness · 本地审核</text>
-              <text class="map-caption" x="690" y="101" text-anchor="middle">原文锚定 / 指代绑定 / 范围</text>
-              <text class="map-caption" x="690" y="121" text-anchor="middle">模型申请不等于读取权限</text>
+              <rect class="map-box blue" x="580" y="48" width="220" height="90" rx="8" />
+              <text class="map-title" x="690" y="78" text-anchor="middle">LLM · plan()</text>
+              <text class="map-caption" x="690" y="101" text-anchor="middle">ProcessingPlan · 1–4 项任务</text>
+              <text class="map-caption" x="690" y="121" text-anchor="middle">同一 HTTP 出口，不绕过授权</text>
               <path class="map-line" d="M800 93H858" style="marker-end:url(#harness-arrow)" />
               <rect class="map-box" x="860" y="48" width="240" height="90" rx="8" />
-              <text class="map-title" x="980" y="78" text-anchor="middle">限定视图 / 单条记录</text>
-              <text class="map-caption" x="980" y="101" text-anchor="middle">体重 / 饮食 / 必要可编辑字段</text>
-              <text class="map-caption" x="980" y="121" text-anchor="middle">本地查询结果直接返回界面</text>
-              <path class="map-line" d="M690 138V174" style="marker-end:url(#harness-arrow)" />
-              <rect class="map-box orange" x="580" y="177" width="220" height="54" rx="8" />
-              <text class="map-title" x="690" y="199" text-anchor="middle">歧义 → 追问</text>
-              <text class="map-caption" x="690" y="220" text-anchor="middle">越界申请 → 拦截</text>
-              <path class="map-line" d="M980 138V313H802" style="marker-end:url(#harness-arrow)" />
-              <text class="map-annotation" x="853" y="292">必要数据 → 本次授权</text>
-              <rect class="map-box" x="580" y="264" width="220" height="102" rx="8" />
-              <text class="map-title" x="690" y="292" text-anchor="middle">ModelBoundary</text>
-              <text class="map-caption" x="690" y="315" text-anchor="middle">字段白名单 / 固定 Schema</text>
-              <text class="map-caption" x="690" y="335" text-anchor="middle">精确内容指纹 / 一次性授权</text>
-              <text class="map-caption" x="690" y="355" text-anchor="middle">发出前扣减累计预算</text>
-              <path class="map-line" d="M580 313H522" style="marker-end:url(#harness-arrow)" />
-              <rect class="map-box blue" x="300" y="264" width="220" height="102" rx="8" />
-              <text class="map-title" x="410" y="292" text-anchor="middle">统一 HTTP 出口 → LLM</text>
-              <text class="map-caption" x="410" y="315" text-anchor="middle">model_request(ApprovedCall)</text>
-              <text class="map-caption" x="410" y="335" text-anchor="middle">纠错·补丁·营养·建议·表达</text>
-              <text class="map-caption" x="410" y="355" text-anchor="middle">未授权内容不能发出</text>
-              <path class="map-line" d="M300 313H242" style="marker-end:url(#harness-arrow)" />
-              <rect class="map-box" x="20" y="264" width="220" height="102" rx="8" />
-              <text class="map-title" x="130" y="292" text-anchor="middle">本地校验与执行</text>
-              <text class="map-caption" x="130" y="315" text-anchor="middle">Pydantic / 业务边界 / 幂等</text>
-              <text class="map-caption" x="130" y="335" text-anchor="middle">纠错复核绑定 ID 与版本</text>
-              <text class="map-caption" x="130" y="355" text-anchor="middle">保存回执 / 卡片 / 证据</text>
-              <rect class="map-box" x="20" y="390" width="1080" height="33" rx="6" />
-              <text class="map-caption" x="560" y="412" text-anchor="middle">local_only → 本地规则 / 查询 / 兜底；所有模型入口禁止外发 · 重启与恢复后仍受限</text>
+              <text class="map-title" x="980" y="78" text-anchor="middle">PlanHarness · 本地审核</text>
+              <text class="map-caption" x="980" y="101" text-anchor="middle">原文 / 任务 / 视图 / 时间范围</text>
+              <text class="map-caption" x="980" y="121" text-anchor="middle">指代按需本地解析，不由模型选 ID</text>
+              <path class="map-line" d="M980 138V220" style="marker-end:url(#harness-arrow)" />
+              <text class="map-annotation" x="825" y="184">需要后续模型时</text>
+              <rect class="map-box" x="860" y="222" width="240" height="102" rx="8" />
+              <text class="map-title" x="980" y="250" text-anchor="middle">限定资源构造</text>
+              <text class="map-caption" x="980" y="273" text-anchor="middle">correct 单条 / advice 视图</text>
+              <text class="map-caption" x="980" y="295" text-anchor="middle">补丁 / 营养 / 表达各自构造</text>
+              <path class="map-line" d="M860 273H802" style="marker-end:url(#harness-arrow)" />
+              <rect class="map-box" x="580" y="222" width="220" height="102" rx="8" />
+              <text class="map-title" x="690" y="250" text-anchor="middle">后续调用同样检查</text>
+              <text class="map-caption" x="690" y="273" text-anchor="middle">ModelBoundary · 固定 Schema</text>
+              <text class="map-caption" x="690" y="295" text-anchor="middle">精确内容指纹 / 一次性批准</text>
+              <path class="map-line" d="M580 273H522" style="marker-end:url(#harness-arrow)" />
+              <rect class="map-box blue" x="300" y="222" width="220" height="102" rx="8" />
+              <text class="map-title" x="410" y="250" text-anchor="middle">统一 HTTP 出口 → LLM</text>
+              <text class="map-caption" x="410" y="273" text-anchor="middle">六种固定契约 · 非工具循环</text>
+              <text class="map-caption" x="410" y="295" text-anchor="middle">consume 预记账 → 一次请求</text>
+              <path class="map-line" d="M300 273H242" style="marker-end:url(#harness-arrow)" />
+              <rect class="map-box" x="20" y="222" width="220" height="102" rx="8" />
+              <text class="map-title" x="130" y="250" text-anchor="middle">输出校验与业务节点</text>
+              <text class="map-caption" x="130" y="273" text-anchor="middle">Schema / 规则 / 幂等写入</text>
+              <text class="map-caption" x="130" y="295" text-anchor="middle">错误可阻断或按业务降级</text>
+              <path class="map-line" d="M1100 93H1110V390H1102" style="marker-end:url(#harness-arrow)" />
+              <rect class="map-box orange" x="20" y="365" width="1080" height="50" rx="6" />
+              <text class="map-caption" x="560" y="386" text-anchor="middle">本地支路：query → 本地查询并返回；歧义 → 追问；越界 → 拒绝；新增 / fact 可直接进入本地处理</text>
+              <text class="map-caption" x="560" y="405" text-anchor="middle">不是每次都要第二次调用模型；追问恢复可直接 patch，不重新调用 plan</text>
+              <rect class="map-box" x="20" y="438" width="1080" height="33" rx="6" />
+              <text class="map-caption" x="560" y="460" text-anchor="middle">local_only：本地解析 / 查询 / 兜底，不使用模型或演示营养值；恢复只能收紧，不能自动放宽</text>
             </svg>
           </div>
-          <div class="memory-subhead"><h3>模型只能申请这些固定视图</h3><span>指代先由程序确定；更短时间要求不扩成最大窗口</span></div>
+          <p class="case-note">图上两处检查指的是同一个 <code>ModelBoundary</code>。<code>PlanHarness</code> 负责规划审批与引用绑定；补丁、营养、表达和建议分别在其业务节点构造资源，所有请求最后都走 <code>Parser.request → approve → model_request → consume → HTTP</code>。查询结果不送模型作二次总结；若另有 advice 任务，其上下文独立按批准视图构造。</p>
+          <div class="memory-subhead"><h3>建议的六种固定视图</h3><span>程序根据原文复核并选择；不是模型自己决定最终取数范围</span></div>
           <div class="harness-views">
-            <div class="harness-view"><b>不读取历史</b><code>none</code><span>当前问题、时间；没有健康历史。</span></div>
-            <div class="harness-view"><b>单餐指代</b><code>meal_reference</code><span>绑定的一餐，最多 10 个食物；不带当天其他餐食。</span></div>
-            <div class="harness-view"><b>相关日期饮食</b><code>diet_today</code><span>日期由本地解析；最多 10 餐 × 10 个食物及汇总。</span></div>
-            <div class="harness-view"><b>近期饮食汇总</b><code>diet_week</code><span>最多 7 天：餐数、营养汇总、记录完整性。</span></div>
-            <div class="harness-view"><b>体重趋势</b><code>weight_trend</code><span>最多 28 天：只含日期与体重，不含饮食和档案。</span></div>
-            <div class="harness-view"><b>分量上下文</b><code>diet_portion</code><span>相关日期饮食 + 必要基础档案；饮食视图可带已确认限制 / 偏好。</span></div>
+            <div class="harness-view"><b>最终获批不读历史</b><code>none</code><span>只有 question / scene / view / now；无健康历史。注意：计划默认 none 可能被程序按问题补成相关视图，见下方范围规则。</span></div>
+            <div class="harness-view"><b>单餐指代</b><code>meal_reference</code><span>仅绑定一餐，最多 10 个食物；不带其他餐食、全天汇总或反馈。仍含下述饮食共用字段。</span></div>
+            <div class="harness-view"><b>相关日期饮食</b><code>diet_today</code><span>本地解析问题日期，默认今日；最多 10 餐 × 每餐 10 个食物，并带该日汇总、剩余额度、目标、完整性和最多 6 条反馈。可另附一条绑定餐食。</span></div>
+            <div class="harness-view"><b>近期饮食汇总</b><code>diet_week</code><span>最多 7 天，只列有餐食记录日期的餐数、营养汇总与完整性；无逐餐列表。明确更短窗口就缩短；含饮食共用字段。</span></div>
+            <div class="harness-view"><b>体重趋势</b><code>weight_trend</code><span>最多 28 天窗口内的每日体重及起止日期；无档案、目标、偏好、饮食和周期。除日期 / 体重外，保留问题等基础字段。</span></div>
+            <div class="harness-view"><b>分量上下文</b><code>diet_portion</code><span>单日饮食视图 + 档案中的年龄、身高、体重、目标体重、活动档位、营养情境六项；档案不存在时不附加。</span></div>
           </div>
+          <p class="case-note"><strong>饮食共用字段：</strong>meal_reference / diet_today / diet_week / diet_portion 都可能带 active_targets（四项营养目标）、constraints（最多 8 条）、preferences（最多 5 条）、nutrition_context 与固定 selection_policy。每条长期信息最多 500 字符。none 与 weight_trend 不带这些字段。证据 ID 和旧聊天原文不放入建议 context；单条纠错 / 补丁的投影仍可含目标记录 / 当前草稿的 raw_text，不能概括为“所有模型调用都不发送 raw_text”。</p>
+          <div class="dev-table-wrap"><table class="dev-table harness-policy-table"><thead><tr><th>范围如何决定</th><th>当前工程的实际规则</th></tr></thead><tbody>
+            <tr><td>模型申请 data_view</td><td>approve_plan 根据当前原文重算相关视图，可以补全默认 none，或把单餐指代收窄成 meal_reference；不接受不相关的视图申请。用户明确要求不读历史时，只接受 none，不自动补成历史视图。</td></tr>
+            <tr><td>时间窗口</td><td>diet_week ≤ 7 天，weight_trend ≤ 28 天；明确更短就缩短，本周按已过天数。上周、上个月、去年等不支持窗口与超上限请求直接拒绝，不偷偷扩成默认窗口。单日数据按 question 解析日期；字段 today 不一定是今天。</td></tr>
+            <tr><td>本地查询 query</td><td>模型只提结构化查询条件，Repository 在本地执行，最多返回 100 条；类型与关键词受原文检查，同时给出起止时检查范围为 0–365 天。不是把这 100 条再交给模型总结。</td></tr>
+            <tr><td>语义与写入边界</td><td>原文锚定、Schema 与范围规则能拒绝已覆盖的越界情况，不是任意自然语言的语义证明。模型只返回计划或草稿，健康事件仍需后续本地校验、准备和 Repository 写入。</td></tr>
+          </tbody></table></div>
           <div class="harness-budgets" aria-label="模型外发预算">
-            <span>每流程 ≤ 4 次规划</span><span>每流程 ≤ 32 次外部调用</span><span>每次 ≤ 90,000 UTF-8 字节</span><span>累计 ≤ 400,000 字节</span><span>失败、重试与重启共用预算</span>
+            <span>每 thread_id ≤ 4 次规划</span><span>每 thread_id ≤ 32 次调用预记账</span><span>每次业务 JSON ≤ 90,000 UTF-8 字节</span><span>累计业务 JSON ≤ 400,000 字节</span><span>进入网络阶段后的失败 / 重试也计入</span>
           </div>
+          <p class="case-note">字节预算按序列化的业务 payload（user JSON，含 task / Schema 等）计算，不是 token 数，也不是包括 system 提示词、模型名和 HTTP 头在内的完整请求大小。<code>consume</code> 在连接建立前持久化预记账；未通过此前审批的请求不会记成已外发。预算按 thread_id 跨暂停、重试与重启累计；新工作流不是同一份预算。</p>
           <div class="memory-read-grid">
-            <div class="memory-read"><b>指代与纠错</b><span>选中记录优先；否则只绑定同会话上一轮唯一结果。候选最多 5 条，仅在本地界面展示。</span></div>
-            <div class="memory-read"><b>暂停与恢复</b><span>保留 plan_input_text、processing_plan 和本地模式；恢复后重新审核，checkpoint 不携带可复用授权。</span></div>
-            <div class="memory-read"><b>前端披露</b><span>发送前显示供应商、模型与各任务允许发送的数据范围；用户可选择纯本地模式。</span></div>
-            <div class="memory-read"><b>外发元数据</b><span>model_disclosures 返回调用用途与数据类别；model_calls 只保存用途、字节数、时间和流程 ID。</span></div>
+            <div class="memory-read"><b>指代与纠错</b><span>选中记录优先；否则原话须命中指代规则或以“不是”开头，才按需查同会话上轮引用，且必须唯一。目标不明时，prepare_clarification 最多给出 5 条本地候选；候选列表不发给模型。</span></div>
+            <div class="memory-read"><b>暂停与恢复</b><span>增量补充走 patch_pending，不重新规划；合并范围由 pending 字段控制，纠错复核绑定版本。advice_context 取数前重审保存的建议 action；不能统称“恢复后所有计划都重审”。CallScope 每次 invoke 新建，checkpoint 不保存可复用授权。</span></div>
+            <div class="memory-read"><b>前端披露与本地模式</b><span>发送前可展开供应商、模型与各任务可能发送的数据类别，不是逐请求正文预览或逐次确认。可选 local_only；本地解析、查询与兜底继续可用，不调模型、不补演示营养；已收紧的工作流恢复时不能自动放宽。</span></div>
+            <div class="memory-read"><b>外发元数据</b><span>model_disclosures 描述本次 invoke 进入发送阶段的用途、数据类别、供应商主机名与模型，不保证供应商已成功接收。model_calls 仅持久化 thread_id、purpose、payload_bytes 与 created_at；无请求正文、健康原文或调用成功状态。</span></div>
           </div>
           <div class="llm-source-grid">
             <a href="backend/app/harness.py"><b>harness.py</b>PlanHarness / ModelBoundary</a>
+            <a href="backend/app/advice.py"><b>advice.py</b>视图实际字段与检索上限</a>
+            <a href="backend/app/graphs.py"><b>graphs.py</b>恢复、上下文构造与本地查询</a>
+            <a href="backend/app/repository.py"><b>repository.py</b>account_model_call</a>
+            <a href="backend/app/parser.py"><b>parser.py</b>所有用途的统一 HTTP 出口</a>
             <a href="backend/app/schemas.py"><b>schemas.py</b>ProcessingPlan / PlannedAction</a>
             <a href="backend/tests/test_harness.py"><b>test_harness.py</b>模拟 HTTP · 访问边界验证</a>
             <a href="docs/模型数据访问边界.md"><b>详细设计</b>视图、授权、预算与本地模式</a>
           </div>
+          <p class="case-note">核对日期：2026-10-21。以上以当前实现为准；<a href="#harness-case">下一节用纠错案例逐步对照代码</a>，未调用真实模型或读取个人健康数据。</p>
+        </div>
+      </section>
+
+      <section class="section panel harness-case" id="harness-case">
+        <div class="support-head"><span>例</span><div>
+          <h2>Harness 专题 · 一次“65kg 改成 66kg”怎样被约束</h2>
+          <p>场景、实际代码与数据范围放在一起看 · 按 2026-10-21 当前实现核对。</p>
+        </div></div>
+        <div class="support-body">
+          <p class="dev-intro">核心不是让模型自己遵守“少看数据”，而是程序先装好允许发送的数据，再审核模型提出的任务。下面是假设模型正确识别纠错意图时的代码推演，不读取真实健康记录，也不代表已经执行过一次模型请求。代码片段省略了无关分支。</p>
+          <div class="case-scene">
+            <div><h3>用户实际怎么说</h3><p>先记录：</p><blockquote>今天体重65kg。</blockquote><p>系统已保存，随后用户发现说错了：</p><blockquote>不是，刚才那条改成66kg。</blockquote></div>
+            <div><h3>本地有什么，但不该一并交给模型</h3><p>假设数据库还有昨天的餐食、睡眠与其他日期的体重。此次没有手动选中记录；同会话上一轮只有刚保存的那条体重结果。</p><p>第一轮规划不查、不发送上轮结果数量；只有后面确实需要解析“刚才那条”时，才在本地读取引用元数据。</p></div>
+          </div>
+          <div class="case-flow" role="img" aria-label="当前修改要求进入第一次模型调用，返回计划后本地审批并解析指代，第二次模型调用只读取绑定体重记录，返回草稿再经过本地校验保存。两次调用均经过网络出口授权。">
+            <span>当前修改要求</span><b aria-hidden="true">→</b><span class="model">① 模型只提计划</span><b aria-hidden="true">→</b><span>本地审批 / 绑定目标</span><b aria-hidden="true">→</b><span class="model">② 模型只改这一条</span><b aria-hidden="true">→</b><span>后续校验 / 保存</span>
+          </div>
+          <ol class="case-steps">
+            <li class="case-step" id="harness-case-plan">
+              <h3>先让模型听懂这句话，不告诉它旧体重</h3>
+              <p><code>parse_initial</code> 把工作交给 <code>self.harness.prepare(state)</code>。在模型模式下，Harness 先登记允许发送的内容，再调用规划模型：</p>
+              <pre class="case-code"><code>self.parser.boundary.grant('processing_plan', {
+    'text': state['input_text'],  # 不是，刚才那条改成66kg。
+    'interaction': {'selected_record': bool(selected)}  # False
+})
+plan = self.parser.plan(state['input_text'], bool(selected))</code></pre>
+              <p>模型实际接收的业务内容如下；请求还会附加当前时间、固定任务名与输出 Schema：</p>
+              <pre class="case-code"><code>{
+  "text": "不是，刚才那条改成66kg。",
+  "interaction": {"selected_record": false}
+}</code></pre>
+              <div class="case-outcome">这一关限制的是“第一次能看到什么”：模型不知道原来是65kg，不知道上轮结果数量，也看不到餐食、睡眠或历史聊天正文。<code>grant</code> 只是登记本次允许发送的内容，不是给模型一个查库工具。</div>
+              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · PlanHarness.prepare</a>
+            </li>
+            <li class="case-step" id="harness-case-approve">
+              <h3>模型提出“纠错”，程序先检查这张申请单</h3>
+              <p>假设模型提出一项 <code>correct</code>，<code>text</code> 是当前原话，<code>target=previous</code>、<code>events=[]</code>、<code>data_view=none</code>。这不是可直接执行的命令，必须先经过 <code>actions = self.approve_plan(state, plan)</code>：</p>
+              <pre class="case-code"><code>if action.text not in state['input_text']:
+    raise PolicyError('处理计划必须对应本次输入，不能自行扩展问题。')
+if action.intent != 'record' and action.events:
+    raise PolicyError('规划阶段只有新增任务可以携带事件草稿。')
+if action.data_view != 'none' and action.intent != 'advice':
+    raise PolicyError('此任务不能申请建议数据。')</code></pre>
+              <div class="case-outcome">这一关限制的是“能申请做什么”：纠错不能夹带模型编出的旧事件，也不能顺带申请一周饮食数据。原文匹配和字段规则是本地检查，但不是对自然语言理解正确性的完整证明。</div>
+              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · PlanHarness.approve_plan</a>
+            </li>
+            <li class="case-step" id="harness-case-resolve">
+              <h3>“刚才那条”由本地程序定位，不由模型选择 ID</h3>
+              <p>模型说 <code>target=previous</code> 本身不构成授权。<code>resolve</code> 优先使用用户选中的记录；没有选中时，检查的是用户当前原话，然后才按需读取同会话上一轮的引用：</p>
+              <pre class="case-code"><code>selected = self.selected(state)
+if selected:
+    return selected
+if REFERENCE.search(state['input_text']) or state['input_text'].startswith('不是'):
+    ids = self.previous_ids(state)
+    if len(ids) == 1:
+        return self.repo.event(ids[0])
+return None</code></pre>
+              <p>代入本例：原话有“刚才那条” → 查询上一轮引用 → 只有一条体重记录 → 在本地读取原值65kg。如果上一轮有体重和睡眠两条，无法唯一确定，则不进入单条纠错模型调用：</p>
+              <pre class="case-code"><code>prior = self.resolve(state, correction)
+if not prior:
+    return ExtractionResult(
+        intent='correct',
+        question='要修改哪条记录？请先选择记录，或明确上一轮记录。'
+    ), [], actions</code></pre>
+              <div class="case-outcome">这一关限制的是“究竟操作谁”：唯一目标由本地引用和用户选择确定。真实记录 ID 留在程序中；目标不明确就返回追问，后续走澄清流程，不把更多历史交给模型猜。</div>
+              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · resolve / previous_ids / prepare</a>
+            </li>
+            <li class="case-step" id="harness-case-correct">
+              <h3>第二次才给原记录，而且只给绑定这一条的必要字段</h3>
+              <p>确定目标后，<code>record_projection</code> 按固定字段裁剪记录，排除数据库 ID、版本、无关反馈与营养派生元数据。然后为“本次修改要求 + 这份投影”单独授权：</p>
+              <pre class="case-code"><code>projection = record_projection(prior)
+self.parser.boundary.grant('correct_selected', {
+    'text': correction.text,
+    'record': projection
+})
+updated = self.parser.correct(correction.text, projection)</code></pre>
+              <p>此时模型才知道：原记录是今天体重65kg，用户要改成66kg。餐食、睡眠和其他体重没有被一起放进去。模型返回后，类型和原日期还受程序控制：</p>
+              <pre class="case-code"><code>if updated.event.kind != prior['kind']:
+    raise PolicyError('纠错不能改变记录类型，请另建记录。')
+updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])</code></pre>
+              <div class="case-outcome">这一关限制的是“给哪份历史、允许怎样修改”：只给已绑定记录的投影；修改结果不能换类型，日期强制沿用原记录。上述类型 / 日期检查位于 <code>if updated.event:</code> 分支；模型也可以返回需要补充的问题。</div>
+              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · record_projection / prepare 的 correct 分支</a>
+            </li>
+            <li class="case-step" id="harness-case-boundary">
+              <h3>两次模型调用，都必须经过同一个外发门卫</h3>
+              <p>这一关发生在每次 HTTP 请求之前，不是等第二次纠错结束后才检查。<code>grant</code> 登记内容指纹，<code>approve</code> 校验用途、字段、固定 Schema 与实际数据，再将请求固定为不可变内容：</p>
+              <pre class="case-code"><code>grant = self._grant_key(purpose, self._resource(purpose, data))
+if grant not in scope.grants:
+    raise PolicyError('发送内容没有通过本次处理计划的范围检查。')
+scope.grants.remove(grant)</code></pre>
+              <p>例如：授权的是“修改要求 + 体重记录”，后续却夹带餐食，会被字段检查或内容指纹检查拒绝。通过审核后，传输层还要消费一次性批准：</p>
+              <pre class="case-code"><code># Parser.request
+call = self.boundary.approve(purpose, data)
+return self.model_request(prompt, call, output_type)
+
+# Parser.model_request：通过后才建立 HTTP 连接
+data = self.boundary.consume(call)</code></pre>
+              <div class="case-outcome">这一关限制的是“最终实际发了什么”：未授权、改了内容、重复使用批准、纯本地模式或预算不足，都会在该次网络请求发出前拒绝。授权由可信本地构造代码创建，不是由模型返回的 JSON 创建；它不替代前面的业务范围审批。</div>
+              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · ModelBoundary.grant / approve / consume</a><br />
+              <a class="case-source" href="backend/app/parser.py">网络出口：parser.py · request / model_request</a>
+            </li>
+          </ol>
+          <h3 class="small-heading">同一个案例，两次模型调用究竟各看到了什么</h3>
+          <div class="dev-table-wrap"><table class="dev-table case-data-table"><thead><tr><th>阶段</th><th>模型可见</th><th>仍留在本地 / 不附带</th></tr></thead><tbody>
+            <tr><td>第一次：processing_plan</td><td>当前原话、selected_record=false、时间、固定任务与 Schema。</td><td>上轮结果数量、引用 ID、原体重65kg、历史正文；此时不查询上轮引用元数据。</td></tr>
+            <tr><td>本地审批 / resolve</td><td>不是一次模型调用。</td><td>按需读取同会话上轮引用；只有唯一目标才读取该记录。用户选中记录优先。</td></tr>
+            <tr><td>第二次：correct_selected</td><td>当前修改要求、原体重记录的必要字段投影、时间、固定任务与 Schema。</td><td>真实记录 ID / version、其他记录、历史聊天、无关反馈与营养派生元数据。</td></tr>
+            <tr><td>返回 parse_initial</td><td>不会因为返回草稿就再发送全量历史。</td><td>本地绑定 correction_id / version，返回 extraction；后续 normalize_extraction → validate_drafts → prepare_nutrition → save_ready → persist → respond，按条件路由；缺信息则先 clarify。</td></tr>
+          </tbody></table></div>
+          <h3 class="small-heading">走不通时，在哪一关停下</h3>
+          <div class="dev-table-wrap"><table class="dev-table"><thead><tr><th>发生什么</th><th>当前实现怎么处理</th></tr></thead><tbody>
+            <tr><td>模型正确提出纠错，但上轮有多条结果</td><td>resolve 不返回唯一目标；prepare 生成问题，不调用 correct。</td></tr>
+            <tr><td>纠错计划夹带事件草稿或申请饮食视图</td><td>approve_plan 抛 PolicyError；不执行该纠错模型调用。</td></tr>
+            <tr><td>模型改成了其他记录类型</td><td>纠错模型已经调用，但返回结果被本地拒绝；不能直接写库。</td></tr>
+            <tr><td>发送前请求夹带额外记录或内部字段</td><td>ModelBoundary 字段或指纹校验失败；该次 HTTP 请求不发出。</td></tr>
+            <tr><td>用户选择纯本地模式</td><td>Parser.mode 变为 local，prepare 使用本地解析分支；边界层同时禁止创建 / 使用模型外发授权。本例的“两次模型调用”不适用。</td></tr>
+            <tr><td>模型没有识别成纠错，或把66理解错</td><td>这些规则不能保证语义一定正确。新增 / 纠错混合等已覆盖情况会澄清，但不能承诺所有误分类都会被识别；数据最小化也不等于数值理解正确。</td></tr>
+          </tbody></table></div>
+          <p class="case-summary">一句话串起来：模型理解“想改成66kg” → 程序决定“改哪条” → 模型只接收那条记录 → 出口核对实际内容 → 后续节点校验并保存。<strong>parse_initial 形成草稿，不直接写健康事件；Harness 约束数据访问，但不是对模型语义正确性的保证。</strong></p>
+          <p class="case-note">继续阅读：<a href="#impl-harness">PlanHarness 完整实现说明</a> · <a href="#impl-boundary">ModelBoundary 授权生命周期</a> · <a href="#impl-parse_initial">parse_initial 的输入输出</a> · <a href="#data-harness">固定视图与累计预算</a>。</p>
         </div>
       </section>
 
@@ -2110,7 +2305,7 @@
                 <div class="llm-contract-head"><div><small>parse_initial 节点 · 首轮规划</small><b>plan()</b></div><span class="llm-risk">失败阻断</span></div>
                 <div class="llm-contract-body">
                   <div class="llm-contract-row"><b>触发</b><span>model 模式下的新聊天；记录、纠错、查询、咨询、长期事实都先经过它。</span></div>
-                  <div class="llm-contract-row"><b>输入</b><span><code>now / text / interaction / schema</code>；interaction 只有选中状态与上轮结果数量。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>now / text / interaction / schema</code>；interaction 只有 selected_record 布尔值；不查询或发送上轮结果数量。</span></div>
                   <div class="llm-contract-row"><b>输出</b><span><code>ProcessingPlan.actions</code>：1–4 个 record / correct / query / advice / fact / clarify 任务。</span></div>
                   <div class="llm-contract-row"><b>复核</b><span>PlanHarness 检查原文、申请视图、范围与指代；纠错计划不得包含记录 ID 或旧事件草稿。</span></div>
                   <div class="llm-contract-row"><b>失败</b><span>请求、JSON 或 Schema 任一失败 → ValueError → workflow failed → HTTP 409；不切 demo。</span></div>
@@ -2286,6 +2481,7 @@
           <a href="#routing">意图识别与路由</a>
           <a href="#developer-guide">节点实现手册</a>
           <a href="#data-harness">处理计划与数据边界</a>
+          <a href="#harness-case">Harness 案例与实际代码</a>
           <a href="#memory-system">记忆与存储</a>
           <a href="#prompt-system">提示词与上下文</a>
           <a href="#tool-runtime">执行、校验与重试</a>
@@ -2517,7 +2713,7 @@
           "purpose":"这是 parse_initial 内部的本地控制器，不是独立 Graph 节点。它把模型计划转成原有流程可执行的主要任务与 extra_actions，并把目标绑定和数据范围留在程序中。",
           "input":[["ProcessingPlan.actions","最多4项，每项 text 必须是当前输入的连续原文；计划不能携带 SQL、字段列表或任意记录 ID。"],["selected_id / 同会话上轮引用","由用户操作或本地 messages.evidence_refs 提供，模型的 target 字段本身不是授权。"]],
           "output":[["主要 ExtractionResult / extra_actions / 批准后 actions","优先纠错，其次合并新增，其次主 fact 或首项；剩余查询、建议、fact 留给 respond。"]],
-          "steps":["新模型规划只发 text、now、selected_record 布尔值与 previous_result_count，不带历史正文。","检查 text 原文锚定、非新增任务不得携带事件草稿、只有 advice 能申请建议视图。","指代优先取用户选中记录；否则当前文本必须有明确引用，且同会话上轮结果恰好唯一，才在本地取那一条。","建议视图由本地当前问题信号限制为 none、单餐、单日、≤7天饮食、≤28天体重或分量；更短窗口按实际天数，不支持的历史窗口拒绝自动扩大。","用户说不读历史时，none 可继续；申请历史视图则拒绝。query 的类型与关键词也受当前原文检查；起止同时存在时检查范围不超过一年。","新增与纠错混合、或多条纠错会整体先澄清；单次最多一个 query、一个 advice、一项 fact。","明确纠错后只把目标的 record_projection 给 correct；程序覆盖原日期、校验类型并绑定 ID；新记录可合并多个同类 action。"],
+          "steps":["新模型规划只发 text、now、selected_record 布尔值与程序固定 task / Schema；不查询或发送上轮结果数量，不带历史正文。","检查 text 原文锚定、非新增任务不得携带事件草稿、只有 advice 能申请建议视图。","指代优先取用户选中记录；否则仅在当前原话存在明确引用或以“不是”开头时按需查询同会话上轮引用元数据，结果恰好唯一才在本地取那一条；模型声称 previous 本身不是授权。","建议视图由本地当前问题信号限制为 none、单餐、单日、≤7天饮食、≤28天体重或分量；更短窗口按实际天数，不支持的历史窗口拒绝自动扩大。","用户说不读历史时，none 可继续；申请历史视图则拒绝。query 的类型与关键词也受当前原文检查；起止同时存在时检查范围不超过一年。","新增与纠错混合、或多条纠错会整体先澄清；单次最多一个 query、一个 advice、一项 fact。","明确纠错后只把目标的 record_projection 给 correct；程序覆盖原日期、校验类型并绑定 ID；新记录可合并多个同类 action。"],
           "branches":[["模型计划有 clarify / 指代不清","返回可追问的 extraction，不先读全历史供模型猜。"],["有 correct","先解决唯一目标，再单条纠错提取。"],["有 record","合并新事件作为主任务，附加任务留后。"],["demo / local","本地 demo_parse 只得到必要的绑定记录；不读取全局历史列表。"]],
           "sideEffects":["只通过固定本地路径读取数据；不向模型开放工具循环。需要模型时为确切 payload 创建授权。"],
           "errors":["超范围视图、伪造字段、原文不匹配、类型不符等拒绝执行。","这是有界、保守的语言路由，不是通用自然语言语义证明器；未知或不支持任务可要求用户澄清。"],
@@ -2670,24 +2866,49 @@
         }
       ],
       "state": [
-        ["thread_id / conversation_id","Engine 创建流程ID；conversation_id 对应同会话消息和上轮引用。","checkpoint 按 thread_id 保存；messages、workflow 和 receipt 关联执行身份。"],
-        ["input_text / original / plan_input_text","当前输入、首次追问描述、原处理计划的原文。","input_text 可变为100g等补充；原计划的建议仍按 plan_input_text 重新审核。"],
-        ["processing_plan / extra_actions","PlanHarness 批准后的任务列表与未作为主 extraction 执行的任务。","parse_initial 产生；respond 顺序执行附加 query / advice / fact；不等同于外发授权。"],
-        ["extraction / parsed","extraction 保留宽松草稿；parsed 是 check_drafts 筛选后的完整事件与问题。","parse_initial / patch_pending 产生草稿，normalize_extraction 收敛契约；validate_drafts 生成 parsed。"],
-        ["event_indexes / waiting_indexes","parsed.events 对应原草稿索引；仍在等可选答案的完整草稿索引。","保证补丁、缓存、op_key 和独立事件保存保持稳定，不因列表筛选而改写错对象。"],
-        ["pending_event_index / pending_item_index / pending_fields / pending_required","下一问对应的事件、食物位置、要补字段与必需标记。","validate_drafts 决定；clarify 展示；patch_pending 恢复时只合并这些字段。"],
-        ["incremental_answer / rounds / skip_optional / abandoned_indexes","是否补原草稿、流程级追问计数、跳过可选项和放弃索引。","clarify / patch_pending / normalize_extraction 更新；check_drafts 决定是否继续问、跳过或不保存。"],
-        ["parse_context","两个解析入口传给归一化节点的短生命周期本地数据：反馈候选、日期锚点、控制标志和来源。","normalize_extraction 消费后清空；不包含授权令牌，也不是健康事实源。"],
-        ["prepared_events","以原草稿索引为键的准备完成事件，包含餐食营养与来源。","prepare_nutrition 生产；save_ready / persist 只读取该结果并再次严格验证。"],
-        ["record_ids / saved_indexes","实际已保存的ID；追问前提前保存的原草稿索引。","save_ready / persist 维护；回应读取真实记录，避免恢复时重复写独立事件。"],
-        ["selected_id / correction_version / correction_candidates","程序绑定纠错ID、绑定版本、追问时固定的最多5个本地候选。","纠错模型看不到ID；补充与落库复核版本；候选选择不能换成任意ID。"],
-        ["conversation_feedback / feedback_only / guided_topics / guidance_shown","本流程核验的主观反馈、是否可选复盘、已表达引导主题。","normalize_extraction / prepare_clarification 更新；反馈可关联餐食，不能自动成为 facts。"],
-        ["clarification_reply / reply_plan","已准备的追问文本与本地表达要点。","在 interrupt 前保存，避免恢复时重复上一轮润色；reply_plan 不是 ProcessingPlan。"],
-        ["plan / plan_id / approved","plan_graph 的目标草案、数据库ID和确认决定。","与聊天 ProcessingPlan 不同；prepare 写草案，approve 给决定，activate 核验并更新状态。"],
-        ["period / analysis","分析图的 day / week 范围与生成的规律。","analyze / review 本地统计；不决定模型读取权限。"],
-        ["reply / cards / evidence_refs / process_trace","用户响应材料、卡片、引用与可核验执行摘要。","respond 等节点生成；Engine 保存接口结果和消息；不是模型私有思维链。"],
-        ["CallScope.grants / approved / disclosures（不属于State）","ModelBoundary 当前上下文中的内容指纹、一次性批准与本次调用类别。","只在 Engine.invoke 作用域内存中；结束清除；不随 checkpoint 保存。"],
-        ["model_calls（不属于State）","Repository 持久化的用途、字节、时间与thread_id。","跨重启累计预算；不保存请求正文，与内存授权的生命周期不同。"]
+        ["thread_id","str · Engine.run 生成 UUID","单次工作流实例 ID，也是 checkpoint 的分区键。","Engine.run","所有需幂等或写库的节点；SqliteSaver 按此保存，workflow、messages、receipts、model_calls 用它关联执行身份。"],
+        ["conversation_id","str · 默认 main","用户会话分组；同一会话的消息和“上一条记录”引用共享此值。","Engine.run","previous_ids、advice、respond 与消息落库使用；会被 checkpoint 保存，但不是用户身份或授权凭证。"],
+        ["input_text","str · 必填","本轮正在处理的文本；恢复追问时会变成补充答案或重建后的纠错指令。","API 初始输入；clarify 恢复","parse_initial、patch_pending、respond、advice_context；属于可变流程态。"],
+        ["original","str · 首次追问前可能缺席","进入追问前保留的原始描述，防止 input_text 被补充答案覆盖后丢失上下文。","clarify","patch_pending 的日期/反馈锚点与 respond 的医疗边界判断；产生后随 checkpoint 保存。"],
+        ["selected_id","str | None","程序已绑定或用户从固定候选中选定的纠错目标记录 ID。","API event_id；parse_initial；clarify","PlanHarness.selected、patch_pending、persist；模型不会看到真实记录 ID。"],
+        ["parsed","dict[str, Any] · 校验后产生","从 extraction 中筛出的严格路由结果，包含可保存事件、意图和待补问题。","validate_drafts","prepare_nutrition、save_ready、route_chat、clarify、persist、fact、respond；工作流结束前保存在 checkpoint。"],
+        ["extraction","dict[str, Any] · 宽松草稿","模型或本地补丁形成的当前事件/意图/反馈草稿；允许暂时不完整。","parse_initial、patch_pending、normalize_extraction","validate_drafts、prepare_clarification、respond；是恢复追问的主要草稿态。"],
+        ["event_indexes","list[int] · 无可用事件时为空","parsed.events 到 extraction.events 的原始位置映射。","validate_drafts / check_drafts","prepare_nutrition、save_ready、persist；让缓存、op_key 和补丁不因筛选而错位。"],
+        ["waiting_indexes","list[int] · 默认空列表","内容已完整但仍等待可选反馈的事件原始索引。","validate_drafts","prepare_nutrition 与 save_ready 跳过这些索引；跨 interrupt 保持稳定。"],
+        ["pending_event_index","int | None","下一轮要补充或确认的事件原始索引。","validate_drafts / check_drafts","clarify 生成交互载荷，route_parse 与 patch_pending 定位草稿；跨 interrupt 保存。"],
+        ["pending_fields","list[str] · 默认空列表","本轮允许用户补充的字段白名单。","validate_drafts / check_drafts","clarify 展示，patch_pending 及 parser.patch 只合并这些字段，限制补丁边界。"],
+        ["pending_required","bool · 默认 false","pending_fields 中是否存在阻塞保存的必填项。","validate_drafts / check_drafts","clarify 区分必填/可选提示；patch_pending 决定“不知道/取消”能否直接跳过。"],
+        ["pending_item_index","int | None","当问题落到餐食条目时，标识要修改的 food item 位置。","validate_drafts / check_drafts","patch_pending、parser.patch 与 merge_patch 精确定位条目；非条目问题为空。"],
+        ["incremental_answer","bool · 初始缺席或 false","标记当前 input_text 是对已有草稿的增量回答，而非全新请求。","clarify 置 true；normalize_extraction 置 false","route_parse 决定进入 patch_pending 还是 parse_initial；是一次追问轮次的控制位。"],
+        ["skip_optional","bool · 初始 false","用户明确不补可选字段时的跳过标志。","parse_initial、patch_pending、normalize_extraction","validate_drafts / check_drafts 不再为同一可选项继续追问。"],
+        ["abandoned_indexes","list[int] · 初始空列表","用户明确取消或无法补齐的必填草稿索引。","patch_pending、normalize_extraction","validate_drafts 跳过这些草稿；防止恢复后再次要求保存同一不完整事件。"],
+        ["unrecorded_count","int · 默认 0","因取消、缺字段或校验失败而未落库的草稿数量。","validate_drafts / check_drafts","respond 用于明确告知“哪些没有记录”，避免把草稿误报为已保存。"],
+        ["prepared_events","dict[str, dict] · 默认空字典","按原草稿索引缓存的严格 PreparedEvent，含餐食营养值及来源。","prepare_nutrition","save_ready / persist 只消费准备完成的值并再次校验；避免重复估算。"],
+        ["conversation_feedback","list[dict] · 默认空列表","本流程已核验的主观餐食反馈，例如饱腹感或不适。","normalize_extraction","prepare_clarification、respond；可关联事件但不会自动晋升为长期 facts。"],
+        ["feedback_only","bool · 默认 false","当前交互是否仅做可选反馈复盘，而不是明确记录新事件。","parse_initial、patch_pending、normalize_extraction","validate_drafts 决定是否展示可选反馈问题；不代表记录已经持久化。"],
+        ["guidance_shown","bool · 默认 false","本工作流是否已展示过反馈引导的标记。","prepare_clarification","随 checkpoint 保留供审计/UI 使用；当前不直接参与路由。"],
+        ["guided_topics","list[str] · 默认空列表","本流程已经解释过的反馈主题集合。","prepare_clarification","后续 prepare_clarification / respond 生成表达计划时去重，避免重复建议。"],
+        ["clarification_reply","str · 追问前产生","已经准备好的用户可见追问文本。","prepare_clarification","clarify 直接放入 interrupt 载荷；checkpoint 避免恢复时重复调用模型润色同一句。"],
+        ["reply_plan","dict · 默认空字典","生成追问或回复时使用的本地表达要点与边界；不是 ProcessingPlan。","prepare_clarification、respond","随状态保存，支持追踪表达依据；不等同于数据访问许可。"],
+        ["record_ids","list[str] · Engine.run 初始为空","本工作流实际成功写入的事件记录 ID。","save_ready、persist","clarify 显示已保存数量，respond 生成卡片与回执；恢复时作为真实落库结果。"],
+        ["saved_indexes","list[int] · Engine.run 初始为空","已经成功保存的 extraction 原始索引。","save_ready","prepare_nutrition 和 persist 据此跳过重复写入，保证一条草稿只落库一次。"],
+        ["rounds","int · Engine.run 初始 0","当前工作流已经完成的追问回答轮数。","clarify 每次恢复加 1","validate_drafts / check_drafts 限制可选追问次数，防止无限循环。"],
+        ["reply","str · 完成节点产生","最终面向用户的文本回复。","respond、activate_plan、review","format_result 返回给 API，并写入 workflow / messages；不是事实表数据。"],
+        ["cards","list[dict] · 默认空列表","最终回复附带的结构化 UI 卡片。","respond、activate_plan、review","format_result 返回并随消息结果保存；不得被当作健康事实源。"],
+        ["evidence_refs","list[dict] · 默认空列表","回复对应的本地事件、日期或分析证据引用。","respond、activate_plan","format_result 与消息记录使用，便于解释结论来源；本身不授权模型读取原始数据。"],
+        ["plan_id","str · 计划准备后产生","数据库中计划草案的稳定 ID。","prepare_plan","approve_plan 的交互载荷、activate_plan 与 Repository 决策使用；跨确认中断保存。"],
+        ["plan","dict · 计划 Graph 使用","目标计划草案，含目标、阶段、证据和基线版本。","请求初态；prepare_plan 规范化并落库","approve_plan、activate_plan；与聊天 Graph 的 processing_plan 是两种不同对象。"],
+        ["approved","bool · 确认后产生","用户或规则对计划草案的接受/拒绝决定。","approve_plan","activate_plan 只按该决定改变草案状态；跨 interrupt checkpoint 保存。"],
+        ["period","str · day 或 week","分析 Graph 的统计与复盘范围。","analysis 请求 / scheduler 初始状态","review 节点选择日/周复盘；不影响模型数据权限。"],
+        ["analysis","list[dict] · 默认空列表","analyze 阶段发现并持久化的规律或洞察摘要。","analyze","分析 Graph 后续流程与诊断输出使用；长期事实以 Repository 中已保存洞察为准。"],
+        ["process_trace","list[dict] · 初始空列表","面向用户、可核验的执行步骤摘要，不包含模型私有思维链。","normalize、validate、nutrition、persist、fact、respond 等","format_result 与消息结果使用；各节点复制旧列表再追加，checkpoint 保存整份结果。"],
+        ["processing_mode","str · model_allowed / local_only","整条工作流的模型出站策略；local_only 是粘性的，恢复时不能放宽。","chat 请求初态；恢复时 update_state","ModelBoundary 的请求作用域与 format_result 使用；checkpoint 保存，但最终授权仍由当次 CallScope 决定。"],
+        ["processing_plan","list[dict] · 最多 4 项","PlanHarness 审批后的任务清单，描述本轮允许执行的工作类型。","parse_initial","respond 选择主任务并记录审计；数据访问前仍需重审，不能替代外发授权。"],
+        ["plan_input_text","str · parse_initial 写入","生成 processing_plan 时对应的原始用户文本。","parse_initial","advice_context 在恢复后据此重新审批计划，避免用补充答案悄悄扩大任务范围。"],
+        ["extra_actions","list[dict] · 默认空列表","未作为主 extraction 执行、但已获批准的附加 query / advice / fact 任务。","parse_initial","respond 按顺序执行；每项仍受各自工具和模型边界约束。"],
+        ["parse_context","dict[str, Any] · 短生命周期","两个解析入口交给统一归一化节点的桥接元数据：反馈候选、日期锚点、控制标志和来源。","parse_initial、patch_pending","normalize_extraction 消费后立即清空为 {}；不包含授权令牌，也不是健康事实。"],
+        ["correction_candidates","list[dict] · 最多 5 项","纠错目标不唯一时，由本地检索固定下来的候选快照。","prepare_clarification","clarify 展示并校验用户选择；候选记录 ID 不发送给模型，不能替换为任意 ID。"],
+        ["correction_version","int | None","纠错目标绑定时读取的记录版本，用于检测并发修改。","parse_initial","patch_pending / persist 执行乐观并发校验；版本变化时拒绝静默覆盖。"]
       ]
     }
     </script>
@@ -2865,7 +3086,12 @@
         const stateRows = document.getElementById("state-rows");
         for (const fields of implementation.state) {
           const row = element("tr");
-          fields.forEach((value) => row.append(element("td", "", value)));
+          fields.forEach((value, index) => {
+            const cell = element("td");
+            if (index === 0) cell.append(element("code", "state-field", value));
+            else cell.textContent = value;
+            row.append(cell);
+          });
           stateRows.append(row);
         }
         function filterGuide() {

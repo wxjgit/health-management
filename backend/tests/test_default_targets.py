@@ -3,9 +3,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
+from app.common.config import Settings
 from app.main import create_app
-from app.schemas import Targets
+from app.contracts.profile import Targets
 
 
 @pytest.fixture

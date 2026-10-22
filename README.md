@@ -35,7 +35,7 @@
 
 ## 模型配置与演示模式
 
-正常启动时，后端直接使用 `backend/app/config.py` 中固定的百炼兼容接口、API Key 和 `qwen3.8-max` 模型。用户在网页中提交自然语言后，内容会发送给该外部模型服务。
+模型地址、API Key 和模型名称当前直接配置在后端 `app/common/config.py` 中，`Settings.from_env()` 默认启用该模型。用户在网页中提交自然语言后，内容会发送给配置的外部模型服务。
 
 代码测试可以显式构造无模型配置的 `Settings` 进入演示模式。演示解析覆盖常见中文表达，页面明确提示其营养数值来自固定示例，不是完整或已核验的营养数据库。无法识别的食物保存为营养未知，不算成零。
 
@@ -134,15 +134,20 @@ Chat 先提取允许缺少必需信息的草稿，再由本地检查完整性。
 
 ```text
 backend/app/
-  main.py         FastAPI 接口与启动生命周期
-  graphs.py       交互、计划确认、规律与复盘三个 LangGraph 图
-  parser.py       演示解析与真实模型适配
-  harness.py      处理计划审核、指代绑定与统一模型外发权限
-  drafts.py       草稿完整性检查与待补字段增量合并
-  repository.py   SQLite 数据、修订、任务和去重
-  nutrition.py    保存前营养准备、来源/分量校验、营养求和与演示值
-  services.py     历史、分析、计划、权重建议、归档
-  scheduler.py    后台任务与站内消息
+  main.py         FastAPI 启动生命周期与路由注册
+  api/            HTTP 路由、依赖与接口请求模型
+  common/         时区时钟与运行配置等共享基础能力
+  chat/           对话反馈、草稿完整性与回复策略
+  workflows/      工作流引擎、聊天节点、计划/分析图、状态与运行时
+  parsing/        本地演示解析规则
+  contracts/      按用户配置、健康事件和工作流拆分的数据契约
+  evidence/       原文证据规则、字段绑定、纠错合并与持久化验证
+  modeling/       模型适配、外发授权、Payload 白名单与最小数据投影
+  health/         营养、目标、建议、历史、分析、计划与归档
+  jobs/           后台调度与站内消息任务
+  infrastructure/
+    database.py   SQLite 结构与连接初始化
+    repositories/ Repository 组装及按事件、工作流、计划和维护拆分的数据访问
 frontend/src/
   App.tsx         五个页面与交互
   types.ts        API 数据类型

@@ -6,18 +6,19 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.clock import SHANGHAI
-from app.config import Settings
-from app.grounding import (GroundingError, assert_grounded, ground_correction,
-                           ground_event, ground_patch)
+from app.common.clock import SHANGHAI
+from app.common.config import Settings
+from app.evidence import (GroundingError, assert_grounded, ground_correction,
+                          ground_event, ground_patch)
 from app.main import create_app
-from app.schemas import EventPatch, ExtractionEvent
+from app.contracts.events import ExtractionEvent
+from app.contracts.workflows import EventPatch
 
 
 @pytest.fixture(autouse=True)
 def clock(monkeypatch):
     fixed = lambda: datetime(2026, 10, 21, 12, tzinfo=SHANGHAI)
-    for module in ('app.clock', 'app.parser', 'app.graphs'):
+    for module in ('app.common.clock', 'app.modeling.parser'):
         monkeypatch.setattr(module + '.now', fixed)
 
 
@@ -191,7 +192,7 @@ def test_chat_persists_locally_grounded_value_and_provenance(tmp_path, monkeypat
         }, ensure_ascii=False)}}]})
 
     monkeypatch.setattr(
-        'app.parser.httpx.Client',
+        'app.modeling.parser.httpx.Client',
         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)),
     )
 

@@ -6,8 +6,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
-from app.clock import SHANGHAI
+from app.common.config import Settings
+from app.common.clock import SHANGHAI
 from app.main import create_app
 from model_helpers import planned_content
 
@@ -15,7 +15,7 @@ from model_helpers import planned_content
 @pytest.fixture(autouse=True)
 def clock(monkeypatch):
     fixed = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
-    for module in ('app.clock', 'app.parser', 'app.graphs'):
+    for module in ('app.common.clock', 'app.modeling.parser'):
         monkeypatch.setattr(module + '.now', fixed)
 
 
@@ -59,7 +59,7 @@ def mock_model(monkeypatch, extract, estimate):
         content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
-    monkeypatch.setattr('app.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.parser.httpx.Client',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
     return calls
 

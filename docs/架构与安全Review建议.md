@@ -29,7 +29,7 @@
 
 ### 2.1 模型 API Key 已写入代码和 Git 历史
 
-位置：[`backend/app/config.py`](../backend/app/config.py#L10)
+位置：[`backend/app/common/config.py`](../backend/app/common/config.py)
 
 当前模型地址、模型名称和 API Key 都直接写在源代码中，`Settings.from_env()` 实际没有从环境变量读取这些模型配置。该密钥从初始提交开始已经存在于 Git 历史中，应当按“已经泄露”处理，而不能只删除当前文件中的字符串。
 
@@ -67,7 +67,7 @@
 
 ### 3.1 模型解析接收了范围过大的历史记录
 
-位置：[`backend/app/parser.py`](../backend/app/parser.py#L46)
+位置：[`backend/app/modeling/parser.py`](../backend/app/modeling/parser.py)
 
 `model_parse()` 每次都会发送最近 12 条完整记录，包括原始文本和事件数据。新增一条体重记录通常不需要历史餐食；这种做法会：
 
@@ -84,7 +84,7 @@
 | 补充追问 | 当前回答、checkpoint 中的目标草稿、允许修改的字段 |
 | 纠错 | 用户选中的记录；未选择时只发送少量候选摘要 |
 | 查询历史 | 当前问题和查询 Schema；查询由本地代码执行 |
-| 普通建议 | `advice.py` 已筛选的结构化场景上下文 |
+| 普通建议 | `health/advice.py` 已筛选的结构化场景上下文 |
 
 前端应明确说明外部模型供应商和发送范围，并提供纯本地模式或关闭外部模型的选项。
 
@@ -92,9 +92,9 @@
 
 相关位置：
 
-- [`backend/app/parser.py`](../backend/app/parser.py#L46)
-- [`backend/app/graphs.py`](../backend/app/graphs.py#L186)
-- [`backend/app/schemas.py`](../backend/app/schemas.py#L55)
+- [`backend/app/modeling/parser.py`](../backend/app/modeling/parser.py)
+- [`backend/app/evidence/binding.py`](../backend/app/evidence/binding.py)
+- [`backend/app/contracts/events.py`](../backend/app/contracts/events.py)
 
 Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食物、时间、分量、体重等内容确实来自用户原话。模型仍可能产生“范围合法但用户没有说过”的数据，并通过当前的持久化边界。
 
@@ -119,9 +119,9 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 
 相关位置：
 
-- [`backend/app/graphs.py`](../backend/app/graphs.py#L510)
-- [`backend/app/parser.py`](../backend/app/parser.py#L79)
-- [`backend/app/scheduler.py`](../backend/app/scheduler.py#L8)
+- [`backend/app/workflows/runtime.py`](../backend/app/workflows/runtime.py)
+- [`backend/app/modeling/parser.py`](../backend/app/modeling/parser.py)
+- [`backend/app/jobs/scheduler.py`](../backend/app/jobs/scheduler.py)
 
 `Engine.run()` 和 `Engine.resume()` 在整个 Graph 调用期间持有一个全局 `RLock`，而 Graph 内部可能执行超时为 45 秒的外部 HTTP 请求。这意味着一个慢模型请求可能阻塞其他聊天、计划确认、删除操作和调度任务。
 
@@ -144,8 +144,8 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 
 相关位置：
 
-- [`backend/app/repository.py`](../backend/app/repository.py#L306)
-- [`backend/app/graphs.py`](../backend/app/graphs.py#L575)
+- [`backend/app/infrastructure/repositories/maintenance.py`](../backend/app/infrastructure/repositories/maintenance.py)
+- [`backend/app/workflows/runtime.py`](../backend/app/workflows/runtime.py)
 
 删除一条 event 或 fact 会清空全部聊天消息、workflow、receipt、通知、规律、复盘和所有 checkpoint。隐私清理比较彻底，但也会误伤与目标记录无关的流程和用户上下文。
 
@@ -158,7 +158,7 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 
 ### 3.5 医疗安全边界依赖有限的关键词正则
 
-位置：[`backend/app/replies.py`](../backend/app/replies.py#L39)
+位置：[`backend/app/chat/replies.py`](../backend/app/chat/replies.py)
 
 当前 `medical_question()` 只覆盖少量疾病、症状和用药关键词。诸如头晕、低血糖、持续腹泻、催吐、进食障碍、未成年人、孕产期复杂问题等输入可能进入普通饮食建议链路。
 
@@ -239,7 +239,7 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 - 模型营养估算必须标记来源和不确定性。
 - 模型自然语言不能覆盖本地生成的日期、数值、保存状态和风险边界。
 
-当前项目已经实现了其中大部分，后续应把这些规则抽成独立的 policy/validator 层，而不是持续堆叠在 `graphs.py` 和 prompt 中。
+当前项目已经实现了其中大部分，后续应继续把这些规则放在独立的 policy/validator 层，而不是堆叠在工作流节点和 prompt 中。
 
 ### 5.2 将规则策略、模型适配和流程节点拆分
 
@@ -249,7 +249,7 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 domain/
   events.py          # 健康事件与修订规则
   memories.py        # 长期事实、冲突与撤回
-  nutrition.py       # 营养来源和一致性规则
+  health/nutrition.py # 营养来源和一致性规则
   safety.py          # 医疗/高风险路由
   plans.py           # 目标、计划和确认策略
 
@@ -261,7 +261,7 @@ application/
 infrastructure/
   repository.py
   model_gateway.py
-  scheduler.py
+  jobs/scheduler.py
 ```
 
 LangGraph 节点应保持薄：读取状态、调用领域服务、返回状态增量；不要让一个节点同时负责上下文拼装、模型调用、业务校验、持久化和回复组装。
@@ -271,7 +271,7 @@ LangGraph 节点应保持薄：读取状态、调用领域服务、返回状态�
 相关位置：
 
 - [`backend/app/main.py`](../backend/app/main.py#L56)
-- [`backend/app/parser.py`](../backend/app/parser.py#L96)
+- [`backend/app/modeling/parser.py`](../backend/app/modeling/parser.py)
 
 模型网络失败、模型输出格式错误和业务冲突目前都可能表现为 `ValueError`，最终统一返回 HTTP 409。建议定义明确异常类型：
 
@@ -378,7 +378,7 @@ LangGraph 节点应保持薄：读取状态、调用领域服务、返回状态�
 
 ### 8.3 修复会话恢复的 conversation_id
 
-位置：[`backend/app/graphs.py`](../backend/app/graphs.py#L540)
+位置：[`backend/app/workflows/runtime.py`](../backend/app/workflows/runtime.py)
 
 首次聊天可以指定 `conversation_id`，但 resume 写入消息时没有传入原会话 ID，因此会回落到默认 `main`。当前前端固定使用 `main`，问题暂时不明显，但 API 已经暴露了多会话能力。
 

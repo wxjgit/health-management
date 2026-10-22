@@ -4,7 +4,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
+from app.common.config import Settings
 from app.main import create_app
 from model_helpers import planned_content
 
@@ -28,7 +28,7 @@ def fake_client(monkeypatch, handler):
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(planned_content(data, content))}}]})
     def patched(*args, **kwargs):
         return original(*args, **kwargs, transport=httpx.MockTransport(wire_handler))
-    monkeypatch.setattr('app.parser.httpx.Client', patched)
+    monkeypatch.setattr('app.modeling.parser.httpx.Client', patched)
 
 
 def test_model_schema_is_checked_and_secrets_are_not_exposed(model_settings, monkeypatch):

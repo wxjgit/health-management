@@ -5,13 +5,14 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
+from app.common.config import Settings
 from app.main import create_app
-from app.graphs import Engine
-from app.clock import SHANGHAI, now
-from app.schemas import Targets, EventDraft, MealItem
-from app.services import analyze, archive, dashboard
-from app.scheduler import tick
+from app.workflows.engine import Engine
+from app.common.clock import SHANGHAI, now
+from app.contracts.events import EventDraft, MealItem
+from app.contracts.profile import Targets
+from app.health import analyze, archive, dashboard
+from app.jobs.scheduler import tick
 
 
 def uid():

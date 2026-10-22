@@ -6,18 +6,18 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import Settings
-from app.conversation import reconcile_feedback, attach_feedback
-from app.clock import SHANGHAI
+from app.common.config import Settings
+from app.chat.feedback import reconcile_feedback, attach_feedback
+from app.common.clock import SHANGHAI
 from app.main import create_app
-from app.replies import check_phrasing, make_plan
+from app.chat.replies import check_phrasing, make_plan
 from model_helpers import planned_content
 
 
 @pytest.fixture(autouse=True)
 def fixed_clock(monkeypatch):
     clock = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
-    for module in ['app.clock', 'app.parser', 'app.graphs', 'app.services', 'app.replies']:
+    for module in ['app.common.clock', 'app.modeling.parser', 'app.chat.replies']:
         monkeypatch.setattr(module + '.now', clock)
 
 
@@ -62,7 +62,7 @@ def install_model(monkeypatch, parse=None, phrase=None):
         content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
-    monkeypatch.setattr('app.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.parser.httpx.Client',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
     return calls
 
@@ -298,7 +298,7 @@ def test_followup_after_midnight_does_not_reinterpret_yesterday(settings, monkey
     install_model(monkeypatch)
     with TestClient(create_app(settings)) as client:
         pending = chat(client, '昨天吃得有点咸')
-        monkeypatch.setattr('app.clock.now', lambda: datetime(2026, 10, 10, 12, tzinfo=SHANGHAI))
+        monkeypatch.setattr('app.common.clock.now', lambda: datetime(2026, 10, 10, 12, tzinfo=SHANGHAI))
         pending = resume(client, pending, '炸鸡，还是有点咸')
         done = resume(client, pending, '吃了100g')
         assert done['status'] == 'completed'

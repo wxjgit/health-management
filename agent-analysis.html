@@ -1783,7 +1783,7 @@
           <div class="field-list" id="detail-input"></div>
           <h3>更新 / 输出</h3>
           <div class="field-list" id="detail-output"></div>
-          <a class="source" id="detail-source" href="backend/app/graphs.py"></a>
+          <a class="source" id="detail-source" href="backend/app/workflows/runtime.py"></a>
           <div class="route-rules" id="route-info"></div>
         </aside>
       </div>
@@ -1970,12 +1970,14 @@
             <div class="memory-read"><b>外发元数据</b><span>model_disclosures 描述本次 invoke 进入发送阶段的用途、数据类别、供应商主机名与模型，不保证供应商已成功接收。model_calls 仅持久化 thread_id、purpose、payload_bytes 与 created_at；无请求正文、健康原文或调用成功状态。</span></div>
           </div>
           <div class="llm-source-grid">
-            <a href="backend/app/harness.py"><b>harness.py</b>PlanHarness / ModelBoundary</a>
-            <a href="backend/app/advice.py"><b>advice.py</b>视图实际字段与检索上限</a>
-            <a href="backend/app/graphs.py"><b>graphs.py</b>恢复、上下文构造与本地查询</a>
-            <a href="backend/app/repository.py"><b>repository.py</b>account_model_call</a>
-            <a href="backend/app/parser.py"><b>parser.py</b>所有用途的统一 HTTP 出口</a>
-            <a href="backend/app/schemas.py"><b>schemas.py</b>ProcessingPlan / PlannedAction</a>
+            <a href="backend/app/workflows/policy.py"><b>workflows/policy.py</b>PlanHarness</a>
+            <a href="backend/app/modeling/boundary.py"><b>modeling/boundary.py</b>ModelBoundary</a>
+            <a href="backend/app/health/advice.py"><b>health/advice.py</b>视图实际字段与检索上限</a>
+            <a href="backend/app/workflows/runtime.py"><b>workflows/runtime.py</b>恢复与执行作用域</a>
+            <a href="backend/app/workflows/chat_response.py"><b>workflows/chat_response.py</b>上下文构造与本地查询</a>
+            <a href="backend/app/infrastructure/repositories/common.py"><b>repositories/common.py</b>account_model_call</a>
+            <a href="backend/app/modeling/parser.py"><b>modeling/parser.py</b>所有用途的统一 HTTP 出口</a>
+            <a href="backend/app/contracts/workflows.py"><b>contracts/workflows.py</b>ProcessingPlan / PlannedAction</a>
             <a href="backend/tests/test_harness.py"><b>test_harness.py</b>模拟 HTTP · 访问边界验证</a>
             <a href="docs/模型数据访问边界.md"><b>详细设计</b>视图、授权、预算与本地模式</a>
           </div>
@@ -2012,7 +2014,7 @@ plan = self.parser.plan(state['input_text'], bool(selected))</code></pre>
   "interaction": {"selected_record": false}
 }</code></pre>
               <div class="case-outcome">这一关限制的是“第一次能看到什么”：模型不知道原来是65kg，不知道上轮结果数量，也看不到餐食、睡眠或历史聊天正文。<code>grant</code> 只是登记本次允许发送的内容，不是给模型一个查库工具。</div>
-              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · PlanHarness.prepare</a>
+              <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · PlanHarness.prepare</a>
             </li>
             <li class="case-step" id="harness-case-approve">
               <h3>模型提出“纠错”，程序先检查这张申请单</h3>
@@ -2024,7 +2026,7 @@ if action.intent != 'record' and action.events:
 if action.data_view != 'none' and action.intent != 'advice':
     raise PolicyError('此任务不能申请建议数据。')</code></pre>
               <div class="case-outcome">这一关限制的是“能申请做什么”：纠错不能夹带模型编出的旧事件，也不能顺带申请一周饮食数据。原文匹配和字段规则是本地检查，但不是对自然语言理解正确性的完整证明。</div>
-              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · PlanHarness.approve_plan</a>
+              <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · PlanHarness.approve_plan</a>
             </li>
             <li class="case-step" id="harness-case-resolve">
               <h3>“刚才那条”由本地程序定位，不由模型选择 ID</h3>
@@ -2045,7 +2047,7 @@ if not prior:
         question='要修改哪条记录？请先选择记录，或明确上一轮记录。'
     ), [], actions</code></pre>
               <div class="case-outcome">这一关限制的是“究竟操作谁”：唯一目标由本地引用和用户选择确定。真实记录 ID 留在程序中；目标不明确就返回追问，后续走澄清流程，不把更多历史交给模型猜。</div>
-              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · resolve / previous_ids / prepare</a>
+              <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · resolve / previous_ids / prepare</a>
             </li>
             <li class="case-step" id="harness-case-correct">
               <h3>第二次才给原记录，而且只给绑定这一条的必要字段</h3>
@@ -2061,7 +2063,8 @@ updated = self.parser.correct(correction.text, projection)</code></pre>
     raise PolicyError('纠错不能改变记录类型，请另建记录。')
 updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])</code></pre>
               <div class="case-outcome">这一关限制的是“给哪份历史、允许怎样修改”：只给已绑定记录的投影；修改结果不能换类型，日期强制沿用原记录。上述类型 / 日期检查位于 <code>if updated.event:</code> 分支；模型也可以返回需要补充的问题。</div>
-              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · record_projection / prepare 的 correct 分支</a>
+              <a class="case-source" href="backend/app/modeling/projections.py">代码定位：modeling/projections.py · record_projection</a><br />
+              <a class="case-source" href="backend/app/workflows/policy.py">纠错分支：workflows/policy.py · prepare</a>
             </li>
             <li class="case-step" id="harness-case-boundary">
               <h3>两次模型调用，都必须经过同一个外发门卫</h3>
@@ -2078,8 +2081,8 @@ return self.model_request(prompt, call, output_type)
 # Parser.model_request：通过后才建立 HTTP 连接
 data = self.boundary.consume(call)</code></pre>
               <div class="case-outcome">这一关限制的是“最终实际发了什么”：未授权、改了内容、重复使用批准、纯本地模式或预算不足，都会在该次网络请求发出前拒绝。授权由可信本地构造代码创建，不是由模型返回的 JSON 创建；它不替代前面的业务范围审批。</div>
-              <a class="case-source" href="backend/app/harness.py">代码定位：harness.py · ModelBoundary.grant / approve / consume</a><br />
-              <a class="case-source" href="backend/app/parser.py">网络出口：parser.py · request / model_request</a>
+              <a class="case-source" href="backend/app/modeling/boundary.py">代码定位：modeling/boundary.py · ModelBoundary.grant / approve / consume</a><br />
+              <a class="case-source" href="backend/app/modeling/parser.py">网络出口：modeling/parser.py · request / model_request</a>
             </li>
           </ol>
           <h3 class="small-heading">同一个案例，两次模型调用究竟各看到了什么</h3>
@@ -2174,7 +2177,7 @@ data = self.boundary.consume(call)</code></pre>
           <div class="case-flow" role="img" aria-label="PlanHarness收集同一任务的食物名称，调用ground_event；ground_event查找食物和数量的位置，由bind_quantities在本地绑定，再生成字段证据。">
             <span>PlanHarness.approve_plan</span><b aria-hidden="true">→</b><span class="model">ground_event</span><b aria-hidden="true">→</b><span>_name_spans</span><b aria-hidden="true">→</b><span>_bind_quantities</span><b aria-hidden="true">→</b><span>_ground_items</span>
           </div>
-          <pre class="case-code"><code># backend/app/harness.py · approve_plan
+          <pre class="case-code"><code># backend/app/workflows/policy.py · approve_plan
 item_names = [item.name for event in action.events for item in event.items if item.name]
 events = [ground_event(event,
                        state.get('source_text') or state['input_text'],
@@ -2183,7 +2186,7 @@ events = [ground_event(event,
                        item_names)
           for event in action.events]
 
-# backend/app/grounding.py · _ground_items
+# backend/app/evidence/core.py · _ground_items
 names = _name_spans(items, text)
 bindings = _bind_quantities(items, text, names)
 item['quantity'], item['unit'] = quantity['value'], quantity['unit']</code></pre>
@@ -2197,7 +2200,7 @@ item['quantity'], item['unit'] = quantity['value'], quantity['unit']</code></pre
           </tbody></table></div>
 
           <h3 class="small-heading">最后一道门不是“有证据”，而是“证据证明当前值”</h3>
-          <pre class="case-code"><code># backend/app/grounding.py · _verified / assert_grounded
+          <pre class="case-code"><code># backend/app/evidence/verification.py · _verified / assert_grounded
 if source.text[evidence.start:evidence.end] != evidence.quote:
     raise GroundingError('证据片段与原文范围不一致')
 replayed, unit = _replay(evidence, source)
@@ -2212,10 +2215,12 @@ if not _equal(replayed, _actual(event, evidence)):
             <div class="memory-read"><b>旧记录没有 evidence？</b><span>保留为 unverified_legacy；无关纠错不会把历史模型结果升级为可信事实。</span></div>
           </div>
           <div class="llm-source-grid">
-            <a href="backend/app/grounding.py"><b>grounding.py</b>本地绑定、纠错来源、证据重放</a>
-            <a href="backend/app/harness.py"><b>harness.py</b>模型候选进入 grounding 的入口</a>
-            <a href="backend/app/schemas.py"><b>schemas.py</b>EvidenceSource / FieldEvidence</a>
-            <a href="backend/app/nutrition.py"><b>nutrition.py</b>只接受有证据的用户营养值</a>
+            <a href="backend/app/evidence/binding.py"><b>evidence/binding.py</b>本地绑定</a>
+            <a href="backend/app/evidence/corrections.py"><b>evidence/corrections.py</b>纠错来源</a>
+            <a href="backend/app/evidence/verification.py"><b>evidence/verification.py</b>证据重放</a>
+            <a href="backend/app/workflows/policy.py"><b>workflows/policy.py</b>模型候选进入 grounding 的入口</a>
+            <a href="backend/app/contracts/events.py"><b>contracts/events.py</b>EvidenceSource / FieldEvidence</a>
+            <a href="backend/app/health/nutrition.py"><b>health/nutrition.py</b>只接受有证据的用户营养值</a>
             <a href="backend/tests/test_grounding.py"><b>test_grounding.py</b>数量对调、伪造 span、旧记录回归测试</a>
           </div>
           <p class="case-summary">一句话：<strong>LLM 输出是待核对的草稿，不是事实。</strong> Grounding Harness 用原文重新确定“哪个值属于哪个实体”，持久化边界再证明“这段原文经过这条规则，确实得到当前字段值”。</p>
@@ -2503,12 +2508,13 @@ if not _equal(replayed, _actual(event, evidence)):
               <span><b>本地代码决定落库</b> 事件经校验、营养准备和 Repository 写入；事实来自本次原文，亦可由 respond 执行附加 fact；建议与润色不会成为长期事实。</span>
             </div>
             <div class="llm-source-grid" aria-label="LLM 调用代码位置">
-              <a href="backend/app/parser.py"><b>parser.py</b>6 个 prompt + model_request</a>
-              <a href="backend/app/harness.py"><b>harness.py</b>任务审核、固定视图、精确授权</a>
-              <a href="backend/app/graphs.py"><b>graphs.py</b>节点触发条件与失败分支</a>
-              <a href="backend/app/nutrition.py"><b>nutrition.py</b>营养候选、校验与 provenance</a>
-              <a href="backend/app/replies.py"><b>replies.py</b>反馈策略与 phrase 校验</a>
-              <a href="backend/app/advice.py"><b>advice.py</b>咨询上下文、回答校验与兜底</a>
+              <a href="backend/app/modeling/parser.py"><b>modeling/parser.py</b>6 个 prompt + model_request</a>
+              <a href="backend/app/workflows/policy.py"><b>workflows/policy.py</b>任务审核与固定视图</a>
+              <a href="backend/app/modeling/boundary.py"><b>modeling/boundary.py</b>精确授权</a>
+              <a href="backend/app/workflows/chat_flow.py"><b>workflows/chat_flow.py</b>节点触发条件与失败分支</a>
+              <a href="backend/app/health/nutrition.py"><b>health/nutrition.py</b>营养候选、校验与 provenance</a>
+              <a href="backend/app/chat/replies.py"><b>chat/replies.py</b>反馈策略与 phrase 校验</a>
+              <a href="backend/app/health/advice.py"><b>health/advice.py</b>咨询上下文、回答校验与兜底</a>
             </div>
           </div>
         </div>
@@ -2549,8 +2555,8 @@ if not _equal(replayed, _actual(event, evidence)):
             <p class="small-note">
               HTTP 模型调用没有自动重试；用户重试共用持久化预算。恢复流程重新审核并创建本次授权，不能复用旧授权；local_only 可以收紧，不能在恢复时自动放宽。
             </p>
-            <a class="source" href="backend/app/graphs.py"
-              >graphs.py · Engine.run() / resume()</a
+            <a class="source" href="backend/app/workflows/runtime.py"
+              >workflows/runtime.py · Engine.run() / resume()</a
             >
           </div>
         </div>
@@ -2578,16 +2584,16 @@ if not _equal(replayed, _actual(event, evidence)):
               草案比较单次与自上次确认以来的累计目标变化。首份计划或变化超过 5%
               进入确认；该阈值是当前原型规则。
             </p>
-            <a class="source" href="backend/app/repository.py"
-              >repository.py · Repository.decide_plan()</a
+            <a class="source" href="backend/app/infrastructure/repositories/planning.py"
+              >repositories/planning.py · Repository.decide_plan()</a
             >
           </div>
         </div>
       </section>
       <footer>
         <span
-          >证据：backend/app/graphs.py · harness.py · schemas.py · parser.py · nutrition.py · replies.py ·
-          advice.py · services.py · repository.py · scheduler.py · main.py</span
+          >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ ·
+          infrastructure/repositories/ · jobs/scheduler.py · main.py</span
         ><span>工程结构快照 · 不读取个人健康数据 · 不代表一次运行轨迹</span>
       </footer>
       <noscript
@@ -2626,7 +2632,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["登记 workflows；新聊天写 messages。START 标记本身不读健康历史，也不调用模型。"],
           "errors":["同一个 request_id 的指纹不同会报错，防止把其他请求当作重试。"],
           "example":"请求：POST /api/chat，text=今天体重65kg\n初始：record_ids=[]，saved_indexes=[]，rounds=0\n去向：START → route_parse → parse_initial",
-          "related":["executor","parse_initial","patch_pending","prepare","analyze"],"sources":[["backend/app/graphs.py","Engine.run / invoke / graph_for"]]
+          "related":["executor","parse_initial","patch_pending","prepare","analyze"],"sources":[["backend/app/workflows/runtime.py","Engine.run / invoke / graph_for"]]
         },
         {
           "id":"parse_initial","group":"chat","title":"首次输入：规划、审核并形成草稿",
@@ -2638,7 +2644,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可条件调用 plan 与 correct；每次授权和消费在本节点内完成。","不写 events / facts；审批后的计划和草稿可进入 checkpoint。"],
           "errors":["越界计划、结构化输出失败或纠错类型变化会被拒绝。","不会把模型返回的记录 ID 当作绑定依据。"],
           "example":"输入：今天吃了炸鸡，今天饮食怎么调整？\n本节点：plan → 本地审批 → extraction(record) + extra_actions(advice)\n下一步：normalize_extraction。",
-          "related":["harness","normalize_extraction","validate_drafts","executor"],"sources":[["backend/app/graphs.py","Engine.parse_initial / route_parse"],["backend/app/harness.py","PlanHarness.prepare"]]
+          "related":["harness","normalize_extraction","validate_drafts","executor"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.parse_initial / route_parse"],["backend/app/workflows/policy.py","PlanHarness.prepare"]]
         },
         {
           "id":"patch_pending","group":"chat","title":"追问恢复：只补当前草稿",
@@ -2650,7 +2656,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可调用一次 patch；授权与调用保持在本节点内。","不重新读取全量历史，不直接落库。"],
           "errors":["待补索引失效、绑定记录变化或模型越界字段都会被拒绝。"],
           "example":"pending：第1个食物的 quantity\n回答：100g\n只更新该食物的 quantity / unit，其他事件、日期与食物保持不变。",
-          "related":["clarify","draft_rules","normalize_extraction","boundary"],"sources":[["backend/app/graphs.py","Engine.patch_pending"],["backend/app/drafts.py","merge_patch"]]
+          "related":["clarify","draft_rules","normalize_extraction","boundary"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.patch_pending"],["backend/app/chat/drafts.py","merge_patch"]]
         },
         {
           "id":"normalize_extraction","group":"chat","title":"纯本地归一化反馈与意图",
@@ -2662,7 +2668,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["仅更新 State；没有模型调用、数据库读取或业务写入。"],
           "errors":["parse_context 缺失会报策略错误；不会静默猜测来源。"],
           "example":"parse_initial 或 patch_pending → normalize_extraction\n输出同一种 extraction 契约 → validate_drafts。",
-          "related":["parse_initial","patch_pending","feedback_rules","validate_drafts"],"sources":[["backend/app/graphs.py","Engine.normalize_extraction"],["backend/app/conversation.py","reconcile_feedback / attach_feedback"]]
+          "related":["parse_initial","patch_pending","feedback_rules","validate_drafts"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.normalize_extraction"],["backend/app/chat/feedback.py","reconcile_feedback / attach_feedback"]]
         },
         {
           "id":"validate_drafts","group":"chat","title":"将宽松草稿变成可保存事件",
@@ -2674,7 +2680,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["只更新 State 与执行摘要；不调用模型，不写业务数据库。"],
           "errors":["已知值越界、时间无时区、追问的食物索引越界会报错；不会把错误值当作普通缺失吞掉。"],
           "example":"草稿 0：体重65kg，完整\n草稿 1：炸鸡，分量未知且可选追问\n结果：event_indexes=[0,1]，waiting_indexes=[1]\n下一步只有索引 0 可先准备并保存。",
-          "related":["draft_rules","prepare_nutrition","save_ready","route_chat"],"sources":[["backend/app/graphs.py","Engine.validate_drafts"],["backend/app/drafts.py","check_drafts"],["backend/app/schemas.py","ExtractionEvent / EventDraft"]]
+          "related":["draft_rules","prepare_nutrition","save_ready","route_chat"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.validate_drafts"],["backend/app/chat/drafts.py","check_drafts"],["backend/app/contracts/events.py","ExtractionEvent / EventDraft"]]
         },
         {
           "id":"prepare_nutrition","group":"chat","title":"在写入前准备营养与来源",
@@ -2686,7 +2692,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可调用 estimate_nutrition，并记录模型预算；读取绑定旧事件；不写健康事件。"],
           "errors":["估算请求或估算结果失败通常降级为未知营养，仍保留食物与分量。","事件结构或纠错数量本身不合法则向上报错，不能靠估算兜底绕过结构校验。"],
           "example":"输入：100g某食物，用户只提供 kcal\n候选：只申请缺失的蛋白质 / 碳水 / 脂肪\n输出：用户 kcal 不变，其他字段标各自来源或未知\n后续：persist 读取 prepared_events，而不是再次询问模型。",
-          "related":["nutrition_rules","boundary","save_ready","persist"],"sources":[["backend/app/graphs.py","Engine.prepare_nutrition / prepared_record"],["backend/app/nutrition.py","prepare_nutrition"]]
+          "related":["nutrition_rules","boundary","save_ready","persist"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.prepare_nutrition / prepared_record"],["backend/app/health/nutrition.py","prepare_nutrition"]]
         },
         {
           "id":"save_ready","group":"chat","title":"追问前先保存不受影响的独立记录",
@@ -2698,7 +2704,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["事务写 events、revisions、operations，并增加 data_version；可能使现有 insights 过期。","已保存独立事件不会因为后续取消餐食而撤销。"],
           "errors":["没有 prepared_events 就拒绝保存；同操作键重放直接复用已保存 ID。"],
           "example":"输入：今天体重65kg，今天吃了炸鸡\n炸鸡要追问分量；体重已准备完成\nsave_ready：保存体重，saved_records=1\n用户取消餐食：体重记录仍保留。",
-          "related":["prepare_nutrition","route_chat","clarify","repository_rules"],"sources":[["backend/app/graphs.py","Engine.save_ready"],["backend/app/repository.py","Repository.save_events"]]
+          "related":["prepare_nutrition","route_chat","clarify","repository_rules"],"sources":[["backend/app/workflows/chat_flow.py","Engine.save_ready"],["backend/app/infrastructure/repositories/events.py","Repository.save_events"]]
         },
         {
           "id":"prepare_clarification","group":"chat","title":"在暂停前准备追问表达与候选",
@@ -2710,7 +2716,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可能读取本地候选并调用表达模型；不写 events / facts。","表达和候选随 State 落 checkpoint，成为本次追问的一部分。"],
           "errors":["表达模型失败或改写未通过校验时用本地句子，追问仍可继续。"],
           "example":"体验：昨天吃得有点咸\n本地先决定回应偏咸的关注点与边界\n再追加可选问题：主要吃了什么？\n恢复补充时不会重新生成已保存的这段前置表达。",
-          "related":["reply_rules","feedback_rules","clarify","executor"],"sources":[["backend/app/graphs.py","Engine.prepare_clarification"],["backend/app/replies.py","make_plan / express_plan"]]
+          "related":["reply_rules","feedback_rules","clarify","executor"],"sources":[["backend/app/workflows/chat_flow.py","Engine.prepare_clarification"],["backend/app/chat/replies.py","make_plan / express_plan"]]
         },
         {
           "id":"clarify","group":"chat","title":"暂停工作流并把用户答案送回解析",
@@ -2722,7 +2728,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["interrupt 保存执行位置；本节点不直接写业务表。Engine 在节点外登记补充消息与恢复回执。"],
           "errors":["非法候选 ID 被拒绝。没有 text 或中断 ID 不匹配由节点 / Engine 拒绝。","interrupt 是控制流暂停，不等同于 HTTP 模型超时。"],
           "example":"pending：quantity，event_index=1，optional=true\n用户补充：100g\n返回：input_text=100g，incremental_answer=true，rounds+1\n控制流：clarify → patch_pending → normalize_extraction → validate_drafts。",
-          "related":["prepare_clarification","parse_initial","patch_pending","executor"],"sources":[["backend/app/graphs.py","Engine.clarify / route_parse / resume"]]
+          "related":["prepare_clarification","parse_initial","patch_pending","executor"],"sources":[["backend/app/workflows/chat_flow.py","Engine.clarify / route_parse"],["backend/app/workflows/runtime.py","Engine.resume"]]
         },
         {
           "id":"persist","group":"chat","title":"最终保存或修正准备完成的事件",
@@ -2734,7 +2740,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["写 events / revisions / operations；增加 data_version，使已有 active insights 过期。","一个请求跨多个节点，并不是覆盖全流程的大事务。"],
           "errors":["目标已删除、版本变化、未经过营养准备、仍待补信息，均拒绝直接写入。","后续 respond 失败时，已经成功的写入可能仍存在；重试依赖 checkpoint 和 op_key，而非全量回滚。"],
           "example":"原记录 ID=A，version=1\n程序绑定 A，把体重改成64kg\n写入：ID 仍为 A，version=2，并新增 revision\n重放相同 op_key：返回 A，不再增加一次修订。",
-          "related":["repository_rules","prepare_nutrition","save_ready","respond"],"sources":[["backend/app/graphs.py","Engine.persist / prepared_record"],["backend/app/repository.py","Repository.save_events"]]
+          "related":["repository_rules","prepare_nutrition","save_ready","respond"],"sources":[["backend/app/workflows/chat_flow.py","Engine.persist"],["backend/app/workflows/chat_parsing.py","Engine.prepared_record"],["backend/app/infrastructure/repositories/events.py","Repository.save_events"]]
         },
         {
           "id":"fact","group":"chat","title":"保存用户明确提供的长期偏好或限制",
@@ -2746,7 +2752,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["写 facts；首次新增时更新数据版本、使旧 insights 失效。"],
           "errors":["原文来源检查在 PlanHarness 执行；本节点没有额外模型调用，也没有第二次事实真伪判定。"],
           "example":"当前输入：我不喜欢燕麦\n计划：fact_text=我不喜欢燕麦\nfacts：source=user，status=confirmed\n后续饮食建议可在限定偏好条数内参考它。",
-          "related":["harness","respond","repository_rules"],"sources":[["backend/app/graphs.py","Engine.fact"],["backend/app/repository.py","Repository.save_fact"]]
+          "related":["harness","respond","repository_rules"],"sources":[["backend/app/workflows/chat_flow.py","Engine.fact"],["backend/app/infrastructure/repositories/planning.py","Repository.save_fact"]]
         },
         {
           "id":"respond","group":"chat","title":"按实际结果组装回答并执行附加任务",
@@ -2758,7 +2764,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读取业务数据；有条件调用建议 / 表达模型；附加 fact 可写数据库。","本节点还未保存 messages / workflows 的最终结果，外层 Engine 在 Graph 返回后完成这些操作。"],
           "errors":["advice_context 的授权检查在生成建议的 try 之外，越界或指代不明确会向上报错，而不是伪装成已成功读取。","已经在 persist / save_ready 成功保存的事件，不会因回答阶段报错自动撤回。"],
           "example":"输入：今天体重65kg，最近是不是降得太快？\n主要任务先保存体重；extra_actions 留下 advice\n建议只得到批准窗口的日期与体重\n最终回答同时包含保存回执与趋势回答。",
-          "related":["advice_rules","reply_rules","executor","repository_rules"],"sources":[["backend/app/graphs.py","Engine.respond / advice_context"],["backend/app/services.py","dashboard / meal_assessment / evidence"]]
+          "related":["advice_rules","reply_rules","executor","repository_rules"],"sources":[["backend/app/workflows/chat_response.py","Engine.respond / advice_context"],["backend/app/health/dashboard.py","dashboard / evidence"],["backend/app/health/analysis.py","meal_assessment"]]
         },
         {
           "id":"prepare","group":"plan","title":"生成并持久化不可变计划草案",
@@ -2770,7 +2776,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读取档案、facts、近期记录与生效计划；写 plans.pending。完全本地，不调用模型。"],
           "errors":["资料不完整、默认目标不可用、fingerprint 过期或提交值偏离当前默认，会拒绝生成对应默认草案。"],
           "example":"已有目标1800，新目标1850：先计算本次变化与累计变化\n如果任何目标的累计变化已超过5%，仍要确认\n草案生成时记住基准数据版本；确认期间记录变化可令草案过期。",
-          "related":["targets_rules","approve","activate","repository_rules"],"sources":[["backend/app/graphs.py","Engine.prepare_plan"],["backend/app/services.py","plan_draft"]]
+          "related":["targets_rules","approve","activate","repository_rules"],"sources":[["backend/app/workflows/planning.py","Engine.prepare_plan"],["backend/app/health/planning.py","plan_draft"]]
         },
         {
           "id":"approve","group":"plan","title":"按规则自动批准或等待明确确认",
@@ -2782,7 +2788,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可写 checkpoint 暂停位置；本节点不变更 active plan，不调用模型。"],
           "errors":["字符串 true、缺少决定或错误的 interrupt_id 不能作为有效确认。"],
           "example":"首份计划：approve 暂停等待\n用户点击采用 → approved=True\n即使用户接受，若期间健康记录已变，activate 仍可能给出 stale。",
-          "related":["prepare","activate","executor"],"sources":[["backend/app/graphs.py","Engine.approve_plan / resume"]]
+          "related":["prepare","activate","executor"],"sources":[["backend/app/workflows/planning.py","Engine.approve_plan"],["backend/app/workflows/runtime.py","Engine.resume"]]
         },
         {
           "id":"activate","group":"plan","title":"事务检查并决定计划最终状态",
@@ -2794,7 +2800,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["事务更新 plans 状态；不调用模型，也不修改健康事件。"],
           "errors":["计划不存在会报错；计划过期是一个明确业务结果，不等同于模型调用失败。"],
           "example":"草案生成时 data_version=10\n用户确认前新增体重使版本变为11\nactivate：判定 stale，不激活旧草案，当前计划保持不变。",
-          "related":["prepare","approve","repository_rules"],"sources":[["backend/app/graphs.py","Engine.activate_plan"],["backend/app/repository.py","Repository.decide_plan"]]
+          "related":["prepare","approve","repository_rules"],"sources":[["backend/app/workflows/planning.py","Engine.activate_plan"],["backend/app/infrastructure/repositories/planning.py","Repository.decide_plan"]]
         },
         {
           "id":"analyze","group":"analysis","title":"在充分样本上计算规则型规律",
@@ -2806,7 +2812,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读取近 28 天本地数据；更新 insights，必要时写 notifications。没有模型调用。"],
           "errors":["统计阈值是原型规则，不代表医学因果或个体诊断；页面展示的是观察及其样本限制。","数据库或结构异常向上报错，没有让 LLM 猜测缺失统计的路径。"],
           "example":"睡眠较短组只有2个完整配对，另一组有8个\n结果：不生成睡眠 / 摄入规律\n因为缺的是有效样本，不用模型补造结论。",
-          "related":["review","repository_rules","scheduler_rules"],"sources":[["backend/app/graphs.py","Engine.build_analysis 的 analyze 节点"],["backend/app/services.py","analyze"]]
+          "related":["review","repository_rules","scheduler_rules"],"sources":[["backend/app/workflows/planning.py","Engine.build_analysis 的 analyze 节点"],["backend/app/health/analysis.py","analyze"]]
         },
         {
           "id":"review","group":"analysis","title":"汇总日报或周报并返回复盘卡片",
@@ -2818,7 +2824,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读本地记录和规律，写 reviews。无外部模型调用。"],
           "errors":["它是规则汇总，不做医疗判断，也不自动改变计划或数值目标。"],
           "example":"一周有7条记录，但仅2天确认饮食完整\navg_kcal 只基于这2天\nweight_change 没有足够体重日期则为 None\n卡片保留窗口、完整天数和来源。",
-          "related":["analyze","scheduler_rules","executor"],"sources":[["backend/app/graphs.py","Engine.build_analysis 的 review 节点"],["backend/app/services.py","review"]]
+          "related":["analyze","scheduler_rules","executor"],"sources":[["backend/app/workflows/planning.py","Engine.build_analysis 的 review 节点"],["backend/app/health/analysis.py","review"]]
         },
         {
           "id":"__end__","group":"lifecycle","title":"结束 Graph，生成接口结果与回执",
@@ -2830,7 +2836,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["写 workflows、messages；恢复成功时写 receipts。END 标记本身不执行模型请求。"],
           "errors":["Engine.run 捕获异常会标记 failed 再向上抛出；resume 的异常处理并非完全相同，详见执行器说明。"],
           "example":"persist 已写入成功，但首次响应组装失败\n客户端沿用同一 request_id 重试\nEngine 读取已有工作流与 checkpoint，Repository 的操作键防止重复保存。",
-          "related":["executor","repository_rules"],"sources":[["backend/app/graphs.py","Engine.format_result / run / resume"]]
+          "related":["executor","repository_rules"],"sources":[["backend/app/workflows/runtime.py","Engine.format_result / run / resume"]]
         },
         {
           "id":"harness","group":"core","title":"PlanHarness：审核模型提出的任务与数据申请",
@@ -2842,7 +2848,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["只通过固定本地路径读取数据；不向模型开放工具循环。需要模型时为确切 payload 创建授权。"],
           "errors":["超范围视图、伪造字段、原文不匹配、类型不符等拒绝执行。","这是有界、保守的语言路由，不是通用自然语言语义证明器；未知或不支持任务可要求用户澄清。"],
           "example":"当前输入只有体重问题，模型申请 diet_week\n本地发现不属于允许视图 → 拒绝\n模型不能通过反复 tool_call 自行扩展，因为代码没有暴露通用数据库工具。",
-          "related":["parse_initial","boundary","advice_rules"],"sources":[["backend/app/harness.py","PlanHarness.prepare / approve_plan / resolve / view_days"],["backend/app/schemas.py","ProcessingPlan / PlannedAction"]]
+          "related":["parse_initial","boundary","advice_rules"],"sources":[["backend/app/workflows/policy.py","PlanHarness.prepare / approve_plan / resolve / view_days"],["backend/app/contracts/workflows.py","ProcessingPlan / PlannedAction"]]
         },
         {
           "id":"boundary","group":"core","title":"ModelBoundary：精确内容授权与统一外发闸门",
@@ -2854,7 +2860,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["在外发前写 model_calls；不保存请求正文，不向模型暴露数据库工具。"],
           "errors":["PolicyError 继承 ValueError；可能由调用方按其业务策略处理，但拒绝本身不会发出网络请求。","用户输入已经作为当前消息提供给允许的模型，与历史数据是否获准发送是两个不同范围。"],
           "example":"本地授权 context A\n后续代码把它改成 context B，哪怕视图名相同\napprove 对比指纹不一致 → 拒绝\n重新获取合法本地授权才可发送。",
-          "related":["transport","executor","repository_rules"],"sources":[["backend/app/harness.py","ModelBoundary / ApprovedCall / validate_advice_payload"],["backend/app/repository.py","account_model_call"]]
+          "related":["transport","executor","repository_rules"],"sources":[["backend/app/modeling/boundary.py","ModelBoundary / ApprovedCall"],["backend/app/modeling/payloads.py","validate_advice_payload"],["backend/app/infrastructure/repositories/common.py","account_model_call"]]
         },
         {
           "id":"transport","group":"core","title":"Parser 模型适配：六种固定契约与一次 HTTP 调用",
@@ -2866,7 +2872,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["每次调用只有一次 HTTP 请求；供应商由服务端配置，密钥不进入浏览器与数据导出。"],
           "errors":["没有自动切换到演示估算，也没有传输层自动重试。","Schema 放在 user JSON 中提示模型，未使用服务端 response_format；最终靠本地验证接收输出。"],
           "example":"模型返回合法 JSON，但把体重写成9999\n输出 Schema 的范围验证失败\n调用方收到统一 ValueError；这个事件不会直接写库。",
-          "related":["boundary","parse_initial","patch_pending","nutrition_rules","advice_rules"],"sources":[["backend/app/parser.py","Parser.request / model_request 及六类任务方法"]]
+          "related":["boundary","parse_initial","patch_pending","nutrition_rules","advice_rules"],"sources":[["backend/app/modeling/parser.py","Parser.request / model_request 及六类任务方法"]]
         },
         {
           "id":"route_chat","group":"core","title":"保存前后的主分支优先级",
@@ -2878,7 +2884,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["只返回节点名；不调用模型、不读写数据库。"],
           "errors":["不会重新判断自然语言意图，也不会绕过前面节点的校验。"],
           "example":"parsed.intent=record，events有1条，question仍有值\n路由选择 prepare_clarification\n不是因为 events 非空就抢先走最终 persist。",
-          "related":["save_ready","prepare_clarification","persist","fact","respond"],"sources":[["backend/app/graphs.py","Engine.route_chat / build_chat"]]
+          "related":["save_ready","prepare_clarification","persist","fact","respond"],"sources":[["backend/app/workflows/chat_flow.py","Engine.route_chat / build_chat"]]
         },
         {
           "id":"draft_rules","group":"core","title":"草稿必需项、可选追问与字段级补丁",
@@ -2890,7 +2896,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["只操作内存 / State，不直接调用模型或写库；模型补丁请求由 patch_pending 组织。"],
           "errors":["非法已知数值仍会报错，不能借“只是补充”绕过范围验证。","rounds 是流程级计数，不是每个食物各自独立的两轮计数。"],
           "example":"requested_fields=[quantity]，item_index=0\n模型返回 quantity=1、unit=碗，同时返回另一日期和炸鸡列表\n实际：只填原食物的分量与单位；日期和其他食物不会被替换。",
-          "related":["validate_drafts","patch_pending","prepare_nutrition"],"sources":[["backend/app/drafts.py","check_drafts / optional_missing / merge_patch"],["backend/app/schemas.py","ExtractionEvent / EventDraft / PreparedEvent"]]
+          "related":["validate_drafts","patch_pending","prepare_nutrition"],"sources":[["backend/app/chat/drafts.py","check_drafts / optional_missing / merge_patch"],["backend/app/contracts/events.py","ExtractionEvent / EventDraft / PreparedEvent"]]
         },
         {
           "id":"nutrition_rules","group":"core","title":"营养来源、分量换算、失效与复用规则",
@@ -2902,7 +2908,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["算法本身不落库；只在模型模式的候选估算处触发受授权外发。"],
           "errors":["用户旧总营养对应旧份量时需要重新确认；不会擅自按比例推断所有用户总量。","本地范围与一致性检查只能发现部分不合理结果，不能证明营养估算精确。"],
           "example":"先记100g，模型估算得到旧值\n改成200g：描述指纹改变，旧模型值失效，重新估算\n若是每100g用户标签，则按新克数本地换算\n若是旧份量的用户实际总量，则提示重新确认。",
-          "related":["prepare_nutrition","boundary","repository_rules"],"sources":[["backend/app/nutrition.py","prepare_nutrition / item_fingerprint / _reference / _stamp"]]
+          "related":["prepare_nutrition","boundary","repository_rules"],"sources":[["backend/app/health/nutrition.py","prepare_nutrition / item_fingerprint / _reference / _stamp"]]
         },
         {
           "id":"feedback_rules","group":"core","title":"主观饮食反馈的本地证据核验与关联",
@@ -2914,7 +2920,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["只更新本工作流 State 与待保存餐食；不会自动写 facts，也不读取旧聊天来引入体验。"],
           "errors":["关键词与否认模式是保守规则，不能覆盖任意复杂语言；没有证据的模型反馈会被忽略。"],
           "example":"上一轮关注偏咸；这轮说其实不咸，是有点油\n本地撤回 salty，按原话识别 oily\n不会因此写入“长期爱吃油腻食物”的事实。",
-          "related":["normalize_extraction","reply_rules","fact"],"sources":[["backend/app/conversation.py","signals_from_text / reconcile_feedback / attach_feedback"]]
+          "related":["normalize_extraction","reply_rules","fact"],"sources":[["backend/app/chat/feedback.py","signals_from_text / reconcile_feedback / attach_feedback"]]
         },
         {
           "id":"reply_rules","group":"core","title":"本地表达计划、受限润色与固定边界",
@@ -2926,7 +2932,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["可有一次受限润色外发；没有健康数据写入。"],
           "errors":["表达检查是规则过滤，不是通用医学事实验证器。","数字、日期、保存回执与追问由其他本地逻辑组装，不能交给润色层自由决定。"],
           "example":"程序批准“你提到口味偏咸”\n模型若新增“钠已经超标”或编造数字 → 拒绝\n回到本地确认句，并追加不能据主观口味认定超标的固定边界。",
-          "related":["prepare_clarification","respond","boundary"],"sources":[["backend/app/replies.py","make_plan / express_plan / check_phrasing"]]
+          "related":["prepare_clarification","respond","boundary"],"sources":[["backend/app/chat/replies.py","make_plan / express_plan / check_phrasing"]]
         },
         {
           "id":"advice_rules","group":"core","title":"建议的按需上下文、指代与答案复核",
@@ -2938,7 +2944,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读取获准数据，可能发送一份授权 context；不会把答案保存为 facts 或 events。"],
           "errors":["validate_advice 的数值检查是上下文数值集合与表达模式检查，不证明每个数字的引用关系或完整语义正确。","字段名 today 在代码中也承载用户明确指定日期的单日数据；窗口语义要看其中 date。"],
           "example":"问题：最近三天体重趋势怎么样？\n窗口只取3天，不自动扩成28天\n模型收到日期和体重；不会顺带收到这三天吃了什么或生理周期。",
-          "related":["respond","harness","boundary"],"sources":[["backend/app/graphs.py","Engine.advice_context"],["backend/app/advice.py","build_advice_context / validate_advice / fallback_advice"]]
+          "related":["respond","harness","boundary"],"sources":[["backend/app/workflows/chat_response.py","Engine.advice_context"],["backend/app/health/advice.py","build_advice_context / validate_advice / fallback_advice"]]
         },
         {
           "id":"executor","group":"core","title":"Engine：请求幂等、checkpoint、恢复与结果保存",
@@ -2950,7 +2956,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["使用两个 SQLite：health.db 存业务事实与回执，checkpoints.db 存状态。","一个流程可以多次暂停；局部已保存事件不会因之后的异常自动回滚。"],
           "errors":["不是 waiting_input、过时 interrupt_id、相同 request_id 改了内容均被拒绝。","HTTP 模型层没有自动重试；用户重试仍消耗累计预算，不能通过重启清零。"],
           "example":"先保存体重，餐食等待补充\n服务重启 → workflow 仍 waiting_input\n同 thread_id + 正确 interrupt_id 补100g\n已保存体重不重写，餐食继续准备；同恢复请求再次发送则返回 receipt。",
-          "related":["__start__","__end__","clarify","boundary","repository_rules"],"sources":[["backend/app/graphs.py","Engine.run / resume / invoke / format_result"]]
+          "related":["__start__","__end__","clarify","boundary","repository_rules"],"sources":[["backend/app/workflows/runtime.py","Engine.run / resume / invoke / format_result"]]
         },
         {
           "id":"repository_rules","group":"core","title":"Repository：事实写入、操作去重与版本传播",
@@ -2962,7 +2968,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["事务边界是具体 Repository 方法；跨 save_ready、persist、respond 的整个流程不是一个大事务。"],
           "errors":["删除记录会同时清理可能含副本的聊天、流程与派生上下文，并由 Engine purge checkpoints；其他事件保留。","该项目是单用户本地原型，引用绑定和数据最小化不等于多租户身份鉴权。"],
           "example":"同一事件键 thread:event:0 被调用两次\n第一次：events + revision + operation 成功提交\n第二次：operations 命中，返回同一ID\n不会因为客户端重试又增加一条体重。",
-          "related":["persist","fact","activate","boundary","executor"],"sources":[["backend/app/repository.py","save_events / save_fact / decide_plan / _bump / erase_context"],["backend/app/graphs.py","purge_checkpoints"]]
+          "related":["persist","fact","activate","boundary","executor"],"sources":[["backend/app/infrastructure/repositories/events.py","save_events"],["backend/app/infrastructure/repositories/planning.py","save_fact / decide_plan"],["backend/app/infrastructure/repositories/common.py","_bump"],["backend/app/infrastructure/repositories/maintenance.py","erase_context"],["backend/app/workflows/runtime.py","purge_checkpoints"]]
         },
         {
           "id":"targets_rules","group":"core","title":"系统默认目标的计算与使用边界",
@@ -2974,7 +2980,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["读取档案和 facts；函数本身不写数据库，不调用模型。"],
           "errors":["公式与产品阈值不能被表述为个体安全保证；代码会返回适用限制与警告。"],
           "example":"用户改了基础档案后，旧默认 fingerprint 已过期\n前端再次按旧默认提交\nplan_draft 拒绝沿用旧估算，要求刷新；已有生效自定义目标保持不变。",
-          "related":["prepare","approve","activate"],"sources":[["backend/app/targets.py","default_targets"],["backend/app/services.py","plan_draft"]]
+          "related":["prepare","approve","activate"],"sources":[["backend/app/health/targets.py","default_targets"],["backend/app/health/planning.py","plan_draft"]]
         },
         {
           "id":"scheduler_rules","group":"core","title":"后台调度如何复用节点与清理流程",
@@ -2986,7 +2992,7 @@ if not _equal(replayed, _actual(event, evidence)):
           "sideEffects":["写 jobs、notifications、reviews 等；维护可删除过期数据与 checkpoint；不调用模型生成分析或计划。"],
           "errors":["维护或单任务失败标记为可重试，不让整个后台循环退出。","原始记录压缩成月度摘要后，不能再恢复逐餐细节。"],
           "example":"用户关网页，但本地服务仍运行\n定时时间到 → 站内日报与通知写入SQLite\n下次打开网页可看到结果；没有设备推送\n后台生成需确认的计划仍要用户明确采用。",
-          "related":["analyze","review","prepare","executor"],"sources":[["backend/app/scheduler.py","tick / scheduler_loop"],["backend/app/graphs.py","archive / prune_context"]]
+          "related":["analyze","review","prepare","executor"],"sources":[["backend/app/jobs/scheduler.py","tick / scheduler_loop"],["backend/app/workflows/runtime.py","archive / prune_context"]]
         }
       ],
       "state": [
@@ -3279,7 +3285,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "由 Engine.run() 选择当前 Graph；新的工作流使用独立 thread_id。",
             input: ["request_id", "initial State"],
             output: ["Graph 初始状态"],
-            source: "graphs.py · Engine.run()",
+            source: "workflows/runtime.py · Engine.run()",
           },
           __end__: {
             name: "END",
@@ -3288,7 +3294,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "返回回复、卡片与证据引用；Engine 保存工作流结果与对话消息。",
             input: ["reply", "cards", "evidence_refs"],
             output: ["workflow result", "messages"],
-            source: "graphs.py · format_result() / run()",
+            source: "workflows/runtime.py · format_result() / run()",
           },
           parse_initial: {
             name: "首次输入规划",
@@ -3302,7 +3308,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "操作状态 / 上轮引用元数据（本地）",
             ],
             output: ["processing_plan / extra_actions", "plan_input_text", "extraction", "parse_context / 绑定 ID 与版本"],
-            source: "graphs.py · Engine.parse_initial() / harness.py / parser.py",
+            source: "workflows/chat_parsing.py · Engine.parse_initial() / workflows/policy.py / modeling/parser.py",
             tone: "model",
             llm: "plan / correct（经 ModelBoundary）",
             sub: "LLM · 当前输入计划 / 单条纠错",
@@ -3314,7 +3320,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "仅处理已有 extraction 的追问答案。它复核纠错版本，把权限锁定到 pending 事件、字段与食物索引；取消、不知道和转咨询由本地规则处理。",
             input: ["extraction", "input_text / original", "pending_*", "selected_id / correction_version"],
             output: ["只更新指定字段的 extraction", "parse_context"],
-            source: "graphs.py · Engine.patch_pending() / drafts.py",
+            source: "workflows/chat_parsing.py · Engine.patch_pending() / chat/drafts.py",
             tone: "model",
             llm: "patch（经 ModelBoundary）",
             sub: "LLM · 仅补 pending 字段",
@@ -3326,7 +3332,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "合并两条解析路径，核验饮食反馈原话、日期和否认关系，收敛最终意图并输出统一 extraction；不读取数据库、不调用模型。",
             input: ["extraction", "parse_context", "input_text"],
             output: ["conversation_feedback", "统一 extraction", "本地控制标志 / process_trace"],
-            source: "graphs.py · Engine.normalize_extraction() / conversation.py",
+            source: "workflows/chat_parsing.py · Engine.normalize_extraction() / chat/feedback.py",
             sub: "本地 · 反馈核验与统一契约",
           },
           validate_drafts: {
@@ -3336,7 +3342,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "检查缺失字段、追问轮次、放弃项、纠错边界和字段范围；把提取草稿转换为可路由的 parsed 状态。",
             input: ["extraction", "rounds", "skip_optional", "abandoned_indexes"],
             output: ["parsed", "event_indexes", "waiting_indexes", "pending_fields"],
-            source: "graphs.py · Engine.validate_drafts() / drafts.py",
+            source: "workflows/chat_parsing.py · Engine.validate_drafts() / chat/drafts.py",
             sub: "不调用模型 · 缺失项与边界",
           },
           prepare_nutrition: {
@@ -3346,7 +3352,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "仅对准备保存且食物和分量足够的餐食调用 estimate_nutrition。用户给出的数值优先；失败时保留未知，不编造热量。",
             input: ["parsed.events", "event_indexes", "prepared_events", "已有记录"],
             output: ["prepared_events", "nutrition status / source / uncertainty"],
-            source: "graphs.py · Engine.prepare_nutrition() / nutrition.py",
+            source: "workflows/chat_parsing.py · Engine.prepare_nutrition() / health/nutrition.py",
             tone: "model",
             llm: "estimate_nutrition",
             sub: "LLM · 有食物与分量时粗估",
@@ -3358,7 +3364,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "当 record 意图仍需追问时，先保存不属于待补充类型的独立事件，避免体重等记录被一餐的缺失阻塞。随后进入 route_chat。",
             input: ["parsed.events", "parsed.question", "saved_indexes"],
             output: ["record_ids", "saved_indexes", "events / revisions"],
-            source: "graphs.py · Engine.save_ready()",
+            source: "workflows/chat_flow.py · Engine.save_ready()",
             sub: "不依赖补充的事件先落库",
           },
           prepare_clarification: {
@@ -3368,7 +3374,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "本地 make_plan 先决定允许表达的要点；存在反馈建议时调用 phrase_reply 做自然语言改写，再与固定追问拼接。失败时使用本地表达。",
             input: ["conversation_feedback", "guided_topics", "parsed.question", "本次食物"],
             output: ["clarification_reply", "reply_plan", "guided_topics", "correction_candidates（≤5，本地）"],
-            source: "graphs.py · Engine.prepare_clarification() / replies.py",
+            source: "workflows/chat_flow.py · Engine.prepare_clarification() / chat/replies.py",
             tone: "model",
             llm: "phrase_reply",
             sub: "LLM · 只改写已批准要点",
@@ -3380,7 +3386,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "暂停并输出问题，纠错歧义时可提供记录选项。Engine.resume() 校验中断 ID，用同线程 Command 恢复；route_parse 决定进入首次解析或草稿补丁。",
             input: ["parsed.question", "用户 text / event_id"],
             output: ["input_text / original", "selected_id", "rounds + 1"],
-            source: "graphs.py · Engine.clarify() / resume()",
+            source: "workflows/chat_flow.py · Engine.clarify() / workflows/runtime.py · resume()",
             tone: "pause",
             sub: "同 thread_id 补充后继续",
           },
@@ -3391,7 +3397,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "读取已经过营养准备的事件并按操作键去重保存；纠错前重新核验绑定 ID 与版本，保持类型和原日期。数据变化使现有规律过期。",
             input: ["prepared_events", "correction_id", "saved_indexes"],
             output: ["record_ids", "events / revisions", "data_version"],
-            source: "graphs.py · Engine.persist() / repository.py",
+            source: "workflows/chat_flow.py · Engine.persist() / repositories/events.py",
             sub: "事务写入 · 版本 · 去重",
           },
           fact: {
@@ -3401,7 +3407,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "把用户主动表达的偏好或已知限制写入 facts，来源为 user，状态为 confirmed。它不把模型推断自动确认为用户事实。",
             input: ["parsed.fact_text", "thread_id"],
             output: ["facts", "data_version"],
-            source: "graphs.py · Engine.fact()",
+            source: "workflows/chat_flow.py · Engine.fact()",
             sub: "facts · 用户明确表达",
           },
           respond: {
@@ -3411,7 +3417,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "本地生成查询、保存回执和事实确认，再执行 extra_actions 中已批准的查询、建议或 fact。建议重新审核原始任务范围，仅发固定视图；反馈表达和建议均经统一授权出口。",
             input: ["parsed.intent / extra_actions", "record_ids / plan_input_text", "经批准的最小数据视图", "conversation_feedback"],
             output: ["reply", "cards", "evidence_refs"],
-            source: "graphs.py · Engine.respond()",
+            source: "workflows/chat_response.py · Engine.respond()",
             tone: "model",
             llm: "answer_advice / phrase_reply",
             sub: "LLM · 普通咨询 / 反馈表达",
@@ -3423,7 +3429,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "调用 plan_draft()，参考当前目标与近期记录生成七天安排。保存不可变草案，记录数据版本、基准计划和累计变化锚点。重放复用已保存草案。",
             input: ["targets / 当前目标", "近期记录 / 偏好", "input_text"],
             output: ["plan", "plan_id", "plans: pending"],
-            source: "graphs.py · Engine.prepare_plan() / services.py",
+            source: "workflows/planning.py · Engine.prepare_plan() / health/planning.py",
             sub: "plan_draft() · pending",
           },
           approve: {
@@ -3433,7 +3439,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "needs_confirmation 为假时直接批准；为真时 interrupt 等待明确的布尔决定。分支位于节点函数内部，Graph 的下一节点始终是 activate。",
             input: ["plan.needs_confirmation", "用户 approved"],
             output: ["approved: bool"],
-            source: "graphs.py · Engine.approve_plan()",
+            source: "workflows/planning.py · Engine.approve_plan()",
             tone: "pause",
             sub: "大变化等待明确确认",
           },
@@ -3444,7 +3450,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "调用 Repository.decide_plan()：拒绝保持原计划；接受但基准已变则过期；接受且版本一致才替换生效计划。三个结果都继续到 END。",
             input: ["plan_id", "approved", "最新数据 / 计划版本"],
             output: ["active / rejected / stale", "reply", "evidence_refs"],
-            source: "graphs.py · Engine.activate_plan() / repository.py",
+            source: "workflows/planning.py · Engine.activate_plan() / repositories/planning.py",
             sub: "active / rejected / stale",
           },
           analyze: {
@@ -3454,7 +3460,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "调用 analyze() 读取近 28 天数据。比较睡眠与次日摄入、工作日与周末摄入；仅使用标记完整且营养齐全的数据，保存规律与证据，必要时发通知。",
             input: ["28 天记录", "完整度 / 营养信息", "用户否认状态"],
             output: ["analysis", "insights", "重要模式通知"],
-            source: "graphs.py · build_analysis() / services.py",
+            source: "workflows/planning.py · build_analysis() / health/analysis.py",
             tone: "analysis",
             sub: "样本量 · 覆盖率 · 限制",
           },
@@ -3465,7 +3471,7 @@ if not _equal(replayed, _actual(event, evidence)):
               "调用 review() 按 period 汇总一天或七天数据，计算记录数、完整日、体重变化、睡眠与运动。保存 reviews 并返回复盘卡片。",
             input: ["period: day / week", "健康记录 / 当前规律"],
             output: ["cards: review", "reply", "reviews"],
-            source: "graphs.py · build_analysis() / services.py",
+            source: "workflows/planning.py · build_analysis() / health/analysis.py",
             tone: "analysis",
             sub: "1 / 7 天统计与复盘",
           },
@@ -3641,15 +3647,27 @@ if not _equal(replayed, _actual(event, evidence)):
           }
           const source = document.getElementById("detail-source");
           source.textContent = "↗ " + d.source;
-          source.href =
-            "backend/app/" +
-            (id === "parse_initial" || id === "patch_pending"
-              ? "harness.py"
-              : id === "activate"
-                ? "repository.py"
-                : id === "analyze" || id === "review"
-                  ? "services.py"
-                  : "graphs.py");
+          const sourcePaths = {
+            __start__: "workflows/runtime.py",
+            __end__: "workflows/runtime.py",
+            parse_initial: "workflows/chat_parsing.py",
+            patch_pending: "workflows/chat_parsing.py",
+            normalize_extraction: "workflows/chat_parsing.py",
+            validate_drafts: "workflows/chat_parsing.py",
+            prepare_nutrition: "workflows/chat_parsing.py",
+            save_ready: "workflows/chat_flow.py",
+            prepare_clarification: "workflows/chat_flow.py",
+            clarify: "workflows/chat_flow.py",
+            persist: "workflows/chat_flow.py",
+            fact: "workflows/chat_flow.py",
+            respond: "workflows/chat_response.py",
+            prepare: "workflows/planning.py",
+            approve: "workflows/planning.py",
+            activate: "workflows/planning.py",
+            analyze: "workflows/planning.py",
+            review: "workflows/planning.py",
+          };
+          source.href = "backend/app/" + sourcePaths[id];
           const route = document.getElementById("route-info");
           route.replaceChildren();
           const rows =

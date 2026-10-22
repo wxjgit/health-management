@@ -19,6 +19,8 @@ DEMO_FIXTURES = {
     '红薯': (180, 3, 42, .3), '咖啡': (5, .3, .5, 0), '奶茶': (400, 4, 65, 14),
 }
 KEYS = ['kcal', 'protein_g', 'carbs_g', 'fat_g']
+EVIDENCE_FIELDS = {'kcal': 'item_kcal', 'protein_g': 'item_protein_g',
+                   'carbs_g': 'item_carbs_g', 'fat_g': 'item_fat_g'}
 
 
 def estimate(draft, mode):
@@ -52,13 +54,20 @@ def item_fingerprint(item):
                                      allow_nan=False).encode()).hexdigest()
 
 
-def _reference(item):
-    if item.get('nutrition_reference'):
-        return copy.deepcopy(item['nutrition_reference'])
-    values = {key: item[key] for key in KEYS if item.get(key) is not None}
-    if item.get('source') == 'user' and values:
-        return {'basis': item.get('nutrition_basis', 'consumed'), 'values': values,
-                'fingerprint': item_fingerprint(item)}
+def _reference(item, evidence, item_index):
+    """Only locally grounded user values may become an authoritative reference."""
+    trusted = {(entry.get('field'), entry.get('item_index')) for entry in evidence
+               if entry.get('source') in ('user_text', 'user_confirmed')
+               and not entry.get('ambiguity') and entry.get('policy_version') == 'health-grounding-v2'}
+    stored = (item.get('nutrition_reference') or {}).get('values', {})
+    values = {key: (stored[key] if key in stored else item[key]) for key in KEYS
+              if (key in stored or item.get(key) is not None)
+              and (EVIDENCE_FIELDS[key], item_index) in trusted}
+    basis = (item.get('nutrition_reference') or {}).get('basis', item.get('nutrition_basis', 'consumed'))
+    if basis == 'per_100g' and ('item_nutrition_basis', item_index) not in trusted:
+        return None
+    if values:
+        return {'basis': basis, 'values': values, 'fingerprint': item_fingerprint(item)}
     return None
 
 
@@ -100,6 +109,8 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
     if event['kind'] != 'meal':
         return event
     previous_items = (previous or {}).get('items', [])
+    evidence = event.get('evidence', [])
+    previous_evidence = (previous or {}).get('evidence', [])
     candidates = []
     claimed = set()
     supplied_now = bool(re.search(r'热量|kcal|千卡|蛋白质|碳水|脂肪|每\s*100', user_text, re.I))
@@ -113,8 +124,8 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
         old = previous_items[old_index] if old_index is not None else {}
         if old_index is not None:
             claimed.add(old_index)
-        reference = _reference(item)
-        old_reference = _reference(old) if old else None
+        reference = _reference(item, evidence, index)
+        old_reference = _reference(old, previous_evidence, old_index) if old else None
         if old_reference and (not reference or not supplied_now):
             reference = old_reference
         known_reference = {k: v for k, v in (reference or {}).get('values', {}).items() if v is not None}
@@ -205,6 +216,19 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
         if any(item.get(k) is None for k in KEYS) and not reason:
             reason = '未能可靠估算全部营养，已知部分保留，未知部分没有按零计算。'
         _stamp(item, reason)
+    # Provenance for invalidated user nutrition must not survive a portion/food change.
+    keep = set()
+    for index, item in enumerate(event['items']):
+        for key, source in item.get('nutrition_sources', {}).items():
+            if source == 'user':
+                keep.add((EVIDENCE_FIELDS[key], index))
+        reference = item.get('nutrition_reference') or {}
+        if reference.get('basis') == 'per_100g' and 'user' in item.get('nutrition_sources', {}).values():
+            keep.add(('item_nutrition_basis', index))
+    nutrition_fields = {*EVIDENCE_FIELDS.values(), 'item_nutrition_basis'}
+    event['evidence'] = [entry for entry in event.get('evidence', [])
+                         if entry.get('field') not in nutrition_fields
+                         or (entry.get('field'), entry.get('item_index')) in keep]
     # Validate the final values, ranges and provenance before allowing persistence.
     return PreparedEvent.model_validate(event).model_dump(mode='json')
 

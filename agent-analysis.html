@@ -1604,10 +1604,11 @@
       <nav class="site-links" aria-label="顶部导航">
         <a class="active" href="#graph-overview">工作流</a>
         <a href="#data-harness">模型边界</a>
+        <a href="#grounding-harness">原文证据</a>
         <a href="#memory-system">记忆系统</a>
         <a href="#developer-guide">实现索引</a>
       </nav>
-      <span class="site-meta">离线自包含 · 2026-10-20</span>
+      <span class="site-meta">离线自包含 · 2026-10-22</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
@@ -1619,9 +1620,10 @@
         <div class="nav-group"><span class="nav-label">模型与状态</span>
           <a href="#data-harness">04 · 数据访问 Harness</a>
           <a href="#harness-case">案例 · 65kg 改成 66kg</a>
-          <a href="#memory-system">05 · 记忆与存储</a>
-          <a href="#prompt-system">06 · 提示词与上下文</a>
-          <a href="#tool-runtime">07 · 执行与降级</a>
+          <a href="#grounding-harness">05 · Grounding Harness</a>
+          <a href="#memory-system">06 · 记忆与存储</a>
+          <a href="#prompt-system">07 · 提示词与上下文</a>
+          <a href="#tool-runtime">08 · 执行与降级</a>
         </div>
         <div class="nav-group"><span class="nav-label">开发参考</span>
           <a href="#developer-guide">节点实现手册</a>
@@ -1645,8 +1647,8 @@
         </div>
       </header>
       <div class="status-row">
-        <span class="snapshot">实现快照 · 2026-10-20</span
-        ><span>已同步 ProcessingPlan / Harness</span><span>2 个 SQLite · 离线可打开</span
+        <span class="snapshot">实现快照 · 2026-10-22</span
+        ><span>已同步 ProcessingPlan / Grounding Harness</span><span>2 个 SQLite · 离线可打开</span
         ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
         ><button class="print-button" onclick="window.print()">
           打印 / 另存 PDF
@@ -1657,6 +1659,7 @@
         <a href="#graph-overview">Graph 总览</a><a href="#developer-guide">节点实现手册</a>
         <a href="#state-dictionary">状态字段字典</a><a href="#data-harness">Harness 与数据访问</a>
         <a href="#harness-case">Harness 案例与代码</a>
+        <a href="#grounding-harness">Grounding 与原文证据</a>
         <a href="#memory-system">记忆与存储</a>
       </nav>
       <div class="section-head">
@@ -2100,10 +2103,130 @@ data = self.boundary.consume(call)</code></pre>
         </div>
       </section>
 
+      <section class="section panel harness-panel" id="grounding-harness">
+        <div class="support-head">
+          <span>02</span>
+          <div>
+            <h2>提取 Grounding Harness · 模型给候选，本地证明原文</h2>
+            <p>它不判断模型“有多自信”，而是重做原文绑定，并在写库前把证据完整重放一遍。</p>
+          </div>
+        </div>
+        <div class="support-body">
+          <div class="harness-diagram">
+            <svg viewBox="0 0 1120 350" role="img" aria-label="用户原文和模型候选进入PlanHarness，本地ground_event忽略模型提交的证据归属，重新绑定实体与数值，生成不可变原文来源和字段证据。保存前assert_grounded重放范围、归一化和值；通过才写库，无法唯一绑定则追问，不一致则拒绝。">
+              <defs><marker id="grounding-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" /></marker></defs>
+              <text class="map-annotation" x="20" y="25">两道本地门：先重建证据，再在持久化边界复验；模型提交的 quote / item_index 不直接成为事实。</text>
+              <rect class="map-box blue" x="20" y="55" width="205" height="100" rx="8" />
+              <text class="map-title" x="122" y="84" text-anchor="middle">LLM 候选</text>
+              <text class="map-caption" x="122" y="108" text-anchor="middle">苹果 200g · 香蕉 100g</text>
+              <text class="map-caption" x="122" y="131" text-anchor="middle">可能类型合法但语义错</text>
+              <path class="map-line" d="M225 105H274" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box" x="276" y="55" width="245" height="100" rx="8" />
+              <text class="map-title" x="398" y="84" text-anchor="middle">ground_event · 本地重绑</text>
+              <text class="map-caption" x="398" y="108" text-anchor="middle">实体位置 + 分句 + 邻近 + 一对一</text>
+              <text class="map-caption" x="398" y="131" text-anchor="middle">不采信模型的证据归属</text>
+              <path class="map-line" d="M521 105H570" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box" x="572" y="55" width="245" height="100" rx="8" />
+              <text class="map-title" x="694" y="84" text-anchor="middle">Grounded 草稿</text>
+              <text class="map-caption" x="694" y="108" text-anchor="middle">苹果 100g · 香蕉 200g</text>
+              <text class="map-caption" x="694" y="131" text-anchor="middle">source + span + normalization</text>
+              <path class="map-line" d="M817 105H866" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box" x="868" y="55" width="232" height="100" rx="8" />
+              <text class="map-title" x="984" y="84" text-anchor="middle">assert_grounded · 写库前</text>
+              <text class="map-caption" x="984" y="108" text-anchor="middle">切片 / 哈希 / 归一化 / 当前值</text>
+              <text class="map-caption" x="984" y="131" text-anchor="middle">全部一致才允许持久化</text>
+              <path class="map-line" d="M984 155V212" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box" x="868" y="214" width="232" height="72" rx="8" />
+              <text class="map-title" x="984" y="243" text-anchor="middle">✓ Repository 写入</text>
+              <text class="map-caption" x="984" y="268" text-anchor="middle">证据可从不可变原文重放</text>
+              <path class="map-line" d="M694 155V212" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box orange" x="572" y="214" width="245" height="72" rx="8" />
+              <text class="map-title" x="694" y="243" text-anchor="middle">? 无法唯一绑定</text>
+              <text class="map-caption" x="694" y="268" text-anchor="middle">字段留空 → 草稿校验追问</text>
+              <path class="map-line" d="M398 155V212" style="marker-end:url(#grounding-arrow)" />
+              <rect class="map-box orange" x="276" y="214" width="245" height="72" rx="8" />
+              <text class="map-title" x="398" y="243" text-anchor="middle">✕ 证据和值不一致</text>
+              <text class="map-caption" x="398" y="268" text-anchor="middle">GroundingError → 不落库</text>
+              <rect class="map-box" x="20" y="214" width="205" height="72" rx="8" />
+              <text class="map-title" x="122" y="243" text-anchor="middle">不可变 EvidenceSource</text>
+              <text class="map-caption" x="122" y="268" text-anchor="middle">message_id + 原文 + SHA-256</text>
+              <text class="map-annotation" x="20" y="329">适用：体重、运动/睡眠时长、餐食实体与分量、用户营养值、周期动作，以及纠错和补充回答。</text>
+            </svg>
+          </div>
+
+          <div class="case-scene">
+            <div>
+              <h3>实际输入与错误候选</h3>
+              <blockquote>今天吃了100g苹果和200g香蕉</blockquote>
+              <pre class="case-code"><code># 模型把数量归属对调
+苹果 → 200g（quote="200g"）
+香蕉 → 100g（quote="100g"）</code></pre>
+            </div>
+            <div>
+              <h3>本地运行结果</h3>
+              <pre class="case-code"><code>苹果 → 100g · span 4..8
+香蕉 → 200g · span 11..15</code></pre>
+              <p><code>source.text[4:8] == "100g"</code><br /><code>source.text[11:15] == "200g"</code></p>
+            </div>
+          </div>
+
+          <h3 class="small-heading">代码怎样把错误候选拉回原文</h3>
+          <div class="case-flow" role="img" aria-label="PlanHarness收集同一任务的食物名称，调用ground_event；ground_event查找食物和数量的位置，由bind_quantities在本地绑定，再生成字段证据。">
+            <span>PlanHarness.approve_plan</span><b aria-hidden="true">→</b><span class="model">ground_event</span><b aria-hidden="true">→</b><span>_name_spans</span><b aria-hidden="true">→</b><span>_bind_quantities</span><b aria-hidden="true">→</b><span>_ground_items</span>
+          </div>
+          <pre class="case-code"><code># backend/app/harness.py · approve_plan
+item_names = [item.name for event in action.events for item in event.items if item.name]
+events = [ground_event(event,
+                       state.get('source_text') or state['input_text'],
+                       state.get('source_message_id'),
+                       action.text,
+                       item_names)
+          for event in action.events]
+
+# backend/app/grounding.py · _ground_items
+names = _name_spans(items, text)
+bindings = _bind_quantities(items, text, names)
+item['quantity'], item['unit'] = quantity['value'], quantity['unit']</code></pre>
+          <p class="case-note"><code>_bind_quantities</code> 先在同一分句内找唯一数量；不唯一时才尝试距离不超过 6 个字符且严格最近的候选，并保证一个数量只能使用一次。绑定失败就不保留模型给的分量。</p>
+
+          <div class="dev-table-wrap"><table class="dev-table"><thead><tr><th>证据字段</th><th>苹果</th><th>香蕉</th><th>本地保证</th></tr></thead><tbody>
+            <tr><td>item_name</td><td>“苹果”</td><td>“香蕉”</td><td>实体名称必须在原文中找到位置。</td></tr>
+            <tr><td>item_quantity</td><td>“100g” → 100</td><td>“200g” → 200</td><td>数值由本地规则解析，不采用模型提交的归属。</td></tr>
+            <tr><td>item_unit</td><td>“100g” → g</td><td>“200g” → g</td><td>单位和值共享原文片段，但分别证明当前字段。</td></tr>
+            <tr><td>source</td><td colspan="2">message_id + source_text_hash + start/end</td><td>字符坐标始终指向原始消息，不指向拼接后的 raw_text。</td></tr>
+          </tbody></table></div>
+
+          <h3 class="small-heading">最后一道门不是“有证据”，而是“证据证明当前值”</h3>
+          <pre class="case-code"><code># backend/app/grounding.py · _verified / assert_grounded
+if source.text[evidence.start:evidence.end] != evidence.quote:
+    raise GroundingError('证据片段与原文范围不一致')
+replayed, unit = _replay(evidence, source)
+if not _equal(replayed, evidence.normalization.output_value):
+    raise GroundingError('归一化记录无法从原文重放')
+if not _equal(replayed, _actual(event, evidence)):
+    raise GroundingError('证据不能证明当前字段值')</code></pre>
+          <div class="memory-read-grid">
+            <div class="memory-read"><b>把苹果改回 200g？</b><span>证据重放得到 100，当前字段却是 200，写库前抛出 GroundingError。</span></div>
+            <div class="memory-read"><b>偷偷移动 start/end？</b><span>原文切片不再等于 quote，范围校验失败。</span></div>
+            <div class="memory-read"><b>模型声称 kcal 来自用户？</b><span>没有本地营养证据就清空或降级，不能作为权威 user 值保留。</span></div>
+            <div class="memory-read"><b>旧记录没有 evidence？</b><span>保留为 unverified_legacy；无关纠错不会把历史模型结果升级为可信事实。</span></div>
+          </div>
+          <div class="llm-source-grid">
+            <a href="backend/app/grounding.py"><b>grounding.py</b>本地绑定、纠错来源、证据重放</a>
+            <a href="backend/app/harness.py"><b>harness.py</b>模型候选进入 grounding 的入口</a>
+            <a href="backend/app/schemas.py"><b>schemas.py</b>EvidenceSource / FieldEvidence</a>
+            <a href="backend/app/nutrition.py"><b>nutrition.py</b>只接受有证据的用户营养值</a>
+            <a href="backend/tests/test_grounding.py"><b>test_grounding.py</b>数量对调、伪造 span、旧记录回归测试</a>
+          </div>
+          <p class="case-summary">一句话：<strong>LLM 输出是待核对的草稿，不是事实。</strong> Grounding Harness 用原文重新确定“哪个值属于哪个实体”，持久化边界再证明“这段原文经过这条规则，确实得到当前字段值”。</p>
+          <p class="case-note">实现快照：2026-10-22。回归场景覆盖数量归属对调、当前值与证据不一致、纠错消息坐标、伪造用户营养值和 legacy 自动升级。</p>
+        </div>
+      </section>
+
       <section class="section support-grid">
         <div class="panel memory-panel" id="memory-system">
           <div class="support-head">
-            <span>02</span>
+            <span>03</span>
             <div>
               <h2>记忆系统 · 写入、读取与生命周期</h2>
               <p>没有向量库：SQLite 是事实源，按场景做有界检索；LLM 不直接写长期记忆</p>
@@ -2270,7 +2393,7 @@ data = self.boundary.consume(call)</code></pre>
         </div>
         <div class="panel llm-panel" id="prompt-system">
           <div class="support-head">
-            <span>03</span>
+            <span>04</span>
             <div>
               <h2>LLM 调用契约 · 5 个节点，6 类任务</h2>
               <p>规划、纠错、补丁、估算、表达、建议均通过同一个授权出口；每类任务有独立 Schema 与降级策略</p>
@@ -2391,7 +2514,7 @@ data = self.boundary.consume(call)</code></pre>
         </div>
         <div class="panel" id="tool-runtime">
           <div class="support-head">
-            <span>04</span>
+            <span>05</span>
             <div>
               <h2>执行、校验与重试</h2>
               <p>节点直接调用业务函数；没有 ToolNode / 模型工具循环</p>
@@ -2433,7 +2556,7 @@ data = self.boundary.consume(call)</code></pre>
         </div>
         <div class="panel">
           <div class="support-head">
-            <span>05</span>
+            <span>06</span>
             <div>
               <h2>计划节点内部的分支</h2>
               <p>仅说明节点内部逻辑，不增加编译图中的节点或边</p>
@@ -2482,6 +2605,7 @@ data = self.boundary.consume(call)</code></pre>
           <a href="#developer-guide">节点实现手册</a>
           <a href="#data-harness">处理计划与数据边界</a>
           <a href="#harness-case">Harness 案例与实际代码</a>
+          <a href="#grounding-harness">提取 Grounding 与原文证据</a>
           <a href="#memory-system">记忆与存储</a>
           <a href="#prompt-system">提示词与上下文</a>
           <a href="#tool-runtime">执行、校验与重试</a>

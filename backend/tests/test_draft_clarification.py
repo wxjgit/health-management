@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from uuid import uuid4
 
 import httpx
@@ -6,8 +7,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.clock import SHANGHAI
 from app.main import create_app
 from model_helpers import planned_content
+
+
+@pytest.fixture(autouse=True)
+def clock(monkeypatch):
+    fixed = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
+    for module in ('app.clock', 'app.parser', 'app.graphs'):
+        monkeypatch.setattr(module + '.now', fixed)
 
 
 @pytest.fixture
@@ -138,12 +147,15 @@ def test_other_required_fields_are_collected_before_saving(settings, monkeypatch
         if 'requested_fields' in data:
             assert data['requested_fields'] == [requested]
             return model_response(patch)
-        event = {'kind': kind, 'occurred_at': '2026-10-08T12:00:00+08:00', 'raw_text': '待补记录', **fields}
+        event = {'kind': kind, 'occurred_at': '2026-10-08T12:00:00+08:00',
+                 'raw_text': data['text'], **fields}
         return model_response({'intent': 'record', 'events': [event]})
 
     mock_model(monkeypatch, handler)
     with TestClient(create_app(settings)) as client:
-        pending = chat(client, '待补记录')
+        prompt = ('苹果待补记录' if kind == 'meal' else
+                  '轻松待补记录' if kind == 'exercise' else '待补记录')
+        pending = chat(client, prompt)
         assert pending['status'] == 'waiting_input'
         assert client.get('/api/events').json() == []
         done = resume(client, pending, answer)
@@ -280,9 +292,11 @@ def test_unnamed_food_draft_retains_known_quantity_when_name_is_added(settings, 
     def handler(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
         if 'requested_fields' in data:
-            assert data['requested_fields'] == ['items']
             assert data['item_index'] == 1
-            return model_response({'items': [{'name': '牛肉面'}]})
+            if data['requested_fields'] == ['items']:
+                return model_response({'items': [{'name': '牛肉面'}]})
+            assert data['requested_fields'] == ['quantity']
+            return model_response({'quantity': 2, 'unit': '碗'})
         return model_response({'intent': 'record', 'events': [meal(items=[
             {'name': '卤蛋', 'quantity': 1, 'unit': '个'}, {'quantity': 2, 'unit': '碗'},
         ])]})
@@ -291,7 +305,9 @@ def test_unnamed_food_draft_retains_known_quantity_when_name_is_added(settings, 
     with TestClient(create_app(settings)) as client:
         pending = chat(client, '昨天吃了一个卤蛋和两碗别的东西')
         assert client.get('/api/events').json() == []
-        done = resume(client, pending, '牛肉面')
+        named = resume(client, pending, '牛肉面')
+        assert named.json()['status'] == 'waiting_input'
+        done = resume(client, named.json(), '两碗')
         assert done.status_code == 200, done.text
         items = client.get('/api/events').json()[0]['data']['items']
         assert [i['name'] for i in items] == ['卤蛋', '牛肉面']

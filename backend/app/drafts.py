@@ -1,5 +1,6 @@
 """Local completeness checks and incremental updates for conversation drafts."""
 from .schemas import EventDraft, ExtractionEvent, ExtractionResult
+from .grounding import merge_patch_evidence
 
 
 def optional_missing(event, field):
@@ -130,4 +131,5 @@ def merge_patch(event, patch, fields, answer, item_index=None):
         elif field in update and (field in draft.missing_fields() or optional_missing(draft, field)):
             data[field] = update[field]
     data['raw_text'] = (data['raw_text'] + '，补充：' + answer)[:4000]
+    data = merge_patch_evidence(data, patch)
     return ExtractionEvent.model_validate(data).model_dump(mode='json')

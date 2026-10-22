@@ -73,6 +73,9 @@ class Parser:
             'fact 只用于用户主动表达的长期偏好、过敏或限制，不能把推断当事实。'
             '查询时填 query_start/query_end/query_kind/query_search，按用户明确的时间范围查询。'
             '先提取草稿：食物、数值或周期动作未提供时允许缺失，不要编造来补齐记录。'
+            '对发生时间、value、运动类型、食物名称和分量，在 event.evidence 中给出对应的连续原文 quote；'
+            'field 使用 occurred_at/value/exercise_type/item_name/item_quantity，食物证据同时给 item_index。'
+            'evidence 的来源、字符范围、归一化和策略版本由本地程序填写，模型不得猜测。'
             '食物名称未明确时 items=[]；“咸、油腻、吃多了”等感受不是食物名称，保留在 raw_text。'
             '在对应 action 的 feedback 中提取本次饮食反馈：salty/oily/overeating/hungry；quote 必须是本次原话片段。'
             'day 是反馈对应日期；stance=experience 为自述，question 为假设性问题，denial 为明确否认。'
@@ -94,6 +97,7 @@ class Parser:
             '仅根据本次修改要求返回 event（修正后的完整事件）或 question（需要补充的问题）。'
             '不能选择其他记录、读取其他数据、改变记录类型；保留原日期。'
             '保留未要求修改的字段；不要复制或生成模型营养估算。仅提取用户明确给出的营养数值，source=user。'
+            '只为本次实际修改的字段提供 evidence 原文 quote；本地程序会验证并保留未修改字段的旧来源。'
             'raw_text 描述修正后的记录；未知字段留空。返回给定Schema的JSON。'
         )
         return self.request('correct_selected', prompt, {
@@ -138,6 +142,7 @@ class Parser:
                 '补充分量示例：{"quantity":1,"unit":"碗"}；补充食物示例：{"items":[{"name":"牛肉面"}]}。'
                 'item_index 不为空时，仅提取该食物的分量或做法。'
                 '未回答的字段省略或留 null。不要通过猜测填满字段。'
+                '为实际回答的 value、食物名称或分量提供 evidence 原文 quote；字符范围和来源由本地程序填写。'
                 'feedback 是独立的用户反馈更新，不属于餐食字段；仅提取本次明确表达的偏咸、油腻、吃撑或仍饿。'
                 'topic=salty/oily/overeating/hungry；quote 必须逐字来自本次答案。否认用 stance=denial；不推断营养超标。'
             )

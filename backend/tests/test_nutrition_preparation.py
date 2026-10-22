@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from uuid import uuid4
 
 import httpx
@@ -6,8 +7,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.clock import SHANGHAI
 from app.main import create_app
 from model_helpers import planned_content
+
+
+@pytest.fixture(autouse=True)
+def clock(monkeypatch):
+    fixed = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
+    for module in ('app.clock', 'app.parser', 'app.graphs'):
+        monkeypatch.setattr(module + '.now', fixed)
 
 
 @pytest.fixture
@@ -188,7 +197,7 @@ def test_food_or_cooking_change_recomputes_estimate(settings, monkeypatch, chang
     with TestClient(create_app(settings)) as client:
         chat(client, '昨天吃了100g炸鸡')
         record_id = client.get('/api/events').json()[0]['id']
-        chat(client, '纠正食物或做法', event_id=record_id)
+        chat(client, '食物改成豆腐' if 'name' in change else '做法改成不同做法', event_id=record_id)
         assert client.get('/api/events').json()[0]['version'] == 2
     assert calls['nutrition'] == 2
 
@@ -219,7 +228,7 @@ def test_user_value_is_not_overwritten_when_other_nutrients_are_estimated(settin
     calls = mock_model(monkeypatch, lambda data: {'intent': 'record',
                        'events': [meal(kcal=120, source='user')]}, estimate)
     with TestClient(create_app(settings)) as client:
-        done = chat(client, '100g食物，实际热量120kcal')
+        done = chat(client, '昨天吃了100g炸鸡，实际热量120kcal')
         item = client.get('/api/events').json()[0]['data']['items'][0]
         assert item['kcal'] == 120
         assert item['nutrition_sources'] == {'kcal': 'user', 'protein_g': 'model_estimate',
@@ -239,7 +248,7 @@ def test_per_100g_user_label_is_scaled_without_model_and_survives_portion_change
 
     calls = mock_model(monkeypatch, extract, lambda items: pytest.fail('完整用户标签不应调用估算模型'))
     with TestClient(create_app(settings)) as client:
-        first = chat(client, '吃了200g，每100g热量100kcal，蛋白质10g，碳水10g，脂肪2g')
+        first = chat(client, '昨天吃了200g炸鸡，每100g热量100kcal，蛋白质10g，碳水10g，脂肪2g')
         assert first['cards'][0]['totals']['kcal'] == 200
         record_id = client.get('/api/events').json()[0]['id']
         done = chat(client, '不是200g，是300g')
@@ -264,7 +273,7 @@ def test_repeating_same_user_value_reuses_completed_mixed_nutrition(settings, mo
         'index': 0, 'protein_g': 8, 'carbs_g': 12, 'fat_g': 4, 'uncertainty': '缺失营养粗估',
     }]})
     with TestClient(create_app(settings)) as client:
-        chat(client, '100g食物，实际热量120kcal')
+        chat(client, '昨天吃了100g炸鸡，实际热量120kcal')
         record_id = client.get('/api/events').json()[0]['id']
         chat(client, '确认还是100g，热量120kcal', event_id=record_id)
         item = client.get('/api/events').json()[0]['data']['items'][0]

@@ -17,6 +17,7 @@ from .nutrition import prepare_nutrition, nutrition_summary
 from .parser import Parser
 from .harness import PlanHarness, PolicyError, record_projection
 from .drafts import check_drafts, merge_patch
+from .grounding import assert_grounded, ground_patch
 from .schemas import EventDraft, PreparedEvent, PlannedAction
 from .conversation import reconcile_feedback, attach_feedback, wants_advice, explicitly_recording
 from .replies import make_plan, express_plan, medical_question, record_receipt
@@ -29,6 +30,8 @@ class State(TypedDict, total=False):
     thread_id: str
     conversation_id: str
     input_text: str
+    source_message_id: str
+    source_text: str
     original: str
     selected_id: str | None
     parsed: dict[str, Any]
@@ -196,6 +199,9 @@ class Engine:
                     'requested_fields': state['pending_fields'], 'item_index': state.get('pending_item_index')})
             patch = self.parser.patch(text, extraction['events'][index], state['pending_fields'],
                                       state.get('pending_item_index'))
+            patch = ground_patch(patch, text, extraction['events'][index]['kind'],
+                                 state['pending_fields'], state.get('pending_item_index'),
+                                 state.get('source_message_id'))
             supplied_feedback = patch.feedback
             extraction['events'][index] = merge_patch(extraction['events'][index], patch,
                                                      state['pending_fields'], text, state.get('pending_item_index'))
@@ -306,12 +312,16 @@ class Engine:
                 '按完整食物与实际分量准备营养；保留用户数值，校验估算与来源，无法估算时保留未知原因。')
         return update
 
-    @staticmethod
-    def prepared_record(state, index):
+    def prepared_record(self, state, index):
         record = state.get('prepared_events', {}).get(str(index))
         if record is None:
             raise ValueError('记录尚未经过营养准备，不能保存')
-        return PreparedEvent.model_validate(record).model_dump(mode='json')
+        prior = None
+        correction_id = state.get('parsed', {}).get('correction_id')
+        if correction_id:
+            stored = self.repo.event(correction_id)
+            prior = stored['data'] if stored else None
+        return assert_grounded(record, prior=prior).model_dump(mode='json')
 
     @staticmethod
     def traced(state, title, detail):
@@ -378,14 +388,22 @@ class Engine:
             raise PolicyError('请选择本次提供的纠错候选记录。')
         if state.get('pending_event_index') is not None:
             return {'original': state.get('original') or state['input_text'], 'input_text': answer['text'],
+                    'source_message_id': answer.get('source_message_id', state.get('source_message_id')),
+                    'source_text': answer['text'],
                     'selected_id': selected, 'incremental_answer': True,
                     'rounds': state.get('rounds', 0) + 1}
         if parsed['intent'] == 'correct':
             text = state.get('original') or state['input_text']
             if not answer.get('event_id'):
                 text += '，' + answer['text']
-            return {'input_text': text, 'selected_id': selected, 'rounds': state.get('rounds', 0) + 1}
+            return {'input_text': text,
+                    'source_message_id': (state.get('source_message_id') if answer.get('event_id')
+                                          else answer.get('source_message_id', state.get('source_message_id'))),
+                    'source_text': (state.get('source_text') if answer.get('event_id') else answer['text']),
+                    'selected_id': selected, 'rounds': state.get('rounds', 0) + 1}
         return {'original': state.get('original') or state['input_text'], 'input_text': answer['text'],
+                'source_message_id': answer.get('source_message_id', state.get('source_message_id')),
+                'source_text': answer['text'],
                 'rounds': state.get('rounds', 0) + 1}
 
     def persist(self, state):
@@ -673,11 +691,11 @@ class Engine:
                 if existing['status'] in ['completed', 'waiting_input']:
                     return existing['result']
                 thread_id = existing['id']
-                invocation = None if self.graph_for(kind).get_state({'configurable': {'thread_id': thread_id}}).values else {**initial, 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
+                invocation = None if self.graph_for(kind).get_state({'configurable': {'thread_id': thread_id}}).values else {**initial, 'source_message_id': request_id, 'source_text': initial.get('input_text', ''), 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
             else:
                 thread_id = str(uuid4())
                 self.repo.register_workflow(thread_id, request_id, fp, kind)
-                invocation = {**initial, 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
+                invocation = {**initial, 'source_message_id': request_id, 'source_text': initial.get('input_text', ''), 'thread_id': thread_id, 'conversation_id': conversation, 'record_ids': [], 'saved_indexes': [], 'rounds': 0}
                 if kind == 'chat':
                     self.repo.message(request_id, thread_id, 'user', initial['input_text'], conversation=conversation)
             try:
@@ -719,7 +737,8 @@ class Engine:
             else:
                 if not payload.get('text'):
                     raise ValueError('请输入补充信息')
-                answer = {'text': payload['text'], 'event_id': payload.get('event_id')}
+                answer = {'text': payload['text'], 'event_id': payload.get('event_id'),
+                          'source_message_id': payload['request_id']}
                 display = payload['text']
             config = {'configurable': {'thread_id': thread_id}}
             saved = self.graph_for(workflow['kind']).get_state(config).values

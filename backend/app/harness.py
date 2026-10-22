@@ -13,6 +13,7 @@ import re
 from urllib.parse import urlsplit
 
 from . import clock
+from .grounding import ground_correction, ground_event
 from .schemas import (ExtractionResult, PlannedAction, ProcessingPlan, CorrectionResult,
                       EventPatch, AdviceReply, ContextualReply, NutritionEstimates)
 
@@ -425,6 +426,13 @@ class PlanHarness:
                 if action.query_start and action.query_end:
                     if not 0 <= (action.query_end - action.query_start).days <= 365:
                         raise PolicyError('查询时间范围应在一年以内。')
+            if action.intent == 'record':
+                item_names = [item.name for event in action.events for item in event.items if item.name]
+                action = action.model_copy(update={
+                    'events': [ground_event(event, state.get('source_text') or state['input_text'],
+                                            state.get('source_message_id'), action.text, item_names)
+                               for event in action.events],
+                })
             actions.append(action)
         writes = {a.intent for a in actions if a.intent in ('record', 'correct')}
         if len(writes) > 1 or sum(a.intent == 'correct' for a in actions) > 1:
@@ -453,6 +461,10 @@ class PlanHarness:
             data = result.model_dump(mode='json', exclude={'correction_id'})
             if data['intent'] == 'correct':
                 # 本地纠错结果直接返回，不再调用模型。
+                if prior and result.events:
+                    result.events[0] = ground_correction(
+                        result.events[0], prior, state.get('source_text') or state['input_text'],
+                        state.get('source_message_id'))
                 return result, [], []
             plan = ProcessingPlan(actions=[PlannedAction(text=state['input_text'], **data)])
         # 计划先过本地检查，不能让模型说做什么就直接做。
@@ -477,6 +489,9 @@ class PlanHarness:
                 if updated.event.kind != prior['kind']:
                     raise PolicyError('纠错不能改变记录类型，请另建记录。')
                 updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])
+                updated.event = ground_correction(
+                    updated.event, prior, state.get('source_text') or correction.text,
+                    state.get('source_message_id'))
             result = ExtractionResult(intent='correct', correction_id=prior['id'],
                                       events=[updated.event] if updated.event else [],
                                       question=updated.question or (None if updated.event else '请说明这条记录要改成什么。'))

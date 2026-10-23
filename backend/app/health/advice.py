@@ -76,7 +76,7 @@ def _day_summary(day):
 
 def build_advice_context(repo, question, conversation_id='main', thread_id=None, *, view=None, bound=None, scope_text=None):
     """Return bounded model context and the exact local records supporting it."""
-    from .workflows.policy import PlanHarness
+    from ..workflows.policy import PlanHarness
     view = view or PlanHarness.advice_view(question, bound)
     scene = {'none': 'general', 'weight_trend': 'weight_trend', 'meal_reference': 'meal_reference', 'diet_week': 'recent_review',
              'diet_portion': 'portion'}.get(view, classify_scene(question))

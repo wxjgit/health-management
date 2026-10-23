@@ -55,9 +55,9 @@ class PlanningWorkflowMixin:
 
     def build_plan(self):
         graph = StateGraph(State)
-        graph.add_node('prepare', self.prepare_plan)
-        graph.add_node('approve', self.approve_plan)
-        graph.add_node('activate', self.activate_plan)
+        graph.add_node('prepare', self.guarded_node(self.prepare_plan))
+        graph.add_node('approve', self.guarded_node(self.approve_plan))
+        graph.add_node('activate', self.guarded_node(self.activate_plan))
         graph.add_edge(START, 'prepare')
         graph.add_edge('prepare', 'approve')
         graph.add_edge('approve', 'activate')
@@ -66,14 +66,14 @@ class PlanningWorkflowMixin:
 
     def build_analysis(self):
         graph = StateGraph(State)
-        graph.add_node('analyze', lambda state: {'analysis': analyze(self.repo)})
-        graph.add_node('review', lambda state: {
+        graph.add_node('analyze', self.guarded_node(lambda state: {'analysis': analyze(self.repo)}))
+        graph.add_node('review', self.guarded_node(lambda state: {
             'cards': [{
                 'type': 'review',
                 **review(self.repo, state.get('period', 'week')),
             }],
             'reply': '复盘已更新。规律仅引用足够完整的记录；数据不足时不会制造结论。',
-        })
+        }))
         graph.add_edge(START, 'analyze')
         graph.add_edge('analyze', 'review')
         graph.add_edge('review', END)

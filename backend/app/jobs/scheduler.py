@@ -7,6 +7,7 @@ from ..health import analyze, recommendation, review
 
 def tick(engine, reference=None):
     current = reference or now()
+    weekly_key = None
     with engine.lock:
         repo = engine.repo
         prefs = repo.get_meta('preferences')
@@ -61,14 +62,26 @@ def tick(engine, reference=None):
             if current.weekday() == prefs['weekly_day']:
                 key = f'weekly:{day}'
                 if repo.start_job(key, 'weekly'):
-                    try:
-                        engine.run('analysis', key, {'period': 'week'}, {'period': 'week'})
-                        repo.notify(key, '本周复盘已生成', '查看历史规律与记录完整度。已有目标时，可以在计划页生成下周安排。')
-                        if repo.active_plan():
-                            engine.run('plan', f'auto-plan:{day}', {'targets': None}, {'plan': {'targets': None}})
-                        repo.finish_job(key)
-                    except Exception:
-                        repo.finish_job(key, False)
+                    weekly_key = key
+                    epoch = engine.context_epoch
+
+    # Graph execution must not inherit the scheduler's outer engine lock.
+    if weekly_key:
+        try:
+            engine.run('analysis', weekly_key, {'period': 'week'}, {'period': 'week'})
+            with engine.lock:
+                if engine.context_epoch != epoch:
+                    repo.finish_job(weekly_key, False)
+                    return
+                repo.notify(weekly_key, '本周复盘已生成', '查看历史规律与记录完整度。已有目标时，可以在计划页生成下周安排。')
+                has_plan = bool(repo.active_plan())
+            if has_plan:
+                engine.run('plan', f'auto-plan:{day}', {'targets': None}, {'plan': {'targets': None}})
+            with engine.lock:
+                repo.finish_job(weekly_key)
+        except Exception:
+            with engine.lock:
+                repo.finish_job(weekly_key, False)
 
 
 async def scheduler_loop(engine):

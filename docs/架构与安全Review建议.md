@@ -117,11 +117,6 @@ Pydantic 可以保证字段类型、范围和枚举合法，但不能证明食�
 
 ### 3.3 全局锁跨越最长 45 秒的模型网络调用
 
-相关位置：
-
-- [`backend/app/workflows/runtime.py`](../backend/app/workflows/runtime.py)
-- [`backend/app/modeling/parser.py`](../backend/app/modeling/parser.py)
-- [`backend/app/jobs/scheduler.py`](../backend/app/jobs/scheduler.py)
 
 `Engine.run()` 和 `Engine.resume()` 在整个 Graph 调用期间持有一个全局 `RLock`，而 Graph 内部可能执行超时为 45 秒的外部 HTTP 请求。这意味着一个慢模型请求可能阻塞其他聊天、计划确认、删除操作和调度任务。
 

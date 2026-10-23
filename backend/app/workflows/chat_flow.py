@@ -196,7 +196,7 @@ class ChatFlowMixin:
             'respond',
         ]
         for name in node_names:
-            graph.add_node(name, getattr(self, name))
+            graph.add_node(name, self.guarded_node(getattr(self, name)))
 
         parse_routes = {name: name for name in ['parse_initial', 'patch_pending']}
         graph.add_conditional_edges(START, self.route_parse, parse_routes)

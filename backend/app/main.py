@@ -13,6 +13,7 @@ from .api.system import router_for as system_router_for
 from .api.workflows import router as workflows_router
 from .common.config import ROOT, Settings
 from .workflows.engine import Engine
+from .workflows.concurrency import WorkflowConflict
 from .jobs.scheduler import scheduler_loop
 
 
@@ -41,6 +42,7 @@ def create_app(settings=None):
     )
 
     @app.exception_handler(ValueError)
+    @app.exception_handler(WorkflowConflict)
     async def invalid(_, error):
         return JSONResponse(status_code=409, content={'detail': str(error)})
 

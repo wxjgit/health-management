@@ -1,6 +1,7 @@
 """Schema-validated model adapter with a delegated local parser."""
 import json
 import re
+from contextlib import nullcontext
 
 import httpx
 
@@ -19,9 +20,10 @@ from .projections import record_projection
 
 
 class Parser:
-    def __init__(self, settings):
+    def __init__(self, settings, network_context=None):
         self.settings = settings
         self.boundary = ModelBoundary(settings)
+        self.network_context = network_context or (lambda purpose: nullcontext())
 
     @property
     def mode(self):
@@ -103,7 +105,7 @@ class Parser:
             # Qwen3.8-Max defaults to thinking; extraction should answer promptly.
             if self.settings.model_name.startswith('qwen3.8-max'):
                 body['enable_thinking'] = False
-            with httpx.Client(timeout=45, follow_redirects=False) as client:
+            with self.network_context(call.purpose), httpx.Client(timeout=45, follow_redirects=False) as client:
                 response = client.post(self.settings.model_base_url + '/chat/completions', headers={
                     'Authorization': 'Bearer ' + self.settings.model_api_key,
                 }, json=body)

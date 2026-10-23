@@ -29,7 +29,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { api, requestId } from "./api";
+import { api, ApiError, requestId } from "./api";
 import type {
   Card,
   Daily,
@@ -347,8 +347,36 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const lastRequest = useRef<{ key: string; id: string } | null>(null);
+  const [confirmingPlans, setConfirmingPlans] = useState<Set<string>>(() => new Set());
+  const [cancellingPlans, setCancellingPlans] = useState<Set<string>>(() => new Set());
+  const planInFlight = useRef(new Set<string>());
+  const planCancellationInFlight = useRef(new Set<string>());
+  const planPayloads = useRef(new Map<string, NonNullable<Workflow["retry_request"]>>());
+  const planReadSequence = useRef(0);
+  const appliedPlanRead = useRef(0);
+  const latestPlans = useRef<Plan[]>([]);
+
+  const applyPlanStatus = useCallback((pl: Plan[], w: Workflow[], sequence: number) => {
+    // A slow earlier refresh must not restore a draft over a newer active plan.
+    if (sequence < appliedPlanRead.current) return;
+    appliedPlanRead.current = sequence;
+    latestPlans.current = pl;
+    setPlans(pl.filter((p) => p.status !== "purged"));
+    setPending(w);
+    setConfirmingPlans((previous) => {
+      const next = new Set([...previous].filter((id) => planInFlight.current.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, []);
+
+  const refreshPlanStatus = useCallback(async () => {
+    const sequence = ++planReadSequence.current;
+    const [pl, w] = await Promise.all([api<Plan[]>("/plans"), api<Workflow[]>("/workflows")]);
+    applyPlanStatus(pl, w, sequence);
+  }, [applyPlanStatus]);
 
   const refresh = useCallback(async () => {
+    const sequence = ++planReadSequence.current;
     const [h, p, d, m, e, t, pl, i, r, n, w, pr, f, mo, dt] = await Promise.all([
       api<Health>("/health"),
       api<Profile | null>("/profile"),
@@ -373,15 +401,15 @@ export default function App() {
     setMessages(m);
     setEvents(e);
     setDays(t);
-    setPlans(pl.filter((p) => p.status !== "purged"));
+    applyPlanStatus(pl, w, sequence);
     setInsights(i);
     setReviews(r);
     setNotices(n);
-    setPending(w);
     setPreferences(pr);
     setFacts(f);
     setMonths(mo);
-  }, []);
+    return { plans: pl, workflows: w };
+  }, [applyPlanStatus]);
 
   useEffect(() => {
     refresh()
@@ -411,16 +439,35 @@ export default function App() {
       if (!document.hidden)
         Promise.all([
           api<Notice[]>("/notifications"),
-          api<Workflow[]>("/workflows"),
+          refreshPlanStatus(),
         ])
-          .then(([n, w]) => {
+          .then(([n]) => {
             setNotices(n);
-            setPending(w);
           })
           .catch(() => {});
     }, 60000);
     return () => clearInterval(t);
-  }, []);
+  }, [refreshPlanStatus]);
+
+  const hasPlanInProgress = confirmingPlans.size > 0 || pending.some(
+    (w) => w.pending_input?.kind === "plan_confirmation" && w.status === "resuming",
+  );
+  useEffect(() => {
+    if (!hasPlanInProgress) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        if (!document.hidden) await refreshPlanStatus();
+      } catch {
+        // Keep the current state on a failed refresh and try again next tick.
+      } finally {
+        if (!stopped) timer = setTimeout(poll, 2000);
+      }
+    };
+    timer = setTimeout(poll, 2000);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [hasPlanInProgress, refreshPlanStatus]);
 
   const act = async (task: () => Promise<unknown>, success = "") => {
     setBusy(true);
@@ -431,6 +478,9 @@ export default function App() {
       if (success) setToast(success);
     } catch (e) {
       setError(e instanceof Error ? e.message : "请求失败");
+      // An error can arrive after the server accepted an answer or activated a
+      // plan. Refresh recovery information instead of offering another answer.
+      await refresh().catch(() => {});
     } finally {
       setBusy(false);
     }
@@ -447,7 +497,7 @@ export default function App() {
   };
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
-    if (!input.trim() || busy) return;
+    if (!input.trim() || busy || currentPending?.retry_request) return;
     const text = input.trim(),
       workflow = currentPending;
     const processingMode = localOnly || health?.local_only || workflow?.processing_mode === "local_only"
@@ -483,19 +533,92 @@ export default function App() {
       setProcessingStartedAt(null);
     }
   };
-  const decidePlan = (workflow: Workflow, approved: boolean) =>
-    act(() =>
-      api(`/workflows/${workflow.thread_id}/resume`, "POST", {
-        request_id: requestId(),
-        interrupt_id: workflow.pending_input!.interrupt_id,
-        approved,
-      }),
+  const runPlanDecision = async (workflow: Workflow, payload: NonNullable<Workflow["retry_request"]>) => {
+    const id = workflow.thread_id;
+    if (planInFlight.current.has(id) || planCancellationInFlight.current.has(id)) return;
+    planInFlight.current.add(id);
+    setConfirmingPlans((previous) => new Set(previous).add(id));
+    setError("");
+    let failure: unknown;
+    let snapshot: Awaited<ReturnType<typeof refresh>> | undefined;
+    try {
+      await api(`/workflows/${id}/resume`, "POST", payload);
+    } catch (e) {
+      failure = e;
+    }
+    try {
+      snapshot = await refresh();
+    } catch (e) {
+      failure ??= e;
+    } finally {
+      planInFlight.current.delete(id);
+      // If refreshing failed, keep the uncertain state until polling succeeds.
+      if (snapshot) setConfirmingPlans((previous) => {
+        const next = new Set(previous); next.delete(id); return next;
+      });
+    }
+    const planId = workflow.pending_input?.plan_id ?? id;
+    const activated = latestPlans.current.some((p) => p.id === planId && p.status === "active");
+    if (failure && !activated) setError(
+      `${snapshot ? "计划确认失败" : "暂时无法获取确认结果，请刷新状态"}：${failure instanceof Error ? failure.message : "请稍后重试"}`,
     );
-  const clearPending = (workflow: Workflow) =>
-    act(
-      () => api(`/workflows/${workflow.thread_id}`, "DELETE"),
+  };
+  const decidePlan = (workflow: Workflow, approved: boolean) => {
+    const previous = planPayloads.current.get(workflow.thread_id);
+    const interruptId = workflow.pending_input!.interrupt_id;
+    const payload = previous?.approved === approved && previous.interrupt_id === interruptId
+      ? previous : { request_id: requestId(), interrupt_id: interruptId, approved };
+    planPayloads.current.set(workflow.thread_id, payload);
+    return runPlanDecision(workflow, payload);
+  };
+  const cancelPlan = async (workflow: Workflow) => {
+    const id = workflow.thread_id;
+    if (planCancellationInFlight.current.has(id)) return;
+    planCancellationInFlight.current.add(id);
+    setCancellingPlans((previous) => new Set(previous).add(id));
+    setError("");
+    try {
+      await api(`/workflows/${id}`, "DELETE");
+      setToast("已取消待处理计划");
+    } catch (e) {
+      setError(e instanceof ApiError && e.status === 409
+        && (planInFlight.current.has(id) || e.message.includes("计划正在确认"))
+        ? "计划正在确认，暂时无法取消"
+        : e instanceof Error ? e.message : "取消失败，请刷新状态");
+    } finally {
+      await refresh().catch(() => {});
+      planCancellationInFlight.current.delete(id);
+      setCancellingPlans((previous) => { const next = new Set(previous); next.delete(id); return next; });
+    }
+  };
+  const retryWorkflow = (workflow: Workflow) => {
+    if (workflow.pending_input?.kind === "plan_confirmation" && workflow.retry_request)
+      return runPlanDecision(workflow, workflow.retry_request);
+    return act(async () => {
+      if (!workflow.retry_request) return;
+      if ((localOnly || health?.local_only) && workflow.processing_mode !== "local_only"
+        && workflow.retry_request.processing_mode !== "local_only") {
+        throw new Error("上次补充使用模型模式。若要改为纯本地处理，请取消后重新提交。");
+      }
+      await api(`/workflows/${workflow.thread_id}/resume`, "POST", workflow.retry_request);
+      lastRequest.current = null;
+      setInput("");
+      setSelectedWorkflow(null);
+      setSelectedEvent(null);
+    });
+  };
+  const clearPending = (workflow: Workflow) => {
+    if (workflow.pending_input?.kind === "plan_confirmation") return cancelPlan(workflow);
+    return act(
+      async () => {
+        await api(`/workflows/${workflow.thread_id}`, "DELETE");
+        lastRequest.current = null;
+        setInput("");
+        setSelectedWorkflow("new");
+      },
       "已取消待处理事项",
     );
+  };
   const removeEvent = (e: Event) => {
     if (
       !confirm(
@@ -787,9 +910,17 @@ export default function App() {
                       <div className="pending-strip">
                         <CircleHelp size={15} />
                         <span>
-                          {currentPending.pending_input?.optional ? "可选补充：" : "正在补充："}
-                          {currentPending.pending_input?.prompt ?? currentPending.pending_input?.question}
+                          {currentPending.retry_request
+                            ? currentPending.status === "resuming"
+                              ? `正在处理上次补充“${currentPending.retry_request.text ?? ""}”，请稍候。`
+                              : `上次补充“${currentPending.retry_request.text ?? ""}”未完成。请重试原答案，或取消后重新填写。已保存的记录保留；若历史已有该条，请纠正它。`
+                            : <>{currentPending.pending_input?.optional ? "可选补充：" : "正在补充："}
+                              {currentPending.pending_input?.prompt ?? currentPending.pending_input?.question}</>}
                         </span>
+                        {currentPending.retry_request && (
+                          <button disabled={busy || currentPending.status === "resuming"}
+                            onClick={() => retryWorkflow(currentPending)}>重试原答案</button>
+                        )}
                         <button
                           disabled={busy}
                           onClick={() => {
@@ -828,7 +959,7 @@ export default function App() {
                         </button>
                       </div>
                     )}
-                    {currentPending?.pending_input?.options && (
+                    {currentPending?.pending_input?.options && !currentPending.retry_request && (
                       <div className="pending-options">
                         {currentPending.pending_input.options.map((o) => (
                           <button
@@ -880,6 +1011,7 @@ export default function App() {
                     <form className="composer" onSubmit={submit}>
                       <textarea
                         aria-label="描述饮食或身体状态"
+                        disabled={busy || !!currentPending?.retry_request}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder={
@@ -904,7 +1036,7 @@ export default function App() {
                       />
                       <button
                         className="send-button"
-                        disabled={busy || !input.trim()}
+                        disabled={busy || !input.trim() || !!currentPending?.retry_request}
                         aria-label="发送记录"
                       >
                         {busy ? (
@@ -1015,6 +1147,9 @@ export default function App() {
                   (w) => w.pending_input?.kind === "plan_confirmation",
                 )}
                 busy={busy}
+                confirming={confirmingPlans}
+                cancelling={cancellingPlans}
+                refreshStatus={() => refreshPlanStatus().catch((e) => setError(e.message))}
                 generate={(body) =>
                   act(() =>
                     api("/plans/propose", "POST", {
@@ -1024,6 +1159,8 @@ export default function App() {
                   )
                 }
                 decide={decidePlan}
+                retry={retryWorkflow}
+                cancel={clearPending}
                 navigate={navigateEvidence}
               />
             )}
@@ -1532,8 +1669,13 @@ function Plans({
   plans,
   pending,
   busy,
+  confirming,
+  cancelling,
+  refreshStatus,
   generate,
   decide,
+  retry,
+  cancel,
   navigate,
 }: {
   active?: Plan;
@@ -1542,8 +1684,13 @@ function Plans({
   plans: Plan[];
   pending: Workflow[];
   busy: boolean;
+  confirming: Set<string>;
+  cancelling: Set<string>;
+  refreshStatus: () => void;
   generate: (body: { targets?: Targets; note?: string; target_source?: "manual" | "system_default"; suggestion_fingerprint?: string }) => void;
   decide: (w: Workflow, approved: boolean) => void;
+  retry: (w: Workflow) => void;
+  cancel: (w: Workflow) => void;
   navigate: (id: string) => void;
 }) {
   const [fields, setFields] = useState<Record<string, string>>({
@@ -1582,12 +1729,31 @@ function Plans({
   }, [active?.id, defaults?.fingerprint, defaults?.status, dirty]);
   return (
     <div className="plans-page">
-      {pending.map((w) => (
+      {pending.map((w) => {
+        const stored = plans.find((p) => p.id === (w.pending_input?.plan_id ?? w.thread_id));
+        if (stored && stored.status !== "pending") {
+          // Business state wins even if workflow result finalization is delayed.
+          if (stored.status === "active" && w.status === "resume_failed" && w.retry_request)
+            return <div className="plan-confirm" key={w.thread_id}>
+              <p>计划已生效，上次请求未完成。可以更新确认结果，无需再次采用计划。</p>
+              <button className="secondary" disabled={busy || confirming.has(w.thread_id)}
+                onClick={() => retry(w)}>{confirming.has(w.thread_id) ? "更新中…" : "更新确认结果"}</button>
+            </div>;
+          return null;
+        }
+        const isConfirming = confirming.has(w.thread_id) || w.status === "resuming";
+        const isCancelling = cancelling.has(w.thread_id);
+        return (
         <div className="plan-confirm" key={w.thread_id}>
           <div>
-            <span className="tag">待你确认</span>
+            <span className="tag">{isConfirming ? "确认中…" : w.status === "resume_failed" ? "确认失败" : "待你确认"}</span>
             <h2>新的计划已准备好</h2>
             <p>{w.pending_input?.question}</p>
+            {w.status === "resume_failed" && <p className="small-note" role="status">
+              计划确认失败。{w.retry_request
+                ? `上次选择“${w.retry_request.approved ? "采用计划" : "保留原计划"}”未完成，请重试上次确认，或取消待处理计划。`
+                : "请根据当前草案重新确认或取消。"}
+            </p>}
             {w.pending_input?.target_source === "system_default" && (
               <p className="small-note">系统初始估算，可修改，不是医疗处方。{w.pending_input.target_warnings?.join(" ")}</p>
             )}
@@ -1613,24 +1779,35 @@ function Plans({
             )}
           </div>
           <div className="confirm-actions">
+            {w.retry_request ? <>
+              <button className="primary" disabled={busy || isConfirming || isCancelling}
+                onClick={() => retry(w)}>
+                {isConfirming && <LoaderCircle size={15} className="spin" />}
+                {isConfirming ? "确认中…" : "重试上次确认"}
+              </button>
+            </> : <>
             <button
               className="primary"
-              disabled={busy}
+              disabled={busy || isConfirming || isCancelling}
               onClick={() => decide(w, true)}
             >
-              <Check size={15} />
-              采用计划
+              {isConfirming ? <LoaderCircle size={15} className="spin" /> : <Check size={15} />}
+              {isConfirming ? "确认中…" : "采用计划"}
             </button>
             <button
               className="secondary"
-              disabled={busy}
+              disabled={busy || isConfirming || isCancelling}
               onClick={() => decide(w, false)}
             >
               保留原计划
             </button>
+            </>}
+            <button className="secondary" disabled={busy || isCancelling}
+              onClick={() => cancel(w)}>{isCancelling ? "取消中…" : "取消待处理计划"}</button>
+            {isConfirming && <button className="text-button" onClick={refreshStatus}>刷新状态</button>}
           </div>
         </div>
-      ))}
+      ); })}
       <div className="plan-grid">
         <section className="panel target-panel">
           <div className="panel-heading">
@@ -1731,7 +1908,7 @@ function Plans({
         <section className="panel current-plan">
           <div className="panel-heading">
             <b>当前生效计划</b>
-            <span className="tiny-tag">{active ? "执行中" : "未设置"}</span>
+            <span className="tiny-tag" role={active ? "status" : undefined}>{active ? "计划已生效" : "未设置"}</span>
           </div>
           {active ? (
             <>

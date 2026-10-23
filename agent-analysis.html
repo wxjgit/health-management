@@ -2395,38 +2395,93 @@
       .case-outcome,
       .case-summary { color: #273244; }
       footer { color: #4b5563; }
+      /* Concurrency recovery appendix: separate styles keep existing diagrams intact. */
+      #concurrency-recovery { padding: 28px; }
+      #concurrency-recovery h3 { margin: 24px 0 10px; font-size: 18px; }
+      #concurrency-recovery p { max-width: 100%; }
+      .recovery-lead { color: var(--muted); }
+      .recovery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .recovery-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #f8faf6; }
+      #concurrency-recovery .recovery-card h3 { margin-top: 0; }
+      .recovery-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+      .recovery-step { flex: 1 1 135px; padding: 12px; border-radius: 10px; border: 1px solid #d2e0d4; background: #edf5ed; }
+      .recovery-step b, .recovery-step small { display: block; }
+      .recovery-step small { color: #526458; }
+      .recovery-arrow { color: #6c8d78; font-size: 20px; }
+      .recovery-danger { background: #fff3e6; border-color: #edd2af; }
+      .recovery-code { margin: 12px 0; padding: 16px; border-radius: 10px; background: #20382e; color: #e6f3e9; font-size: 12px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+      .recovery-table-wrap { max-width: 100%; overflow-x: auto; }
+      .recovery-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .recovery-table th, .recovery-table td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+      .recovery-table th { background: #edf3e9; }
+      .recovery-notice { padding: 14px 18px; border-left: 4px solid #af7e35; background: #fff7eb; border-radius: 0 10px 10px 0; }
+      .recovery-example-switch { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+      .recovery-example-switch button { border: 1px solid #b6cdbd; border-radius: 8px; background: #fff; color: #315944; padding: 8px 12px; }
+      .recovery-example-switch button[aria-pressed="true"] { background: #315944; color: white; }
+      .recovery-example-output { white-space: pre-wrap; overflow-wrap: anywhere; padding: 18px; background: #edf3e9; border-radius: 12px; line-height: 1.9; font-size: 14px; min-height: 185px; }
+      .recovery-sources { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 12px; margin-top: 16px; }
+      .recovery-reader-note { margin: 14px 0; padding: 14px 18px; border: 1px solid #cbdcec; border-radius: 10px; background: #f0f6fd; }
+      .recovery-source-line { margin-top: 10px; font-size: 12px; color: #425b75; overflow-wrap: anywhere; }
+      .recovery-source-line a { text-decoration: underline; text-underline-offset: 3px; }
+      .recovery-explain { margin: 12px 0; padding-left: 22px; }
+      .recovery-explain li { margin: 7px 0; }
+      .recovery-ui { margin: 14px 0; padding: 16px; background: #fff; border: 1px solid #cbd9cf; border-radius: 10px; }
+      .recovery-ui p + p { margin-top: 8px; }
+      .recovery-ui span { display: inline-block; margin: 8px 8px 0 0; padding: 6px 10px; border: 1px solid #b6cdbd; border-radius: 6px; color: #315944; }
+      .recovery-details { margin: 18px 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+      .recovery-details > summary { cursor: pointer; font-weight: 650; }
+      .recovery-details[open] > summary { margin-bottom: 14px; }
+      #concurrency-recovery .recovery-card p + p { margin-top: 10px; }
+      .doc-main [data-chapter] { scroll-margin-top: 76px; }
+      .chapter-nav a.nav-subsection { padding-left: 24px; font-size: 13px; }
+      .chapter-nav .nav-group { margin-bottom: 26px; }
+      .chapter-nav .nav-label { display: flex; align-items: center; gap: 8px; }
+      .chapter-nav .nav-label::after { content: ""; flex: 1; height: 1px; background: #e5e7eb; }
+      .reading-nav, .page-toc { display: none !important; }
+      .doc-shell {
+        width: min(100%, 1520px);
+        max-width: 1520px;
+        grid-template-columns: 240px minmax(0, 1280px);
+      }
+      @media(max-width: 760px) { #concurrency-recovery { padding: 18px; } .recovery-grid { grid-template-columns: 1fr; } .recovery-table th, .recovery-table td { padding: 9px; } }
     </style>
   </head>
   <body>
     <div class="site-bar">
       <div class="site-brand"><span class="brand-mark">HM</span><span>健康管理 Agent 工程图</span></div>
       <nav class="site-links" aria-label="顶部导航">
-        <a class="active" href="#graph-overview">工作流</a>
-        <a href="#data-harness">模型边界</a>
-        <a href="#grounding-harness">原文证据</a>
-        <a href="#memory-system">记忆系统</a>
-        <a href="#developer-guide">实现索引</a>
+        <a class="active" href="#graph-overview">系统流程</a>
+        <a href="#developer-guide">代码实现</a>
+        <a href="#data-harness">数据边界</a>
+        <a href="#memory-system">运行机制</a>
+        <a href="#concurrency-recovery">并发可靠性</a>
       </nav>
       <span class="site-meta">离线自包含 · 2026-10-22</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
-        <div class="nav-group"><span class="nav-label">工程概览</span>
-          <a class="current" href="#graph-overview">01 · 工作流总览</a>
-          <a href="#entry-points">02 · 入口与请求</a>
-          <a href="#routing">03 · 意图与路由</a>
+        <div class="nav-group"><span class="nav-label">01 · 系统流程</span>
+          <a class="current" href="#graph-overview">三个工作流总览</a>
+          <a class="nav-subsection" href="#entry-points">入口、请求与恢复</a>
+          <a class="nav-subsection" href="#routing">意图识别与路由</a>
         </div>
-        <div class="nav-group"><span class="nav-label">模型与状态</span>
-          <a href="#data-harness">04 · 数据访问 Harness</a>
-          <a href="#harness-case">案例 · 65kg 改成 66kg</a>
-          <a href="#grounding-harness">05 · Grounding Harness</a>
-          <a href="#memory-system">06 · 记忆与存储</a>
-          <a href="#prompt-system">07 · 提示词与上下文</a>
-          <a href="#tool-runtime">08 · 执行与降级</a>
+        <div class="nav-group"><span class="nav-label">02 · 代码实现</span>
+          <a href="#developer-guide">节点实现索引</a>
+          <a class="nav-subsection" href="#state-dictionary">State 字段字典</a>
         </div>
-        <div class="nav-group"><span class="nav-label">开发参考</span>
-          <a href="#developer-guide">节点实现手册</a>
-          <a href="#state-dictionary">State 字段字典</a>
+        <div class="nav-group"><span class="nav-label">03 · 数据边界</span>
+          <a href="#data-harness">处理计划与数据权限</a>
+          <a class="nav-subsection" href="#harness-case">纠错案例：65kg → 66kg</a>
+          <a class="nav-subsection" href="#grounding-harness">提取结果的证据约束</a>
+        </div>
+        <div class="nav-group"><span class="nav-label">04 · 运行机制</span>
+          <a href="#memory-system">记忆系统</a>
+          <a class="nav-subsection" href="#prompt-system">LLM 调用契约</a>
+          <a class="nav-subsection" href="#tool-runtime">执行、校验与重试</a>
+          <a class="nav-subsection" href="#plan-branches">计划生成与确认分支</a>
+        </div>
+        <div class="nav-group"><span class="nav-label">05 · 并发可靠性</span>
+          <a href="#concurrency-recovery">锁、取消与失败恢复</a>
         </div>
       </aside>
     <main class="doc-main">
@@ -2454,16 +2509,9 @@
         </button>
       </div>
 
-      <nav class="reading-nav" aria-label="阅读导航">
-        <a href="#graph-overview">Graph 总览</a><a href="#developer-guide">节点实现手册</a>
-        <a href="#state-dictionary">状态字段字典</a><a href="#data-harness">Harness 与数据访问</a>
-        <a href="#harness-case">Harness 案例与代码</a>
-        <a href="#grounding-harness">Grounding 与原文证据</a>
-        <a href="#memory-system">记忆与存储</a>
-      </nav>
-      <div class="section-head">
+      <div class="section-head" id="graph-overview" data-chapter>
         <div>
-          <h2>三个 Graph，独立运行</h2>
+          <h2>工作流总览 · 三个 Graph 独立运行</h2>
           <p>业务节点计数不包含 START / END；图中的箭头对应真实控制流。</p>
         </div>
         <div class="tabs" role="tablist" aria-label="选择 Graph">
@@ -2494,7 +2542,7 @@
           </button>
         </div>
       </div>
-      <div class="graph-layout" id="graph-overview">
+      <div class="graph-layout">
         <div>
           <section
             class="panel graph-panel"
@@ -2587,7 +2635,7 @@
         </aside>
       </div>
 
-      <section class="section" id="entry-points">
+      <section class="section" id="entry-points" data-chapter>
         <div class="section-head">
           <div>
             <h2>入口与恢复</h2>
@@ -2625,7 +2673,13 @@
         </div>
       </section>
 
-      <section class="section panel routes-section" id="routing">
+      <section class="section panel routes-section" id="routing" data-chapter>
+        <div class="section-head">
+          <div>
+            <h2>意图识别与路由</h2>
+            <p>校验和营养准备完成后，程序按固定优先级选择下一个节点。</p>
+          </div>
+        </div>
         <h3>route_chat：完成校验与营养准备后，依次匹配</h3>
         <div class="decision">
           <div>
@@ -2651,9 +2705,9 @@
         </div>
       </section>
 
-      <section class="section panel dev-guide" id="developer-guide">
+      <section class="section panel dev-guide" id="developer-guide" data-chapter>
         <div class="support-head"><span>DEV</span><div>
-          <h2>开发者实现手册 · 16 个业务节点与底层执行机制</h2>
+          <h2>节点实现手册 · 16 个业务节点与底层执行机制</h2>
           <p>每项包含用途、输入输出、处理顺序、分支、数据库与外部调用、异常和开发示例。</p>
         </div></div>
         <div class="support-body">
@@ -2667,7 +2721,7 @@
           <nav id="guide-index" class="dev-index" aria-label="实现说明索引"></nav>
           <div id="guide-cards"></div>
           <p id="guide-empty" class="dev-empty" hidden>没有匹配的节点或机制，可清空搜索或切换到全部说明。</p>
-          <div class="dev-state" id="state-dictionary"><h3>State 状态字段字典</h3>
+          <div class="dev-state" id="state-dictionary" data-chapter><h3>State 状态字段字典</h3>
             <p class="dev-intro"><code>State</code> 是三个 Graph 共用的 <code>TypedDict(total=False)</code>：字段缺席表示“尚未设置”，不等于空值。节点只返回本次修改的字段；普通列表没有 reducer，不会自动追加，需复制旧列表后再返回。checkpoint 保存的是流程执行状态，不是健康事实源，也不授予模型外发权限。</p>
             <div class="state-summary" aria-label="State 摘要"><span>43 个声明字段</span><span>一个字段一行</span><span>chat / plan / analysis 共用</span><span>thread_id 级 checkpoint</span></div>
             <div class="dev-table-wrap"><table class="dev-table state-table"><thead><tr><th>字段</th><th>类型 / 初值</th><th>语义</th><th>生产者</th><th>消费者 / checkpoint 生命周期</th></tr></thead><tbody id="state-rows"></tbody></table></div>
@@ -2680,9 +2734,9 @@
         </div>
       </section>
 
-      <section class="section panel harness-panel" id="data-harness">
+      <section class="section panel harness-panel" id="data-harness" data-chapter>
         <div class="support-head">
-          <span>01</span>
+          <span>05</span>
           <div>
             <h2>处理计划与数据 Harness</h2>
             <p>按当前源码核对：计划审批与外发授权是两层检查；包括首次 plan 在内，每次模型请求都经过同一个出口。图为节点内部调用关系，不新增 Graph 节点。</p>
@@ -2784,9 +2838,9 @@
         </div>
       </section>
 
-      <section class="section panel harness-case" id="harness-case">
-        <div class="support-head"><span>例</span><div>
-          <h2>Harness 专题 · 一次“65kg 改成 66kg”怎样被约束</h2>
+      <section class="section panel harness-case" id="harness-case" data-chapter>
+        <div class="support-head"><span>06</span><div>
+          <h2>Harness 案例：65kg 改成 66kg</h2>
           <p>场景、实际代码与数据范围放在一起看 · 按 2026-10-21 当前实现核对。</p>
         </div></div>
         <div class="support-body">
@@ -2905,9 +2959,9 @@ data = self.boundary.consume(call)</code></pre>
         </div>
       </section>
 
-      <section class="section panel harness-panel" id="grounding-harness">
+      <section class="section panel harness-panel" id="grounding-harness" data-chapter>
         <div class="support-head">
-          <span>02</span>
+          <span>07</span>
           <div>
             <h2>提取 Grounding Harness · 模型给候选，本地证明原文</h2>
             <p>它不判断模型“有多自信”，而是重做原文绑定，并在写库前把证据完整重放一遍。</p>
@@ -3028,9 +3082,9 @@ if not _equal(replayed, _actual(event, evidence)):
       </section>
 
       <section class="section support-grid">
-        <div class="panel memory-panel" id="memory-system">
+        <div class="panel memory-panel" id="memory-system" data-chapter>
           <div class="support-head">
-            <span>03</span>
+            <span>08</span>
             <div>
               <h2>记忆系统 · 写入、读取与生命周期</h2>
               <p>没有向量库：SQLite 是事实源，按场景做有界检索；LLM 不直接写长期记忆</p>
@@ -3195,9 +3249,9 @@ if not _equal(replayed, _actual(event, evidence)):
             </div>
           </div>
         </div>
-        <div class="panel llm-panel" id="prompt-system">
+        <div class="panel llm-panel" id="prompt-system" data-chapter>
           <div class="support-head">
-            <span>04</span>
+            <span>09</span>
             <div>
               <h2>LLM 调用契约 · 5 个节点，6 类任务</h2>
               <p>规划、纠错、补丁、估算、表达、建议均通过同一个授权出口；每类任务有独立 Schema 与降级策略</p>
@@ -3317,9 +3371,9 @@ if not _equal(replayed, _actual(event, evidence)):
             </div>
           </div>
         </div>
-        <div class="panel" id="tool-runtime">
+        <div class="panel" id="tool-runtime" data-chapter>
           <div class="support-head">
-            <span>05</span>
+            <span>10</span>
             <div>
               <h2>执行、校验与重试</h2>
               <p>节点直接调用业务函数；没有 ToolNode / 模型工具循环</p>
@@ -3359,9 +3413,9 @@ if not _equal(replayed, _actual(event, evidence)):
             >
           </div>
         </div>
-        <div class="panel">
+        <div class="panel" id="plan-branches" data-chapter>
           <div class="support-head">
-            <span>06</span>
+            <span>11</span>
             <div>
               <h2>计划节点内部的分支</h2>
               <p>仅说明节点内部逻辑，不增加编译图中的节点或边</p>
@@ -3389,6 +3443,233 @@ if not _equal(replayed, _actual(event, evidence)):
           </div>
         </div>
       </section>
+      <section class="section panel" id="concurrency-recovery" data-chapter aria-labelledby="recovery-title">
+        <div class="section-head"><div>
+          <h2 id="recovery-title">并发修复与失败重试</h2>
+          <p class="recovery-lead">释放全局锁之后，答案和计划如何保持一致？代码修复说明 · 2026-10-23 · 示例中的 65 / 67 公斤与 1800 kcal 为演示数据，不读取个人记录。</p>
+        </div></div>
+        <p>这部分只回答两个问题：<b>提交“65 公斤”报错后，为什么不能直接换成“67 公斤”重试？点击确认计划后，再点取消，到底算哪个成功？</b>下面先看操作例子，再看对应代码。代码片段均为当前实现的简化摘录，省略号表示省略了其他参数或校验，不是可直接复制的完整函数。</p>
+        <div class="recovery-reader-note"><b>先理解“报错”：</b>一次处理有好几个步骤。后面的步骤报错，不代表前面的步骤没执行，也不代表已经保存的记录会自动撤销。这正是这次修复需要处理的情况。</div>
+
+        <h3>读代码前，先认清“进度”和“编号”</h3>
+        <div class="recovery-flow" aria-label="程序进度与实际数据的区别">
+          <div class="recovery-step"><b>Graph：处理路线</b><small>例如：接收答案 → 解析 → 保存 → 回复</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>checkpoint：进度存档</b><small>记住程序上次走到了哪一步</small></div><span class="recovery-arrow">≠</span>
+          <div class="recovery-step"><b>events / plans：实际数据</b><small>健康记录是否已保存，计划是否已生效</small></div>
+        </div>
+        <p><code>workflow</code> 则是对外展示的流程登记，例如“等待回答”“正在处理”“处理完成”。它、Graph 进度和实际数据不是同一份东西，所以一次 HTTP 报错后，需要把它们对照起来看。</p>
+        <div class="recovery-table-wrap"><table class="recovery-table">
+          <thead><tr><th>代码里的名称</th><th>用人话说</th><th>代入体重例子</th></tr></thead>
+          <tbody>
+            <tr><td><code>thread_id</code></td><td>哪一条业务流程；这里不是 Python 线程编号</td><td>这次体重记录流程</td></tr>
+            <tr><td><code>interrupt_id</code></td><td>流程里正在等回答的哪一个问题</td><td>“体重是多少？”这个问题</td></tr>
+            <tr><td><code>request_id</code></td><td>用户的哪一次提交，类似提交单号</td><td>提交“65 公斤”的请求 A</td></tr>
+            <tr><td><code>payload / fingerprint</code></td><td>完整提交内容 / 根据内容算出的校验码</td><td>用来判断重试是否仍是原来的编号、答案和处理模式</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>先看锁：共享 Engine 合理，等待模型时别占着全局锁</h3>
+        <p>多个请求可以共用一个 <code>Engine</code>。即使只有一个用户，也可能一边等待聊天回复，一边点击计划确认或删除记录。原来整个 Graph 都拿着全局锁，一个慢模型会让其他需要这把锁的操作排队。</p>
+        <div class="recovery-flow" aria-label="修复后的锁范围">
+          <div class="recovery-step"><b>本地处理：加锁</b><small>校验请求、读取数据、保存进度</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>HTTP 等待：释放全局锁</b><small>不同对话、计划确认、删除和调度可进入</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>返回：重新加锁并检查</b><small>删除 / 取消优先；上下文已变化则停止旧结果</small></div>
+        </div>
+        <p>现在 Graph 调用本身不持有全局锁；本地步骤和进度存档的读写短暂持锁。<code>model_io()</code> 在同一节点线程等待模型时释放全局锁，模型返回后重新拿锁，并检查期间是否发生删除、取消或相关数据变化。<b>工作流自己的锁仍然保留</b>，所以同一流程、同一对话依然按顺序执行，不同对话可以并行。</p>
+        <p class="recovery-source-line">对应代码：<a href="backend/app/workflows/concurrency.py">concurrency.py · model_io() / serialized_execution()</a>。<code>timeout=45</code> 是 HTTPX 的网络阶段超时，不是整个 Graph 总耗时最多 45 秒。</p>
+
+        <div class="recovery-grid">
+          <article class="recovery-card">
+            <h3>问题一 · 我输入 67，为什么可能保存了 65？</h3>
+            <div class="recovery-flow">
+              <div class="recovery-step">你回答：65 公斤</div><span>→</span><div class="recovery-step">程序已记住答案</div><span>→</span><div class="recovery-step recovery-danger">后面的步骤报错</div>
+            </div>
+            <p>旧行为中，页面仍把这个问题当成“尚未回答”。你换填 67，Graph 却可能接着上次保存的进度执行，而进度里的 <code>input_text</code> 还是 65。</p>
+            <p><b>修复规则：</b>接受 65 时先登记。失败后只允许继续原来的 65；想换成 67，先取消旧流程，再发起新的处理。若之前已经保存了体重，应该修改那条记录。</p>
+          </article>
+          <article class="recovery-card">
+            <h3>问题二 · 页面说已取消，为什么计划还生效？</h3>
+            <div class="recovery-flow">
+              <div class="recovery-step">你点击确认计划</div><span>→</span><div class="recovery-step">计划已经生效</div><span>→</span><div class="recovery-step recovery-danger">流程登记还没更新</div>
+            </div>
+            <p>旧取消代码只看流程登记，还以为“可以取消”，于是显示取消成功；但真实的计划已经生效了。</p>
+            <p><b>修复规则：</b>确认和取消必须先拿到这份计划的同一把锁。确认进行中，取消立即失败；即使拿到了锁，也必须确认真实计划仍然待确认，才能取消。</p>
+          </article>
+        </div>
+
+        <h3>代码第一步 · 先记下“这次接受的是 65”，再执行 Graph</h3>
+        <p><code>resume()</code> 就是继续之前暂停的流程。用户补充答案后，后端先调用 <code>begin_resume()</code> 保存登记，然后才调用 <code>invoke()</code> 执行 Graph，顺序不能反过来。</p>
+        <pre class="recovery-code"># runtime.py · resume()（节选）
+self.repo.begin_resume(
+    thread_id, payload, request_fingerprint, display, conversation,
+)
+...
+state, disclosures = self.invoke(
+    workflow['kind'], invocation, thread_id, local_only
+)</pre>
+        <p><code>begin_resume()</code> 将这份提交保存进 <code>resume_attempts</code>。把数据库那行记录翻译成人话，就是：<b>“体重流程的问题 1，已经接受请求 A 的 65 公斤，目前正在处理。”</b></p>
+        <pre class="recovery-code"># 便于理解的数据示例，不是完整数据库字段
+thread_id:    体重流程
+interrupt_id: 问题1
+request_id:   请求A
+payload:      {text: "65公斤", ...}
+status:       executing（正在执行）</pre>
+        <p>表上还有 <code>UNIQUE(thread_id, interrupt_id)</code> 约束：同一流程的同一个问题，只能登记一份提交。登记在数据库里，服务重启后依然能找到。</p>
+        <p class="recovery-source-line">对应代码：<a href="backend/app/workflows/runtime.py">runtime.py · resume()</a> → <a href="backend/app/infrastructure/repositories/workflows.py">Repository · begin_resume()</a>；表定义：<a href="backend/app/infrastructure/database.py">database.py · resume_attempts</a>。</p>
+
+        <h3>代码第二步 · 失败后，先检查是不是原来的那一次提交</h3>
+        <pre class="recovery-code"># runtime.py · resume()（节选）
+attempt = self.repo.attempt_for_interrupt(thread_id, payload['interrupt_id'])
+if attempt and (
+    attempt['request_id'] != payload['request_id']
+    or attempt['fingerprint'] != request_fingerprint
+):
+    raise WorkflowConflict('上一条补充尚未处理完成，请重试原答案，或取消后重新提交。')</pre>
+        <ul class="recovery-explain">
+          <li><code>attempt</code>：找到了之前接受答案的登记。</li>
+          <li>编号不同，或者内容校验码不同：说明不是原来的提交，拒绝继续。</li>
+          <li>编号和内容都相同：允许按原答案重试。相同的“65 公斤”换一个新编号，也不算原请求重试。</li>
+        </ul>
+        <div class="recovery-table-wrap"><table class="recovery-table">
+          <thead><tr><th>上一次已登记</th><th>这次提交</th><th>处理结果</th></tr></thead>
+          <tbody>
+            <tr><td>请求 A：65 公斤</td><td>请求 A：65 公斤，其他内容也不变</td><td>允许重试原处理</td></tr>
+            <tr><td>请求 A：65 公斤</td><td>请求 B：67 公斤</td><td>返回 409，不执行 Graph</td></tr>
+            <tr><td>请求 A：65 公斤</td><td>请求 A：67 公斤，或请求 B：65 公斤</td><td>同样拒绝，编号与内容必须同时保持一致</td></tr>
+          </tbody>
+        </table></div>
+        <p class="recovery-reader-note"><b>409 在这里的意思：</b>你的操作和当前处理状态不相容。拒绝新提交不会触发旧答案继续保存，但也不会撤销上一次执行中已经保存的记录。取消旧流程同样不是“撤销所有记录”。</p>
+
+        <h3>代码第三步 · 重试不是从头再来，而是先看存档</h3>
+        <p>程序可能在“答案交给 Graph 之前”失败，也可能在“答案已收到，后面的解析或保存步骤”失败。重试要区分这两种位置。</p>
+        <pre class="recovery-code"># runtime.py · resume()（节选）
+snapshot = self.graph_for(workflow['kind']).get_state(config)
+interrupt_ids = {item.id for task in snapshot.tasks for item in task.interrupts}
+invocation = (
+    Command(resume=answer)
+    if payload['interrupt_id'] in interrupt_ids else None
+)</pre>
+        <div class="recovery-grid">
+          <div class="recovery-card"><b>还在等这个问题 → Command(resume=answer)</b><p>存档里还列着“体重是多少？”：把已登记的 65 再交给这个暂停点。可以理解为“现在正式回答原问题”。</p></div>
+          <div class="recovery-card"><b>答案已接收 → invocation=None</b><p>程序已经记住答案，只是后面失败：不再塞入另一份答案，按现有存档继续。这里的 None 是“不发送新输入”，不是清空原答案。</p></div>
+        </div>
+        <p>前面的编号和内容检查必须先通过。对于没有答案登记、进度却已经越过原问题的旧流程，代码会拒绝接受新答案，不能猜着恢复。</p>
+
+        <h3>代码第四步 · 页面告诉你原答案还没处理完，重启后也能找回</h3>
+        <div class="recovery-flow">
+          <div class="recovery-step"><b>waiting_input</b><small>尚未接受答案，可以填写</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>resuming</b><small>答案已登记，正在处理</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>completed / waiting_input</b><small>完成，或者等待下一轮新问题</small></div>
+        </div>
+        <p>处理报错且流程仍有效时，<code>fail_resume()</code> 把它标成 <code>resume_failed</code>，意思是“原答案处理失败，可重试”，不再伪装成普通的“还没回答”。结果里同时保留 <code>retry_request</code>，也就是原来的请求编号、答案和其他内容。</p>
+        <div class="recovery-ui" aria-label="失败后页面显示示意">
+          <b>上次补充“65 公斤”未完成。</b>
+          <p>请重试原答案，或取消后重新填写。已保存的记录保留；若历史已有该条，请纠正它。</p>
+          <span>重试原答案</span><span>取消待处理事项</span>
+        </div>
+        <pre class="recovery-code">// App.tsx · retryWorkflow()（节选）
+await api(
+  `/workflows/${workflow.thread_id}/resume`,
+  "POST",
+  workflow.retry_request
+);</pre>
+        <p>注意最后一项是 <code>workflow.retry_request</code>：直接重发后端保存的原提交，不生成新编号，也不拿输入框里的 67 替换原答案。服务启动时，<code>recover_resume_attempts()</code> 会把上次中断的执行标成待重试；单纯刷新页面时，后端若仍在运行，就继续显示“正在处理”。</p>
+        <p class="recovery-source-line">对应代码：<a href="backend/app/infrastructure/repositories/workflows.py">Repository · _resume_status() / fail_resume() / recover_resume_attempts()</a>；启动入口：<a href="backend/app/workflows/engine.py">engine.py · __init__()</a>；页面：<a href="frontend/src/App.tsx">App.tsx · retryWorkflow() / pending-strip</a>。</p>
+
+        <h3>代码第五步 · 计划确认和取消，先争同一份计划的操作权</h3>
+        <p>可以把工作流锁理解为“这份计划当前由谁操作”。确认进入 <code>serialized_execution()</code> 后，拿着 <code>('workflow', thread_id)</code> 对应的锁，直到处理结果登记结束。取消同一份计划，也必须尝试拿这把锁。</p>
+        <pre class="recovery-code"># runtime.py · cancel()（节选）
+key = ('workflow', thread_id) if is_plan else None
+with self.execution_locks.hold(key, blocking=False) as acquired:
+    if not acquired:
+        raise WorkflowConflict('计划正在确认，请稍后刷新状态，尚未取消。')
+    with self.lock:
+        self.repo.cancel_workflow(thread_id)
+        self.checkpointer.delete_thread(thread_id)</pre>
+        <p><code>blocking=False</code> 就是：<b>拿不到锁就立即结束这次取消，不排队等待，也不会在确认结束后自动再取消。</b>这套机制没有“点击取消就中断正在执行的确认”的能力。</p>
+        <div class="recovery-flow" aria-label="确认中取消失败的时间顺序">
+          <div class="recovery-step"><b>① 点击确认</b><small>确认拿到这份计划的锁</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step recovery-danger"><b>② 此时点击取消</b><small>拿不到锁，返回 409；本次取消结束</small></div><span class="recovery-arrow">→</span>
+          <div class="recovery-step"><b>③ 确认继续</b><small>如果成功，计划生效并释放锁</small></div>
+        </div>
+        <p>即使取消拿到了锁，还要检查数据库里的真实计划状态。因为确认可能已经让计划生效，只是最后的流程登记失败或服务中断；此时锁已经释放，也不能把生效计划当草案取消。</p>
+        <pre class="recovery-code"># Repository · cancel_workflow()（计划分支节选）
+plan = self.plan(thread_id)
+if not plan or plan['status'] != 'pending':
+    raise ValueError('计划已经处理，无法取消，请刷新状态。')</pre>
+        <div class="recovery-table-wrap"><table class="recovery-table">
+          <thead><tr><th>先后情况</th><th>后台结果</th><th>页面怎么显示</th></tr></thead>
+          <tbody>
+            <tr><td>取消先成功</td><td>计划被拒绝，流程被取消；后来的确认不能激活它</td><td>“已取消待处理计划”</td></tr>
+            <tr><td>确认正在执行，此时取消</td><td>取消立即失败，不会自动重试；确认继续</td><td>“计划正在确认，暂时无法取消”，随后刷新真实状态</td></tr>
+            <tr><td>确认已成功，之后取消</td><td>计划已经生效，不能再取消草案</td><td>显示生效计划，不再提供这份草案的确认 / 取消按钮</td></tr>
+          </tbody>
+        </table></div>
+        <p><b>两层检查各管一件事：</b>锁保证同一份计划不被同时确认和取消；数据库状态检查保证已处理的计划不会被错误取消。其他独立工作流使用各自的锁，不必等这份计划。聊天等待模型时的取消仍可立即执行。</p>
+        <p class="recovery-source-line">对应代码：<a href="backend/app/workflows/concurrency.py">concurrency.py · serialized_execution()</a> → <a href="backend/app/workflows/runtime.py">runtime.py · cancel()</a> → <a href="backend/app/infrastructure/repositories/workflows.py">Repository · cancel_workflow()</a>；页面：<a href="frontend/src/App.tsx">App.tsx · cancelPlan()</a>，仅接口成功才显示“已取消”。</p>
+
+        <h3>代码第六步 · 最后的几项登记，要么一起保存，要么一起不保存</h3>
+        <p>假如程序只记下“流程成功”，还没记下“请求 A 已成功”就崩溃，重启后这些登记就对不上了。因此 <code>finish_resume()</code> 把下面四项放进同一个数据库事务。</p>
+        <pre class="recovery-code"># Repository · finish_resume()（结构示意，省略 SQL 参数）
+with self.lock, self.conn:
+    # 1. 更新 workflow 状态和结果
+    # 2. 保存 receipts：请求 A 已成功，以及上次的结果
+    # 3. 标记 resume_attempts：这次答案处理已完成
+    # 4. 保存助手回复</pre>
+        <p><code>self.lock</code> 让这些受保护的数据库操作按顺序进行；<code>self.conn</code> 管理数据库事务，成功一起提交，中途异常则回滚这一组修改。计划取消也将“计划拒绝”和“流程取消”一起提交。</p>
+        <p>如果只是成功回复在网络上丢了，原请求重试时，<code>_resume_receipt()</code> 找到成功凭据后直接返回上次结果，不再执行 Graph。<b>但这个事务只覆盖最后的登记，不会自动撤销前面节点已经保存的健康记录，也不包含另一个数据库里的 Graph 存档。</b></p>
+        <p class="recovery-source-line">对应代码：<a href="backend/app/infrastructure/repositories/workflows.py">Repository · finish_resume() / cancel_workflow()</a>；成功结果复用：<a href="backend/app/workflows/runtime.py">runtime.py · _resume_receipt()</a>。</p>
+
+        <h3>点选一个例子，看修复后的结果</h3>
+        <div class="recovery-example-switch" aria-label="选择恢复示例">
+          <button type="button" data-recovery-case="changed" aria-pressed="true">65 失败后改答 67</button>
+          <button type="button" data-recovery-case="retry" aria-pressed="false">重试原答案 65</button>
+          <button type="button" data-recovery-case="plan" aria-pressed="false">计划确认撞上取消</button>
+        </div>
+        <div id="recovery-example-output" class="recovery-example-output" aria-live="polite">① 用户提交“65公斤”，程序先登记请求 A，再恢复 Graph。
+② 等待模型时其他请求更新数据，65 的解析结果失效；流程显示“待重试”。
+③ 用户提交“改为67公斤”（请求 B）→ 返回 409，不执行 Graph；这次提交不会触发旧答案继续保存。
+④ 想保留 65：点击“重试原答案”；想改为 67：取消后重新提交。
+⑤ 先查看历史记录：若上次已经保存了该条，应纠正现有记录，避免新建重复记录。</div>
+
+        <details class="recovery-details"><summary>进一步查看：实际操作与边界行为对照表</summary>
+        <div class="recovery-table-wrap"><table class="recovery-table">
+          <thead><tr><th>场景</th><th>系统行为</th><th>用户该怎么做</th></tr></thead>
+          <tbody>
+            <tr><td>冲突 / 模型失败，原答案未处理完成</td><td>持久化为 resume_failed，并返回 retry_request；不再伪装成可以随意换答案的普通问题。</td><td>点“重试原答案”。请求编号、问题编号、文字、选择记录及处理模式都沿用原值。</td></tr>
+            <tr><td>答案未消费就失败</td><td>重试原 Command；interrupt 正常收到原答案。</td><td>仍使用原请求重试，无需人工判断 Graph 位置。</td></tr>
+            <tr><td>答案已消费，后续节点失败</td><td>使用 invoke(None) 从存档继续，不能以新答案覆盖旧答案。</td><td>原答案不变；想修改则取消，检查已保存记录后重新提交或纠正。</td></tr>
+            <tr><td>记录已写入，最后登记 / 回包失败</td><td>失败不会撤销健康记录。重试通过已有进度和写入去重继续，不重复保存。</td><td>优先重试原请求。取消也保留已保存的独立记录；要改数字请纠正已有记录。</td></tr>
+            <tr><td>页面刷新 / 服务重启</td><td>启动时把持久化的 executing 转为失败待重试；页面读取服务端的原请求。重启不自动发模型请求。</td><td>刷新后仍可点重试。仅刷新页面时，服务端若仍在运行则显示“正在处理”。</td></tr>
+            <tr><td>计划确认正在进行</td><td>点击后按钮立即显示“确认中…”并禁用，取消仍可单独发起；取消收到 409 时提示“计划正在确认，暂时无法取消”，然后同时刷新 plans 与 workflows。处理中每 2 秒检查状态。</td><td>后端仍为 resuming 时保持“确认中…”；可点“刷新状态”。确认失败且计划 pending 时恢复确认 / 取消，或仅允许绑定原请求的“重试上次确认”。</td></tr>
+            <tr><td>刷新发现计划已 active</td><td>显示“计划已生效”，移除该草案的确认与取消按钮，即使 workflow 的最终结果仍在登记。较早的慢刷新不能覆盖新的生效状态。</td><td>以实际生效目标为准。若只是请求结果未完成，可点“更新确认结果”，不会再次采用计划。</td></tr>
+            <tr><td>计划 active，但登记失败 / 服务已重启</td><td>即使工作流锁已释放，也检查实际计划状态并拒绝取消；原确认请求仍可重试补齐登记。</td><td>在已生效提示中点“更新确认结果”。取消待处理事项不等于撤销已生效计划。</td></tr>
+            <tr><td>确认请求失败，且暂时无法刷新状态</td><td>不把网络错误当成“计划未生效”。保留“确认中…”并禁用重复确认，等待状态读取恢复。</td><td>恢复连接后刷新，或等待自动检查；页面根据真实的 pending / resuming / active 状态恢复操作。</td></tr>
+            <tr><td>取消先于计划确认成功</td><td>事务内计划变 rejected、workflow 变 cancelled；后来的确认停止。</td><td>可以重新生成计划。重复取消或确认已结束流程返回冲突。</td></tr>
+            <tr><td>聊天模型等待期间取消 / 删除记录</td><td>聊天取消仍可立即执行；删除清理 resume_attempts、消息、凭据和 checkpoint，迟到结果禁止写回。</td><td>被删除或取消的请求不能重试；按新输入发起新流程。</td></tr>
+            <tr><td>重试时切换处理模式</td><td>绑定请求不允许改模式。若当前选择纯本地，页面阻止重发原模型模式请求。</td><td>取消后用所选模式重新提交；服务端纯本地限制始终优先。</td></tr>
+            <tr><td>升级前遗留流程没有答案绑定，Graph 却已越过问题</td><td>返回 409，要求重新发起；不会根据 workflow 的旧问题猜测恢复方式。</td><td>取消旧流程；先核对历史，再新建或纠正记录。</td></tr>
+          </tbody>
+        </table></div>
+        </details>
+
+        <h3>数据提交和清理：哪些能一起完成，哪些不能回滚？</h3>
+        <div class="recovery-grid">
+          <div class="recovery-card"><b>同一 health.db 事务</b><p><code>finish_resume()</code> 将 workflow 结果、成功 receipt、attempt 完成标记和助手回复一起提交。<code>cancel_workflow()</code> 将待确认计划拒绝与 workflow 取消一起提交。内部使用不自行提交的消息插入函数，避免嵌套方法提前提交。workflow、receipt、messages 和 plans 的查询也获取 Repository 锁，防止同一 SQLite 连接读到尚未提交的中间值。</p></div>
+          <div class="recovery-card"><b>不宣称跨数据库整体回滚</b><p>Graph checkpoint 在独立的 checkpoints.db；健康记录也可能已由前序节点提交。本方案用答案绑定、进度恢复、业务写入去重及删除 / 取消检查协调它们，不把 HTTP 报错解释为业务全部撤销。</p></div>
+        </div>
+        <p class="recovery-notice"><b>范围：</b>当前原型采用单进程协调，工作流锁不是跨进程分布式锁。等待模型仍释放全局锁，调度器也不再外层持锁调用 Graph。重试可能再次调用失败步骤中的模型，计入现有持久化预算；程序不会无限自动重试。新增 resume_attempts 随删除、月度归档和流程过期清理一起清除，数据库启动迁移到版本 4，保留既有健康记录。</p>
+        <p><b>验证方法：</b>使用事件暂停模型请求或 Graph 完成后的提交窗口，确定性地插入数据修改 / 取消；还用 SQLite 触发器模拟事务中途失败。覆盖原答案与不同答案、重启前后、计划激活前后、清理、旧数据库迁移以及网页上的恢复按钮。测试均使用临时数据库和模拟模型。</p>
+        <div class="recovery-sources">
+          <a href="backend/app/workflows/runtime.py">runtime.py · resume / cancel</a>
+          <a href="backend/app/workflows/concurrency.py">concurrency.py · model_io / KeyedLocks</a>
+          <a href="backend/app/infrastructure/repositories/workflows.py">Repository · begin / fail / finish / cancel</a>
+          <a href="backend/app/infrastructure/database.py">database.py · resume_attempts / v4</a>
+          <a href="frontend/src/App.tsx">App.tsx · 原请求重试与冲突刷新</a>
+          <a href="backend/tests/test_resume_recovery.py">后端恢复与取消回归测试</a>
+          <a href="frontend/src/App.test.tsx">前端恢复交互测试</a>
+        </div>
+      </section>
       <footer>
         <span
           >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ ·
@@ -3401,21 +3682,6 @@ if not _equal(replayed, _actual(event, evidence)):
         </p></noscript
       >
     </main>
-      <aside class="page-toc" aria-label="本页目录">
-        <h2>此页内容</h2>
-        <nav>
-          <a class="current" href="#graph-overview">工作流总览</a>
-          <a href="#entry-points">入口与恢复</a>
-          <a href="#routing">意图识别与路由</a>
-          <a href="#developer-guide">节点实现手册</a>
-          <a href="#data-harness">处理计划与数据边界</a>
-          <a href="#harness-case">Harness 案例与实际代码</a>
-          <a href="#grounding-harness">提取 Grounding 与原文证据</a>
-          <a href="#memory-system">记忆与存储</a>
-          <a href="#prompt-system">提示词与上下文</a>
-          <a href="#tool-runtime">执行、校验与重试</a>
-        </nav>
-      </aside>
     </div>
 
     <script type="application/json" id="implementation-data">
@@ -4699,6 +4965,105 @@ if not _equal(replayed, _actual(event, evidence)):
           }),
         );
         select("chat", "parse_initial");
+      })();
+    </script>
+    <script>
+      (() => {
+        const root = document.getElementById('concurrency-recovery');
+        const output = document.getElementById('recovery-example-output');
+        const cases = {
+          changed: '① 用户提交“65公斤”，程序先调用 begin_resume() 登记请求 A，再执行 Graph。\n② 等待模型时其他请求更新相关数据，65 的解析结果失效；流程显示“待重试”。\n③ 用户提交“改为67公斤”（请求 B）→ 编号和内容与登记不一致，返回 409，不执行 Graph。\n④ 这次新提交不会触发旧答案继续保存；但上一次处理已经保存的记录不会因此撤销。\n⑤ 想保留 65：点击“重试原答案”；想改为 67：取消旧流程，先核对历史，有记录则纠正，没有则重新提交。',
+          retry: '① 页面显示上次提交“65公斤”未完成，并提供“重试原答案”。\n② retryWorkflow() 重发服务端保存的 retry_request：请求 A、65公斤、模式和问题编号都保持不变。\n③ Graph 还在等原问题 → Command(resume=answer)；已经接收过答案 → invocation=None，按存档继续。\n④ finish_resume() 一起保存结果、成功凭据、完成标记和回复；成功后的同一请求直接复用结果。\n⑤ 页面刷新或服务重启后仍能找到原提交；重启不自动重试，也不会自动回滚已保存记录。',
+          plan: '① 用户点击“确认”，确认拿到这份计划的工作流锁，页面显示“确认中…”。\n② 确认还没结束，用户点击“取消”。cancel() 用 blocking=False 尝试同一把锁。\n③ 拿不到锁 → 立即返回 409，这次取消结束；不会排队，也不会等确认结束后自动取消。\n④ 前端提示“计划正在确认，暂时无法取消”并刷新；确认继续，如果成功则显示生效计划。\n⑤ 即使锁已释放，cancel_workflow() 仍要求计划为 pending；已生效不能再当草案取消。若取消先成功，后来的确认不能让计划生效。'
+        };
+        root.querySelectorAll('[data-recovery-case]').forEach(button => {
+          button.addEventListener('click', () => {
+            root.querySelectorAll('[data-recovery-case]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+            output.textContent = cases[button.dataset.recoveryCase];
+          });
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const chapters = Array.from(document.querySelectorAll('.doc-main [data-chapter]'));
+        const chapterLinks = Array.from(document.querySelectorAll('.chapter-nav a'));
+        const siteLinks = Array.from(document.querySelectorAll('.site-links a'));
+        if (!chapters.length) return;
+
+        const siteSectionByChapter = {
+          'graph-overview': 'graph-overview',
+          'entry-points': 'graph-overview',
+          routing: 'graph-overview',
+          'developer-guide': 'developer-guide',
+          'state-dictionary': 'developer-guide',
+          'data-harness': 'data-harness',
+          'harness-case': 'data-harness',
+          'grounding-harness': 'data-harness',
+          'memory-system': 'memory-system',
+          'prompt-system': 'memory-system',
+          'tool-runtime': 'memory-system',
+          'plan-branches': 'memory-system',
+          'concurrency-recovery': 'concurrency-recovery'
+        };
+
+        function chapterForHash(hash) {
+          if (!hash || hash === '#') return null;
+          let id;
+          try { id = decodeURIComponent(hash.slice(1)); }
+          catch (_) { id = hash.slice(1); }
+          const target = document.getElementById(id);
+          if (!target) return null;
+          return target.matches('[data-chapter]') ? target : target.closest('[data-chapter]');
+        }
+
+        function markCurrent(chapter) {
+          if (!chapter) return;
+          const href = '#' + chapter.id;
+          chapterLinks.forEach(link => {
+            const current = link.getAttribute('href') === href;
+            link.classList.toggle('current', current);
+            if (current) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+          });
+          const siteHref = '#' + (siteSectionByChapter[chapter.id] || chapter.id);
+          siteLinks.forEach(link => {
+            const current = link.getAttribute('href') === siteHref;
+            link.classList.toggle('active', current);
+            if (current) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+          });
+        }
+
+        function currentChapter() {
+          const threshold = 88;
+          let current = chapters[0];
+          for (const chapter of chapters) {
+            if (chapter.getBoundingClientRect().top <= threshold) current = chapter;
+            else break;
+          }
+          return current;
+        }
+
+        let frame = 0;
+        function updateFromScroll() {
+          if (frame) return;
+          frame = requestAnimationFrame(() => {
+            frame = 0;
+            markCurrent(currentChapter());
+          });
+        }
+
+        function updateFromHash() {
+          markCurrent(chapterForHash(location.hash) || currentChapter());
+        }
+
+        window.addEventListener('scroll', updateFromScroll, { passive: true });
+        window.addEventListener('resize', updateFromScroll);
+        window.addEventListener('hashchange', updateFromHash);
+        document.addEventListener('toggle', updateFromScroll, true);
+        if ('ResizeObserver' in window) new ResizeObserver(updateFromScroll).observe(document.querySelector('.doc-main'));
+        requestAnimationFrame(updateFromHash);
       })();
     </script>
   </body>

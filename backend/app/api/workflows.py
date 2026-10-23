@@ -37,16 +37,4 @@ def resume(thread_id: str, body: ResumeRequest, engine=Depends(get_engine)):
 
 @router.delete('/workflows/{thread_id}')
 def cancel(thread_id: str, engine=Depends(get_engine)):
-    with engine.lock:
-        old = engine.repo.workflow(thread_id)
-        if not old or old['status'] != 'waiting_input':
-            raise HTTPException(409, '没有待取消的流程')
-        engine.repo.workflow_result(thread_id, {
-            'thread_id': thread_id,
-            'status': 'cancelled',
-            'reply': '已取消待处理事项，已保存的独立记录保留。',
-        })
-        engine.checkpointer.delete_thread(thread_id)
-        if old['kind'] == 'plan':
-            engine.repo.decide_plan(thread_id, False)
-    return {'cancelled': True}
+    return engine.cancel(thread_id)

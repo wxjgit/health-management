@@ -27,6 +27,7 @@ class Engine(
     def __init__(self, settings):
         self.settings = settings
         self.repo = Repository(settings.data_dir / 'health.db')
+        self.repo.recover_resume_attempts()
         self.lock = RLock()
         self.execution_locks = KeyedLocks()
         self.context_epoch = 0

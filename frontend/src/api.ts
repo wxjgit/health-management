@@ -1,3 +1,13 @@
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function api<T>(
   path: string,
   method = "GET",
@@ -18,7 +28,7 @@ export async function api<T>(
         : Array.isArray(error.detail)
           ? error.detail.map((item: { msg: string }) => item.msg).join("；")
           : "请求失败";
-    throw new Error(detail);
+    throw new ApiError(response.status, detail);
   }
   return response.json();
 }

@@ -86,6 +86,7 @@ class MaintenanceRepositoryMixin:
                 'messages',
                 'workflows',
                 'receipts',
+                'resume_attempts',
                 'operations',
                 'reviews',
                 'notifications',

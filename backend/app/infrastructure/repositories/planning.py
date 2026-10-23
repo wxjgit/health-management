@@ -35,12 +35,13 @@ class PlanningRepositoryMixin:
                 self._bump()
 
     def plans(self):
-        return [
-            {**dict(row), 'data': json.loads(row['data'])}
-            for row in self.conn.execute(
-                'SELECT * FROM plans ORDER BY created_at DESC'
-            )
-        ]
+        with self.lock:
+            return [
+                {**dict(row), 'data': json.loads(row['data'])}
+                for row in self.conn.execute(
+                    'SELECT * FROM plans ORDER BY created_at DESC'
+                )
+            ]
 
     def active_plan(self):
         return next(

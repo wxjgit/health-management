@@ -25,17 +25,20 @@ class KeyedLocks:
         self._entries = {}
 
     @contextmanager
-    def hold(self, key):
+    def hold(self, key, blocking=True):
         if key is None:
-            yield
+            yield True
             return
         with self._guard:
             entry = self._entries.setdefault(key, [RLock(), 0])
             entry[1] += 1
+        acquired = False
         try:
-            with entry[0]:
-                yield
+            acquired = entry[0].acquire(blocking=blocking)
+            yield acquired
         finally:
+            if acquired:
+                entry[0].release()
             with self._guard:
                 entry[1] -= 1
                 if not entry[1]:

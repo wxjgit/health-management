@@ -105,6 +105,7 @@ export type Message = {
   created_at: string;
 };
 export type Pending = {
+  plan_id?: string;
   interrupt_id: string;
   kind: "clarification" | "plan_confirmation";
   question: string;
@@ -128,6 +129,14 @@ export type Workflow = {
   duration_ms: number;
   pending_input?: Pending;
   processing_mode?: "model_allowed" | "local_only";
+  retry_request?: {
+    request_id: string;
+    interrupt_id: string;
+    text?: string | null;
+    approved?: boolean | null;
+    event_id?: string | null;
+    processing_mode?: "model_allowed" | "local_only" | null;
+  };
 };
 export type Plan = {
   id: string;

@@ -20,6 +20,10 @@ SCHEMA = '''
     CREATE TABLE IF NOT EXISTS receipts (
         request_id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
         result TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS resume_attempts (
+        request_id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, interrupt_id TEXT NOT NULL,
+        fingerprint TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL,
+        created_at TEXT NOT NULL, UNIQUE(thread_id, interrupt_id));
     CREATE TABLE IF NOT EXISTS messages (
         id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, conversation_id TEXT NOT NULL,
         role TEXT NOT NULL, text TEXT NOT NULL, cards TEXT NOT NULL,
@@ -69,6 +73,6 @@ def open_database(path):
         connection.execute(
             'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
         )
-    connection.execute('PRAGMA user_version=3')
+    connection.execute('PRAGMA user_version=4')
     connection.commit()
     return connection

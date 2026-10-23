@@ -79,6 +79,8 @@ class WorkflowRuntimeMixin:
             ):
                 with self.lock:
                     current = self.repo.workflow(thread_id)
+                    if current['status'] in ('resuming', 'resume_failed'):
+                        raise WorkflowConflict('该流程已有已接收的补充，请重试原补充请求或取消后重新提交。')
                     if current['status'] in ['completed', 'waiting_input']:
                         return current['result']
                     saved = self.graph_for(kind).get_state({
@@ -170,11 +172,23 @@ class WorkflowRuntimeMixin:
                     if receipt is not None:
                         return receipt
                     workflow = self.repo.workflow(thread_id)
-                    if workflow['status'] != 'waiting_input':
+                    if workflow['status'] not in ('waiting_input', 'resuming', 'resume_failed'):
                         raise ValueError('此流程没有待回答问题，可能已取消或记录已删除')
                     pending = workflow['result']['pending_input']
                     if pending['interrupt_id'] != payload['interrupt_id']:
                         raise ValueError('待回答问题已变化，请刷新')
+                    attempt = self.repo.attempt_for_interrupt(thread_id, payload['interrupt_id'])
+                    by_request = self.repo.resume_attempt(payload['request_id'])
+                    if by_request and (
+                        by_request['thread_id'] != thread_id
+                        or by_request['fingerprint'] != request_fingerprint
+                    ):
+                        raise ValueError('重复请求内容不一致')
+                    if attempt and (
+                        attempt['request_id'] != payload['request_id']
+                        or attempt['fingerprint'] != request_fingerprint
+                    ):
+                        raise WorkflowConflict('上一条补充尚未处理完成，请重试原答案，或取消后重新提交。')
                     if pending['kind'] == 'plan_confirmation':
                         if type(payload.get('approved')) is not bool:
                             raise ValueError('需要接受或拒绝计划')
@@ -189,39 +203,54 @@ class WorkflowRuntimeMixin:
                             'source_message_id': payload['request_id'],
                         }
                         display = payload['text']
-                    saved = self.graph_for(workflow['kind']).get_state(config).values
+                    snapshot = self.graph_for(workflow['kind']).get_state(config)
+                    saved = snapshot.values
+                    interrupt_ids = {
+                        item.id for task in snapshot.tasks for item in task.interrupts
+                    }
+                    if not saved or (not attempt and payload['interrupt_id'] not in interrupt_ids):
+                        raise WorkflowConflict('原问题的进度已变化，无法安全接受新答案，请取消后重新提交。')
+                    # A retry may have already consumed the interrupt. Continue the
+                    # failed node with its bound answer, instead of resuming again.
+                    invocation = (
+                        Command(resume=answer)
+                        if payload['interrupt_id'] in interrupt_ids else None
+                    )
                     local_only = (
                         payload.get('processing_mode') == 'local_only'
                         or saved.get('processing_mode') == 'local_only'
                     )
-                    if local_only and saved.get('processing_mode') != 'local_only':
-                        self.graph_for(workflow['kind']).update_state(
-                            config, {'processing_mode': 'local_only'}
+                    self.repo.begin_resume(
+                        thread_id, payload, request_fingerprint, display, conversation,
+                    )
+                try:
+                    with self.lock:
+                        self.check_execution()
+                        if local_only and saved.get('processing_mode') != 'local_only':
+                            self.graph_for(workflow['kind']).update_state(
+                                config, {'processing_mode': 'local_only'}
+                            )
+                    state, disclosures = self.invoke(
+                        workflow['kind'], invocation, thread_id, local_only
+                    )
+                    with self.lock:
+                        self.check_execution()
+                        result = self.format_result(thread_id, state)
+                        result['model_disclosures'] = disclosures
+                        result['duration_ms'] = round((time.perf_counter() - started) * 1000)
+                        self.repo.finish_resume(
+                            thread_id, payload, request_fingerprint, result, conversation,
                         )
-                    self.repo.message(
-                        payload['request_id'], thread_id, 'user', display,
-                        conversation=conversation,
-                    )
-                state, disclosures = self.invoke(
-                    workflow['kind'], Command(resume=answer), thread_id, local_only
-                )
-                with self.lock:
-                    self.check_execution()
-                    result = self.format_result(thread_id, state)
-                    result['model_disclosures'] = disclosures
-                    result['duration_ms'] = round((time.perf_counter() - started) * 1000)
-                    self.repo.workflow_result(thread_id, result)
-                    self.repo.save_receipt(
-                        payload['request_id'], thread_id, request_fingerprint, result
-                    )
-                    self.repo.message(
-                        payload['request_id'] + ':reply', thread_id, 'assistant',
-                        result['reply'], result['cards'], result['evidence_refs'],
-                        conversation=conversation,
-                        process_trace=result['process_trace'],
-                        duration_ms=result['duration_ms'],
-                    )
-                    return result
+                        return result
+                except Exception:
+                    with self.lock:
+                        try:
+                            self.check_execution()
+                        except WorkflowConflict:
+                            pass  # Cancellation/deletion must never be undone by failure recovery.
+                        else:
+                            self.repo.fail_resume(payload['request_id'])
+                    raise
 
     def _resume_receipt(self, thread_id, payload, request_fingerprint):
         receipt = self.repo.receipt(payload['request_id'])
@@ -230,6 +259,24 @@ class WorkflowRuntimeMixin:
         if receipt['fingerprint'] != request_fingerprint or receipt['thread_id'] != thread_id:
             raise ValueError('重复请求内容不一致')
         return receipt['result']
+
+    def cancel(self, thread_id):
+        with self.lock:
+            workflow = self.repo.workflow(thread_id)
+            if not workflow:
+                raise ValueError('没有待取消的流程')
+            is_plan = workflow['kind'] == 'plan'
+        # Never wait for a workflow lock under engine.lock. Plan confirmation
+        # owns this lock through terminal result/receipt commit. Chat cancellation
+        # stays immediate, including while its model request is in flight.
+        key = ('workflow', thread_id) if is_plan else None
+        with self.execution_locks.hold(key, blocking=False) as acquired:
+            if not acquired:
+                raise WorkflowConflict('计划正在确认，请稍后刷新状态，尚未取消。')
+            with self.lock:
+                self.repo.cancel_workflow(thread_id)
+                self.checkpointer.delete_thread(thread_id)
+        return {'cancelled': True}
 
     def purge_checkpoints(self):
         # Invalidate in-flight nodes and background checkpoint writes before erase.

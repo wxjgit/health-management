@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 
@@ -16,6 +16,216 @@ const suggestedValues = { kcal: 2100, protein_g: 105, carbs_g: 262, fat_g: 70, e
 const readyDefaults = () => ({
   status: "ready", targets: suggestedValues, reason: "温和减重起点", basis: "基于基础档案的本地公式估算。",
   fingerprint: "a".repeat(64), formula_version: "mifflin-editable-defaults-v1", warnings: [], sources: [],
+});
+
+const confirmationDraft = (status = "waiting_input") => ({
+  thread_id: "state-plan", status,
+  pending_input: { kind: "plan_confirmation", plan_id: "state-plan", interrupt_id: "state-question", question: "采用这份计划？" },
+});
+const confirmationPlan = (status = "pending") => ({
+  id: "state-plan", status, created_at: "2026-10-23", data: {
+    targets: { kcal: 1800, protein_g: 100, carbs_g: 215, fat_g: 60, exercise_minutes: 120 },
+    schedule: [], next_meal: "按实际情况安排。", tomorrow_focus: "记录。", evidence_refs: [],
+    notes: "", changes: {}, data_version: 1, needs_confirmation: true,
+  },
+});
+function deferredResponse() {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+const confirmedResponse = () => new Response(JSON.stringify({ status: "completed", thread_id: "state-plan" }), { status: 200 });
+
+describe("计划确认的并发状态", () => {
+  it("无法刷新服务端状态时保持确认中，恢复连接后再启用操作", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const originalFetch = fetch;
+    let unavailable = false;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (options?.method === "POST" && path.endsWith("/resume")) {
+        unavailable = true;
+        return Promise.resolve(new Response(JSON.stringify({ detail: "连接中断" }), { status: 503 }));
+      }
+      if (unavailable && (path === "/api/plans" || path === "/api/workflows"))
+        return Promise.resolve(new Response(JSON.stringify({ detail: "暂时无法读取状态" }), { status: 503 }));
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "采用计划" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("暂时无法获取确认结果");
+    expect((screen.getByRole("button", { name: "确认中…" }) as HTMLButtonElement).disabled).toBe(true);
+    unavailable = false;
+    await userEvent.click(screen.getByRole("button", { name: "刷新状态" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "采用计划" }) as HTMLButtonElement).disabled).toBe(false));
+  });
+
+  it("点击后立即显示确认中并阻止重复确认，成功后移除草案操作", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const response = deferredResponse();
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (options?.method === "POST" && path.endsWith("/resume")) {
+        bodies.push({ path, body: JSON.parse(options.body as string) });
+        return response.promise;
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "采用计划" }));
+    const confirming = screen.getByRole("button", { name: "确认中…" }) as HTMLButtonElement;
+    expect(confirming.disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "取消待处理计划" }) as HTMLButtonElement).disabled).toBe(false);
+    await userEvent.click(confirming);
+    expect(bodies).toHaveLength(1);
+    workflows = []; storedPlans = [confirmationPlan("active")];
+    await act(async () => { response.resolve(confirmedResponse()); });
+    await screen.findByText("计划已生效");
+    expect(screen.queryByRole("button", { name: "采用计划" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "取消待处理计划" })).toBeNull();
+  });
+
+  it("确认期间取消冲突时先提示再刷新，仍在执行则保持确认中", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const response = deferredResponse();
+    const originalFetch = fetch;
+    let planReads = 0, workflowReads = 0;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (path === "/api/plans") planReads++;
+      if (path === "/api/workflows") workflowReads++;
+      if (options?.method === "POST" && path.endsWith("/resume")) {
+        const payload = JSON.parse(options.body as string);
+        workflows = [{ ...confirmationDraft("resuming"), retry_request: payload }];
+        return response.promise;
+      }
+      if (options?.method === "DELETE") return Promise.resolve(new Response(
+        JSON.stringify({ detail: "计划正在确认，请稍后刷新状态，尚未取消。" }), { status: 409 },
+      ));
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "采用计划" }));
+    await userEvent.click(screen.getByRole("button", { name: "取消待处理计划" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("计划正在确认，暂时无法取消");
+    await waitFor(() => expect(workflowReads).toBeGreaterThan(1));
+    expect(planReads).toBeGreaterThan(1);
+    expect((screen.getByRole("button", { name: "确认中…" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByText("已取消待处理计划")).toBeNull();
+    workflows = []; storedPlans = [confirmationPlan("active")];
+    await userEvent.click(screen.getByRole("button", { name: "刷新状态" }));
+    await screen.findByText("计划已生效");
+    expect(screen.queryByRole("button", { name: "取消待处理计划" })).toBeNull();
+    await act(async () => { response.resolve(confirmedResponse()); });
+  });
+
+  it("重新打开页面时根据后端显示确认中，并轮询至计划生效", async () => {
+    workflows = [{ ...confirmationDraft("resuming"), retry_request: {
+      request_id: "already-running", interrupt_id: "state-question", approved: true,
+    } }]; storedPlans = [confirmationPlan()];
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    expect((await screen.findByRole("button", { name: "确认中…" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(bodies).toHaveLength(0);
+    workflows = []; storedPlans = [confirmationPlan("active")];
+    await screen.findByText("计划已生效", {}, { timeout: 4000 });
+    expect(screen.queryByRole("button", { name: "确认中…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "取消待处理计划" })).toBeNull();
+  });
+
+  it("确认失败但后端仍等待输入时恢复确认和取消，同一选择重试沿用请求编号", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (options?.method === "POST" && path.endsWith("/resume")) {
+        bodies.push({ path, body: JSON.parse(options.body as string) });
+        if (bodies.length === 1) return new Response(JSON.stringify({ detail: "尚未接收本次确认" }), { status: 500 });
+        workflows = []; storedPlans = [confirmationPlan("active")];
+        return confirmedResponse();
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "采用计划" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("计划确认失败");
+    expect((screen.getByRole("button", { name: "采用计划" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "取消待处理计划" }) as HTMLButtonElement).disabled).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "采用计划" }));
+    await screen.findByText("计划已生效");
+    expect(bodies[0].body.request_id).toBe(bodies[1].body.request_id);
+  });
+
+  it("确认失败且答案已绑定时只允许重试上次确认", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (options?.method === "POST" && path.endsWith("/resume")) {
+        const payload = JSON.parse(options.body as string);
+        bodies.push({ path, body: payload });
+        if (bodies.length === 1) {
+          workflows = [{ ...confirmationDraft("resume_failed"), retry_request: payload }];
+          return new Response(JSON.stringify({ detail: "确认处理失败" }), { status: 409 });
+        }
+        workflows = []; storedPlans = [confirmationPlan("active")];
+        return confirmedResponse();
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "采用计划" }));
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: "采用计划" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "保留原计划" })).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "重试上次确认" }));
+    await screen.findByText("计划已生效");
+    expect(bodies[1].body).toEqual(bodies[0].body);
+  });
+
+  it("计划已生效优先于尚未完成的流程状态，草案按钮不再显示", async () => {
+    workflows = [{ ...confirmationDraft("resuming"), retry_request: {
+      request_id: "already-active", interrupt_id: "state-question", approved: true,
+    } }]; storedPlans = [confirmationPlan("active")];
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await screen.findByText("计划已生效");
+    expect(screen.queryByRole("button", { name: "确认中…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "重试上次确认" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "取消待处理计划" })).toBeNull();
+  });
+
+  it("较早的慢刷新不会把已生效计划重新显示为待确认", async () => {
+    const running = { ...confirmationDraft("resuming"), retry_request: {
+      request_id: "refresh-order", interrupt_id: "state-question", approved: true,
+    } };
+    workflows = [running]; storedPlans = [confirmationPlan()];
+    const originalFetch = fetch;
+    const oldPlans = deferredResponse(), oldWorkflows = deferredResponse();
+    let holdOld = false, remaining = 2;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (holdOld && remaining > 0 && (path === "/api/plans" || path === "/api/workflows")) {
+        remaining--;
+        return path === "/api/plans" ? oldPlans.promise : oldWorkflows.promise;
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    holdOld = true;
+    await userEvent.click(await screen.findByRole("button", { name: "刷新状态" }));
+    workflows = []; storedPlans = [confirmationPlan("active")];
+    await userEvent.click(screen.getByRole("button", { name: "刷新状态" }));
+    await screen.findByText("计划已生效");
+    await act(async () => {
+      oldPlans.resolve(new Response(JSON.stringify([confirmationPlan()]), { status: 200 }));
+      oldWorkflows.resolve(new Response(JSON.stringify([running]), { status: 200 }));
+    });
+    expect(screen.getByText("计划已生效")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "确认中…" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "取消待处理计划" })).toBeNull();
+  });
 });
 
 const emptyDay = {
@@ -112,6 +322,100 @@ beforeEach(() => {
 });
 
 describe("网页核心交互", () => {
+  it("刷新后从服务端恢复原答案重试，不能直接输入不同答案", async () => {
+    const payload = { request_id: "original-answer", interrupt_id: "q-retry", text: "65公斤",
+      event_id: null, approved: null, processing_mode: "model_allowed" };
+    workflows = [{ thread_id: "retry-weight", status: "resume_failed", processing_mode: "model_allowed",
+      pending_input: { kind: "clarification", interrupt_id: "q-retry", question: "体重多少？" },
+      retry_request: payload }];
+    render(<App />);
+    await screen.findByText(/上次补充“65公斤”未完成/);
+    expect((screen.getByLabelText("描述饮食或身体状态") as HTMLTextAreaElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "发送记录" }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "重试原答案" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ path: "/workflows/retry-weight/resume", body: payload });
+  });
+
+  it("补充请求失败后刷新恢复状态并沿用原请求重试", async () => {
+    const pending = { thread_id: "failed-weight", status: "waiting_input", processing_mode: "model_allowed",
+      pending_input: { kind: "clarification", interrupt_id: "q-failed", question: "体重多少？" } };
+    workflows = [pending];
+    const originalFetch = fetch;
+    let failedBody: Record<string, unknown> | undefined;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (path.endsWith("/resume") && !failedBody) {
+        failedBody = JSON.parse(options!.body as string);
+        bodies.push({ path: path.replace("/api", ""), body: failedBody! });
+        workflows = [{ ...pending, status: "resume_failed", retry_request: failedBody }];
+        return new Response(JSON.stringify({ detail: "相关数据已变化" }), { status: 409 });
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await screen.findByText("正在补充：体重多少？");
+    await userEvent.type(screen.getByLabelText("描述饮食或身体状态"), "65公斤");
+    await userEvent.click(screen.getByRole("button", { name: "发送记录" }));
+    await screen.findByText(/上次补充“65公斤”未完成/);
+    await userEvent.click(screen.getByRole("button", { name: "重试原答案" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+    expect(bodies[1].body).toEqual(failedBody);
+  });
+
+  it("原补充正在执行时禁用重试，但允许另开独立记录", async () => {
+    workflows = [{ thread_id: "executing", status: "resuming",
+      pending_input: { kind: "clarification", interrupt_id: "q-run", question: "体重多少？" },
+      retry_request: { request_id: "run-answer", interrupt_id: "q-run", text: "65公斤" } }];
+    render(<App />);
+    await screen.findByText(/正在处理上次补充/);
+    expect((screen.getByRole("button", { name: "重试原答案" }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(screen.getByRole("button", { name: "另开一条" }));
+    expect((screen.getByLabelText("描述饮食或身体状态") as HTMLTextAreaElement).disabled).toBe(false);
+  });
+
+  it("纯本地偏好不会被恢复的模型模式请求静默绕过", async () => {
+    localStorage.setItem("health-local-only", "true");
+    workflows = [{ thread_id: "model-retry", status: "resume_failed", processing_mode: "model_allowed",
+      pending_input: { kind: "clarification", interrupt_id: "q-mode", question: "体重多少？" },
+      retry_request: { request_id: "mode-answer", interrupt_id: "q-mode", text: "65公斤", processing_mode: "model_allowed" } }];
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "重试原答案" }));
+    await screen.findByText(/若要改为纯本地处理/);
+    expect(bodies).toHaveLength(0);
+  });
+
+  it("计划恢复沿用上次的拒绝请求，不生成新的确认编号", async () => {
+    const payload = { request_id: "previous-rejection", interrupt_id: "q-plan", approved: false };
+    workflows = [{ thread_id: "retry-plan", status: "resume_failed",
+      pending_input: { kind: "plan_confirmation", interrupt_id: "q-plan", question: "确认计划？" },
+      retry_request: payload }];
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "重试上次确认" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0].body).toEqual(payload);
+  });
+
+  it("计划取消冲突后刷新状态，不显示取消成功", async () => {
+    workflows = [{ thread_id: "active-plan", status: "resume_failed",
+      pending_input: { kind: "plan_confirmation", interrupt_id: "q-active", question: "确认计划？" },
+      retry_request: { request_id: "old-approval", interrupt_id: "q-active", approved: true } }];
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (options?.method === "DELETE") {
+        workflows = [];
+        return new Response(JSON.stringify({ detail: "计划已经处理，无法取消，请刷新状态。" }), { status: 409 });
+      }
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "取消待处理计划" }));
+    await screen.findByRole("alert");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "重试上次确认" })).toBeNull());
+    expect(screen.queryByText("已取消待处理事项")).toBeNull();
+  });
+
   it("发送前显示供应商、模型和各任务的数据范围", async () => {
     healthOverride = { mode: "model", today: "2026-10-20", timezone: "Asia/Shanghai",
       model_name: "test-model", model_provider: "model.test.invalid", local_only: false, scheduler_enabled: false };

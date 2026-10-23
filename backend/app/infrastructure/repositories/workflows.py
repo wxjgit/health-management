@@ -8,16 +8,18 @@ from .common import dump
 
 class WorkflowRepositoryMixin:
     def workflow(self, thread_id):
-        row = self.conn.execute(
-            'SELECT * FROM workflows WHERE id=?', (thread_id,)
-        ).fetchone()
-        return {**dict(row), 'result': json.loads(row['result'])} if row else None
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT * FROM workflows WHERE id=?', (thread_id,)
+            ).fetchone()
+            return {**dict(row), 'result': json.loads(row['result'])} if row else None
 
     def workflow_by_request(self, request_id):
-        row = self.conn.execute(
-            'SELECT id FROM workflows WHERE request_id=?', (request_id,)
-        ).fetchone()
-        return self.workflow(row['id']) if row else None
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT id FROM workflows WHERE request_id=?', (request_id,)
+            ).fetchone()
+            return self.workflow(row['id']) if row else None
 
     def register_workflow(self, thread_id, request_id, fingerprint, kind):
         with self.lock, self.conn:
@@ -34,19 +36,20 @@ class WorkflowRepositoryMixin:
             )
 
     def messages(self, conversation_id='main', limit=100):
-        rows = self.conn.execute(
-            'SELECT * FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT ?',
-            (conversation_id, limit),
-        ).fetchall()
-        return [
-            {
-                **dict(row),
-                'cards': json.loads(row['cards']),
-                'evidence_refs': json.loads(row['evidence_refs']),
-                'process_trace': json.loads(row['process_trace']),
-            }
-            for row in reversed(rows)
-        ]
+        with self.lock:
+            rows = self.conn.execute(
+                'SELECT * FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT ?',
+                (conversation_id, limit),
+            ).fetchall()
+            return [
+                {
+                    **dict(row),
+                    'cards': json.loads(row['cards']),
+                    'evidence_refs': json.loads(row['evidence_refs']),
+                    'process_trace': json.loads(row['process_trace']),
+                }
+                for row in reversed(rows)
+            ]
 
     def previous_reference_ids(self, conversation_id, excluding_thread):
         # Reference resolution reads only local result metadata, not chat text.
@@ -73,29 +76,40 @@ class WorkflowRepositoryMixin:
         duration_ms=0,
     ):
         with self.lock, self.conn:
-            self.conn.execute(
-                '''INSERT OR IGNORE INTO messages
-                (id,thread_id,conversation_id,role,text,cards,evidence_refs,created_at,process_trace,duration_ms)
-                VALUES (?,?,?,?,?,?,?,?,?,?)''',
-                (
-                    message_id,
-                    thread_id,
-                    conversation,
-                    role,
-                    text,
-                    dump(cards or []),
-                    dump(evidence or []),
-                    stamp(),
-                    dump(process_trace or []),
-                    max(0, int(duration_ms)),
-                ),
+            self._insert_message(
+                message_id, thread_id, role, text, cards, evidence, conversation,
+                process_trace, duration_ms,
             )
 
+    def _insert_message(
+        self, message_id, thread_id, role, text, cards=None, evidence=None,
+        conversation='main', process_trace=None, duration_ms=0,
+    ):
+        """Insert inside the caller's transaction; never commit independently."""
+        self.conn.execute(
+            '''INSERT OR IGNORE INTO messages
+            (id,thread_id,conversation_id,role,text,cards,evidence_refs,created_at,process_trace,duration_ms)
+            VALUES (?,?,?,?,?,?,?,?,?,?)''',
+            (
+                message_id,
+                thread_id,
+                conversation,
+                role,
+                text,
+                dump(cards or []),
+                dump(evidence or []),
+                stamp(),
+                dump(process_trace or []),
+                max(0, int(duration_ms)),
+            ),
+        )
+
     def receipt(self, request_id):
-        row = self.conn.execute(
-            'SELECT * FROM receipts WHERE request_id=?', (request_id,)
-        ).fetchone()
-        return {**dict(row), 'result': json.loads(row['result'])} if row else None
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT * FROM receipts WHERE request_id=?', (request_id,)
+            ).fetchone()
+            return {**dict(row), 'result': json.loads(row['result'])} if row else None
 
     def save_receipt(self, request_id, thread_id, fingerprint, result):
         with self.lock, self.conn:
@@ -104,10 +118,120 @@ class WorkflowRepositoryMixin:
                 (request_id, thread_id, fingerprint, dump(result)),
             )
 
+    def resume_attempt(self, request_id):
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT * FROM resume_attempts WHERE request_id=?', (request_id,)
+            ).fetchone()
+            return {**dict(row), 'payload': json.loads(row['payload'])} if row else None
+
+    def attempt_for_interrupt(self, thread_id, interrupt_id):
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT request_id FROM resume_attempts WHERE thread_id=? AND interrupt_id=?',
+                (thread_id, interrupt_id),
+            ).fetchone()
+            return self.resume_attempt(row['request_id']) if row else None
+
+    def _resume_status(self, thread_id, payload, status):
+        workflow = self.workflow(thread_id)
+        result = {
+            **workflow['result'], 'status': status, 'retry_request': payload,
+            'reply': ('已接收补充，正在处理。' if status == 'resuming' else
+                      '上次补充未处理完成。请重试原答案，或取消后重新提交；已保存的独立记录保留。'),
+        }
+        self.conn.execute(
+            'UPDATE workflows SET status=?,result=? WHERE id=?',
+            (status, dump(result), thread_id),
+        )
+
+    def begin_resume(self, thread_id, payload, request_fingerprint, display, conversation):
+        """Persist answer ownership before Graph can consume the interrupt."""
+        with self.lock, self.conn:
+            self.conn.execute(
+                'INSERT OR IGNORE INTO resume_attempts VALUES (?,?,?,?,?,?,?)',
+                (payload['request_id'], thread_id, payload['interrupt_id'],
+                 request_fingerprint, dump(payload), 'executing', stamp()),
+            )
+            attempt = self.resume_attempt(payload['request_id'])
+            if not attempt or attempt['thread_id'] != thread_id or attempt['fingerprint'] != request_fingerprint:
+                raise ValueError('本次补充已绑定其他请求，请重试原答案或取消后重新提交。')
+            self.conn.execute(
+                "UPDATE resume_attempts SET status='executing' WHERE request_id=?",
+                (payload['request_id'],),
+            )
+            self._resume_status(thread_id, payload, 'resuming')
+            self._insert_message(payload['request_id'], thread_id, 'user', display,
+                                 conversation=conversation)
+
+    def fail_resume(self, request_id):
+        with self.lock, self.conn:
+            attempt = self.resume_attempt(request_id)
+            if not attempt:
+                return
+            workflow = self.workflow(attempt['thread_id'])
+            if not workflow or workflow['status'] not in ('resuming', 'resume_failed'):
+                return
+            self.conn.execute(
+                "UPDATE resume_attempts SET status='failed' WHERE request_id=?", (request_id,),
+            )
+            self._resume_status(attempt['thread_id'], attempt['payload'], 'resume_failed')
+
+    def recover_resume_attempts(self):
+        """Single-process startup: an interrupted execution is explicitly retryable."""
+        with self.lock:
+            ids = [row[0] for row in self.conn.execute(
+                "SELECT request_id FROM resume_attempts WHERE status='executing'"
+            ).fetchall()]
+            for request_id in ids:
+                self.fail_resume(request_id)
+
+    def finish_resume(self, thread_id, payload, request_fingerprint, result, conversation):
+        """Commit result, receipt, attempt and assistant reply in one transaction."""
+        with self.lock, self.conn:
+            self.conn.execute(
+                'UPDATE workflows SET status=?,result=? WHERE id=?',
+                (result['status'], dump(result), thread_id),
+            )
+            self.conn.execute(
+                'INSERT INTO receipts VALUES (?,?,?,?)',
+                (payload['request_id'], thread_id, request_fingerprint, dump(result)),
+            )
+            self.conn.execute(
+                "UPDATE resume_attempts SET status='completed' WHERE request_id=?",
+                (payload['request_id'],),
+            )
+            self._insert_message(
+                payload['request_id'] + ':reply', thread_id, 'assistant', result['reply'],
+                result['cards'], result['evidence_refs'], conversation,
+                result['process_trace'], result['duration_ms'],
+            )
+
+    def cancel_workflow(self, thread_id):
+        """Commit cancellation and rejection of a pending plan together."""
+        with self.lock, self.conn:
+            workflow = self.workflow(thread_id)
+            if not workflow or workflow['status'] not in ('waiting_input', 'resuming', 'resume_failed'):
+                raise ValueError('没有待取消的流程')
+            if workflow['kind'] == 'plan':
+                plan = self.plan(thread_id)
+                if not plan or plan['status'] != 'pending':
+                    raise ValueError('计划已经处理，无法取消，请刷新状态。')
+                self.conn.execute("UPDATE plans SET status='rejected' WHERE id=?", (thread_id,))
+            result = {'thread_id': thread_id, 'status': 'cancelled',
+                      'reply': '已取消待处理事项，已保存的独立记录保留。'}
+            self.conn.execute(
+                "UPDATE workflows SET status='cancelled',result=? WHERE id=?", (dump(result), thread_id),
+            )
+            self.conn.execute(
+                "UPDATE resume_attempts SET status='cancelled' WHERE thread_id=? AND status!='completed'",
+                (thread_id,),
+            )
+
     def waiting_workflows(self):
         with self.lock:
             rows = self.conn.execute(
-                "SELECT id FROM workflows WHERE status='waiting_input' ORDER BY created_at"
+                "SELECT id FROM workflows WHERE status IN ('waiting_input','resuming','resume_failed') ORDER BY created_at"
             ).fetchall()
             return [self.workflow(row['id'])['result'] for row in rows]
 
@@ -115,8 +239,8 @@ class WorkflowRepositoryMixin:
         with self.lock:
             rows = self.conn.execute(
                 "SELECT id,kind FROM workflows "
-                "WHERE (status!='waiting_input' AND created_at<?) "
-                "OR (status='waiting_input' AND created_at<?)",
+                "WHERE (status NOT IN ('waiting_input','resuming','resume_failed') AND created_at<?) "
+                "OR (status IN ('waiting_input','resuming','resume_failed') AND created_at<?)",
                 (completed_before, pending_before),
             ).fetchall()
             return [dict(row) for row in rows]
@@ -131,6 +255,7 @@ class WorkflowRepositoryMixin:
                 self.conn.execute(
                     'DELETE FROM receipts WHERE thread_id=?', (thread_id,)
                 )
+                self.conn.execute('DELETE FROM resume_attempts WHERE thread_id=?', (thread_id,))
                 self.conn.execute(
                     'DELETE FROM model_calls WHERE thread_id=?', (thread_id,)
                 )

@@ -69,6 +69,17 @@ class WorkflowRepositoryMixin:
             if row else []
         )
 
+    def safety_previous_input(self, conversation_id, excluding_thread):
+        """One explicit continuation source; register reads for precise erasure."""
+        row = self.conn.execute(
+            "SELECT id,text FROM messages WHERE conversation_id=? AND role='user' "
+            'AND thread_id!=? ORDER BY created_at DESC,rowid DESC LIMIT 1',
+            (conversation_id, excluding_thread),
+        ).fetchone()
+        if row:
+            self.observe('message', row['id'])
+        return row['text'] if row else None
+
     def message(
         self,
         message_id,

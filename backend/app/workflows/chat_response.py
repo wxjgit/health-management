@@ -14,6 +14,15 @@ class ChatResponseMixin:
 
     def respond(self, state):
         parsed = state['parsed']
+        if state.get('safety', {}).get('capability') == 'record_only' and parsed['intent'] != 'query':
+            records = [self.repo.event(event_id) for event_id in state.get('record_ids', [])]
+            records = [record for record in records if record]
+            return {
+                'reply': (record_receipt(records, corrected=parsed['intent'] == 'correct') if records
+                          else '本次没有保存记录。') + '\n离线模式仅处理明确的记录和查询，本次未生成评分或建议。',
+                'cards': [], 'evidence_refs': [evidence(record) for record in records],
+                'reply_plan': {},
+            }
         cards = []
         refs = []
         advice_traces = []

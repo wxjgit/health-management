@@ -15,6 +15,11 @@ class State(TypedDict, total=False):
     source_message_id: str
     source_text: str
     original: str
+    safety_input_text: str
+    safety: dict[str, Any]
+    safety_context: dict[str, Any]
+    safety_fingerprint: str
+    safety_classification: dict[str, Any]
     selected_id: str | None
     parsed: dict[str, Any]
     extraction: dict[str, Any]

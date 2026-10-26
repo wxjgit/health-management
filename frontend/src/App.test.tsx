@@ -36,6 +36,28 @@ function deferredResponse() {
 }
 const confirmedResponse = () => new Response(JSON.stringify({ status: "completed", thread_id: "state-plan" }), { status: 200 });
 
+describe("计划安全边界", () => {
+  it("展示被安全路由阻止的计划回复，不出现可确认草案", async () => {
+    defaultTargets = readyDefaults();
+    const original = fetch;
+    const boundary = "本次暂停通用计划，请先咨询医生。";
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (path === "/api/plans/propose" && options?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({
+          thread_id: "blocked", status: "completed", reply: boundary, cards: [], evidence_refs: [],
+          safety: { category: "medical", reason: "model_classification", policy_version: "hybrid-safety-v1" },
+        }), { status: 200 }));
+      }
+      return original(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "生成计划草案" }));
+    expect((await screen.findByRole("alert")).textContent).toContain(boundary);
+    expect(screen.queryByRole("button", { name: "采用计划" })).toBeNull();
+  });
+});
+
 describe("计划确认的并发状态", () => {
   it("无法刷新服务端状态时保持确认中，恢复连接后再启用操作", async () => {
     workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];

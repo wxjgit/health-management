@@ -8,10 +8,12 @@ from ..contracts.workflows import (
     ProcessingPlan,
 )
 from ..contracts.events import NutritionEstimates
+from ..contracts.safety import SafetyClassification, SafetyContext
 from .errors import PolicyError
 
 
 ENVELOPES = {
+    'safety_classification': {'task', 'context', 'schema'},
     'processing_plan': {'task', 'now', 'text', 'interaction', 'schema'},
     'correct_selected': {'task', 'now', 'text', 'record', 'schema'},
     'patch_draft': {
@@ -23,6 +25,7 @@ ENVELOPES = {
 }
 
 OUTPUTS = {
+    'safety_classification': SafetyClassification,
     'processing_plan': ProcessingPlan,
     'correct_selected': CorrectionResult,
     'patch_draft': EventPatch,
@@ -55,6 +58,8 @@ def validate_payload(purpose, data):
         'version',
         'nutrition_fingerprint',
     })
+    if purpose == 'safety_classification':
+        SafetyContext.model_validate(data['context'])
     if purpose == 'processing_plan':
         if set(data['interaction']) != {'selected_record'}:
             raise PolicyError('规划阶段只能读取是否已选中记录。')

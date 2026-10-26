@@ -12,6 +12,7 @@ import re
 from pydantic import ValidationError
 
 from ..contracts.profile import Profile, Targets
+from .safety import POLICY_VERSION, REPLIES, local_safety
 
 VERSION = 'mifflin-editable-defaults-v1'
 ACTIVITY = {'sedentary': 1.4, 'light': 1.6, 'moderate': 1.8, 'active': 2.0}
@@ -29,11 +30,15 @@ LIMITATION = '仅作一般健康成年人的可编辑起点，不是精确测量
 def default_targets(repo):
     raw = repo.get_meta('profile')
     facts = [f['content'] for f in repo.facts()]
-    fingerprint = hashlib.sha256(json.dumps({'profile': raw, 'facts': sorted(facts), 'version': VERSION},
+    fingerprint = hashlib.sha256(json.dumps({'profile': raw, 'facts': sorted(facts), 'version': VERSION,
+                                            'safety_policy': POLICY_VERSION},
                                 ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     result = {'status': 'unavailable', 'targets': None, 'reason': '', 'basis': '',
               'fingerprint': fingerprint, 'formula_version': VERSION, 'warnings': [],
               'sources': SOURCES, 'reviewed_on': '2026-10-10', 'estimate': None}
+    safety = local_safety(repo)
+    if safety['category'] != 'general':
+        return {**result, 'reason': REPLIES[safety['category']], 'safety': safety}
     if not raw:
         return {**result, 'status': 'needs_profile', 'reason': '建立基础档案后，系统会自动填入可编辑的默认目标。'}
     try:

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from ..common.clock import date_from_text, now
 from .dashboard import dashboard, history_window
+from .safety import unsafe_generated_text
 
 
 TODAY_SCENES = {'today_attention', 'next_meal', 'food_choice', 'portion', 'general'}
@@ -141,6 +142,8 @@ def build_advice_context(repo, question, conversation_id='main', thread_id=None,
 
 def validate_advice(answer, context):
     text = answer.strip()
+    if unsafe_generated_text(text):
+        raise ValueError('建议包含未授权的医疗或补偿行为内容')
     if not text or len(text) > 1200 or '补充：' in text or 'selection_policy' in text:
         raise ValueError('建议回复格式不合格')
     allowed = set()

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app.common.clock import SHANGHAI
 from app.common.config import Settings
 from app.main import create_app
-from model_helpers import planned_content
+from model_helpers import planned_content, safety_transport
 
 
 @pytest.fixture(autouse=True)
@@ -41,7 +41,7 @@ def install_model(monkeypatch, answer):
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
     monkeypatch.setattr('app.modeling.parser.httpx.Client',
-                        lambda *args, **kwargs: original(*args, **kwargs, transport=httpx.MockTransport(handler)))
+                        lambda *args, **kwargs: original(*args, **kwargs, transport=httpx.MockTransport(safety_transport(handler))))
     return calls
 
 

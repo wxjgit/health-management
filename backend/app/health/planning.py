@@ -5,10 +5,12 @@ from ..common import clock
 from .targets import default_targets
 from .dashboard import evidence, history_window, recommendation
 from ..privacy.provenance import tracked
+from .safety import require_plan_eligibility
 
 
 @tracked
 def plan_draft(repo, targets, note='', target_source='manual', suggestion_fingerprint=None):
+    require_plan_eligibility(repo, targets, note)
     active = repo.active_plan()
     current_targets = active['data']['targets'] if active else None
     inherited = targets is None and current_targets and target_source != 'system_default'
@@ -28,6 +30,7 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
         targets = suggestion['targets']
         target_source = 'system_default'
         target_metadata = suggestion
+    require_plan_eligibility(repo, targets, note)
     anchor = active['data'].get('confirmed_anchor', current_targets) if active else targets
     change = {
         key: round((targets[key] - current_targets[key]) / max(current_targets[key], 1) * 100, 1)

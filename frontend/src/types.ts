@@ -142,6 +142,12 @@ export type Workflow = {
   duration_ms: number;
   pending_input?: Pending;
   processing_mode?: "model_allowed" | "local_only";
+  safety?: {
+    category: "general" | "emergency" | "medical" | "eating_disorder" | "special_population" | "uncertain";
+    reason: string;
+    policy_version: string;
+    capability?: "record_only" | "preference_only" | "plan";
+  };
   retry_request?: {
     request_id: string;
     interrupt_id: string;

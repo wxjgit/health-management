@@ -123,7 +123,17 @@ class WorkflowConcurrencyMixin:
                 token = _node_engine.set(self)
                 try:
                     with capture(self.repo, self.repo.workflow_node(state['thread_id'])):
-                        return operation(state)
+                        if operation.__name__ in {
+                            'parse_initial', 'patch_pending', 'prepare_nutrition', 'save_ready',
+                            'prepare_clarification', 'persist', 'fact', 'respond',
+                            'prepare_plan', 'activate_plan',
+                        }:
+                            if operation.__name__ != 'activate_plan' or state.get('approved'):
+                                self.require_safety(state, operation.__name__)
+                        result = operation(state)
+                        if operation.__name__ in ('respond', 'prepare_clarification'):
+                            self.require_safety(state, operation.__name__)
+                        return result
                 finally:
                     _node_engine.reset(token)
         return guarded

@@ -11,7 +11,7 @@ from app.chat.feedback import reconcile_feedback, attach_feedback
 from app.common.clock import SHANGHAI
 from app.main import create_app
 from app.chat.replies import check_phrasing, make_plan
-from model_helpers import planned_content
+from model_helpers import planned_content, safety_transport
 
 
 @pytest.fixture(autouse=True)
@@ -63,7 +63,7 @@ def install_model(monkeypatch, parse=None, phrase=None):
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
     monkeypatch.setattr('app.modeling.parser.httpx.Client',
-                        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
+                        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(handler))))
     return calls
 
 

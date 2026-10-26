@@ -2514,6 +2514,55 @@
         .privacy-code { color: #172c40; background: #f3f5f7; border-color: #aebfcd; }
         .privacy-code-card, .privacy-result { break-inside: avoid; }
       }
+
+      /* Scoped safety explanation: no application requests or personal data. */
+      #safety-routing { padding: 28px; min-width: 0; }
+      #safety-routing h2 { color: #243e39; font-size: 25px; }
+      #safety-routing h3 { margin: 24px 0 12px; font-size: 18px; }
+      #safety-routing p { font-size: 15px; color: #465950; line-height: 1.9; }
+      #safety-routing .safety-kicker { color: #547866; font-size: 12px; letter-spacing: 1.4px; font-weight: 700; }
+      #safety-routing .safety-lead { margin-top: 10px; max-width: 850px; }
+      .safety-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 10px; font-size: 12px; }
+      .safety-legend span { border: 1px solid #cbdacc; background: #edf4ed; padding: 4px 10px; border-radius: 6px; color: #355e49; }
+      .safety-legend .safety-model-key { border-color: #cfbfec; color: #6b459f; background: #f2eafb; }
+      .safety-legend .safety-stop-key { border-color: #e4c8a6; color: #8a5a28; background: #fff4e6; }
+      .safety-diagram { overflow-x: auto; max-width: 100%; border: 1px solid #dce4db; background: #fbfcfa; border-radius: 12px; }
+      .safety-diagram svg { display: block; width: 100%; min-width: 790px; height: auto; }
+      .safety-diagram .sf-node rect { fill: #edf4ed; stroke: #bbcfbf; stroke-width: 1.5; }
+      .safety-diagram .sf-node text { fill: #345841; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; text-anchor: middle; font-size: 16px; font-weight: 650; }
+      .safety-diagram .sf-node .sf-small { font-size: 11px; font-weight: 400; fill: #5a7062; }
+      .safety-diagram .sf-model rect { fill: #f1e9fb; stroke: #c9b9e5; }
+      .safety-diagram .sf-model text { fill: #7049a6; }
+      .safety-diagram .sf-stop rect { fill: #fff3e3; stroke: #dec29a; }
+      .safety-diagram .sf-stop text { fill: #875a29; }
+      .safety-diagram .sf-edge { fill: none; stroke: #829a87; stroke-width: 1.8; marker-end: url(#safety-arrow); }
+      .safety-diagram .sf-failure { stroke: #ae8657; stroke-dasharray: 5 4; }
+      .safety-diagram .sf-label { font-family: "Microsoft YaHei", sans-serif; font-size: 12px; fill: #607565; }
+      #safety-routing .safety-caption { margin-top: 10px; color: #65766b; font-size: 13px; }
+      .safety-switch { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+      .safety-switch button { padding: 9px 13px; border: 1px solid #bdcebf; border-radius: 8px; color: #365945; background: white; font-size: 14px; }
+      .safety-switch button[aria-pressed="true"] { color: white; background: #3e6b55; border-color: #3e6b55; }
+      .safety-example { border: 1px solid #c9d9cb; border-radius: 12px; padding: 20px; background: #f4f8f1; }
+      #safety-routing .safety-example blockquote { margin: 0 0 14px; padding-left: 14px; border-left: 3px solid #789a7f; font-size: 19px; color: #284d38; font-weight: 650; overflow-wrap: anywhere; }
+      .safety-case-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .safety-case-steps article { min-width: 0; padding: 15px; background: white; border: 1px solid #d9e3d5; border-radius: 9px; }
+      .safety-case-steps b { color: #345b43; font-size: 14px; }
+      #safety-routing .safety-case-steps p { margin-top: 7px; font-size: 14px; }
+      .safety-code-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .safety-code-grid details { min-width: 0; border: 1px solid #d3dfd0; border-radius: 10px; padding: 15px; background: #fafcf8; }
+      .safety-code-grid summary { cursor: pointer; font-size: 15px; font-weight: 650; color: #355e49; }
+      #safety-routing .safety-code-grid p { margin-top: 10px; font-size: 14px; }
+      .safety-code-grid pre { padding: 14px; border-radius: 8px; background: #20392f; color: #e8f4e9; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.85 Consolas, "Cascadia Code", monospace; tab-size: 4; }
+      .safety-code-grid a { text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
+      .safety-boundaries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+      .safety-boundaries article { padding: 16px; border: 1px solid #dce4d7; border-radius: 10px; min-width: 0; }
+      .safety-boundaries b { font-size: 15px; color: #375843; }
+      #safety-routing .safety-boundaries p { margin-top: 7px; font-size: 14px; }
+      #safety-routing .safety-limits { margin-top: 16px; padding: 15px 17px; border-left: 4px solid #b98b53; border-radius: 0 8px 8px 0; background: #fff6e9; font-size: 14px; }
+      .safety-links { display: flex; flex-wrap: wrap; gap: 9px 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #dfe7da; font-size: 13px; }
+      @media(max-width: 900px) { .safety-case-steps, .safety-boundaries { grid-template-columns: 1fr; } }
+      @media(max-width: 760px) { #safety-routing { padding: 18px; } #safety-routing h2 { font-size: 23px; } .safety-code-grid { grid-template-columns: 1fr; } }
+      @media print { .safety-switch { display: none; } .safety-diagram svg { min-width: 0; } .safety-code-grid, .safety-case-steps { break-inside: avoid; } }
     </style>
   </head>
   <body>
@@ -2535,6 +2584,7 @@
           <a class="current" href="#graph-overview">三个工作流总览</a>
           <a class="nav-subsection" href="#entry-points">入口、请求与恢复</a>
           <a class="nav-subsection" href="#routing">意图识别与路由</a>
+          <a class="nav-subsection" href="#safety-routing">安全路由：LLM 判断后还要检查什么</a>
         </div>
         <div class="nav-group"><span class="nav-label">02 · 代码实现</span>
           <a href="#developer-guide">节点实现索引</a>
@@ -2760,7 +2810,7 @@
         <div class="section-head">
           <div>
             <h2>意图识别与路由</h2>
-            <p>校验和营养准备完成后，程序按固定优先级选择下一个节点。</p>
+            <p>通过<a href="#safety-routing">前置安全路由</a>后，完成校验和营养准备，再按固定优先级选择下一个业务节点。</p>
           </div>
         </div>
         <h3>route_chat：完成校验与营养准备后，依次匹配</h3>
@@ -2786,6 +2836,116 @@
             <code>→ respond</code>
           </div>
         </div>
+      </section>
+
+
+      <section class="section panel" id="safety-routing" data-chapter aria-labelledby="safety-routing-title">
+        <p class="safety-kicker">SAFETY ROUTING · 先判断能不能做，再决定怎么做</p>
+        <h2 id="safety-routing-title">一句“晚饭吃多少”，为什么要先过安全检查？</h2>
+        <p class="safety-lead">“记录午饭”和“催吐后还想减肥”都在谈饮食，处理方式却不同。现在请求先经过本地规则和独立 LLM 分类，再由程序决定是否允许继续估算、给建议或生成计划。本节对照当前安全实现，前面的总览保留原业务链路快照。</p>
+        <div class="safety-legend" aria-label="安全路由图例"><span>绿色 · 本地程序</span><span class="safety-model-key">紫色 · LLM 分类</span><span class="safety-stop-key">橙色 · 固定安全边界</span></div>
+        <div class="safety-diagram" tabindex="0" role="region" aria-label="安全路由流程图，可横向滚动">
+          <svg viewBox="0 0 960 465" role="img" aria-labelledby="safety-svg-title safety-svg-desc">
+            <title id="safety-svg-title">安全检查前置，模型结果经过本地校验，业务执行前后继续复核</title>
+            <desc id="safety-svg-desc">输入先做本地检查，明确风险直接返回固定回复；其余输入由 LLM 分类并本地校验。风险、失败或无法确定时使用固定回复。普通候选进入意图识别，再检查具体操作权限；通过后才进入业务，生成内容也要接受检查。</desc>
+            <defs><marker id="safety-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#829a87" /></marker></defs>
+            <path class="sf-edge" d="M205 65H265" />
+            <path class="sf-edge" d="M445 65H505" />
+            <path class="sf-edge" d="M685 65H745" />
+            <path class="sf-edge" d="M355 100V210" />
+            <path class="sf-edge sf-failure" d="M595 100V210" />
+            <path class="sf-edge" d="M785 100V170H715V245H685" />
+            <path class="sf-edge" d="M835 100V210" />
+            <path class="sf-edge" d="M835 280V350" />
+            <path class="sf-edge" d="M745 385H685" />
+            <path class="sf-edge" d="M505 385H445" />
+            <path class="sf-edge" d="M265 385H205" />
+            <text class="sf-label" x="457" y="49">未命中</text>
+            <text class="sf-label" x="365" y="155">明确风险 / 档案限制</text>
+            <text class="sf-label" x="605" y="145">超时 / 非法输出</text>
+            <text class="sf-label" x="694" y="192" text-anchor="end">风险 / 不确定</text>
+            <text class="sf-label" x="845" y="158">普通候选</text>
+            <text class="sf-label" x="845" y="320">按实际操作检查</text>
+            <g class="sf-node"><rect x="25" y="30" width="180" height="70" rx="12" /><text x="115" y="58">用户输入<tspan class="sf-small" x="115" dy="22">首次 / 追问原文 / 计划附言</tspan></text></g>
+            <g class="sf-node"><rect x="265" y="30" width="180" height="70" rx="12" /><text x="355" y="58">① 本地安全检查<tspan class="sf-small" x="355" dy="22">safety_gate · 明确规则</tspan></text></g>
+            <g class="sf-node sf-model"><rect x="505" y="30" width="180" height="70" rx="12" /><text x="595" y="58">② LLM 安全分类<tspan class="sf-small" x="595" dy="22">classify_safety · 理解语义</tspan></text></g>
+            <g class="sf-node"><rect x="745" y="30" width="180" height="70" rx="12" /><text x="835" y="58">③ 本地校验与合并<tspan class="sf-small" x="835" dy="22">merge_classification</tspan></text></g>
+            <g class="sf-node sf-stop"><rect x="265" y="210" width="420" height="70" rx="12" /><text x="475" y="239">固定安全回复，结束本次普通处理<tspan class="sf-small" x="475" dy="21">safety_response · 不继续估算、评分、建议或生成计划</tspan></text></g>
+            <g class="sf-node"><rect x="745" y="210" width="180" height="70" rx="12" /><text x="835" y="240">原有意图识别<tspan class="sf-small" x="835" dy="21">记录 / 查询 / 建议等</tspan></text></g>
+            <g class="sf-node"><rect x="745" y="350" width="180" height="70" rx="12" /><text x="835" y="378">④ 本地权限检查<tspan class="sf-small" x="835" dy="22">不满足条件时停止，不执行</tspan></text></g>
+            <g class="sf-node"><rect x="505" y="350" width="180" height="70" rx="12" /><text x="595" y="378">允许的业务步骤<tspan class="sf-small" x="595" dy="22">估算 / 保存 / 生成候选回复</tspan></text></g>
+            <g class="sf-node"><rect x="265" y="350" width="180" height="70" rx="12" /><text x="355" y="378">⑤ 输出与状态复核<tspan class="sf-small" x="355" dy="22">越界内容使用本地兜底</tspan></text></g>
+            <g class="sf-node"><rect x="25" y="350" width="180" height="70" rx="12" /><text x="115" y="378">展示允许的结果<tspan class="sf-small" x="115" dy="22">计划仍保留原有确认流程</tspan></text></g>
+          </svg>
+        </div>
+        <p class="safety-caption">图示模型可用时的主路径；权限和输出检查也会重复调用在各业务步骤前后。小屏可横向查看。无文字附言的计划不需要语义分类，但仍要检查已知限制与目标数值。</p>
+
+        <h3>换一句话，看它会走哪条路</h3>
+        <div class="safety-switch" role="group" aria-label="选择安全路由示例">
+          <button type="button" data-safety-case="explicit" aria-pressed="false">明确风险：本地挡住</button>
+          <button type="button" data-safety-case="implicit" aria-pressed="true">隐晦风险：LLM 识别</button>
+          <button type="button" data-safety-case="ordinary" aria-pressed="false">普通记录：继续检查</button>
+          <button type="button" data-safety-case="failure" aria-pressed="false">模型失败：保守兜底</button>
+        </div>
+        <div class="safety-example" aria-live="polite" aria-atomic="true">
+          <blockquote id="safety-case-input">“吃完就去卫生间，把刚吃进去的东西弄出来。”</blockquote>
+          <div class="safety-case-steps">
+            <article><b id="safety-case-step-1">① 本地没有命中明确词</b><p id="safety-case-text-1">没有直接出现“催吐”等词，交给独立分类模型理解，不在这里认定安全。</p></article>
+            <article><b id="safety-case-step-2">② 模型提出进食障碍风险</b><p id="safety-case-text-2">只返回 eating_disorder 等标签，并引用这句话中的原文；本地继续校验。</p></article>
+            <article><b id="safety-case-step-3">③ 使用固定求助引导</b><p id="safety-case-text-3">停止本次营养估算和减重建议，不把这句话继续交给普通饮食建议模型。</p></article>
+          </div>
+        </div>
+        <p class="safety-caption">这是固定示例演示，不会调用真实模型、接口或读取个人健康数据库。隐晦风险示例对应一次合成语料实测结果。</p>
+
+        <h3>结合代码：每道检查究竟做了什么？</h3>
+        <div class="safety-code-grid">
+          <details open><summary>入口：首次输入和每次追问都先检查</summary>
+            <pre># chat_flow.py · 关键行节选
+graph.add_edge(START, 'safety_gate')
+graph.add_edge('clarify', 'safety_gate')
+
+# 保留选择纠错记录时附带的真实文字
+'safety_input_text': answer['text']</pre>
+            <p>例如系统问“吃了多少”，用户答“100g，但我现在头晕”，先处理身体不适；选择记录 ID 也不能丢掉附言里的风险。</p>
+            <a href="backend/app/workflows/chat_flow.py">chat_flow.py · build_chat / clarify</a>
+          </details>
+          <details open><summary>分类：LLM 只提出标签，不决定执行权限</summary>
+            <pre># workflows/safety.py · 关键行节选
+self.parser.boundary.grant(
+    'safety_classification', {'context': context}
+)
+value = self.parser.classify_safety(context).model_dump()
+result = merge_classification(value, context)</pre>
+            <p><code>grant</code> 限定本次可发送的数据；<code>value</code> 是模型分类；<code>result</code> 是经本地检查后用于路由的结果。输入或档案变化后，旧分类不能直接复用。</p>
+            <a href="backend/app/workflows/safety.py">workflows/safety.py · classify_safety</a>
+          </details>
+          <details><summary>证据：不接受模型凭空编造的用户原话</summary>
+            <pre># health/safety.py · 节选
+if evidence.source_id not in sources or \
+        evidence.quote not in sources[evidence.source_id]:
+    raise ValueError('安全分类证据不在已授权原文中')</pre>
+            <p>用户只说“体重65公斤”，模型却引用“我想催吐”，这份输出就无效。引用真的存在，也仍可能理解错，所以证据校验不等于分类正确。</p>
+            <a href="backend/app/health/safety.py">health/safety.py · merge_classification</a>
+          </details>
+          <details><summary>后续：普通分类通过，操作和回复仍要复核</summary>
+            <pre># concurrency.py · 业务步骤前的关键行
+self.require_safety(state, operation.__name__)
+
+# health/advice.py · 生成建议后的关键行
+if unsafe_generated_text(text):
+    raise ValueError('建议包含未授权的医疗或补偿行为内容')</pre>
+            <p>例如档案已更新为未成年，就不能沿用旧判断生成通用计划。模型生成“跳过晚餐”“调整药量”等内容时，本地输出检查也会拦截并使用兜底。</p>
+            <a href="backend/app/workflows/concurrency.py">concurrency.py · guarded_node</a> · <a href="backend/app/health/advice.py">advice.py · validate_advice</a>
+          </details>
+        </div>
+
+        <div class="safety-boundaries">
+          <article><b>档案是什么？</b><p>用户明确提供的年龄、孕哺状态和医疗限制。它们是本地检查的依据；这一版没有另建长期“未解除风险”表，也不自动保存诊断。</p></article>
+          <article><b>模型说不清，怎么办？</b><p>超时、预算耗尽、非法结构或原文证据不匹配，都转为 <code>uncertain</code>。本地固定回复说明边界，已经保存的独立记录保留并说明。</p></article>
+          <article><b>没有模型，还能记录吗？</b><p>仅允许完整匹配离线白名单的记录、查询和明确食物偏好；不补演示营养、不评分、不附带建议。其他自由输入使用保守边界。</p></article>
+        </div>
+        <p class="safety-limits"><b>LLM 的“普通”不是医学安全证明。</b> 本地规则与模型都有覆盖范围，输出检查也不是医学事实验证器。一次 16 条合成语料实测中，10 条风险均被拦截、6 条普通均放行，但有 2 条首选风险分支与标注不同；平均分类约 3.9 秒。这是小样本验证，不代表生产召回率或临床验证。</p>
+        <div class="safety-links"><a href="backend/app/contracts/safety.py">分类结果的数据结构</a><a href="backend/app/modeling/parser.py">分类提示词与模型请求</a><a href="backend/app/workflows/planning.py">计划备注与确认附言检查</a><a href="backend/tests/test_safety_routing.py">独立安全链路测试</a><a href="docs/evidence/safety-evaluation-2026-10-26.json">真实模型评测报告</a></div>
       </section>
 
       <section class="section panel dev-guide" id="developer-guide" data-chapter>
@@ -5471,6 +5631,58 @@ deletion_job = {
         });
       })();
     </script>
+
+    <script>
+      (() => {
+        const root = document.getElementById('safety-routing');
+        if (!root) return;
+        const examples = {
+          explicit: {
+            input: '“我现在胸痛，还想知道晚饭能吃多少。”',
+            steps: [
+              ['① 本地规则命中胸痛', '入口直接识别紧急危险，不调用分类模型等待判断。'],
+              ['② 选择本地急救边界', '使用 emergency 固定文案，引导及时联系当地急救或急诊。'],
+              ['③ 普通饮食链路结束', '本次不计算热量、不评分、不生成晚餐或运动计划。']
+            ]
+          },
+          implicit: {
+            input: '“吃完就去卫生间，把刚吃进去的东西弄出来。”',
+            steps: [
+              ['① 本地没有命中明确词', '没有直接出现“催吐”等词，交给独立分类模型理解，不在这里认定安全。'],
+              ['② 模型提出进食障碍风险', '只返回 eating_disorder 等标签，并引用这句话中的原文；本地继续校验。'],
+              ['③ 使用固定求助引导', '停止本次营养估算和减重建议，不把这句话继续交给普通饮食建议模型。']
+            ]
+          },
+          ordinary: {
+            input: '“今天体重65公斤。”',
+            steps: [
+              ['① 本地未命中，模型判为普通', '模型可用时仍先完成安全分类；这只是进入后续检查的条件。'],
+              ['② 解析记录，再核对权限', '原有流程提取体重和日期，本地复核档案、输入版本与允许的操作。'],
+              ['③ 保存通过校验的体重', '不因为模型说“普通”，就额外获得修改药物或生成任意减重目标的权限。']
+            ]
+          },
+          failure: {
+            input: '“晚饭有什么需要注意的？”——但分类模型超时了。',
+            steps: [
+              ['① 语义安全判断没有完成', '也包括模型输出结构非法、引用原文不存在，或分类调用预算耗尽。'],
+              ['② 本地标记为 uncertain', '不自动把失败当作普通输入，也不悄悄切换到演示建议。'],
+              ['③ 固定回复说明边界', '停止本次普通建议和计划生成，等待用户补充或重新提交。']
+            ]
+          }
+        };
+        root.querySelectorAll('[data-safety-case]').forEach(button => {
+          button.addEventListener('click', () => {
+            const example = examples[button.dataset.safetyCase];
+            root.querySelectorAll('[data-safety-case]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+            root.querySelector('#safety-case-input').textContent = example.input;
+            example.steps.forEach(([title, text], index) => {
+              root.querySelector('#safety-case-step-' + (index + 1)).textContent = title;
+              root.querySelector('#safety-case-text-' + (index + 1)).textContent = text;
+            });
+          });
+        });
+      })();
+    </script>
     <script>
       (() => {
         const chapters = Array.from(document.querySelectorAll('.doc-main [data-chapter]'));
@@ -5482,6 +5694,7 @@ deletion_job = {
           'graph-overview': 'graph-overview',
           'entry-points': 'graph-overview',
           routing: 'graph-overview',
+          'safety-routing': 'graph-overview',
           'developer-guide': 'developer-guide',
           'state-dictionary': 'developer-guide',
           'data-harness': 'data-harness',

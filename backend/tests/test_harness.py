@@ -1,3 +1,4 @@
+from model_helpers import safety_transport
 """Privacy boundaries are checked against captured requests, not prompt wording."""
 import json
 from datetime import datetime
@@ -40,7 +41,7 @@ def install(monkeypatch, callback):
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
     monkeypatch.setattr('app.modeling.parser.httpx.Client',
-                        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
+                        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(handler))))
     return calls
 
 
@@ -448,7 +449,8 @@ def test_failed_retries_share_persistent_planning_budget(settings, monkeypatch):
         assert client.post('/api/chat', json=payload).status_code == 409
         assert len(calls) == 4
         rows = client.app.state.engine.repo.conn.execute('SELECT purpose,payload_bytes FROM model_calls').fetchall()
-        assert len(rows) == 4
+        assert len(rows) == 5
+        assert sum(row['purpose'] == 'safety_classification' for row in rows) == 1
 
 
 def test_gateway_rejects_unapproved_calls_and_changed_context(settings, monkeypatch):

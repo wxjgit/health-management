@@ -299,15 +299,16 @@ def test_api_preview_execution_and_erased_request(settings):
         assert client.delete('/api/facts/missing').status_code == 404
 
 
-def test_fact_deletion_removes_all_contexts_using_fact_but_keeps_independent_flow(engine):
+def test_fact_deletion_keeps_offline_boundary_and_independent_flow(engine):
     chat(engine, '我不喜欢燕麦')
     fact = engine.repo.facts()[0]
     advice = chat(engine, '下一餐怎么吃？', conversation='advice')
     pending = chat(engine, '今天记录体重', conversation='independent')
-    assert fact['id'] in advice['source_fact_ids']
+    assert advice['safety']['category'] == 'uncertain'
+    assert fact['id'] not in advice['source_fact_ids']
     erase(engine, 'fact', fact['id'])
     assert engine.repo.facts() == []
-    assert engine.repo.messages('advice') == []
+    assert engine.repo.messages('advice')
     assert engine.repo.workflow(pending['thread_id'])
     assert pending['thread_id'] in checkpoint_threads(engine)
     assert '燕麦' not in json.dumps(engine.repo.export(), ensure_ascii=False)

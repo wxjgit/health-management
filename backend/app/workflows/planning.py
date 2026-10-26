@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
 from ..health import analyze, plan_draft, review
+from ..health.safety import REPLIES
 from .state import State
 
 
@@ -38,6 +39,16 @@ class PlanningWorkflowMixin:
         })
         if not isinstance(answer, dict) or type(answer.get('approved')) is not bool:
             raise ValueError('需要明确接受或拒绝计划')
+        if answer['approved'] and answer.get('text'):
+            updated = {**state, 'safety_input_text': answer['text'],
+                       'original': state.get('input_text', '')}
+            checked = self.safety_gate(updated)
+            if self.route_safety_gate(checked) == 'classify_safety':
+                checked.update(self.classify_safety({**updated, **checked}))
+            if checked['safety']['category'] != 'general':
+                raise ValueError(REPLIES[checked['safety']['category']])
+            return {**checked, 'safety_input_text': answer['text'],
+                    'original': state.get('input_text', ''), 'approved': True}
         return {'approved': answer['approved']}
 
     def activate_plan(self, state):
@@ -55,10 +66,15 @@ class PlanningWorkflowMixin:
 
     def build_plan(self):
         graph = StateGraph(State)
+        self.add_safety_nodes(graph)
         graph.add_node('prepare', self.guarded_node(self.prepare_plan))
         graph.add_node('approve', self.guarded_node(self.approve_plan))
         graph.add_node('activate', self.guarded_node(self.activate_plan))
-        graph.add_edge(START, 'prepare')
+        graph.add_edge(START, 'safety_gate')
+        routes = {'authorized': 'prepare', 'classify_safety': 'classify_safety', 'safety_response': 'safety_response'}
+        graph.add_conditional_edges('safety_gate', self.route_safety_gate, routes)
+        graph.add_conditional_edges('classify_safety', self.route_safety_result, routes)
+        graph.add_edge('safety_response', END)
         graph.add_edge('prepare', 'approve')
         graph.add_edge('approve', 'activate')
         graph.add_edge('activate', END)

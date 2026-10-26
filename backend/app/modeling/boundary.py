@@ -94,6 +94,7 @@ class ModelBoundary:
     @staticmethod
     def _resource(purpose, data):
         keys = {
+            'safety_classification': ('context',),
             'processing_plan': ('text', 'interaction'),
             'correct_selected': ('text', 'record'),
             'patch_draft': ('text', 'draft', 'requested_fields', 'item_index'),
@@ -114,6 +115,7 @@ class ModelBoundary:
         # The account callback persists counts before dispatch, including failures.
         scope.account(call.purpose, len(call.payload.encode('utf-8')))
         categories = {
+            'safety_classification': ['本次输入与必要的用户前文', '年龄及营养适用状态（不含完整档案）'],
             'processing_plan': ['本次输入', '操作状态（不含历史正文）'],
             'correct_selected': ['本次修改要求', '已绑定的单条记录（必要字段）'],
             'patch_draft': ['本次补充', '当前草稿（必要字段）'],

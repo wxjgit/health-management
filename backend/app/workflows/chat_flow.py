@@ -54,6 +54,7 @@ class ChatFlowMixin:
             'clarify',
             guided_topics=state.get('guided_topics', []),
             medical=medical_question(state.get('original') or state['input_text']),
+            include_guidance=state.get('safety', {}).get('capability') != 'record_only',
         )
         plan['context'] = {
             'foods': list(dict.fromkeys(
@@ -103,6 +104,7 @@ class ChatFlowMixin:
             raise PolicyError('请选择本次提供的纠错候选记录。')
         if state.get('pending_event_index') is not None:
             return {
+                'safety_input_text': answer['text'],
                 'original': state.get('original') or state['input_text'],
                 'input_text': answer['text'],
                 'source_message_id': answer.get(
@@ -118,6 +120,7 @@ class ChatFlowMixin:
             if not answer.get('event_id'):
                 text += '，' + answer['text']
             return {
+                'safety_input_text': answer['text'],
                 'input_text': text,
                 'source_message_id': (
                     state.get('source_message_id')
@@ -131,6 +134,7 @@ class ChatFlowMixin:
                 'rounds': state.get('rounds', 0) + 1,
             }
         return {
+            'safety_input_text': answer['text'],
             'original': state.get('original') or state['input_text'],
             'input_text': answer['text'],
             'source_message_id': answer.get('source_message_id', state.get('source_message_id')),
@@ -173,6 +177,7 @@ class ChatFlowMixin:
     def fact(self, state):
         self.repo.save_fact(state['thread_id'], state['parsed']['fact_text'])
         return {
+            'safety_fingerprint': self.safety_context(state)[1],
             'process_trace': self.traced(
                 state,
                 '保存长期信息',
@@ -182,11 +187,13 @@ class ChatFlowMixin:
 
     def build_chat(self):
         graph = StateGraph(State)
+        self.add_safety_nodes(graph)
         node_names = [
             'parse_initial',
             'patch_pending',
             'normalize_extraction',
             'validate_drafts',
+            'authorize_operation',
             'prepare_nutrition',
             'save_ready',
             'prepare_clarification',
@@ -199,11 +206,22 @@ class ChatFlowMixin:
             graph.add_node(name, self.guarded_node(getattr(self, name)))
 
         parse_routes = {name: name for name in ['parse_initial', 'patch_pending']}
-        graph.add_conditional_edges(START, self.route_parse, parse_routes)
+        graph.add_edge(START, 'safety_gate')
+        safety_routes = {**parse_routes, 'safety_response': 'safety_response', 'classify_safety': 'classify_safety'}
+        def entry(state):
+            route = self.route_safety_gate(state)
+            return self.route_parse(state) if route == 'authorized' else route
+        def classified(state):
+            return self.route_parse(state) if self.route_safety_result(state) == 'authorized' else 'safety_response'
+        graph.add_conditional_edges('safety_gate', entry, safety_routes)
+        graph.add_conditional_edges('classify_safety', classified, safety_routes)
+        graph.add_edge('safety_response', END)
         graph.add_edge('parse_initial', 'normalize_extraction')
         graph.add_edge('patch_pending', 'normalize_extraction')
         graph.add_edge('normalize_extraction', 'validate_drafts')
-        graph.add_edge('validate_drafts', 'prepare_nutrition')
+        graph.add_edge('validate_drafts', 'authorize_operation')
+        graph.add_conditional_edges('authorize_operation', lambda state:
+                                    'prepare_nutrition' if state['safety']['category'] == 'general' else 'safety_response')
         graph.add_edge('prepare_nutrition', 'save_ready')
         graph.add_conditional_edges(
             'save_ready',
@@ -211,7 +229,7 @@ class ChatFlowMixin:
             {name: name for name in ['prepare_clarification', 'persist', 'fact', 'respond']},
         )
         graph.add_edge('prepare_clarification', 'clarify')
-        graph.add_conditional_edges('clarify', self.route_parse, parse_routes)
+        graph.add_edge('clarify', 'safety_gate')
         graph.add_edge('persist', 'respond')
         graph.add_edge('fact', 'respond')
         graph.add_edge('respond', END)

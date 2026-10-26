@@ -170,15 +170,22 @@ def test_unsupported_profiles_do_not_receive_automatic_targets(client, values):
     assert result['status'] == 'unavailable'
     assert result['targets'] is None
     assert result['reason']
-    assert propose(client).status_code == 409
+    response = propose(client)
+    if values.get('age', 30) < 18 or values.get('nutrition_context') in ('pregnant', 'breastfeeding', 'clinical'):
+        assert response.status_code == 200
+        assert response.json()['safety']['category'] != 'general'
+    else:
+        assert response.status_code == 409
 
 
-def test_known_medical_constraint_blocks_default_not_user_supplied_targets(client):
+def test_known_medical_constraint_blocks_default_and_manual_plan_generation(client):
     save_profile(client)
     client.app.state.engine.repo.save_fact('restriction', '医生要求限制蛋白质')
     assert client.get('/api/targets/default').json()['targets'] is None
     manual = {'kcal': 1800, 'protein_g': 70, 'carbs_g': 245, 'fat_g': 60, 'exercise_minutes': 0}
-    assert propose(client, targets=manual).status_code == 200
+    result = propose(client, targets=manual).json()
+    assert result['safety']['category'] == 'medical'
+    assert client.get('/api/plans').json() == []
 
 
 def test_floor_reduces_deficit_instead_of_forcing_low_energy(client):

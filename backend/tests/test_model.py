@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.common.config import Settings
 from app.main import create_app
-from model_helpers import planned_content
+from model_helpers import planned_content, safety_transport
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def fake_client(monkeypatch, handler):
             })}}]})
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(planned_content(data, content))}}]})
     def patched(*args, **kwargs):
-        return original(*args, **kwargs, transport=httpx.MockTransport(wire_handler))
+        return original(*args, **kwargs, transport=httpx.MockTransport(safety_transport(wire_handler)))
     monkeypatch.setattr('app.modeling.parser.httpx.Client', patched)
 
 
@@ -40,8 +40,8 @@ def test_model_schema_is_checked_and_secrets_are_not_exposed(model_settings, mon
         result = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '体重65公斤'})
         assert result.status_code == 200, result.text
         assert result.json()['duration_ms'] >= 0
-        assert [step['source'] for step in result.json()['process_trace']] == ['model', 'local', 'local', 'local']
-        assert result.json()['process_trace'][0]['title'] == '理解输入'
+        assert [step['source'] for step in result.json()['process_trace']] == ['local', 'model', 'model', 'local', 'local', 'local']
+        assert result.json()['process_trace'][2]['title'] == '理解输入'
         assert client.get('/api/events').json()[0]['data']['value'] == 65
         assert client.get('/api/health').json()['mode'] == 'model'
         assert client.get('/api/messages').json()[-1]['process_trace'] == result.json()['process_trace']

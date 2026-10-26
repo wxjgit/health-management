@@ -1226,12 +1226,15 @@ export default function App() {
                 cancelling={cancellingPlans}
                 refreshStatus={() => refreshPlanStatus().catch((e) => setError(e.message))}
                 generate={(body) =>
-                  act(() =>
-                    api("/plans/propose", "POST", {
+                  act(async () => {
+                    const result = await api<Workflow>("/plans/propose", "POST", {
                       request_id: requestId(),
                       ...body,
-                    }),
-                  )
+                    });
+                    if (result.safety && result.safety.category !== "general") {
+                      setError(result.reply);
+                    }
+                  })
                 }
                 decide={decidePlan}
                 retry={retryWorkflow}

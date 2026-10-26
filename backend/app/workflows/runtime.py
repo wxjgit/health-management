@@ -56,6 +56,8 @@ class WorkflowRuntimeMixin:
                 **pending[0].value,
             }
             result['reply'] = pending[0].value['question']
+        if state.get('safety'):
+            result['safety'] = state['safety']
         return result
 
     def run(self, kind, request_id, request_data, initial, conversation='main'):
@@ -194,7 +196,7 @@ class WorkflowRuntimeMixin:
                     if pending['kind'] == 'plan_confirmation':
                         if type(payload.get('approved')) is not bool:
                             raise ValueError('需要接受或拒绝计划')
-                        answer = {'approved': payload['approved']}
+                        answer = {'approved': payload['approved'], 'text': payload.get('text') or ''}
                         display = '接受计划' if payload['approved'] else '拒绝计划'
                     else:
                         if not payload.get('text'):

@@ -1,3 +1,4 @@
+from model_helpers import safety_transport
 """Exercise overlapping real graphs with model I/O controlled by events."""
 
 import json
@@ -72,7 +73,7 @@ def model(monkeypatch):
     controlled = ControlledModel()
     original = httpx.Client
     monkeypatch.setattr('app.modeling.parser.httpx.Client', lambda *args, **kwargs: original(
-        *args, **kwargs, transport=httpx.MockTransport(controlled.handle)
+        *args, **kwargs, transport=httpx.MockTransport(safety_transport(controlled.handle))
     ))
     return controlled
 

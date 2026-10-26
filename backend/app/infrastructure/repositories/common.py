@@ -38,6 +38,13 @@ class RepositoryBase:
             ).fetchone()
             if count >= 32 or size + payload_bytes > 400000:
                 raise ValueError('本次流程已达到模型调用预算，请缩小任务或重新开始。')
+            if purpose == 'safety_classification':
+                checks = self.conn.execute(
+                    "SELECT COUNT(*) FROM model_calls WHERE thread_id=? AND purpose='safety_classification'",
+                    (thread_id,),
+                ).fetchone()[0]
+                if checks >= 8:
+                    raise ValueError('本次流程已达到安全分类调用预算，请重新提交。')
             if purpose == 'processing_plan':
                 plans = self.conn.execute(
                     "SELECT COUNT(*) FROM model_calls WHERE thread_id=? AND purpose='processing_plan'",

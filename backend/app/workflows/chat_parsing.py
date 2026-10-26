@@ -234,7 +234,7 @@ class ChatParsingMixin:
             'abandoned_indexes': list(dict.fromkeys(context['abandoned_indexes'])),
             'skip_optional': context['skip_optional'],
             'parse_context': {},
-            'process_trace': [{
+            'process_trace': [*state.get('process_trace', []), {
                 'title': '理解输入',
                 'detail': f'已检查处理计划，当前执行“{intent_labels[extraction["intent"]]}”；历史记录按固定视图取数。',
                 'source': context['source'],
@@ -292,7 +292,7 @@ class ChatParsingMixin:
 
             prepared[str(index)] = prepare_nutrition(
                 validated,
-                self.parser.mode,
+                'local' if state.get('safety', {}).get('capability') == 'record_only' else self.parser.mode,
                 estimate,
                 previous=previous,
                 user_text=state['input_text'],

@@ -13,9 +13,11 @@ from .concurrency import GuardedSqliteSaver, KeyedLocks, WorkflowConcurrencyMixi
 from .planning import PlanningWorkflowMixin
 from .policy import PlanHarness
 from .runtime import WorkflowRuntimeMixin
+from .safety import SafetyWorkflowMixin
 
 
 class Engine(
+    SafetyWorkflowMixin,
     ChatParsingMixin,
     ChatFlowMixin,
     ChatResponseMixin,

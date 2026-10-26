@@ -8,6 +8,20 @@ from .common import dump
 
 
 class PlanningRepositoryMixin:
+    def safety_restrictions(self):
+        """Only actual risk restrictions become safety dependencies.
+
+        Ordinary food preferences do not influence safety clearance. Rechecks
+        before writes/output catch restrictions added during model I/O.
+        """
+        from ...health.safety import text_risk
+        records = [dict(row) for row in self.conn.execute(
+            "SELECT * FROM facts WHERE status='confirmed' ORDER BY created_at")]
+        restrictions = [record for record in records if text_risk(record['content']) != 'general']
+        for record in restrictions:
+            self.observe('fact', record['id'])
+        return restrictions
+
     def facts(self):
         records = [
             dict(row)

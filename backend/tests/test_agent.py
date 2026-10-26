@@ -58,7 +58,7 @@ def test_record_correction_and_idempotency(client):
     one = client.post('/api/chat', json=request)
     assert one.status_code == 200, one.text
     first = client.get('/api/dashboard').json()['totals']['kcal']
-    assert first > 0
+    assert first is None  # Offline records do not receive unverified demo estimates.
     assert client.post('/api/chat', json=request).json() == one.json()
     assert len(client.get('/api/events').json()) == 1
     corrected = chat(client, '不是两碗，是一碗')
@@ -67,7 +67,7 @@ def test_record_correction_and_idempotency(client):
     assert records[0]['version'] == 2
     assert records[0]['data']['items'][0]['quantity'] == 1
     assert len(records) == 1
-    assert client.get('/api/dashboard').json()['totals']['kcal'] < first
+    assert client.get('/api/dashboard').json()['totals']['kcal'] is None
     collision = client.post('/api/chat', json={**request, 'text': '今天体重 65 公斤'})
     assert collision.status_code == 409
 
@@ -102,10 +102,11 @@ def test_dates_and_unknown_nutrition(client):
     yesterday = (now().date() - timedelta(days=1)).isoformat()
     assert len(records) == 3
     assert next(r for r in records if r['kind'] == 'sleep')['day'] == yesterday
-    chat(client, '午餐吃了神秘炖菜')
+    result = chat(client, '午餐吃了神秘炖菜')
+    assert result['safety']['category'] == 'uncertain'  # Not in the offline full-string grammar.
     d = client.get('/api/dashboard').json()
     assert d['totals']['kcal'] is None
-    assert d['totals']['unknown_items'] == 1
+    assert d['totals']['unknown_items'] == 0
     assert not d['totals']['complete_nutrition']
 
 

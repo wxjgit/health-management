@@ -1,3 +1,4 @@
+from model_helpers import safety_transport
 import json
 from datetime import datetime
 from uuid import uuid4
@@ -193,7 +194,7 @@ def test_chat_persists_locally_grounded_value_and_provenance(tmp_path, monkeypat
 
     monkeypatch.setattr(
         'app.modeling.parser.httpx.Client',
-        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)),
+        lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(handler))),
     )
 
     with TestClient(create_app(settings)) as client:

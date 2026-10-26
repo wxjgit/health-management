@@ -2444,6 +2444,76 @@
         grid-template-columns: 240px minmax(0, 1280px);
       }
       @media(max-width: 760px) { #concurrency-recovery { padding: 18px; } .recovery-grid { grid-template-columns: 1fr; } .recovery-table th, .recovery-table td { padding: 9px; } }
+      /* Standalone deletion case study. Keep all styles scoped to this chapter. */
+      #privacy-deletion { padding: 30px; }
+      #privacy-deletion h2 { font-size: 27px; line-height: 1.45; color: #152b40; }
+      #privacy-deletion h3 { margin: 30px 0 12px; font-size: 21px; line-height: 1.5; color: #172c40; }
+      #privacy-deletion h4 { margin: 0 0 10px; font-size: 17px; }
+      #privacy-deletion p { color: #334155; font-size: 16px; line-height: 1.9; }
+      #privacy-deletion p + p { margin-top: 10px; }
+      #privacy-deletion code { overflow-wrap: anywhere; }
+      #privacy-deletion .privacy-kicker { color: #245fa2; font-size: 12px; font-weight: 750; letter-spacing: 1.3px; }
+      #privacy-deletion .privacy-meta { margin-top: 10px; color: #526174; font-size: 13px; }
+      .privacy-scene { margin: 22px 0; padding: 22px; border: 1px solid #bcd3e8; border-radius: 12px; background: #f0f6fc; }
+      .privacy-scene blockquote { margin: 12px 0; padding: 12px 16px; border-left: 4px solid #3278b8; background: #fff; color: #183c5c; font-size: 19px; font-weight: 650; }
+      .privacy-switch { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 14px; }
+      .privacy-switch button { border: 1px solid #a8c2d9; border-radius: 8px; padding: 10px 16px; color: #234a6a; background: #fff; font-size: 15px; font-weight: 650; }
+      .privacy-switch button[aria-pressed="true"] { background: #215d90; border-color: #215d90; color: #fff; }
+      .privacy-demo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .privacy-result { min-width: 0; padding: 16px; border: 1px solid #cbd5df; border-radius: 10px; background: #fff; }
+      .privacy-result strong { display: block; color: #1e3346; font-size: 16px; }
+      .privacy-result .privacy-status { display: inline-block; margin: 8px 0; padding: 2px 8px; border-radius: 5px; font-size: 13px; font-weight: 700; }
+      #privacy-deletion .privacy-result p { margin: 0; font-size: 14px; line-height: 1.75; }
+      .privacy-result[data-effect="delete"] { border-color: #e0b7b5; }
+      .privacy-result[data-effect="delete"] .privacy-status { color: #8b2e2b; background: #fcebea; }
+      .privacy-result[data-effect="keep"] { border-color: #a7cbb9; }
+      .privacy-result[data-effect="keep"] .privacy-status { color: #245c42; background: #e8f5ec; }
+      .privacy-result[data-effect="warn"] { border-color: #dfc199; }
+      .privacy-result[data-effect="warn"] .privacy-status { color: #78501c; background: #fff0d9; }
+      #privacy-deletion .privacy-demo-note { margin-top: 12px; font-size: 13px; color: #506175; }
+      .privacy-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 14px 0; }
+      .privacy-code-card { min-width: 0; padding: 18px; border: 1px solid #c7d6e3; border-radius: 12px; background: #f6f9fc; }
+      .privacy-code-card.privacy-before { border-color: #e3d0b8; background: #fffaf3; }
+      .privacy-code-tag { display: inline-block; margin-bottom: 10px; padding: 3px 9px; border-radius: 5px; font-size: 12px; font-weight: 750; color: #215d90; background: #e1edf8; }
+      .privacy-before .privacy-code-tag { color: #7b4c20; background: #f9e8d2; }
+      .privacy-code { display: block; max-width: 100%; margin: 10px 0 12px; padding: 16px; border: 1px solid #203c55; border-radius: 9px; background: #122b40; color: #edf5fc; font: 13px/1.85 Consolas, "Cascadia Code", monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+      #privacy-deletion .privacy-code-card p { font-size: 15px; }
+      #privacy-deletion .privacy-source { margin-top: 10px; color: #506175; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+      .privacy-source a { color: #1d5c97; text-decoration: underline; text-underline-offset: 3px; }
+      .privacy-insight { margin: 16px 0; padding: 15px 18px; border-left: 4px solid #2f7a61; border-radius: 0 8px 8px 0; background: #eef7f1; }
+      .privacy-warning { margin: 16px 0; padding: 16px 18px; border-left: 4px solid #b47b2d; border-radius: 0 8px 8px 0; background: #fff6e7; }
+      .privacy-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 9px; margin: 16px 0; }
+      .privacy-flow > div { flex: 1 1 160px; min-width: 0; padding: 15px; border: 1px solid #bfd1e0; border-radius: 9px; background: #f1f6fa; }
+      .privacy-flow b { display: block; color: #1b3d59; font-size: 15px; }
+      .privacy-flow small { display: block; margin-top: 6px; color: #45586b; font-size: 13px; line-height: 1.75; }
+      .privacy-flow > span { align-self: center; color: #497190; font-size: 23px; }
+      .privacy-table-wrap { max-width: 100%; overflow-x: auto; margin: 16px 0; }
+      .privacy-table { width: 100%; min-width: 570px; border-collapse: collapse; font-size: 14px; line-height: 1.85; }
+      .privacy-table th, .privacy-table td { padding: 13px; border-bottom: 1px solid #d9e3eb; text-align: left; vertical-align: top; }
+      .privacy-table th { background: #eaf2f8; color: #203d57; }
+      .privacy-table td { color: #334155; }
+      .privacy-details { margin: 16px 0; padding: 16px 18px; border: 1px solid #c7d6e3; border-radius: 10px; background: #fafcfe; }
+      .privacy-details summary { cursor: pointer; color: #214a70; font-weight: 650; font-size: 15px; }
+      .privacy-details[open] summary { margin-bottom: 12px; }
+      .privacy-links { display: flex; flex-wrap: wrap; gap: 10px 18px; padding-top: 14px; border-top: 1px solid #d9e3eb; }
+      .privacy-links a { color: #235e94; font-size: 13px; text-decoration: underline; }
+      @media (max-width: 920px) { .privacy-demo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 760px) {
+        #privacy-deletion { padding: 18px; }
+        #privacy-deletion h2 { font-size: 24px; }
+        #privacy-deletion h3 { font-size: 20px; }
+        .privacy-compare, .privacy-demo-grid { grid-template-columns: 1fr; }
+        .privacy-code-card { padding: 14px; }
+        .privacy-code { padding: 12px; font-size: 12px; }
+        .privacy-flow { flex-direction: column; }
+        .privacy-flow > div { flex-basis: auto; }
+        .privacy-flow > span { transform: rotate(90deg); }
+      }
+      @media print {
+        .privacy-switch { display: none; }
+        .privacy-code { color: #172c40; background: #f3f5f7; border-color: #aebfcd; }
+        .privacy-code-card, .privacy-result { break-inside: avoid; }
+      }
     </style>
   </head>
   <body>
@@ -2455,8 +2525,9 @@
         <a href="#data-harness">数据边界</a>
         <a href="#memory-system">运行机制</a>
         <a href="#concurrency-recovery">并发可靠性</a>
+        <a href="#privacy-deletion">精准删除</a>
       </nav>
-      <span class="site-meta">离线自包含 · 2026-10-22</span>
+      <span class="site-meta">离线自包含 · 更新 2026-10-26</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
@@ -2482,6 +2553,18 @@
         </div>
         <div class="nav-group"><span class="nav-label">05 · 并发可靠性</span>
           <a href="#concurrency-recovery">锁、取消与失败恢复</a>
+        </div>
+        <div class="nav-group"><span class="nav-label">06 · 隐私清理</span>
+          <a href="#privacy-deletion">精准删除：成因与修复</a>
+          <a class="nav-subsection" href="#privacy-root-cause">① 前因：为什么原来会全清</a>
+          <a class="nav-subsection" href="#privacy-read-tracking">② 补来源：读数据时记账</a>
+          <a class="nav-subsection" href="#privacy-copy-minimization">③ 管副本：跑步里藏着体重</a>
+          <a class="nav-subsection" href="#privacy-manifest">④ 算范围：依赖与删除预览</a>
+          <a class="nav-subsection" href="#privacy-checkpoint-basics">基础：checkpoint 是什么</a>
+          <a class="nav-subsection" href="#privacy-concurrency">⑤ 防写回：相关流程代次失效</a>
+          <a class="nav-subsection" href="#privacy-recovery">⑥ 防删一半：删除工单与恢复</a>
+          <a class="nav-subsection" href="#privacy-request-replay">⑦ 防重建：旧请求作废登记</a>
+          <a class="nav-subsection" href="#privacy-validation">验证：怎么证明修好了</a>
         </div>
       </aside>
     <main class="doc-main">
@@ -3245,7 +3328,7 @@ if not _equal(replayed, _actual(event, evidence)):
             </div>
             <div class="memory-guard">
               <b>删除防残留</b>
-              <span>删除 event 或 fact、以及完成归档时，会清空可能含副本的对话 / workflow / receipt / 派生上下文，并 purge 全部 checkpoints。</span>
+              <span>删除 event / fact 或归档时，由统一清理服务计算依赖和副本范围，清理相关流程及其 checkpoint，保留可证明独立的数据。来源未知时先明确扩大预览范围。<a href="#privacy-deletion">查看 bug 成因、前后代码与恢复机制 →</a></span>
             </div>
           </div>
         </div>
@@ -3658,7 +3741,7 @@ with self.lock, self.conn:
           <div class="recovery-card"><b>同一 health.db 事务</b><p><code>finish_resume()</code> 将 workflow 结果、成功 receipt、attempt 完成标记和助手回复一起提交。<code>cancel_workflow()</code> 将待确认计划拒绝与 workflow 取消一起提交。内部使用不自行提交的消息插入函数，避免嵌套方法提前提交。workflow、receipt、messages 和 plans 的查询也获取 Repository 锁，防止同一 SQLite 连接读到尚未提交的中间值。</p></div>
           <div class="recovery-card"><b>不宣称跨数据库整体回滚</b><p>Graph checkpoint 在独立的 checkpoints.db；健康记录也可能已由前序节点提交。本方案用答案绑定、进度恢复、业务写入去重及删除 / 取消检查协调它们，不把 HTTP 报错解释为业务全部撤销。</p></div>
         </div>
-        <p class="recovery-notice"><b>范围：</b>当前原型采用单进程协调，工作流锁不是跨进程分布式锁。等待模型仍释放全局锁，调度器也不再外层持锁调用 Graph。重试可能再次调用失败步骤中的模型，计入现有持久化预算；程序不会无限自动重试。新增 resume_attempts 随删除、月度归档和流程过期清理一起清除，数据库启动迁移到版本 4，保留既有健康记录。</p>
+        <p class="recovery-notice"><b>范围：</b>当前原型采用单进程协调，工作流锁不是跨进程分布式锁。等待模型仍释放全局锁，调度器也不再外层持锁调用 Graph。重试可能再次调用失败步骤中的模型，计入现有持久化预算；程序不会无限自动重试。本节恢复机制最初在数据库 v4 引入；当前已增加 v5 血缘与删除作业，resume_attempts 按实际影响范围清理，迁移本身不删除业务记录。<a href="#privacy-deletion">精准删除的最新行为见下一节。</a></p>
         <p><b>验证方法：</b>使用事件暂停模型请求或 Graph 完成后的提交窗口，确定性地插入数据修改 / 取消；还用 SQLite 触发器模拟事务中途失败。覆盖原答案与不同答案、重启前后、计划激活前后、清理、旧数据库迁移以及网页上的恢复按钮。测试均使用临时数据库和模拟模型。</p>
         <div class="recovery-sources">
           <a href="backend/app/workflows/runtime.py">runtime.py · resume / cancel</a>
@@ -3668,6 +3751,369 @@ with self.lock, self.conn:
           <a href="frontend/src/App.tsx">App.tsx · 原请求重试与冲突刷新</a>
           <a href="backend/tests/test_resume_recovery.py">后端恢复与取消回归测试</a>
           <a href="frontend/src/App.test.tsx">前端恢复交互测试</a>
+        </div>
+      </section>
+      <section class="section panel" id="privacy-deletion" data-chapter aria-labelledby="privacy-title">
+        <div class="section-head"><div>
+          <div class="privacy-kicker">BUG CASE STUDY / 从全局清理到按来源删除</div>
+          <h2 id="privacy-title">一条记录，为什么会清空整个聊天？</h2>
+          <p>问题不只在删除 SQL：系统曾经不知道谁使用、复制过这条记录，所以把可能藏副本的上下文全部清空。修复要补齐来源关系，同时处理误删、残留和删除后的重新写入。</p>
+          <p class="privacy-meta">代码对照：修改前取自 Git 提交 <code>d4491ab</code>；修改后对应当前工作区与数据库 v5 · 2026-10-26。下文代码为关键节选；“简化”块只展示控制流。所有数字均为演示，不读取个人数据库。</p>
+        </div></div>
+
+        <div class="privacy-scene" id="privacy-scenario">
+          <h3 style="margin-top:0">先固定一个例子：删体重，跑步和别的流程该怎么办？</h3>
+          <blockquote>“今天体重65公斤，轻松跑步20分钟。”</blockquote>
+          <p>同一条消息 M1 产生 <b>E1：体重65公斤</b> 和 <b>E2：跑步20分钟</b>。另有 <b>W2：独立待补充流程</b>，它没有读取 E1。现在用户只删除 E1。以下演示假设这些对象的来源已完整登记，E2 的字段能够独立验证。</p>
+          <div class="privacy-switch" role="group" aria-label="切换删除体重的修复前后结果">
+            <button type="button" data-privacy-mode="before" aria-pressed="false">看修改前：全局清理</button>
+            <button type="button" data-privacy-mode="after" aria-pressed="true">看修改后：按依赖清理</button>
+          </div>
+          <div class="privacy-demo-grid" id="privacy-demo-results" aria-live="polite" aria-atomic="true">
+            <article class="privacy-result" data-privacy-object="weight" data-effect="delete"><strong>E1 · 体重事件</strong><span class="privacy-status">删除目标</span><p>删除这条体重及其全部修订，关闭相关恢复入口。</p></article>
+            <article class="privacy-result" data-privacy-object="exercise" data-effect="keep"><strong>E2 · 跑步事件</strong><span class="privacy-status">保留独立内容</span><p>保留20分钟等可验证字段，清理共享原文，并检查全部旧修订。</p></article>
+            <article class="privacy-result" data-privacy-object="messages" data-effect="keep"><strong>聊天与结果副本</strong><span class="privacy-status">只处理相关副本</span><p>M1 包含体重，需要清理；其他能证明独立的消息保留。</p></article>
+            <article class="privacy-result" data-privacy-object="pending" data-effect="keep"><strong>W2 · 独立待补充流程</strong><span class="privacy-status">继续使用</span><p>不在依赖清单中，原消息、等待状态和 checkpoint 保留。</p></article>
+            <article class="privacy-result" data-privacy-object="late" data-effect="keep"><strong>等待中的模型任务</strong><span class="privacy-status">相关任务禁止写回</span><p>相关流程代次失效；独立任务通过自身来源检查后仍可提交。</p></article>
+            <article class="privacy-result" data-privacy-object="replay" data-effect="keep"><strong>旧请求再次重试</strong><span class="privacy-status">拒绝旧请求重放</span><p>保留无正文的请求删除标记，返回 request_erased，不重建 E1。</p></article>
+          </div>
+          <p class="privacy-demo-note" id="privacy-demo-caption">当前为修改后示意。按钮只切换说明，不调用接口、不执行删除。新记录已最小化证据来源；删除时仍会处理原始聊天、raw_text、旧修订等其他副本。</p>
+        </div>
+
+        <h3 id="privacy-root-cause" data-chapter>① 前因：为什么当初选择“全清”？</h3>
+        <p>体重不只存在于 <code>events</code>。助手可能回复“已记录65公斤”，workflow.result、receipt 和 checkpoint 也可能保存这句话。只删事件行，其他位置仍可能展示或恢复它。原实现因此选择“所有可能藏副本的上下文一起清理”。</p>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before">
+            <span class="privacy-code-tag">修改前 · 删除入口</span><h4>目标删得精准，随后扩大为全表清理</h4>
+            <pre class="privacy-code"># repositories/events.py · 旧版本节选
+self.conn.execute(
+    'DELETE FROM events WHERE id=?', (event_id,)
+)
+self.erase_context()
+
+# maintenance.py · 旧版本节选
+for table in ['messages', 'workflows', 'receipts',
+              'reviews', 'notifications', 'insights', ...]:
+    self.conn.execute(f'DELETE FROM {table}')</pre>
+            <p><code>event_id</code> 没有传入 <code>erase_context()</code>。后者也没有依赖查询，SQL 没有 WHERE，只能删除整张表里的上下文。</p>
+          </article>
+          <article class="privacy-code-card">
+            <span class="privacy-code-tag">修改后 · 统一删除服务</span><h4>先得到清单，再按具体 thread 清理</h4>
+            <pre class="privacy-code"># privacy/deletion.py · 节选
+manifest = self._plan(kind, object_id)
+
+for thread in manifest['threads']:
+    for table in ('messages', 'receipts',
+                  'resume_attempts', 'model_calls'):
+        repo.conn.execute(
+            f'DELETE FROM {table} WHERE thread_id=?',
+            (thread,),
+        )</pre>
+            <p><code>manifest</code> 是本次清理清单，不是全部数据。W2 能证明独立，就不会进入 threads；E2 是独立保存的事件，也不因创建它的聊天流程被清理而自动删除。</p>
+          </article>
+        </div>
+        <div class="privacy-warning"><p><b>后果有两类：</b>无关聊天、通知、复盘和等待流程被误伤；同时，保留下来的其他事件仍可能保存整句来源消息，导致“删了很多，却没有清干净”。旧 fact 接口还忽略目标是否存在，无条件继续全清；现在未知目标返回404且没有清理副作用。</p></div>
+        <p class="privacy-source">当前入口：<a href="backend/app/workflows/runtime.py">runtime.py · delete_event / delete_fact</a> → <a href="backend/app/privacy/deletion.py">PrivacyDeletionService</a>。旧实现只作为本节对照，正式网页已切换到统一删除服务。</p>
+
+        <h3 id="privacy-read-tracking" data-chapter>② 补来源：从“读完就返回”到“读数据时同步记账”</h3>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before">
+            <span class="privacy-code-tag">修改前 · 等价简化</span><h4>查询返回了什么，没有完整登记使用者</h4>
+            <pre class="privacy-code">def events(...):
+    records = [...]  # 从 events 查询记录
+    return records
+
+# plan_draft 的原有逻辑
+recent = repo.events(limit=30)
+# 页面只展示其中12条引用
+evidence_refs = [evidence(e) for e in recent[:12]]</pre>
+            <p>展示用 <code>evidence_refs</code> 可以裁剪，不能据此断定其他18条没有参与计算。来源清单还需要覆盖 facts、profile、preferences、完整日标记等实际输入。</p>
+          </article>
+          <article class="privacy-code-card">
+            <span class="privacy-code-tag">修改后 · events.py 节选</span><h4>登记查询范围、事件 ID 和版本</h4>
+            <pre class="privacy-code">self.observe_scope(
+    'events', start=start, end=end,
+    event_kind=kind, search=search, limit=limit,
+)
+for record in records:
+    self.observe(
+        'event', record['id'], record['version']
+    )
+return records</pre>
+            <p><code>observe</code> 记“用了E1的第1版”；<code>observe_scope</code> 记“查过哪个范围”。即使结果为空，后来新增符合条件的记录，也可能改变结果。</p>
+          </article>
+        </div>
+        <p>每个 Graph 节点进入 <code>capture(repo, workflow_node)</code> 收集环境。仓储读取在这个环境里登记；生成计划、规律、复盘和通知时，业务对象与依赖边在同一业务库事务保存。来源由本地代码跟踪，不交给模型猜测。</p>
+        <div class="privacy-flow" aria-label="实际来源登记关系示意">
+          <div><b>来源节点：E1 @ v1</b><small>节点保存类型、ID、版本；不是再复制一份体重原文。</small></div><span aria-hidden="true">→</span>
+          <div><b>使用者：体重分析 workflow</b><small>provenance_dependencies 记录来源 → 使用者。</small></div><span aria-hidden="true">→</span>
+          <div><b>消息、复盘等派生结果</b><small>依赖继续传递。receipt 和 checkpoint 还按所属 thread 统一清理。</small></div>
+        </div>
+        <p class="privacy-source">来源：<a href="backend/app/privacy/provenance.py">capture / ReadSet / tracked</a> · <a href="backend/app/infrastructure/repositories/events.py">events / event</a> · <a href="backend/app/infrastructure/repositories/provenance.py">observe / observe_scope / persist_provenance</a> · <a href="backend/app/health/planning.py">plan_draft</a>。</p>
+
+        <h3 id="privacy-copy-minimization" data-chapter>③ 管副本：跑步记录为什么也可能藏着体重？</h3>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before">
+            <span class="privacy-code-tag">修改前 · binding.py 节选</span><h4>每条事件都可能保存整条来源消息</h4>
+            <pre class="privacy-code">source = _make_source(
+    source_text, source_message_id
+)
+data['evidence_sources'] = [
+    source.model_dump(mode='json')
+]
+
+# 两条事件的来源快照都可能包含：
+# 今天体重65公斤，轻松跑步20分钟</pre>
+            <p>删除 E1 不会自动改写 E2。于是 E2 事件还在，它的来源快照里也仍可能有“体重65公斤”。这不是聊天清空能够解决的。</p>
+          </article>
+          <article class="privacy-code-card">
+            <span class="privacy-code-tag">修改后 · 最小证据片段</span><h4>保留能证明当前字段的片段，再重新验证</h4>
+            <pre class="privacy-code"># events.py · 保存前
+draft = minimize_event(draft, sources_only=True)
+
+# fragments.py · 关键处理
+quotes = list(dict.fromkeys(
+    e['quote'] for e in evidence if e.get('quote')
+))
+text = '\n'.join(quotes) or 'local-default'
+# 重算哈希、调整起止位置与来源ID后：
+assert_grounded(result)</pre>
+            <p>E2 的证据保留“跑步”“轻松”“20分钟”等所需片段。<code>sources_only=True</code> 先处理来源快照；聊天、raw_text、反馈和旧修订作为其他副本继续登记和检查。</p>
+          </article>
+        </div>
+        <div class="privacy-insight"><p><b>两种关系分开管理：</b>“E1参与生成了哪个结果”属于计算依赖；“哪条消息、哪个版本保存过原文”属于副本定位。<code>provenance_occurrences</code> 记录原消息 ID、持有对象和字段范围；截取片段、纠错和再次最小化后仍传递来源定位，不丢掉下一次删除的线索。</p></div>
+        <p>真正删除时，对 E2 的全部 <code>revisions</code> 做同样检查。只有能独立验证的字段才能保留；若 E2 的某个字段本身引用了要删除的体重片段，就不能假装它独立，会把 E2 列入扩大的预览。程序不会靠普通字符串替换猜测新的证据。</p>
+        <p class="privacy-source">来源：<a href="backend/app/privacy/fragments.py">minimize_event</a> · <a href="backend/app/infrastructure/repositories/provenance.py">register_event_provenance / origin_locators</a> · <a href="backend/app/privacy/deletion.py">_forbidden_spans / _verify_independent / _minimize</a>。</p>
+
+        <h3 id="privacy-manifest" data-chapter>④ 算范围：先找直接与间接依赖，再给用户预览</h3>
+        <p>删除服务从 E1 的所有版本开始，沿依赖边继续查找。E1影响复盘，复盘又被通知引用，就要把通知也纳入。代码中的 <code>dependency_closure()</code> 可以理解为“从目标出发，把关联链条走完”。</p>
+        <details class="privacy-details"><summary>展开看代码：如何沿关系查找，同时避免重复遍历</summary>
+          <pre class="privacy-code"># repositories/provenance.py · 节选
+found, frontier = set(roots), set(roots)
+while frontier:
+    following = set()
+    for node in frontier:
+        following.update(row[0] for row in self.conn.execute(
+            'SELECT target_node_id FROM provenance_dependencies '
+            'WHERE source_node_id=?', (node,),
+        ))
+    frontier = following - found
+    found.update(frontier)
+return found</pre>
+          <p><code>frontier</code> 是这一轮待查的节点；<code>found</code> 是已经找到的节点。减去 found 后再继续，因此同一个节点不会无限重复处理。</p>
+        </details>
+        <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>清单动作</th><th>落到代码里做什么</th><th>这个例子中的含义</th></tr></thead><tbody>
+          <tr><td><code>delete</code></td><td>按对象 ID 或 thread_id 删除相关业务内容及恢复副本。</td><td>E1、含体重的 M1、相关回复与流程需要清理。</td></tr>
+          <tr><td><code>minimize</code></td><td>重新绑定可验证片段，清理共享原文与全部旧修订。</td><td>E2 保留跑步事实；被清理的聊天流程不会拥有并级联删除独立事件。</td></tr>
+          <tr><td><code>keep_targets</code></td><td>清理受影响的计划安排，保留来源可证明独立的数值目标。</td><td>用户独立手动填写的目标可保留；“用户确认过”本身不等于来源独立。</td></tr>
+          <tr><td>不在清单中</td><td>不触碰对象、回执或 checkpoint。</td><td>来源完整且没有读取 E1 的 W2 可以继续补充。</td></tr>
+        </tbody></table></div>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before"><span class="privacy-code-tag">修改前 · 页面行为简化</span><h4>固定提示，无法说清实际范围</h4><pre class="privacy-code">点击删除
+  → confirm("相关上下文也会清空")
+  → DELETE /events/E1
+  → 全局清理</pre><p>提示中的“相关”容易让用户以为只会处理 E1 的关联内容，实际却清空所有聊天和流程。</p></article>
+          <article class="privacy-code-card"><span class="privacy-code-tag">修改后 · 前后端协作</span><h4>后端给出实际清单，确认后再核对一次</h4><pre class="privacy-code">POST /api/deletions/preview
+  → 展示删除、最小化和保留目标的数量
+POST /api/deletions
+  → 携带 preview_id 和 request_id
+
+if preview['scope_token'] != manifest['scope_token']:
+    raise DeletionError('scope_changed', ...)</pre><p>预览后若新增引用 E1 的副本、扩大了影响范围，就返回新预览；不会默默执行比用户刚看到更大的范围。</p></article>
+        </div>
+        <p class="privacy-source">来源：<a href="backend/app/api/deletions.py">预览 / 执行 / 状态 / 重试 API</a> · <a href="backend/app/privacy/deletion.py">_plan / preview / delete / _erase_business</a> · <a href="frontend/src/App.tsx">previewDeletion / executeDeletion</a>。</p>
+
+        <div class="privacy-scene" id="privacy-checkpoint-basics" data-chapter>
+          <h4>先补基础：checkpoint 是什么，为什么删除记录还要管它？</h4>
+          <p>这里有三样不同的东西：<b>业务数据、流程存档、删除任务记录</b>。checkpoint 就是“流程存档”，类似游戏存档：程序中断后，可以知道之前做到哪里、接下来做什么。</p>
+          <blockquote>今天体重65公斤，请帮我分析一下。</blockquote>
+          <pre class="privacy-code">① 保存体重记录 E1
+        ↓
+② 读取最近的体重变化
+        ↓
+③ 请求模型生成分析
+        ↓
+④ 保存分析结果
+        ↓
+⑤ 给用户发送通知</pre>
+          <p>这整个任务叫一个 <b>workflow（流程）</b>，这里编号为 W1。checkpoint 保存它执行过程中的状态，例如：</p>
+          <pre class="privacy-code"># 示意结构，方便理解，不是工程中的完整存储格式
+checkpoint = {
+    "thread_id": "W1",
+    "next_step": "保存分析结果",
+    "state": {
+        "event_id": "E1",
+        "weight": 65,
+        "model_result": "最近体重有所下降……"
+    }
+}</pre>
+          <p><b>checkpoint 不只记录“执行到了第几步”，也可能保存任务用过的数据、对话和模型结果。</b>所以业务表里的 E1 删掉了，流程存档里可能还留着“65公斤”和相关分析；仅删除业务记录，隐私副本可能仍然存在。</p>
+          <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>对象</th><th>可以理解成什么</th><th>例子</th></tr></thead><tbody>
+            <tr><td>业务数据</td><td>用户正式保存的记录和结果</td><td>E1：体重65公斤，以及相关聊天、分析等。</td></tr>
+            <tr><td>checkpoint</td><td>任务的执行存档</td><td>W1 做到哪一步、用过的数据和中间结果。</td></tr>
+            <tr><td>删除任务记录</td><td>删除操作的工单</td><td>清理哪些对象、哪些流程，以及清理到哪个阶段。</td></tr>
+          </tbody></table></div>
+          <p><b>W2 是什么？</b>它只是另一次任务的编号，例如根据 E2 跑步记录生成运动建议、正在等待用户补充信息的流程。只要没有使用 E1，且来源可以证明独立，删除 E1 时就应该保留 W2 的消息、等待状态和存档。</p>
+        </div>
+
+        <h3 id="privacy-concurrency" data-chapter>⑤ 防写回：从所有流程一起失效，到相关流程代次失效</h3>
+        <details class="privacy-details" open id="privacy-generation-explained"><summary>白话讲解：删掉存档，为什么任务还能把旧数据写回来？</summary>
+          <pre class="privacy-code">W1 读取 E1：体重65公斤
+        ↓
+W1 把数据发给模型，等待返回
+        ↓
+用户删除 E1，系统也删除 W1 的 checkpoint
+        ↓
+模型返回分析结果
+        ↓
+如果没有额外检查，旧 W1 又把分析结果保存回数据库！</pre>
+          <p><b>删除存档，不等于停止正在运行的程序。</b>程序内存里可能还拿着旧数据，模型请求也可能还没有结束。就像你销毁了桌上的文件，但同事之前已经拿走一份，稍后又把处理结果放回桌上。</p>
+          <p>所以还要检查：<b>这次任务是否仍然有资格继续写入？</b>原来所有任务共用一个全局版本号，删除时这个号码一变，W1 和无关的 W2 都会失效；全量清理 checkpoint 又把两者的存档一起删除。</p>
+          <p>现在每个流程单独保存一个 <code>generation</code>，可以理解成<b>执行凭证的版本号</b>。假设 W1 和 W2 启动时都拿到自己的第1版凭证：</p>
+          <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>流程</th><th>使用的数据</th><th>删除 E1 前</th><th>删除 E1 后</th></tr></thead><tbody>
+            <tr><td>W1：体重分析</td><td>E1</td><td>数据库版本1，运行任务持有版本1。</td><td>数据库变成版本2，旧任务仍拿着版本1，拒绝继续写入。</td></tr>
+            <tr><td>W2：独立跑步任务</td><td>E2，没有使用 E1</td><td>数据库版本1，运行任务持有版本1。</td><td>版本仍为1，通过其他必要检查后可以继续。</td></tr>
+          </tbody></table></div>
+          <pre class="privacy-code"># 白话伪代码；下方对照卡片展示工程中的写法
+if 数据库里的流程版本 != 任务启动时的版本:
+    拒绝旧任务继续写入</pre>
+          <p>数字从0还是从1开始不影响原理；关键是新旧版本不相等。<b>清理相关存档，解决已经保存的副本；改变相关流程的版本，拦住仍在运行的旧任务。</b>这不一定能立即取消外部模型请求，但可以阻止旧结果再次落库。</p>
+        </details>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before"><span class="privacy-code-tag">修改前 · 全局保护节选</span><h4>能挡住晚到结果，也会中断独立流程</h4><pre class="privacy-code">self.context_epoch += 1
+threads = {
+    item.config['configurable']['thread_id']
+    for item in self.checkpointer.list(None)
+}
+for thread_id in threads:
+    self.checkpointer.delete_thread(thread_id)</pre><p><code>list(None)</code> 取出全部存档线程；全局 epoch 变化会让正在执行的独立请求也停止。</p></article>
+          <article class="privacy-code-card"><span class="privacy-code-tag">修改后 · 正常删除路径节选</span><h4>只有清单中的流程换代，写入前再检查</h4><pre class="privacy-code"># 删除开始时，仅提升相关 thread 的代次
+UPDATE workflow_generations
+SET generation=generation+1 WHERE thread_id=?
+
+# 模型返回与后续执行时核对
+if row and row[0] != execution.generation:
+    raise WorkflowConflict(...)
+
+# 只清理 deletion_items 中的相关 thread
+self.engine.checkpointer.delete_thread(thread_id)</pre><p>旧任务拿着第0代凭证回来，相关流程已经变成第1代，就不能保存结果。W2 代次不变，通过自身来源检查后仍可继续。</p></article>
+        </div>
+        <p>这个检查不只放在最终回复前。受保护节点、模型 I/O 返回和 <code>GuardedSqliteSaver.cursor()</code> 都会检查流程状态，防止后台 checkpoint 写入把删除前的内容再次落盘。这里主要保证结果不能写回，并不宣称已经发出的网络请求会立即停止。</p>
+        <p class="privacy-source">来源：<a href="backend/app/workflows/concurrency.py">capture_execution / check_execution / model_io / GuardedSqliteSaver</a> · <a href="backend/app/privacy/deletion.py">流程代次屏障与 deletion_items</a>。</p>
+
+        <h3 id="privacy-recovery" data-chapter>⑥ 防“删一半”：两个数据库，用持久化作业协调</h3>
+        <p><code>health.db</code> 保存业务记录，<code>checkpoints.db</code> 保存流程进度。旧代码先删业务再清存档，第二步失败时缺少跨库清理进度记录。现在先登记删除任务和写入屏障，再按阶段推进。</p>
+        <div class="privacy-flow" aria-label="持久化删除任务状态流">
+          <div><b>business_pending</b><small>清理任务已保存，来源进入删除状态；相关代次失效。业务清理尚未完成时，读取接口受屏障保护。</small></div><span aria-hidden="true">→</span>
+          <div><b>checkpoint_pending</b><small>业务对象与阶段更新在 health.db 同一事务提交。接着按清单删除另一库的 thread 历史。</small></div><span aria-hidden="true">→</span>
+          <div><b>completed</b><small>存档、WAL 和存储页维护成功后才报告完成；中途失败返回 pending，支持重试与启动恢复。</small></div>
+        </div>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before"><span class="privacy-code-tag">修改前 · runtime.py 节选</span><h4>顺序调用，没有持久化清理阶段</h4><pre class="privacy-code">with self.lock:
+    self.repo.delete_event(event_id)
+    self.purge_checkpoints()
+
+# 两个数据库并不在同一个普通事务中。
+# 第一项完成、第二项失败，无法靠这一调用栈恢复。</pre><p>一次 HTTP 失败也不等于前面成功提交的删除会自动撤销。</p></article>
+          <article class="privacy-code-card"><span class="privacy-code-tag">修改后 · _finish 控制流简化</span><h4>知道做到哪一步，重启后接着做</h4><pre class="privacy-code">if job['state'] == 'business_pending':
+    with repo.conn:
+        self._erase_business(job, manifest)
+        # 同一事务中改为 checkpoint_pending
+
+# 删除清单里的 checkpoint，记录各项 done
+# 清理 SQLite WAL / 存储页
+# 全部成功，最后改为 completed
+# 异常则保留作业，返回 pending、deleted=False</pre><p><code>recover()</code> 在服务开放前处理未完成任务。GET 状态只读；页面的“继续清理”调用 POST retry，不把一次查询当成删除完成。</p></article>
+        </div>
+        <details class="privacy-details" open id="privacy-deletion-job-explained"><summary>白话讲解：删除工单如何解决“删到一半，程序退出”？</summary>
+          <p>数据分在两个数据库里：<code>health.db</code> 保存 E1 和相关业务内容，<code>checkpoints.db</code> 保存 W1 的执行存档。因此，完整删除需要处理两边。</p>
+          <pre class="privacy-code">修改前可能发生：
+① 删除健康数据库中的 E1 → 成功
+② 删除 checkpoint       → 失败，例如数据库暂时被占用
+③ 程序退出
+
+结果：E1 已经没了，但流程存档里的副本还在。</pre>
+          <p>原来的顺序调用，没有留下可供程序恢复的持久记录，告诉下次启动的服务：“上次还剩 checkpoint 没清完”。异常日志供人排查；<b>删除工单供程序自动接着做。</b></p>
+          <p>现在先在数据库里保存一张工单，再开始分阶段清理：</p>
+          <pre class="privacy-code"># 示意结构，不是工程中的完整工单字段
+deletion_job = {
+    "id": "D1",
+    "target": "E1",
+    "affected_threads": ["W1"],
+    "state": "business_pending"
+}</pre>
+          <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>工单状态</th><th>通俗含义</th></tr></thead><tbody>
+            <tr><td><code>business_pending</code></td><td>业务数据还需要清理。</td></tr>
+            <tr><td><code>checkpoint_pending</code></td><td>业务清理已完成，还需要清理流程存档和存储。</td></tr>
+            <tr><td><code>completed</code></td><td>要求的清理全部完成。</td></tr>
+          </tbody></table></div>
+          <p>代码中 <code>with repo.conn:</code> 包住的重点是：<b>业务清理与工单更新为 checkpoint_pending，在健康数据库的同一个事务里完成。</b>它们一起提交，或者一起回滚，避免“业务清完了，却没记下下一步”。</p>
+          <pre class="privacy-code">工单 D1：business_pending
+        ↓ 业务清理与阶段更新，一起提交
+工单 D1：checkpoint_pending
+        ↓ 假设这时清理存档失败，程序退出
+工单仍保存在数据库，状态没有丢
+        ↓ 用户重试，或者服务重启恢复
+读取 D1，继续处理剩下的 checkpoint 和存储清理
+        ↓ 全部成功
+工单 D1：completed</pre>
+          <p>中途失败时返回 <code>pending</code>、<code>deleted=False</code>，意思是<b>整个删除任务尚未完成</b>，并不表示前面的业务删除一定没有发生。这两个数据库仍然不是一个事务；改进在于跨库操作中断后，系统有可靠的记录继续完成，不会假报成功或忘掉剩余工作。</p>
+        </details>
+
+        <h3 id="privacy-request-replay" data-chapter>⑦ 防“旧请求重建”：正文删除，请求编号保留为拒绝标记</h3>
+        <div class="privacy-compare">
+          <article class="privacy-code-card privacy-before"><span class="privacy-code-tag">修改前 · 风险链条简化</span><h4>全清也清掉去重记录</h4><pre class="privacy-code">删除 E1
+  → workflows / receipts / operations 全部清空
+  → 客户端重发原来的 request_id
+  → 找不到旧流程
+  → 存在按新请求重新创建记录的风险</pre><p>清理副本的同时把“这次请求已处理过”的信息抹掉，可能打开重新执行入口。</p></article>
+          <article class="privacy-code-card"><span class="privacy-code-tag">修改后 · check_request 节选</span><h4>无正文标记阻止原请求再次执行</h4><pre class="privacy-code">if self.repo.conn.execute(
+    'SELECT 1 FROM request_tombstones '
+    'WHERE request_id=?', (request_id,),
+).fetchone():
+    raise RequestErased(
+        '此请求的相关内容已删除，请使用新请求重新输入。'
+    )</pre><p>只保留必要的请求编号与删除任务关联，不保存原文字或结果。旧请求返回410 / request_erased；用户主动用新请求重新提供相同信息仍是新的操作。</p></article>
+        </div>
+        <p class="privacy-source">来源：<a href="backend/app/privacy/deletion.py">_erase_business / _finish / recover / inventory_checkpoints</a> · <a href="backend/app/workflows/concurrency.py">check_request</a> · <a href="backend/app/api/deps.py">读取屏障</a> · <a href="backend/app/main.py">RequestErased / DeletionError 的 HTTP 语义</a>。</p>
+
+        <details class="privacy-details" open id="privacy-tombstone-explained"><summary>白话讲解：request_tombstones 为什么还要保留请求编号？</summary>
+          <p>旧数据还有另一种回来方式：<b>客户端重新发送了之前的请求。</b>这和正在运行的模型任务写回，是两个不同入口。</p>
+          <pre class="privacy-code">请求 R1：创建体重记录 E1
+        ↓
+服务端创建成功，但客户端没收到响应
+        ↓
+用户从其他页面删除 E1
+        ↓
+客户端重试 R1
+        ↓
+如果没有作废登记，系统可能又把 E1 创建一遍</pre>
+          <p><code>request_tombstones</code> 可以理解成一张“作废登记”：<b>请求 R1 已因隐私删除而作废，不允许重新执行。</b>它不保留体重正文，只保留拦截重放所需的请求标识等信息。</p>
+          <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>机制</th><th>它负责挡住什么</th></tr></thead><tbody>
+            <tr><td>checkpoint 清理</td><td>清掉已经保存的流程副本。</td></tr>
+            <tr><td>流程代次 generation</td><td>拦住正在运行的旧任务继续写入。</td></tr>
+            <tr><td>删除工单 deletion job</td><td>记录未完成工作，让中断的清理可以继续。</td></tr>
+            <tr><td>请求作废登记 request_tombstones</td><td>拦住旧请求重试，避免重新创建已删除的数据。</td></tr>
+          </tbody></table></div>
+        </details>
+
+        <h3 id="privacy-validation" data-chapter>怎么验证确实修好了，而不是只改了 SQL？</h3>
+        <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>验证场景</th><th>必须看到的变化</th><th>代码证据</th></tr></thead><tbody>
+          <tr><td>删 E1，同时保留独立待补充流程</td><td>相关内容消失；W2 的消息、状态、checkpoint 不变，而且能成功继续补充。</td><td><a href="backend/tests/test_privacy_deletion.py">test_delete_preserves_independent_messages_reports_notices_and_pending_progress</a></td></tr>
+          <tr><td>同一句话产生体重和跑步，跑步还有旧修订</td><td>所有修订里的体重原文副本被处理；跑步字段仍通过 assert_grounded。</td><td><a href="backend/tests/test_privacy_deletion.py">test_shared_source_is_removed_from_latest_event_and_every_revision</a></td></tr>
+          <tr><td>计划用了展示12条之外的事件</td><td>仍能找到影响；可证明独立的手动目标保留，相关安排清除。</td><td><a href="backend/tests/test_privacy_deletion.py">test_plan_tracks_sources_beyond_twelve_display_refs_and_preserves_manual_targets</a></td></tr>
+          <tr><td>复盘嵌套旧生成版本，通知再复制复盘</td><td>沿间接依赖清除旧副本，不因同一 ID 已更新就漏掉历史来源。</td><td><a href="backend/tests/test_privacy_deletion.py">test_transitive_old_insight_generation_reaches_review_and_notification</a></td></tr>
+          <tr><td>checkpoint 清理失败、业务清理失败、进程重启</td><td>不误报成功；屏障有效，重启先恢复作业，再开放相关内容。</td><td><a href="backend/tests/test_privacy_deletion.py">checkpoint / business failure / archive rollback 测试</a></td></tr>
+          <tr><td>删除后重试原 chat / resume；另一个标签页收到慢响应</td><td>旧请求不重建事件；前端刷新代次检查和跨标签页通知阻止旧消息重新显示。</td><td><a href="backend/tests/test_privacy_deletion.py">旧请求重放测试</a> · <a href="frontend/src/App.test.tsx">跨标签页慢响应测试</a></td></tr>
+        </tbody></table></div>
+        <div class="privacy-warning"><p><b>旧数据的边界：</b>依赖为空可能表示没有依赖，也可能表示没有登记，因此历史对象先标为 <code>unknown</code>，没有 workflow 的孤立 checkpoint 也不默认安全。不能独立验证的历史记录或长期信息会进入扩大后的预览，用户确认后才处理；迁移本身不删除业务数据。</p><p><b>当前范围：</b>读取集合采用保守跟踪，实际读过但最终未使用的候选也可能进入依赖。当前为单进程本地应用；清理覆盖应用管理的数据库与缓存，不承诺删除用户另存的导出文件或外部副本。</p></div>
+        <div class="privacy-links">
+          <a href="docs/精准删除与数据血缘解决方案.md">完整设计与验收方案</a>
+          <a href="backend/app/privacy/deletion.py">统一删除服务</a>
+          <a href="backend/app/infrastructure/repositories/provenance.py">依赖与副本索引</a>
+          <a href="backend/app/privacy/fragments.py">证据片段最小化</a>
+          <a href="backend/app/workflows/concurrency.py">并发与旧请求保护</a>
+          <a href="backend/tests/test_privacy_deletion.py">后端隐私回归测试</a>
         </div>
       </section>
       <footer>
@@ -4031,9 +4477,9 @@ with self.lock, self.conn:
           "steps":["save_events 先查 operations；已有 op_key 立即返回原 ID 列表，不重复插入。","新增生成 UUID 和 version=1；纠错保持 ID、version+1，并要求目标存在。","occurred_at 统一为 UTC ISO，day 按上海时区生成；序列化 data 时拒绝 NaN。","在同一个 save_events 事务中写 events、对应 revisions 和 operations，然后增加 data_version，把 active insights 标为 stale。","save_fact 使用稳定 ID 的 INSERT OR IGNORE，仅首次插入增加版本；它保存明确用户事实而非模型建议。","decide_plan 比对草案 data_version 与 base_plan_id，在事务里决定 active / rejected / stale，避免旧草案替换新状态。","account_model_call 在 HTTP 发出前持久化次数与字节，失败也保留记账；清理工作流时一并清理这些元数据。"],
           "branches":[["相同 op_key 重放","返回已存在结果，不制造第二条事件或额外 revision。"],["不同 op_key 的再次纠错","视为新修改，写新的 revision。"],["记录变化","旧规律过期；界面汇总从已保存事件重新读取。"]],
           "sideEffects":["事务边界是具体 Repository 方法；跨 save_ready、persist、respond 的整个流程不是一个大事务。"],
-          "errors":["删除记录会同时清理可能含副本的聊天、流程与派生上下文，并由 Engine purge checkpoints；其他事件保留。","该项目是单用户本地原型，引用绑定和数据最小化不等于多租户身份鉴权。"],
+          "errors":["删除通过统一服务计算实际依赖和原文副本，清理受影响的聊天、流程与 checkpoint；可证明独立的对象保留。历史来源不完整时先明确扩大预览范围，详见精准删除独立小节。","该项目是单用户本地原型，引用绑定和数据最小化不等于多租户身份鉴权。"],
           "example":"同一事件键 thread:event:0 被调用两次\n第一次：events + revision + operation 成功提交\n第二次：operations 命中，返回同一ID\n不会因为客户端重试又增加一条体重。",
-          "related":["persist","fact","activate","boundary","executor"],"sources":[["backend/app/infrastructure/repositories/events.py","save_events"],["backend/app/infrastructure/repositories/planning.py","save_fact / decide_plan"],["backend/app/infrastructure/repositories/common.py","_bump"],["backend/app/infrastructure/repositories/maintenance.py","erase_context"],["backend/app/workflows/runtime.py","purge_checkpoints"]]
+          "related":["persist","fact","activate","boundary","executor"],"sources":[["backend/app/infrastructure/repositories/events.py","save_events"],["backend/app/infrastructure/repositories/planning.py","save_fact / decide_plan"],["backend/app/infrastructure/repositories/provenance.py","observe / persist_provenance"],["backend/app/privacy/deletion.py","preview / delete / recover"],["backend/app/privacy/fragments.py","minimize_event"]]
         },
         {
           "id":"targets_rules","group":"core","title":"系统默认目标的计算与使用边界",
@@ -4986,6 +5432,47 @@ with self.lock, self.conn:
     </script>
     <script>
       (() => {
+        const root = document.getElementById('privacy-deletion');
+        if (!root) return;
+        const states = {
+          before: {
+            weight: ['delete', '删除目标', 'E1 从 events 删除，随后进入全局上下文清理。'],
+            exercise: ['warn', '事件保留，但可能残留', 'E2 仍在；旧版整句来源快照和修订中可能还含“体重65公斤”。'],
+            messages: ['delete', '全部聊天一起清空', '没有 WHERE 条件的 DELETE 清空 messages、workflow、回执和派生上下文。'],
+            pending: ['delete', '独立进度也丢失', 'W2 没使用 E1，仍因清空全部 workflows 和 checkpoints 而无法继续。'],
+            late: ['warn', '全部执行一起失效', '全局 context_epoch 增加，相关和独立的在途请求都可能停止。'],
+            replay: ['warn', '存在旧请求重建风险', '去重记录随全清消失，旧 request_id 再次提交可能被当成新请求。']
+          },
+          after: {
+            weight: ['delete', '删除目标', '删除这条体重及其全部修订，关闭相关恢复入口。'],
+            exercise: ['keep', '保留独立内容', '保留20分钟等可验证字段，清理共享原文，并检查全部旧修订。'],
+            messages: ['keep', '只处理相关副本', 'M1 包含体重，需要清理；其他能证明独立的消息保留。'],
+            pending: ['keep', '继续使用', '不在依赖清单中，原消息、等待状态和 checkpoint 保留。'],
+            late: ['keep', '相关任务禁止写回', '相关流程代次失效；独立任务通过自身来源检查后仍可提交。'],
+            replay: ['keep', '拒绝旧请求重放', '保留无正文的请求删除标记，返回 request_erased，不重建 E1。']
+          }
+        };
+        root.querySelectorAll('[data-privacy-mode]').forEach(button => {
+          button.addEventListener('click', () => {
+            const mode = button.dataset.privacyMode;
+            root.querySelectorAll('[data-privacy-mode]').forEach(item => {
+              item.setAttribute('aria-pressed', String(item === button));
+            });
+            root.querySelectorAll('[data-privacy-object]').forEach(card => {
+              const [effect, label, explanation] = states[mode][card.dataset.privacyObject];
+              card.dataset.effect = effect;
+              card.querySelector('.privacy-status').textContent = label;
+              card.querySelector('p').textContent = explanation;
+            });
+            root.querySelector('#privacy-demo-caption').textContent = mode === 'before'
+              ? '当前为修改前示意：清理范围很大，同时仍可能漏掉其他事件中的原文副本。按钮不调用接口、不执行删除。'
+              : '当前为修改后示意：按实际依赖和副本定位清理。只有能够证明独立的对象保留；来源未知时必须展示扩大后的范围。按钮不执行删除。';
+          });
+        });
+      })();
+    </script>
+    <script>
+      (() => {
         const chapters = Array.from(document.querySelectorAll('.doc-main [data-chapter]'));
         const chapterLinks = Array.from(document.querySelectorAll('.chapter-nav a'));
         const siteLinks = Array.from(document.querySelectorAll('.site-links a'));
@@ -5004,7 +5491,8 @@ with self.lock, self.conn:
           'prompt-system': 'memory-system',
           'tool-runtime': 'memory-system',
           'plan-branches': 'memory-system',
-          'concurrency-recovery': 'concurrency-recovery'
+          'concurrency-recovery': 'concurrency-recovery',
+          'privacy-deletion': 'privacy-deletion'
         };
 
         function chapterForHash(hash) {
@@ -5026,7 +5514,10 @@ with self.lock, self.conn:
             if (current) link.setAttribute('aria-current', 'location');
             else link.removeAttribute('aria-current');
           });
-          const siteHref = '#' + (siteSectionByChapter[chapter.id] || chapter.id);
+          const siteSection = chapter.id.startsWith('privacy-')
+            ? 'privacy-deletion'
+            : (siteSectionByChapter[chapter.id] || chapter.id);
+          const siteHref = '#' + siteSection;
           siteLinks.forEach(link => {
             const current = link.getAttribute('href') === siteHref;
             link.classList.toggle('active', current);

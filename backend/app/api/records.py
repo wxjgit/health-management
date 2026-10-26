@@ -38,6 +38,16 @@ def delete_event(event_id: str, engine=Depends(get_engine)):
     return engine.delete_event(event_id)
 
 
+@router.get('/events/{event_id}/revisions')
+@protected_read
+def revisions(event_id: str, engine=Depends(get_engine)):
+    with engine.lock:
+        result = engine.repo.event_revisions(event_id)
+        if result is None:
+            raise HTTPException(404, '原始记录不存在或已归档，无法查看逐条修订')
+        return result
+
+
 @router.get('/dashboard')
 @protected_read
 def daily(day: date | None = Query(default=None, alias='date'), engine=Depends(get_engine)):

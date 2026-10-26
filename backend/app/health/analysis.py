@@ -17,7 +17,8 @@ def meal_assessment(repo, event, today):
     constraints = [
         fact['content']
         for fact in repo.facts()
-        if any(word in fact['content'] for word in ['过敏', '不吃', '忌口', '医生'])
+        if fact.get('type') in ('allergy', 'restriction', 'professional_advice')
+        or any(word in fact['content'] for word in ['过敏', '不吃', '忌口', '医生'])
     ]
     if constraints:
         notes.append('已知限制：' + '；'.join(constraints) + '。请核对实际配料；系统不能保证已完整匹配。')
@@ -125,6 +126,7 @@ def review(repo, period='week', end=None):
     complete = [day for day in days if day['diet_complete'] and day['totals']['complete_nutrition']]
     data = {
         'period': period,
+        'rule_version': 'review-v1',
         'start': days[0]['date'],
         'end': days[-1]['date'],
         'data_version': repo.version(),

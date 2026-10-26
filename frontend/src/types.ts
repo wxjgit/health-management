@@ -135,6 +135,7 @@ export type Pending = {
 export type Workflow = {
   thread_id: string;
   status: string;
+  saved_record_ids?: string[];
   reply: string;
   cards: Card[];
   evidence_refs: Evidence[];
@@ -162,6 +163,7 @@ export type Plan = {
   status: string;
   created_at: string;
   data: {
+    memory?: DerivedMemory;
     targets: Targets;
     schedule: { date: string; food: string; exercise: string }[];
     next_meal: string;
@@ -179,6 +181,7 @@ export type Insight = {
   id: string;
   feedback: string | null;
   data: {
+    memory?: DerivedMemory;
     title: string;
     description: string;
     sample_size: number;
@@ -194,6 +197,7 @@ export type Insight = {
 export type Review = {
   id: string;
   data: {
+    memory?: DerivedMemory;
     period: string;
     start: string;
     end: string;
@@ -223,10 +227,22 @@ export type Preferences = {
   weekly_day: number;
   notifications_enabled: boolean;
 };
-export type Fact = { id: string; content: string; source: string };
+export type Fact = {
+  id: string; content: string; source: string;
+  type: "food_preference" | "restriction" | "allergy" | "professional_advice" | "legacy_text";
+  subject: string; value: string; version: number;
+  source_kind: string; confirmation: string; lifecycle: string;
+  valid_from: string | null; valid_until: string | null;
+  supersedes: string | null; evidence_message_id?: string | null;
+};
+export type DerivedMemory = {
+  generated_at?: string; window?: string[] | null; algorithm_version: string | null;
+  status: string; invalid_reason: string | null; recomputable?: boolean;
+};
 export type Month = {
   month: string;
   data: {
+    memory?: DerivedMemory;
     record_count: number;
     meal_count: number;
     avg_weight_kg: number | null;

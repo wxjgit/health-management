@@ -3,6 +3,7 @@ from statistics import mean
 
 from ..common import clock
 from .nutrition import meal_totals
+from .derived import derived_metadata
 
 
 def archive(repo, reference=None, deletions=None):
@@ -36,8 +37,10 @@ def archive(repo, reference=None, deletions=None):
             ),
             'precision': '仅月度统计；无法恢复逐餐、逐日数据或精确复核相关性',
             'version': 1,
+            'rule_version': 'monthly-summary-v1',
+            'window': [min(event['day'] for event in events), max(event['day'] for event in events)],
         }
-        batches.append((month, events, data))
+        batches.append((month, events, derived_metadata('summary', data)))
     if deletions is None:
         raise RuntimeError('归档需要统一隐私清理服务')
     return deletions.archive(batches)

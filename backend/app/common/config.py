@@ -20,6 +20,9 @@ class Settings:
     model_name: str = ''
     scheduler_enabled: bool = True
     local_only: bool = False
+    context_pending_days: int = 7
+    context_plan_days: int = 7
+    context_completed_days: int = 30
 
     @classmethod
     def from_env(cls):
@@ -30,6 +33,9 @@ class Settings:
             model_name=MODEL_NAME,
             scheduler_enabled=os.getenv('SCHEDULER_ENABLED', 'true').lower() == 'true',
             local_only=os.getenv('PROCESSING_MODE', 'model_allowed') == 'local_only',
+            context_pending_days=max(1, int(os.getenv('CONTEXT_PENDING_DAYS', '7'))),
+            context_plan_days=max(1, int(os.getenv('CONTEXT_PLAN_DAYS', '7'))),
+            context_completed_days=max(1, int(os.getenv('CONTEXT_COMPLETED_DAYS', '30'))),
         )
 
     @property

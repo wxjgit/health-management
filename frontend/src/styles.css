@@ -2615,3 +2615,21 @@ details[open] > summary > svg:last-child {
     transition: none !important;
   }
 }
+.memory-note, .revision-history, .expired-contexts {
+  margin: 10px 0;
+  color: var(--muted, #64746b);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.memory-note summary, .revision-history summary, .expired-contexts summary { cursor: pointer; }
+.revision-entry, .fact-entry { border-top: 1px solid #e5e9e4; padding: 12px 0; overflow-wrap: anywhere; }
+.revision-entry p, .fact-entry p { margin: 5px 0; }
+.revision-entry small, .fact-entry small { display: block; color: #64746b; }
+.fact-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.fact-actions button { background: transparent; color: #496452; font-size: 12px; }
+.fact-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.fact-editor label { display: grid; gap: 6px; font-size: 12px; }
+.fact-editor label:first-child, .fact-editor > div { grid-column: 1 / -1; }
+.fact-editor input, .fact-editor select, .fact-editor textarea { width: 100%; min-width: 0; padding: 8px; border: 1px solid #d5dfd3; border-radius: 8px; background: white; }
+.fact-editor textarea { min-height: 72px; resize: vertical; }
+.fact-history { padding: 8px 12px; background: #f3f6ef; font-size: 12px; border-radius: 8px; }

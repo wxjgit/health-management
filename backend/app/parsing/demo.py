@@ -109,7 +109,7 @@ def demo_parse(text, recent, selected_id=None, original=None):
             correction_id=prior['id'],
             question=parsed.question,
         )
-    if any(word in text for word in ['不喜欢', '不吃', '过敏', '喜欢吃', '忌口', '医生要求']):
+    if any(word in text for word in ['不喜欢', '不吃', '过敏', '喜欢', '可以接受', '能接受', '忌口', '医生要求']):
         return ExtractionResult(intent='fact', fact_text=text)
     if any(word in text for word in ['查', '回顾', '吃过什么', '吃了什么', '记录有哪些', '历史', '趋势']):
         start = end = None

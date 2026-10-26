@@ -49,6 +49,7 @@ class WorkflowRuntimeMixin:
             'cards': state.get('cards', []),
             'evidence_refs': state.get('evidence_refs', []),
             'process_trace': state.get('process_trace', []),
+            'saved_record_ids': state.get('record_ids', []),
         }
         if pending:
             result['pending_input'] = {
@@ -163,6 +164,7 @@ class WorkflowRuntimeMixin:
                 workflow = self.repo.workflow(thread_id)
                 if not workflow:
                     raise ValueError('此流程没有待回答问题，可能已取消或记录已删除')
+                self.check_context_deadline(thread_id)
                 config = {'configurable': {'thread_id': thread_id}}
                 saved = self.graph_for(workflow['kind']).get_state(config).values
                 conversation = saved.get('conversation_id', 'main')
@@ -311,13 +313,35 @@ class WorkflowRuntimeMixin:
         with self.lock:
             moment = reference or clock.now()
             completed_before = (
-                moment - timedelta(days=30)
+                moment - timedelta(days=self.settings.context_completed_days)
             ).astimezone(timezone.utc).isoformat()
             pending_before = (
-                moment - timedelta(days=366)
+                moment - timedelta(days=self.settings.context_pending_days)
             ).astimezone(timezone.utc).isoformat()
-            rows = self.repo.expired_workflows(completed_before, pending_before)
+            self.recover_context_expirations()
+            rows = self.repo.expired_workflows(completed_before, pending_before, moment.astimezone(timezone.utc).isoformat())
+            count = 0
             for row in rows:
-                self.checkpointer.delete_thread(row['id'])
-            self.repo.prune_workflow_context(rows, completed_before)
-            return len(rows)
+                with self.execution_locks.hold(('workflow', row['id']), blocking=False) as acquired:
+                    if not acquired:
+                        continue
+                    self.repo.expire_workflow(row['id'])
+                    count += 1
+            self.recover_context_expirations(completed_before)
+            self.repo.prune_workflow_context([], completed_before)
+            return count
+
+    def recover_context_expirations(self, messages_before=None):
+        cutoff = messages_before or (clock.now() - timedelta(days=self.settings.context_completed_days)).astimezone(timezone.utc).isoformat()
+        pending = self.repo.conn.execute("SELECT thread_id FROM context_expirations WHERE state='pending'").fetchall()
+        for row in pending:
+            workflow = self.repo.workflow(row['thread_id'])
+            self.checkpointer.delete_thread(row['thread_id'])
+            self.repo.prune_workflow_context([{'id': row['thread_id'], 'kind': workflow['kind'] if workflow else 'chat'}], cutoff)
+        if pending:
+            self.cp_conn.commit()
+            self.deletions._compact(self.cp_conn)
+            self.repo.compact()
+            with self.repo.conn:
+                for row in pending:
+                    self.repo.conn.execute("UPDATE context_expirations SET state='completed' WHERE thread_id=?", (row['thread_id'],))

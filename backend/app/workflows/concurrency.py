@@ -84,6 +84,13 @@ class WorkflowConcurrencyMixin:
             raise WorkflowConflict('隐私清理尚未完成，请稍后重试。')
         if self.repo.conn.execute('SELECT 1 FROM request_tombstones WHERE request_id=?', (request_id,)).fetchone():
             raise RequestErased('此请求的相关内容已删除，请使用新请求重新输入。')
+        if self.repo.conn.execute('SELECT 1 FROM expired_requests WHERE request_id=?', (request_id,)).fetchone():
+            raise WorkflowConflict('此请求已过期，请使用新请求重新输入；此前已保存的记录保留。')
+        existing = self.repo.conn.execute(
+            'SELECT id FROM workflows WHERE request_id=? UNION SELECT thread_id FROM receipts WHERE request_id=?',
+            (request_id, request_id)).fetchone()
+        if existing:
+            self.check_context_deadline(existing[0])
 
     def check_execution(self, execution=None):
         execution = execution or _execution.get()
@@ -97,8 +104,16 @@ class WorkflowConcurrencyMixin:
         if row and row[0] != execution.generation:
             raise WorkflowConflict('相关记录或上下文已清理，本次处理已停止，请重新提交。')
         workflow = self.repo.workflow(execution.thread_id)
-        if not workflow or workflow['status'] == 'cancelled':
+        if not workflow or workflow['status'] in ('cancelled', 'expired'):
             raise WorkflowConflict('此流程已取消或记录已删除，本次处理已停止。')
+        self.check_context_deadline(execution.thread_id)
+
+    def check_context_deadline(self, thread_id):
+        from datetime import datetime
+        from ..common.clock import now
+        row = self.repo.conn.execute('SELECT expires_at FROM workflow_activity WHERE thread_id=?', (thread_id,)).fetchone()
+        if row and datetime.fromisoformat(row[0]) <= now():
+            raise WorkflowConflict('此事项已过期，请重新开始；此前已保存的记录保留。')
 
     @contextmanager
     def serialized_execution(self, execution, conversation=None):

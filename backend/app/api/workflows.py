@@ -19,16 +19,31 @@ def chat(body: ChatRequest, engine=Depends(get_engine)):
 
 @router.get('/workflows')
 @protected_read
-def workflows(engine=Depends(get_engine)):
-    return engine.repo.waiting_workflows()
+def workflows(include_expired: bool = False, engine=Depends(get_engine)):
+    with engine.lock:
+        engine.prune_context()
+        return engine.repo.waiting_workflows() + (engine.repo.expired_contexts() if include_expired else [])
+
+
+@router.get('/workflows/expired')
+@protected_read
+def expired_workflows(engine=Depends(get_engine)):
+    with engine.lock:
+        engine.prune_context()
+        return engine.repo.expired_contexts()
 
 
 @router.get('/workflows/{thread_id}')
 @protected_read
 def workflow(thread_id: str, engine=Depends(get_engine)):
+    engine.prune_context()
     result = engine.repo.workflow(thread_id)
     if not result:
+        expired = next((r for r in engine.repo.expired_contexts(limit=10000) if r['thread_id'] == thread_id), None)
+        if expired:
+            return expired
         raise HTTPException(404, '流程不存在')
+    engine.check_context_deadline(thread_id)
     return result['result']
 
 

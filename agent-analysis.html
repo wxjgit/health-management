@@ -2552,7 +2552,21 @@
       .safety-code-grid details { min-width: 0; border: 1px solid #d3dfd0; border-radius: 10px; padding: 15px; background: #fafcf8; }
       .safety-code-grid summary { cursor: pointer; font-size: 15px; font-weight: 650; color: #355e49; }
       #safety-routing .safety-code-grid p { margin-top: 10px; font-size: 14px; }
-      .safety-code-grid pre { padding: 14px; border-radius: 8px; background: #20392f; color: #e8f4e9; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.85 Consolas, "Cascadia Code", monospace; tab-size: 4; }
+      .safety-code-grid pre, .safety-background pre { padding: 14px; border-radius: 8px; background: #20392f; color: #e8f4e9; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.85 Consolas, "Cascadia Code", monospace; tab-size: 4; }
+      .safety-background { margin: 22px 0; padding: 20px; border: 1px solid #dfceb5; background: #fffbf4; border-radius: 12px; }
+      #safety-routing .safety-background h3 { margin-top: 0; }
+      #safety-routing .safety-background > p + p { margin-top: 10px; }
+      .safety-background blockquote { margin: 14px 0; padding: 10px 15px; border-left: 4px solid #b38c55; background: white; color: #75542e; font-size: 20px; font-weight: 650; }
+      .safety-background-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
+      .safety-background-grid article { padding: 16px; min-width: 0; border: 1px solid #e3d8c5; border-radius: 9px; background: white; }
+      .safety-background-grid b { display: block; color: #77552e; font-size: 15px; }
+      #safety-routing .safety-background-grid p { margin-top: 10px; font-size: 14px; }
+      .safety-before-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0; }
+      .safety-before-flow span { flex: 1 1 105px; min-width: 0; padding: 10px; border: 1px solid #e6d5bc; background: #fff8ec; border-radius: 7px; color: #795d39; font-size: 14px; }
+      .safety-before-flow small { display: block; font: 11px/1.6 Consolas, monospace; overflow-wrap: anywhere; margin-top: 5px; }
+      .safety-before-flow i { font-style: normal; color: #a48b66; }
+      #safety-routing .safety-background-goal { padding: 13px 15px; border-left: 4px solid #789b79; border-radius: 0 7px 7px 0; background: #eff6eb; }
+      @media(max-width: 900px) { .safety-background-grid { grid-template-columns: 1fr; } }
       .safety-code-grid a { text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
       .safety-boundaries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
       .safety-boundaries article { padding: 16px; border: 1px solid #dce4d7; border-radius: 10px; min-width: 0; }
@@ -2563,6 +2577,39 @@
       @media(max-width: 900px) { .safety-case-steps, .safety-boundaries { grid-template-columns: 1fr; } }
       @media(max-width: 760px) { #safety-routing { padding: 18px; } #safety-routing h2 { font-size: 23px; } .safety-code-grid { grid-template-columns: 1fr; } }
       @media print { .safety-switch { display: none; } .safety-diagram svg { min-width: 0; } .safety-code-grid, .safety-case-steps { break-inside: avoid; } }
+
+      /* Four-layer memory explanation, scoped to this chapter. */
+      #memory-system .memfix-lead { margin: 0 0 20px; font-size: 17px; line-height: 1.85; }
+      #memory-system .memory-flow svg { min-width: 800px; }
+      #memory-system .memfix-unit { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); scroll-margin-top: 88px; }
+      #memory-system .memfix-unit > h3 { margin-bottom: 18px; font-size: 21px; line-height: 1.6; }
+      #memory-system .memfix-grid, #memory-system .memfix-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      #memory-system .memfix-grid > div, #memory-system .memfix-rules > article { min-width: 0; }
+      #memory-system .memfix-grid p, #memory-system .memfix-rules p { font-size: 15px; line-height: 1.85; margin: 10px 0; }
+      #memory-system .memfix-example { border-left: 4px solid #7b9e7d; padding: 12px 16px; background: #f0f5eb; border-radius: 0 7px 7px 0; font-size: 17px; }
+      #memory-system .memfix-route { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin: 16px 0; }
+      #memory-system .memfix-route > span { flex: 1 1 110px; min-width: 0; padding: 12px; border: 1px solid #d8e3d2; background: #f5f8ef; border-radius: 8px; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+      #memory-system .memfix-route > i { color: #7d9177; font-style: normal; }
+      #memory-system .memfix-code { border: 1px solid #dce4da; border-radius: 9px; padding: 16px; background: #f8faf6; }
+      #memory-system .memfix-code > b { font-size: 15px; }
+      #memory-system .memfix-code pre { font: 13px/1.85 Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; margin: 14px 0; padding: 14px; border-radius: 7px; background: #edf1ea; color: #263b2d; }
+      #memory-system code, #memory-system a, #memory-system .retention-item span { overflow-wrap: anywhere; }
+      #memory-system .memfix-code a { font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+      #memory-system .memfix-callout, #memory-system .memfix-rules article { border: 1px solid #e0e6d9; border-radius: 8px; padding: 14px 16px; background: #fbfcf7; }
+      #memory-system .memfix-rules { margin-top: 18px; }
+      #memory-system .memfix-rules b, #memory-system .memfix-callout b { font-size: 15px; }
+      #memory-system .memfix-retention { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+      #memory-system .memfix-validation { margin-top: 20px; font-size: 14px; line-height: 1.85; }
+      #memory-system .memory-guard { align-items: flex-start; }
+      @media (max-width: 760px) {
+        #memory-system .memfix-grid, #memory-system .memfix-rules, #memory-system .memfix-retention { grid-template-columns: 1fr; }
+        #memory-system .memfix-unit > h3 { font-size: 19px; }
+        #memory-system .memory-guard { flex-direction: column; }
+      }
+      @media print {
+        #memory-system .memory-flow svg { min-width: 0; }
+        #memory-system .memfix-code, #memory-system .memfix-rules article { break-inside: avoid; }
+      }
     </style>
   </head>
   <body>
@@ -2596,7 +2643,12 @@
           <a class="nav-subsection" href="#grounding-harness">提取结果的证据约束</a>
         </div>
         <div class="nav-group"><span class="nav-label">04 · 运行机制</span>
-          <a href="#memory-system">记忆系统</a>
+          <a href="#memory-system">四层记忆系统</a>
+          <a class="nav-subsection" href="#memory-working">① 工作记忆：过期与恢复</a>
+          <a class="nav-subsection" href="#memory-ledger">② 事件账本：修订与冲突</a>
+          <a class="nav-subsection" href="#memory-facts">③ 长期事实：确认与有效期</a>
+          <a class="nav-subsection" href="#memory-derived">④ 派生记忆：依据与失效</a>
+          <a class="nav-subsection" href="#memory-guards">共同保障与验证</a>
           <a class="nav-subsection" href="#prompt-system">LLM 调用契约</a>
           <a class="nav-subsection" href="#tool-runtime">执行、校验与重试</a>
           <a class="nav-subsection" href="#plan-branches">计划生成与确认分支</a>
@@ -2635,7 +2687,7 @@
       </header>
       <div class="status-row">
         <span class="snapshot">实现快照 · 2026-10-22</span
-        ><span>已同步 ProcessingPlan / Grounding Harness</span><span>2 个 SQLite · 离线可打开</span
+        ><span>已同步 ProcessingPlan / Grounding Harness</span><span>四层记忆已更新 · 2026-10-26</span><span>2 个 SQLite · 离线可打开</span
         ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
         ><button class="print-button" onclick="window.print()">
           打印 / 另存 PDF
@@ -2843,6 +2895,43 @@
         <p class="safety-kicker">SAFETY ROUTING · 先判断能不能做，再决定怎么做</p>
         <h2 id="safety-routing-title">一句“晚饭吃多少”，为什么要先过安全检查？</h2>
         <p class="safety-lead">“记录午饭”和“催吐后还想减肥”都在谈饮食，处理方式却不同。现在请求先经过本地规则和独立 LLM 分类，再由程序决定是否允许继续估算、给建议或生成计划。本节对照当前安全实现，前面的总览保留原业务链路快照。</p>
+
+        <div class="safety-background" aria-labelledby="safety-background-title">
+          <h3 id="safety-background-title">修复背景：旧程序为什么可能把身体不适当成普通饮食问题？</h3>
+          <p>问题来自《架构与安全 Review 建议》中的“医疗安全边界”检查。原来已有 <code>medical_question()</code>，但它只识别少量关键词，而且主要在回复阶段的部分分支使用。安全判断没有成为所有入口共同的前置检查。</p>
+          <blockquote>“我头晕，晚饭吃多少？”</blockquote>
+          <p>这句话同时包含身体不适和饮食咨询。旧正则没有“头晕”这个词，检查返回 <code>False</code>；代码便缺少一条强制停止普通建议的边界。低血糖、持续腹泻、催吐、未成年人和孕产期复杂问题，也存在类似的覆盖缺口。</p>
+          <div class="safety-background-grid">
+            <article>
+              <b>原因一：关键词没命中，就缺少明确拦截</b>
+              <pre># 修复前已有的检查 · 等价分行展示
+def medical_question(text):
+    return bool(re.search(
+        r'血压|高血压|糖尿病|肾病|肾功能|心脏|胸痛|呼吸困难|'
+        r'持续.*(?:痛|吐)|用药|吃药|药量|利尿|排盐|排毒',
+        text
+    ))
+
+medical_question("我头晕，晚饭吃多少？")
+# False：没有匹配到关键词</pre>
+              <p>只增加几个词仍会留下隐晦表达，例如“吃完把东西弄出来”。因此增加独立 LLM 分类，负责理解这些语义。</p>
+            </article>
+            <article>
+              <b>原因二：检查位置靠后，部分业务已经能够执行</b>
+              <div class="safety-before-flow" aria-label="一条完整记录的旧处理路径，省略中间校验">
+                <span>解析输入<small>parse_initial</small></span><i aria-hidden="true">→</i>
+                <span>准备营养、保存<small>prepare_nutrition / persist</small></span><i aria-hidden="true">→</i>
+                <span>生成回复<small>respond</small></span>
+              </div>
+              <p><code>respond</code> 的部分分支才调用医疗关键词检查；已保存记录的分支会组装营养说明与餐食评分，额外建议任务还有自己的执行路径。末尾的一句能力提示，不能阻止前面的估算、评分或附加建议。</p>
+              <p>混合请求尤其容易暴露这个问题：“记录午餐，另外我持续腹泻”；追问时突然补充不适，以及从计划入口提交目标，也需要共同的安全边界。</p>
+            </article>
+          </div>
+          <p class="safety-background-goal"><b>这次修复要达到的效果：</b>先判断能否进入普通链路，命中风险就用本地固定策略结束；模型判断后、实际操作前和回复输出前继续检查。首次输入、追问及计划入口采用同一边界。</p>
+          <p class="safety-caption">旧路径对照修复前提交 <code>df50bb4</code>。这里说明代码允许的漏判路径，不代表旧模型每次都会给出同样回答。<code>medical_question()</code> 仍保留为局部回复辅助，新的主安全入口已放到它之前。<a href="docs/架构与安全Review建议.md">背景来源：架构与安全 Review 建议 · 3.5</a></p>
+        </div>
+
+        <h3>修复后：把安全检查放在普通业务前面</h3>
         <div class="safety-legend" aria-label="安全路由图例"><span>绿色 · 本地程序</span><span class="safety-model-key">紫色 · LLM 分类</span><span class="safety-stop-key">橙色 · 固定安全边界</span></div>
         <div class="safety-diagram" tabindex="0" role="region" aria-label="安全路由流程图，可横向滚动">
           <svg viewBox="0 0 960 465" role="img" aria-labelledby="safety-svg-title safety-svg-desc">
@@ -2966,7 +3055,7 @@ if unsafe_generated_text(text):
           <p id="guide-empty" class="dev-empty" hidden>没有匹配的节点或机制，可清空搜索或切换到全部说明。</p>
           <div class="dev-state" id="state-dictionary" data-chapter><h3>State 状态字段字典</h3>
             <p class="dev-intro"><code>State</code> 是三个 Graph 共用的 <code>TypedDict(total=False)</code>：字段缺席表示“尚未设置”，不等于空值。节点只返回本次修改的字段；普通列表没有 reducer，不会自动追加，需复制旧列表后再返回。checkpoint 保存的是流程执行状态，不是健康事实源，也不授予模型外发权限。</p>
-            <div class="state-summary" aria-label="State 摘要"><span>43 个声明字段</span><span>一个字段一行</span><span>chat / plan / analysis 共用</span><span>thread_id 级 checkpoint</span></div>
+            <div class="state-summary" aria-label="State 摘要"><span>51 个声明字段</span><span>一个字段一行</span><span>chat / plan / analysis 共用</span><span>thread_id 级 checkpoint</span></div>
             <div class="dev-table-wrap"><table class="dev-table state-table"><thead><tr><th>字段</th><th>类型 / 初值</th><th>语义</th><th>生产者</th><th>消费者 / checkpoint 生命周期</th></tr></thead><tbody id="state-rows"></tbody></table></div>
             <div class="state-runtime" aria-label="非 State 运行态">
               <div><b>CallScope.grants / approved / disclosures</b>仅存在于一次 <code>Engine.invoke</code> 的内存调用域，用于授权、批准与披露；不会写入 Graph checkpoint，也不能在恢复流程时被复用。</div>
@@ -3329,167 +3418,180 @@ if not _equal(replayed, _actual(event, evidence)):
           <div class="support-head">
             <span>08</span>
             <div>
-              <h2>记忆系统 · 写入、读取与生命周期</h2>
-              <p>没有向量库：SQLite 是事实源，按场景做有界检索；LLM 不直接写长期记忆</p>
+              <h2>记忆系统 · 四层记忆与修复方案</h2>
+              <p>对应当前代码 · 2026-10-26 · 数据库 v6 · SQLite + LangGraph checkpoint</p>
             </div>
           </div>
-          <div class="support-body">
-            <div class="memory-layout">
-              <div class="memory-flow">
-                <svg viewBox="0 0 760 515" role="img" aria-label="记忆从用户输入经过本地写入关口进入检查点和业务数据库，再由各节点按范围读取">
-                  <defs>
-                    <marker id="memory-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-                      <path d="M0 0L7 3.5L0 7Z" fill="#a8b59c" />
-                    </marker>
-                  </defs>
-                  <text class="map-annotation" x="14" y="18">信息来源</text>
-                  <rect class="map-box" x="14" y="31" width="215" height="58" rx="7" />
-                  <rect class="map-box" x="273" y="31" width="215" height="58" rx="7" />
-                  <rect class="map-box" x="532" y="31" width="214" height="58" rx="7" />
-                  <text class="map-title" x="121" y="55" text-anchor="middle">聊天输入</text>
-                  <text class="map-caption" x="121" y="75" text-anchor="middle">记录 / 纠错 / 长期事实</text>
-                  <text class="map-title" x="380" y="55" text-anchor="middle">设置页面</text>
-                  <text class="map-caption" x="380" y="75" text-anchor="middle">基础档案 / 偏好设置</text>
-                  <text class="map-title" x="639" y="55" text-anchor="middle">业务计算</text>
-                  <text class="map-caption" x="639" y="75" text-anchor="middle">计划 / 规律 / 复盘 / 归档</text>
+          <div class="support-body memfix-body">
+            <p class="memfix-lead">临时草稿何时忘记、记录改过后如何追溯、偏好变了以谁为准、旧结论什么时候需要更新？四层分别管理这些问题。对话是展示与恢复的上下文；各层可共享同一个业务库。</p>
+            <div class="memory-flow" tabindex="0" role="region" aria-label="四层记忆读写结构图，可横向滚动">
+              <svg viewBox="0 0 1120 370" role="img" aria-labelledby="memfix-map-title">
+                <title id="memfix-map-title">用户原话或设置经过本地校验，分别进入工作记忆、事件账本、结构化长期事实和派生记忆。后三层由业务库管理，临时流程状态在检查点中保存。</title>
+                <defs><marker id="memfix-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#849582"/></marker></defs>
+                <rect class="map-box" x="16" y="135" width="144" height="76" rx="9"/>
+                <text class="map-title" x="88" y="165" text-anchor="middle">原话 / 设置</text>
+                <text class="map-caption" x="88" y="191" text-anchor="middle">明确陈述与修改</text>
+                <path class="map-line" d="M160 173H198" style="marker-end:url(#memfix-arrow)"/>
+                <rect class="map-box blue" x="200" y="135" width="172" height="76" rx="9"/>
+                <text class="map-title" x="286" y="165" text-anchor="middle">本地校验与写入</text>
+                <text class="map-caption" x="286" y="191" text-anchor="middle">模型候选需再核对</text>
+                <path class="map-line" d="M372 173H406M406 43V301M406 43H438M406 129H438M406 215H438M406 301H438" style="marker-end:url(#memfix-arrow)"/>
+                <rect class="map-box blue" x="440" y="8" width="662" height="70" rx="9"/>
+                <text class="map-title" x="459" y="33">01 工作记忆 · 这件事处理到哪一步？</text>
+                <text class="map-caption" x="459" y="57">State / checkpoint + workflow_activity · 草稿与待确认计划闲置 7 天</text>
+                <rect class="map-box" x="440" y="94" width="662" height="70" rx="9"/>
+                <text class="map-title" x="459" y="119">02 事件账本 · 确认记录了什么，后来改过什么？</text>
+                <text class="map-caption" x="459" y="143">events + revisions + revision_context · 当前快照与追加修订</text>
+                <rect class="map-box" x="440" y="180" width="662" height="70" rx="9"/>
+                <text class="map-title" x="459" y="205">03 结构化长期事实 · 当前偏好和限制是什么？</text>
+                <text class="map-caption" x="459" y="229">facts + fact_details + fact_revisions · 确认、冲突、撤回与有效期</text>
+                <rect class="map-box purple" x="440" y="266" width="662" height="70" rx="9"/>
+                <text class="map-title" x="459" y="291">04 派生记忆 · 根据哪些事实，得出了什么结论？</text>
+                <text class="map-caption" x="459" y="315">规律 / 复盘 / 计划 / 月度摘要 · 证据版本、方法版本与失效原因</text>
+                <text class="map-annotation" x="16" y="359">谁读：工作流读草稿，纠错读账本，建议与计划读有效事实，分析读取有界事件窗口。</text>
+              </svg>
+            </div>
 
-                  <path class="map-line" d="M121 89V127" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M380 89V127" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M639 89V127" style="marker-end:url(#memory-arrow)" />
-                  <text class="map-annotation" x="14" y="117">本地写入关口</text>
-                  <rect class="map-box blue" x="14" y="128" width="215" height="72" rx="7" />
-                  <rect class="map-box" x="273" y="128" width="215" height="72" rx="7" />
-                  <rect class="map-box purple" x="532" y="128" width="214" height="72" rx="7" />
-                  <text class="map-title" x="121" y="153" text-anchor="middle">parse stages → validate</text>
-                  <text class="map-caption" x="121" y="173" text-anchor="middle">完整事件才交给 persist</text>
-                  <text class="map-caption" x="121" y="189" text-anchor="middle">intent=fact 才交给 fact</text>
-                  <text class="map-title" x="380" y="153" text-anchor="middle">PUT API</text>
-                  <text class="map-caption" x="380" y="176" text-anchor="middle">Pydantic 校验后覆盖 meta</text>
-                  <text class="map-title" x="639" y="153" text-anchor="middle">services / scheduler</text>
-                  <text class="map-caption" x="639" y="176" text-anchor="middle">规则计算后写派生结果</text>
+            <section class="memfix-unit" id="memory-working" data-chapter aria-labelledby="memory-working-title">
+              <h3 id="memory-working-title">① 工作记忆：草稿过期，已保存的体重仍保留</h3>
+              <div class="memfix-grid">
+                <div>
+                  <p class="memfix-example">“今天体重 65 公斤，中午吃了炸鸡。”</p>
+                  <div class="memfix-route" aria-label="完整体重与未完成餐食分别处理"><span>体重完整<br/><b>先写 events</b></span><i aria-hidden="true">＋</i><span>炸鸡分量待补<br/><b>留在 checkpoint</b></span></div>
+                  <p>7 天没有有效补充，餐食草稿过期。已保存的体重继续保留；期限按最后有效交互计算，普通查看不会续期。</p>
+                  <div class="memfix-route"><span>登记过期凭据</span><i aria-hidden="true">→</i><span>使流程失效</span><i aria-hidden="true">→</i><span>清理副本</span><i aria-hidden="true">→</i><span>完成 / 失败后重试</span></div>
+                </div>
+                <div class="memfix-code">
+                  <b>代码入口 · 保留多久，如何恢复清理</b>
+                  <pre><code># common/config.py · 默认值，可通过环境变量配置
+context_pending_days: int = 7
+context_plan_days: int = 7
+context_completed_days: int = 30
 
-                  <path class="map-line" d="M82 200V248" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M168 200V224H355V248" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M380 200V248" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M639 200V224H610V248" style="marker-end:url(#memory-arrow)" />
-                  <text class="map-annotation" x="14" y="238">两套 SQLite · 职责不同</text>
-                  <rect class="map-box blue" x="14" y="249" width="220" height="125" rx="8" />
-                  <rect class="map-box" x="273" y="249" width="473" height="125" rx="8" />
-                  <text class="map-title" x="124" y="276" text-anchor="middle">checkpoints.db</text>
-                  <text class="map-caption" x="124" y="298" text-anchor="middle">State 草稿 / pending_fields</text>
-                  <text class="map-caption" x="124" y="318" text-anchor="middle">processing_plan / plan_input_text</text>
-                  <text class="map-caption" x="124" y="338" text-anchor="middle">按 thread_id 暂停与恢复</text>
-                  <text class="map-caption" x="124" y="358" text-anchor="middle">可删除副本 · 不是事实源</text>
-                  <text class="map-title" x="509" y="276" text-anchor="middle">health.db · source of truth</text>
-                  <text class="map-caption" x="509" y="298" text-anchor="middle">meta · profile / preferences / complete:day</text>
-                  <text class="map-caption" x="509" y="318" text-anchor="middle">facts · 用户明确长期偏好与限制</text>
-                  <text class="map-caption" x="509" y="338" text-anchor="middle">events + revisions · 已确认健康记录与版本</text>
-                  <text class="map-caption" x="509" y="358" text-anchor="middle">plans / insights / reviews / monthly_summaries</text>
-
-                  <path class="map-line" d="M124 374V407H121V426" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M430 374V403H121V426" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M510 374V426" style="marker-end:url(#memory-arrow)" />
-                  <path class="map-line" d="M640 374V403H639V426" style="marker-end:url(#memory-arrow)" />
-                  <text class="map-annotation" x="14" y="416">按用途读取，不把整库塞给模型</text>
-                  <rect class="map-box blue" x="14" y="427" width="215" height="66" rx="7" />
-                  <rect class="map-box blue" x="273" y="427" width="215" height="66" rx="7" />
-                  <rect class="map-box purple" x="532" y="427" width="214" height="66" rx="7" />
-                  <text class="map-title" x="121" y="452" text-anchor="middle">parse stages / resume</text>
-                  <text class="map-caption" x="121" y="474" text-anchor="middle">当前草稿 / 已绑定单条记录</text>
-                  <text class="map-title" x="380" y="452" text-anchor="middle">respond</text>
-                  <text class="map-caption" x="380" y="474" text-anchor="middle">场景窗口 + facts + 目标</text>
-                  <text class="map-title" x="639" y="452" text-anchor="middle">plan / analysis</text>
-                  <text class="map-caption" x="639" y="474" text-anchor="middle">近期事件 + 派生统计</text>
-                </svg>
-              </div>
-              <div class="memory-stack" aria-label="四层记忆">
-                <div class="memory-layer checkpoint">
-                  <span class="index">01</span>
-                  <div><b>当前线程状态</b><p>处理计划、原始任务输入、草稿、待补字段、本地模式与已保存 ID；用于 interrupt / resume。</p></div>
-                  <code>State + checkpoint</code>
-                </div>
-                <div class="memory-layer conversation">
-                  <span class="index">02</span>
-                  <div><b>对话与幂等上下文</b><p>messages、workflows、receipts、operations；方便展示、重试和防重复。</p></div>
-                  <code>约 30 天</code>
-                </div>
-                <div class="memory-layer">
-                  <span class="index">03</span>
-                  <div><b>长期业务记忆</b><p>profile、preferences、facts、events、active plan；Repository 才是事实源。</p></div>
-                  <code>health.db</code>
-                </div>
-                <div class="memory-layer archive">
-                  <span class="index">04</span>
-                  <div><b>压缩归档</b><p>满一年后的完整月份转为 monthly_summaries，逐餐与逐日细节不可恢复。</p></div>
-                  <code>&gt; 1 年</code>
+# runtime.py · 核心调用，省略锁和循环
+self.repo.expire_workflow(row['id'])
+self.recover_context_expirations(completed_before)</code></pre>
+                  <p><code>expired_requests</code> 保留最小请求编号，阻止清理后旧请求再次写入；<code>context_expirations</code> 记录清理进度，重启可继续。</p>
+                  <a href="backend/app/infrastructure/repositories/workflows.py">touch_workflow / expire_workflow</a> · <a href="backend/app/workflows/runtime.py">prune_context / recover_context_expirations</a>
                 </div>
               </div>
-            </div>
+              <div class="memory-guard"><b>防止过期后写回</b><span>维护跳过仍持有执行锁的流程；恢复、模型返回和写入前再检查期限与 generation。消息读取也先处理过期，避免并行刷新把旧聊天重新显示出来。<a href="backend/app/workflows/concurrency.py">check_request / check_execution</a></span></div>
+            </section>
 
-            <div class="memory-subhead">
-              <h3>什么会成为长期记忆</h3>
-              <span>“写进数据库”不等于“成为用户长期事实”</span>
-            </div>
-            <div class="memory-boundary" aria-label="长期记忆边界">
-              <div class="memory-card fact">
-                <b>facts · 跨对话语义事实</b>
-                仅用户明确说出的喜欢 / 不喜欢、过敏、忌口、长期饮食限制、医生明确要求；source=user、status=confirmed。
+            <section class="memfix-unit" id="memory-ledger" data-chapter aria-labelledby="memory-ledger-title">
+              <h3 id="memory-ledger-title">② 事件账本：改成“一碗”，也能看到原来写了“两碗”</h3>
+              <div class="memfix-grid">
+                <div>
+                  <div class="memfix-route"><span>v1 · 两碗米饭<br/><b>revisions 保留</b></span><i aria-hidden="true">→</i><span>v2 · 一碗米饭<br/><b>events 更新当前值</b></span></div>
+                  <p>原有追加修订继续沿用。本次补上仓储版本检查、操作来源和修订差异展示；同一操作重试不会额外生成 v3。</p>
+                  <div class="memfix-callout"><b>两个页面同时修改？</b><p>它们都读到 v1。第一个提交生成 v2，第二个仍声称“修改 v1”，就会被拒绝，要求刷新。这样不会覆盖刚刚保存的修改。</p></div>
+                </div>
+                <div class="memfix-code">
+                  <b>代码入口 · 修改前核对版本</b>
+                  <pre><code># repositories/events.py · save_events
+if prior and expected_version is not None \
+        and prior['version'] != expected_version:
+    raise ValueError('纠错记录的版本已经变化，请重新选择记录')
+revision = prior['version'] + 1 if prior else 1
+
+# 更新 SQL 同时带上旧版本条件
+# UPDATE events SET ... WHERE id=? AND version=?</code></pre>
+                  <p>同一事务写当前事件、追加修订及操作去重结果。<code>event_revisions()</code> 计算前后字段差异，前端历史页可展开查看。</p>
+                  <a href="backend/app/infrastructure/repositories/events.py">save_events / event_revisions</a> · <a href="frontend/src/MemoryPanels.tsx">RevisionHistory</a>
+                </div>
               </div>
-              <div class="memory-card history">
-                <b>events · 可追溯健康历史</b>
-                完整并校验通过的饮食、体重、睡眠、运动、周期；修正写 revisions。偏咸 / 油腻 / 吃撑 / 仍饿只随对应餐食保存。
+              <div class="memory-guard"><b>修订也受删除管理</b><span>隐私删除覆盖全部历史版本；<code>revision_context</code> 随修订级联删除。明细归档后，只保留月度摘要，不能还原某餐的逐次修改。</span></div>
+            </section>
+
+            <section class="memfix-unit" id="memory-facts" data-chapter aria-labelledby="memory-facts-title">
+              <h3 id="memory-facts-title">③ 长期事实：一句偏好，带上确认状态和有效期</h3>
+              <div class="memfix-grid">
+                <div>
+                  <p>自由文本继续保留，同时增加可比较的对象、取值、来源和状态。<code>confirmation</code> 表示是否明确确认或冲突；<code>lifecycle</code> 表示现在是否适用。</p>
+                  <div class="memfix-route"><span>旧 · 不喜欢燕麦<br/><b>superseded</b></span><i aria-hidden="true">→</i><span>新 · 现在可以接受<br/><b>confirmed + active</b></span></div>
+                  <div class="memfix-route"><span>如果我能接受燕麦？</span><i aria-hidden="true">→</i><span><b>candidate</b><br/>待确认，暂不用于建议</span></div>
+                  <p>检查的不只是模型截取的 <code>fact_text</code>，还包括它所在的原文分句；避免把“如果……”中的片段误存为已确认偏好。</p>
+                </div>
+                <div class="memfix-code">
+                  <b>保存结构示例 · 用户说“我不喜欢燕麦”</b>
+                  <pre><code>{
+  "type": "food_preference",
+  "subject": "燕麦",
+  "value": "dislike",
+  "confirmation": "confirmed",
+  "lifecycle": "active",
+  "valid_until": null,
+  "version": 1
+}</code></pre>
+                  <p><code>facts</code> 保留兼容基表，<code>fact_details</code> 保存结构化状态，<code>fact_revisions</code> 追加每次变更。旧文本标记为 <code>legacy_text</code>，不自动猜类型。</p>
+                  <a href="backend/app/contracts/facts.py">FactInput / FactUpdate</a> · <a href="backend/app/health/facts.py">parse_fact / uncertain_assertion</a> · <a href="backend/app/infrastructure/repositories/facts.py">save_fact / decide_fact</a>
+                </div>
               </div>
-              <div class="memory-card excluded">
-                <b>不进入 facts</b>
-                模型推断、营养估算、助手建议、单次体验、假设问题、未完成或取消草稿。普通消息即使暂存，也不是健康事实。
+              <div class="memfix-rules">
+                <article><b>临时例外 · “这周不吃燕麦”</b><p>与旧偏好冲突时请用户选择，不静默抹掉长期偏好。未选择的临时冲突到期后，原偏好可以恢复。</p></article>
+                <article><b>未来日期 · “下周开始”</b><p>通过有效期字段保存为 scheduled；到达生效日期后，再处理替代或冲突，不提前改变当前偏好。</p></article>
+                <article><b>限制到期 · needs_review</b><p>过敏、专业限制等到期后转为待核对，继续保留保护；普通偏好更新不能自动解除这些限制。</p></article>
+                <article><b>撤回与删除分开</b><p>撤回停用但保留历史；删除进入原有影响范围预览与清理流程，覆盖事实快照和来源副本。</p></article>
               </div>
-            </div>
+              <div class="memory-guard"><b>确认的含义</b><span><code>confirmed</code> 仅表示用户明确陈述或确认，不等于医学核验；专业建议记录为用户转述。当前自然语言规范化只覆盖可完整匹配的明确偏好，不用相似度猜别名。</span></div>
+            </section>
 
-            <div class="memory-subhead">
-              <h3>存储清单与清理规则</h3>
-              <span>当前实现 · 无 embedding / vectorstore / 自动相似度召回</span>
-            </div>
-            <div class="memory-matrix-wrap">
-              <table class="memory-matrix">
-                <thead><tr><th>存储</th><th>写入条件</th><th>主要读取方</th><th>保留 / 失效</th></tr></thead>
-                <tbody>
-                  <tr><td><code>facts</code></td><td>计划核验 fact_text 来自当前原文；fact 或 respond 的附加任务写入</td><td>respond、recommendation、targets、plan</td><td>无自动过期；用户可单条删除</td></tr>
-                  <tr><td><code>events + revisions</code></td><td>必需字段齐全、结构校验通过；persist / save_ready 写入</td><td>parse_initial 纠错、dashboard、advice、plan、analysis</td><td>原始记录约 1 年；之后保留月度摘要</td></tr>
-                  <tr><td><code>meta</code></td><td>用户通过 API 保存 profile / preferences；系统写完整日和版本</td><td>目标估算、建议、计划、提醒调度</td><td>覆盖更新；当前没有自动过期</td></tr>
-                  <tr><td><code>messages</code></td><td>聊天请求、补充回答和助手结果</td><td>聊天界面；指代只读上一轮 evidence_refs 元数据</td><td>30 天清理；用户与助手聊天原文均不回传模型</td></tr>
-                  <tr><td><code>model_calls</code></td><td>每次网络调用前预记账；失败也计数</td><td>ModelBoundary 经 Repository 检查累计调用 / 字节预算</td><td>随工作流清理；不保存健康原文与请求正文</td></tr>
-                  <tr><td><code>workflows / receipts / checkpoints</code></td><td>每次 run / interrupt / resume 与幂等回执</td><td>Engine 恢复流程、验证 request_id、防重复写入</td><td>完成流程 30 天；等待输入最长 366 天</td></tr>
-                  <tr><td><code>plans / insights / reviews</code></td><td>计划、规律分析和日报 / 周报生成后</td><td>计划页、趋势页、建议中的 active targets</td><td>数据版本变化使 insight 失效；非事实型派生数据</td></tr>
-                  <tr><td><code>monthly_summaries</code></td><td>调度器校验月度汇总成功后，才删除对应旧事件</td><td>超过一年后的历史概览</td><td>无自动过期；只保留月级统计</td></tr>
-                </tbody>
-              </table>
-            </div>
+            <section class="memfix-unit" id="memory-derived" data-chapter aria-labelledby="memory-derived-title">
+              <h3 id="memory-derived-title">④ 派生记忆：一餐改了，引用它的周报就需要更新</h3>
+              <div class="memfix-grid">
+                <div>
+                  <div class="memfix-route"><span>餐食 v1</span><i aria-hidden="true">→</i><span>周报 · valid</span></div>
+                  <div class="memfix-route"><span>纠正为餐食 v2</span><i aria-hidden="true">→</i><span>沿实际依赖查找</span><i aria-hidden="true">→</i><span><b>周报 · stale</b></span></div>
+                  <p>结果记录来源 ID / 版本、统计窗口、生成时间、方法版本和参数。沿真实依赖找到受影响对象，可证明独立的结果继续保留。</p>
+                  <p>展示用的 <code>evidence_refs</code> 帮助用户看依据；完整依赖由 <code>provenance</code> 记录，包括“当时查过但没有结果”的查询范围。</p>
+                </div>
+                <div class="memfix-code">
+                  <b>代码入口 · 不同对象采用不同失效状态</b>
+                  <pre><code># health/derived.py · invalidate_data 的核心字段
+{
+    'status': 'needs_review' if plan else 'stale',
+    'invalid_reason': reason,
+}
 
-            <div class="memory-subhead">
-              <h3>真正传给模型的记忆</h3>
-              <span>先由本地代码筛选，再发送结构化子集</span>
-            </div>
-            <div class="memory-read-grid">
-              <div class="memory-read"><b>parse_initial · 首轮规划</b><span>当前输入、时间、操作状态。没有默认历史列表；纠错绑定后才发单条必要字段。</span></div>
-              <div class="memory-read"><b>respond · advice</b><span>授权视图：单餐、相关日期、≤7 天饮食或 ≤28 天体重；饮食可带最多 8 条限制、5 条偏好。</span></div>
-              <div class="memory-read"><b>指代解析</b><span>读取同会话上轮结果的引用元数据，在本地确定唯一记录；不发送任何历史聊天原文。</span></div>
-              <div class="memory-read"><b>plan / analysis · 仅本地</b><span>计划读近期 30 条事件与 facts；分析读 28 天记录和完整度。这两条 Graph 不调用模型。</span></div>
-            </div>
+# derived_view 另检查方法版本和窗口
+# algorithm_changed / window_changed
+# plan_window_ended / legacy_version_unknown</code></pre>
+                  <p><code>derived_metadata()</code> 生成公共元数据；<code>invalidate_dependencies()</code> 按来源变化传播失效；读取时识别旧方法与过时窗口。</p>
+                  <a href="backend/app/health/derived.py">derived_metadata / derived_view</a> · <a href="backend/app/infrastructure/repositories/provenance.py">invalidate_dependencies</a>
+                </div>
+              </div>
+              <div class="memory-matrix-wrap">
+                <table class="memory-matrix"><thead><tr><th>结果</th><th>什么时候需更新</th><th>保留什么</th></tr></thead><tbody>
+                  <tr><td>当前规律 insights</td><td>相关来源、方法版本或滚动窗口变化</td><td>旧结果可供查看，过时结论不继续作为有效规律</td></tr>
+                  <tr><td>历史复盘 reviews</td><td>相关来源变化，或方法版本已更新</td><td>保留原统计窗口，不因进入下一周而自动过期</td></tr>
+                  <tr><td>待确认计划</td><td>依赖指纹、基准计划或方法 / 日期已失效</td><td>禁止激活旧草案，要求重新生成</td></tr>
+                  <tr><td>生效计划</td><td>相关依据或安排窗口变化</td><td>保留已确认目标和用户决策，提示复核；现有安全限制仍约束生成 / 执行</td></tr>
+                  <tr><td>月度摘要</td><td>显式删除来源贡献时，删除受影响摘要</td><td>保留聚合方法和精度；原始明细清理后不承诺重新计算</td></tr>
+                </tbody></table>
+              </div>
+            </section>
 
-            <div class="memory-subhead">
-              <h3>生命周期</h3>
-              <span>定时 scheduler 每分钟检查，归档和上下文清理具备幂等 job 记录</span>
-            </div>
-            <div class="retention-grid">
-              <div class="retention-item"><b>30 天</b><span>清理旧 messages；已完成 / 失败 / 取消工作流及其 checkpoint、receipt 一并移除。</span></div>
-              <div class="retention-item"><b>366 天</b><span>仍在 waiting_input 的流程到期后清理，避免悬挂草稿无限保留。</span></div>
-              <div class="retention-item"><b>超过 1 年</b><span>只归档完整过期月份；摘要校验成功后删除逐条 events 和 complete:day。</span></div>
-              <div class="retention-item"><b>无自动过期</b><span>profile、preferences、facts、active plan、monthly_summaries 继续保留，直到更新或删除。</span></div>
-            </div>
-            <div class="memory-guard">
-              <b>删除防残留</b>
-              <span>删除 event / fact 或归档时，由统一清理服务计算依赖和副本范围，清理相关流程及其 checkpoint，保留可证明独立的数据。来源未知时先明确扩大预览范围。<a href="#privacy-deletion">查看 bug 成因、前后代码与恢复机制 →</a></span>
-            </div>
+            <section class="memfix-unit" id="memory-guards" data-chapter aria-labelledby="memory-guards-title">
+              <h3 id="memory-guards-title">共同保障：清理可恢复，保存失败能完整回滚</h3>
+              <div class="memfix-rules">
+                <article><b>过期凭据与删除凭据分开</b><p><code>expired_requests</code> 阻止过期请求重放；<code>request_tombstones</code> 阻止删除后的内容重建。两者都不保留健康正文。</p></article>
+                <article><b>嵌套读取不能提交半份计划</b><p>保存计划时可能顺便检查事实是否到期。<code>provenance_transaction()</code> 复用外层事务；后续失败时，计划和来源关系一起回滚。</p></article>
+              </div>
+              <div class="retention-grid memfix-retention">
+                <div class="retention-item"><b>7 天 · 工作草稿</b><span>默认闲置期限，CONTEXT_PENDING_DAYS；待确认计划由 CONTEXT_PLAN_DAYS 单独配置。</span></div>
+                <div class="retention-item"><b>30 天 · 完成上下文</b><span>已完成 / 失败 / 取消流程及旧消息；CONTEXT_COMPLETED_DAYS。已保存事件不随草稿删除。</span></div>
+                <div class="retention-item"><b>超过 1 年 · 月度归档</b><span>完整过期月份汇总并校验后清理明细，保留月级精度与来源版本。</span></div>
+                <div class="retention-item"><b>按事实有效期 · 长期信息</b><span>普通临时偏好到期停用；保护性限制到期继续待核对。profile 与 preferences 仍为独立用户设置。</span></div>
+              </div>
+              <p class="memfix-validation"><b>已验证快照 · 2026-10-26：</b>后端 349 条、前端 40 条测试与生产构建通过。覆盖旧请求重放、跨时区过期、并行刷新、临时冲突恢复、未来生效、修订冲突及事务回滚。</p>
+              <div class="llm-source-grid">
+                <a href="backend/tests/test_memory_layers.py"><b>后端边界测试</b>事实、期限、来源与事务一致性</a>
+                <a href="frontend/src/MemoryPanels.test.tsx"><b>前端交互测试</b>修改、撤回、历史与过期提示</a>
+                <a href="frontend/src/MemoryPanels.tsx"><b>对应页面组件</b>FactManager / RevisionHistory / DerivedNote</a>
+                <a href="docs/四层记忆实现说明.md"><b>完整实现说明</b>新增表、配置、接口与兼容规则</a>
+              </div>
+              <div class="memory-guard"><b>删除范围仍需预览</b><span>这次沿用原有精准删除机制，事实和事件的所有修订及副本都纳入清理。<a href="#privacy-deletion">查看依赖、共享原文与删除工单 →</a></span></div>
+            </section>
           </div>
         </div>
         <div class="panel llm-panel" id="prompt-system" data-chapter>
@@ -4414,16 +4516,19 @@ deletion_job = {
           "related":["repository_rules","prepare_nutrition","save_ready","respond"],"sources":[["backend/app/workflows/chat_flow.py","Engine.persist"],["backend/app/workflows/chat_parsing.py","Engine.prepared_record"],["backend/app/infrastructure/repositories/events.py","Repository.save_events"]]
         },
         {
-          "id":"fact","group":"chat","title":"保存用户明确提供的长期偏好或限制",
-          "purpose":"把已经由处理计划核对来自用户本次原文的 fact_text 保存到 facts。它不负责再次推断长期习惯，也不会把普通建议或单次餐食体验自动提升为长期事实。",
-          "input":[["parsed.fact_text / thread_id","待保存的原文事实与本工作流幂等标识。"]],
-          "output":[["process_trace","本地事实保存摘要；事实回执由随后 respond 生成。"]],
-          "steps":["route_chat 仅在没有待补问题、intent=fact 且 fact_text 非空时走到这里。","处理计划阶段已经要求 fact_text 是该 action.text 的原文片段。","Repository.save_fact 用 thread_id 作事实 ID，source=user，status=confirmed，INSERT OR IGNORE 防止重复。","首次插入增加 data_version；然后固定进入 respond。"],
-          "branches":[["主要任务是 fact","在本节点保存。"],["混合请求的附加 fact","由 respond 的 extra_actions 分支另行保存，ID 带 fact:index 后缀。"]],
-          "sideEffects":["写 facts；首次新增时更新数据版本、使旧 insights 失效。"],
-          "errors":["原文来源检查在 PlanHarness 执行；本节点没有额外模型调用，也没有第二次事实真伪判定。"],
-          "example":"当前输入：我不喜欢燕麦\n计划：fact_text=我不喜欢燕麦\nfacts：source=user，status=confirmed\n后续饮食建议可在限定偏好条数内参考它。",
-          "related":["harness","respond","repository_rules"],"sources":[["backend/app/workflows/chat_flow.py","Engine.fact"],["backend/app/infrastructure/repositories/planning.py","Repository.save_fact"]]
+          "id":"fact",
+          "group":"chat",
+          "title":"保存、核对与更新长期事实",
+          "purpose":"将当前原文交给本地事实服务，分别判断是否明确陈述、是否与同对象冲突、何时生效。确认状态与生命周期分开，用户明确确认不代表独立医学核验。",
+          "input":[["parsed.fact_text / source_text / source_message_id","提取内容、所在原文与来源消息；保留上下文以识别假设和他人偏好。"],["thread_id","稳定写入标识，用于事实操作去重。"]],
+          "output":[["fact_id / safety_fingerprint / process_trace","保存后的真实事实 ID、更新后的安全指纹与本地摘要；respond 按实际状态组织回执。"]],
+          "steps":["完整匹配的普通偏好由 parse_fact 规范化对象和取值，原文仍保留。","uncertain_assertion 检查所在分句；假设、疑问或他人偏好为 candidate，不影响已有有效偏好。","明确永久普通偏好可替代旧偏好；临时冲突要求用户选择，未来日期先 scheduled。","通过 facts、fact_details、fact_revisions 保存当前状态与追加快照；旧操作重放不覆盖后来更新。","fact 返回真实 fact_id；fact_receipt 区分已生效、候选、冲突、待生效与已失效，避免把所有结果说成已生效。"],
+          "branches":[["重复语句或旧操作重放","复用事实和操作凭据，不制造重复版本。"],["候选 / 冲突","保留待核对信息；普通建议只读取有效已确认事实，冲突限制仍保留保护。"],["到期限制","转为 needs_review，不能按普通偏好自动解除。"]],
+          "sideEffects":["事务保存事实状态、修订、最小操作凭据与来源关系；关联派生结果可失效。"],
+          "errors":["修改与撤回检查 expected_version；事实变化后旧版本提交被拒绝。","自然语言规范化有覆盖范围；历史文本保留为 legacy_text，不自动猜测结构。"],
+          "example":"先说“我不喜欢燕麦” → confirmed + active\n再说“我现在可以接受燕麦” → 旧偏好 superseded，新偏好生效\n“如果我现在可以接受燕麦呢？” → candidate，不覆盖旧偏好",
+          "related":["harness","respond","repository_rules"],
+          "sources":[["backend/app/workflows/chat_flow.py","fact"],["backend/app/health/facts.py","parse_fact / uncertain_assertion / fact_receipt"],["backend/app/infrastructure/repositories/facts.py","save_fact / decide_fact / expire_facts"],["backend/app/contracts/facts.py","FactInput / FactUpdate"]]
         },
         {
           "id":"respond","group":"chat","title":"按实际结果组装回答并执行附加任务",
@@ -4462,23 +4567,26 @@ deletion_job = {
           "related":["prepare","activate","executor"],"sources":[["backend/app/workflows/planning.py","Engine.approve_plan"],["backend/app/workflows/runtime.py","Engine.resume"]]
         },
         {
-          "id":"activate","group":"plan","title":"事务检查并决定计划最终状态",
+          "id":"activate",
+          "group":"plan",
+          "title":"事务检查并决定计划最终状态",
           "purpose":"把用户决定与最新数据库状态一起判断，确保用户确认的是仍然有效的草案。active、rejected、stale 是同一业务节点内部的结果，不是 Graph 的额外节点。",
-          "input":[["plan_id / approved","草案与用户决定。"],["最新 data_version / 当前 active plan ID","与草案生成时的 data_version、base_plan_id 对比。"]],
+          "input":[["plan_id / approved","草案与用户决定。"],["实际依赖指纹 / 当前生效计划 ID / memory","与生成时的 dependency_stamp、base_plan_id 及方法和窗口状态比较。"]],
           "output":[["reply / cards / evidence_refs","按 active、rejected、stale 生成本地回执；cards 为空，引用来自草案。"]],
-          "steps":["Repository.decide_plan 在事务中读取草案；不存在时报错。","如果草案已经不再 pending，直接返回已保存状态，实现重复确认的稳定结果。","明确拒绝则标记 rejected；接受则检查数据版本和当前生效计划 ID 两个基准。","任一基准变化则标记 stale；都一致才把旧 active 改为 superseded，把当前草案改为 active。","节点按结果返回固定说明，随后到 END。"],
+          "steps":["在事务中读取草案；不存在时报错，已处理则返回已保存状态。","用户拒绝则 rejected；用户接受时核对实际读取的来源版本和查询范围指纹。","同时核对 base_plan_id 与派生 memory 状态，方法变化或安排窗口失效也不能激活。","仅全部有效时将旧 active 改为 superseded，新草案改为 active；安全适用检查仍在激活节点执行。"],
           "branches":[["拒绝","rejected；原计划保持生效。"],["接受 + 任一基准已变","stale；要求重新生成草案。"],["接受 + 两个基准一致","active；替换旧生效计划。"]],
           "sideEffects":["事务更新 plans 状态；不调用模型，也不修改健康事件。"],
           "errors":["计划不存在会报错；计划过期是一个明确业务结果，不等同于模型调用失败。"],
-          "example":"草案生成时 data_version=10\n用户确认前新增体重使版本变为11\nactivate：判定 stale，不激活旧草案，当前计划保持不变。",
-          "related":["prepare","approve","repository_rules"],"sources":[["backend/app/workflows/planning.py","Engine.activate_plan"],["backend/app/infrastructure/repositories/planning.py","Repository.decide_plan"]]
+          "example":"草案依赖近 30 条事件及已确认偏好\n用户确认前相关事件或偏好变化 → dependency_stamp 不再一致\n结果 stale，不激活旧草案，原生效目标仍保留。",
+          "related":["prepare","approve","repository_rules"],
+          "sources":[["backend/app/workflows/planning.py","Engine.activate_plan"],["backend/app/infrastructure/repositories/planning.py","Repository.decide_plan"]]
         },
         {
           "id":"analyze","group":"analysis","title":"在充分样本上计算规则型规律",
           "purpose":"使用近 28 天结构化记录生成可解释的统计观察，写入 insights。没有训练模型，也不把漏记当零；样本不足时可以没有任何规律。",
           "input":[["近28天 dashboard / diet_complete / complete_nutrition","每日体重、睡眠、餐食、营养与完整性标记。"],["已保存 insight feedback / data_version","用户否认状态与当前数据版本。"]],
           "output":[["analysis","Repository 当前 active insights，供后面的 review 引用。"]],
-          "steps":["把旧 active insights 先标为 stale，再基于当前窗口重新计算。","构造前一日睡眠与次日完整饮食的配对：前一日睡眠已知，次日必须明确完整且营养齐全。","按睡眠小于 420 分钟与不少于 420 分钟分组；两组各至少 3 个配对才生成睡眠 / 次日摄入观察。","两组各至少 7 个配对，且平均差绝对值至少 150 kcal 时标记 important，并可能生成去重通知。","工作日与周末也只用完整且营养齐全的日期；两组各至少 3 天才保存比较。","保存规则版本、数据版本、样本、覆盖率、限制和证据；用户已 rejected 的同模板观察不重新激活。"],
+          "steps":["仅将本次重算的 sleep_intake / weekday_intake 模板标为 stale，再基于当前窗口计算；独立模板保留。","构造前一日睡眠与次日完整饮食的配对：前一日睡眠已知，次日必须明确完整且营养齐全。","按睡眠小于 420 分钟与不少于 420 分钟分组；两组各至少 3 个配对才生成睡眠 / 次日摄入观察。","两组各至少 7 个配对，且平均差绝对值至少 150 kcal 时标记 important，并可能生成去重通知。","工作日与周末也只用完整且营养齐全的日期；两组各至少 3 天才保存比较。","保存规则版本、数据版本、样本、覆盖率、限制和证据；用户已 rejected 的同模板观察不重新激活。"],
           "branches":[["样本不足","不生成对应规律，返回可能为空的 active insights。"],["满足3+3门槛","保存初步观察。"],["睡眠配对满足7+7及差异门槛","标记 important；以周级去重键发站内通知。"]],
           "sideEffects":["读取近 28 天本地数据；更新 insights，必要时写 notifications。没有模型调用。"],
           "errors":["统计阈值是原型规则，不代表医学因果或个体诊断；页面展示的是观察及其样本限制。","数据库或结构异常向上报错，没有让 LLM 猜测缺失统计的路径。"],
@@ -4618,28 +4726,34 @@ deletion_job = {
           "related":["respond","harness","boundary"],"sources":[["backend/app/workflows/chat_response.py","Engine.advice_context"],["backend/app/health/advice.py","build_advice_context / validate_advice / fallback_advice"]]
         },
         {
-          "id":"executor","group":"core","title":"Engine：请求幂等、checkpoint、恢复与结果保存",
+          "id":"executor",
+          "group":"core",
+          "title":"Engine：请求幂等、checkpoint、恢复与结果保存",
           "purpose":"外层执行器把 HTTP 请求、Graph 状态、数据库写入与返回结果连接起来。它提供进程内串行化、重复请求识别和恢复，但并不是跨整个工作流的数据库事务。",
           "input":[["run: kind / request_id / request_data / initial","新的或重试的业务请求。"],["resume: thread_id / interrupt_id / text 或 approved","正在等待的流程与本次恢复身份。"]],
           "output":[["接口结果 / 工作流与消息 / receipts","状态、回复、卡片、证据、执行摘要、耗时、调用类别和必要的待输入 payload。"]],
-          "steps":["run 在 RLock 中计算 kind+request_data 指纹；同 ID 不同内容拒绝，同内容已 completed / waiting_input 直接返回原结果。","新请求创建 thread_id 并登记 running；失败重试复用旧 ID，有 checkpoint 时 invocation=None 让 Graph 从保存处继续。","invoke 为此次执行新建授权作用域，绑定持久化预算回调；State 中保存的计划本身没有外发能力。","format_result 将中断变成 waiting_input，将普通完成变成 completed，附本次 model_disclosures 与耗时；run 保存结果及助手消息。","resume 先查 receipts；相同恢复请求直接复用回执，然后校验 workflow 为 waiting_input 且 interrupt_id 匹配。","计划确认要求严格 bool，普通补充要求文本；local_only 可以收紧并写回 State，已有本地模式不能通过 model_allowed 自动升级。","同 thread_id 用 Command(resume=answer) 继续；成功后保存 workflow、receipt 与同会话助手消息。","run 异常会标记 failed 并重抛；resume 没有同样的统一 failed 包装，应通过 checkpoint / 回执判断实际完成阶段，不能只看一次 HTTP 是否成功。"],
-          "branches":[["重复请求或重复补充","按工作流指纹或 receipt 指纹复用结果。"],["模型模式恢复时用户切纯本地","限制收紧，后续估算 / 表达 / 建议也全部禁止模型外发。"],["节点写入成功、响应失败","重试可能从已提交 checkpoint 后继续，Repository op_key 防重复。"]],
+          "steps":["run 用请求锁和指纹识别重复请求；先拒绝删除凭据、过期凭据与超过期限的旧流程。","新请求登记 running；失败重试复用 thread_id 和 checkpoint，执行时持有工作流锁，同会话按需串行。","invoke 每次新建模型授权作用域和预算记账；模型 I/O 释放全局锁，返回后核对执行身份、期限和相关依赖。","format_result 返回保存的事件 ID、当前状态、披露与耗时，并持久化结果和助手消息。","resume 校验请求与回执，begin_resume 在 Graph 消耗中断前持久化答案归属；失败答案进入 resume_failed，可按原请求重试。","local_only 可以收紧，不能在恢复时放宽；待补字段与纠错绑定版本仍由本地检查。","prune_context 按最后有效交互和配置期限找过期流程，跳过活动执行锁；登记 expired_requests 和 context_expirations 后清理副本。","checkpoint 清理或压缩失败保留 pending 作业，下次维护 / 启动恢复；消息读取也处理过期，防止并行刷新重显旧内容。"],
+          "branches":[["重复请求 / 补充","核对指纹并复用结果；过期或已删除请求明确拒绝。"],["已接收答案失败","重试同一答案，或取消后重新核对记录，不隐式替换已绑定答案。"],["过期草稿","清理上下文并保留已保存事件；旧请求不能重新生成。"]],
           "sideEffects":["使用两个 SQLite：health.db 存业务事实与回执，checkpoints.db 存状态。","一个流程可以多次暂停；局部已保存事件不会因之后的异常自动回滚。"],
           "errors":["不是 waiting_input、过时 interrupt_id、相同 request_id 改了内容均被拒绝。","HTTP 模型层没有自动重试；用户重试仍消耗累计预算，不能通过重启清零。"],
           "example":"先保存体重，餐食等待补充\n服务重启 → workflow 仍 waiting_input\n同 thread_id + 正确 interrupt_id 补100g\n已保存体重不重写，餐食继续准备；同恢复请求再次发送则返回 receipt。",
-          "related":["__start__","__end__","clarify","boundary","repository_rules"],"sources":[["backend/app/workflows/runtime.py","Engine.run / resume / invoke / format_result"]]
+          "related":["__start__","__end__","clarify","boundary","repository_rules"],
+          "sources":[["backend/app/workflows/runtime.py","run / resume / prune_context / recover_context_expirations"],["backend/app/workflows/concurrency.py","check_request / check_execution / check_context_deadline"],["backend/app/infrastructure/repositories/workflows.py","begin_resume / expire_workflow / expired_contexts"]]
         },
         {
-          "id":"repository_rules","group":"core","title":"Repository：事实写入、操作去重与版本传播",
-          "purpose":"SQLite 是真实业务状态来源。Graph 保存的是执行进度；模型只输出候选结构。Repository 通过事务、操作键与版本把同一请求重复执行和对旧计划的确认区分开。",
+          "id":"repository_rules",
+          "group":"core",
+          "title":"Repository：事实写入、操作去重与版本传播",
+          "purpose":"事件、长期事实与派生结果各自保留版本和真实来源。具体仓储方法提供事务与操作去重；完整工作流可分阶段保存，不是一个大事务。",
           "input":[["save_events: drafts / op_key / correction_id","已准备的事件与稳定业务操作键；纠错只允许一条。"],["save_fact / decide_plan / account_model_call","事实原文、计划决定与调用预算记录。"]],
           "output":[["事件 ID / 计划状态 / 预算结果","实际保存结果，而不是模型声称的成功。"]],
-          "steps":["save_events 先查 operations；已有 op_key 立即返回原 ID 列表，不重复插入。","新增生成 UUID 和 version=1；纠错保持 ID、version+1，并要求目标存在。","occurred_at 统一为 UTC ISO，day 按上海时区生成；序列化 data 时拒绝 NaN。","在同一个 save_events 事务中写 events、对应 revisions 和 operations，然后增加 data_version，把 active insights 标为 stale。","save_fact 使用稳定 ID 的 INSERT OR IGNORE，仅首次插入增加版本；它保存明确用户事实而非模型建议。","decide_plan 比对草案 data_version 与 base_plan_id，在事务里决定 active / rejected / stale，避免旧草案替换新状态。","account_model_call 在 HTTP 发出前持久化次数与字节，失败也保留记账；清理工作流时一并清理这些元数据。"],
-          "branches":[["相同 op_key 重放","返回已存在结果，不制造第二条事件或额外 revision。"],["不同 op_key 的再次纠错","视为新修改，写新的 revision。"],["记录变化","旧规律过期；界面汇总从已保存事件重新读取。"]],
+          "steps":["save_events 先查 operations，相同 op_key 返回原 ID，不重复追加 revision。","纠错核对 expected_version，更新 SQL 同时匹配旧版本；同一事务写 events、revisions、revision_context 与 operations。","save_fact 规范化明确偏好、检查原文语气、处理冲突与有效期，追加 fact_revisions；旧凭据重放不覆盖新偏好。","来源变化沿 provenance 的版本和查询范围传播，标记受影响规律、复盘与计划；可证明独立的结果保留。","decide_plan 核对 dependency_stamp、base_plan_id 和 memory 有效状态；旧数据仅在缺少依赖指纹时回退 data_version。","provenance_transaction 复用外层事务；读取事实期限不能提前提交半份计划。","account_model_call 在网络调用前记次数与字节，失败也保留记账；不保存健康正文。"],
+          "branches":[["相同 op_key 重放","复用结果，不新增事件或修订。"],["旧 expected_version 修改","拒绝覆盖，要求刷新。"],["相关来源变化","受影响结论 stale；生效计划 needs_review，保留已确认目标。"]],
           "sideEffects":["事务边界是具体 Repository 方法；跨 save_ready、persist、respond 的整个流程不是一个大事务。"],
           "errors":["删除通过统一服务计算实际依赖和原文副本，清理受影响的聊天、流程与 checkpoint；可证明独立的对象保留。历史来源不完整时先明确扩大预览范围，详见精准删除独立小节。","该项目是单用户本地原型，引用绑定和数据最小化不等于多租户身份鉴权。"],
           "example":"同一事件键 thread:event:0 被调用两次\n第一次：events + revision + operation 成功提交\n第二次：operations 命中，返回同一ID\n不会因为客户端重试又增加一条体重。",
-          "related":["persist","fact","activate","boundary","executor"],"sources":[["backend/app/infrastructure/repositories/events.py","save_events"],["backend/app/infrastructure/repositories/planning.py","save_fact / decide_plan"],["backend/app/infrastructure/repositories/provenance.py","observe / persist_provenance"],["backend/app/privacy/deletion.py","preview / delete / recover"],["backend/app/privacy/fragments.py","minimize_event"]]
+          "related":["persist","fact","activate","boundary","executor"],
+          "sources":[["backend/app/infrastructure/repositories/events.py","save_events / event_revisions"],["backend/app/infrastructure/repositories/facts.py","save_fact / expire_facts"],["backend/app/infrastructure/repositories/planning.py","save_plan / decide_plan"],["backend/app/infrastructure/repositories/provenance.py","provenance_transaction / invalidate_dependencies"],["backend/app/health/derived.py","derived_metadata / derived_view"],["backend/app/privacy/deletion.py","preview / delete / recover"]]
         },
         {
           "id":"targets_rules","group":"core","title":"系统默认目标的计算与使用边界",
@@ -4658,7 +4772,7 @@ deletion_job = {
           "purpose":"单进程调度器每约60秒 tick 一次，生成站内提醒、补齐日报、触发周复盘与后续计划，并清理过期原文和执行上下文。关闭网页不会停止后端任务，但也没有设备级实时推送。",
           "input":[["reference / preferences / profile / jobs","上海时间、提醒设置、档案和持久化任务回执。"]],
           "output":[["notifications / reviews / analysis / pending plan / 清理结果","日周报告、提醒、计划草案或自动批准结果，以及过期数据维护。"]],
-          "steps":["先做每日归档与上下文清理；即使关闭提醒，维护任务仍可运行。","没有档案时结束本轮后续调度；有档案则对最近7个有记录日期补日报。","若 notifications_enabled=false，补日报后不再生成本轮提醒与常规定时通知。","按用餐前后窗口、身体记录时间与总结时间写去重通知；没有吃某餐或没有记录不会直接当成零摄入。","到周复盘日和总结时间，Engine.run analysis 生成周复盘；已有 active plan 时再 Engine.run plan，以本地规则生成后续安排。","jobs 使用稳定键登记执行与重试，单任务达到重试次数上限后不无限循环；调度主循环异常只记通用日志，下一轮继续。","旧完成工作流约30天清理，等待输入最长366天；超过一年按完整过期月份归档，摘要校验后才清理原文及上下文副本。"],
+          "steps":["先做每日归档与上下文清理；即使关闭提醒，维护任务仍可运行。","没有档案时结束本轮后续调度；有档案则对最近7个有记录日期补日报。","若 notifications_enabled=false，补日报后不再生成本轮提醒与常规定时通知。","按用餐前后窗口、身体记录时间与总结时间写去重通知；没有吃某餐或没有记录不会直接当成零摄入。","到周复盘日和总结时间，Engine.run analysis 生成周复盘；已有 active plan 时再 Engine.run plan，以本地规则生成后续安排。","jobs 使用稳定键登记执行与重试，单任务达到重试次数上限后不无限循环；调度主循环异常只记通用日志，下一轮继续。","按最后有效交互计算期限：待补草稿和待确认计划默认7天，完成/失败/取消流程默认30天；旧请求保留最小拒绝凭据，清理失败可恢复。超过一年按完整过期月份归档。"],
           "branches":[["关闭提醒","仍做归档维护；符合条件的补日报在提醒开关检查前。"],["计划草案仍需确认","后台可生成 waiting_input，不代替用户点击接受。"],["服务重启","jobs / reviews / workflows 仍在 SQLite；日报按当前补齐规则处理。"]],
           "sideEffects":["写 jobs、notifications、reviews 等；维护可删除过期数据与 checkpoint；不调用模型生成分析或计划。"],
           "errors":["维护或单任务失败标记为可重试，不让整个后台循环退出。","原始记录压缩成月度摘要后，不能再恢复逐餐细节。"],
@@ -4709,7 +4823,15 @@ deletion_job = {
         ["extra_actions","list[dict] · 默认空列表","未作为主 extraction 执行、但已获批准的附加 query / advice / fact 任务。","parse_initial","respond 按顺序执行；每项仍受各自工具和模型边界约束。"],
         ["parse_context","dict[str, Any] · 短生命周期","两个解析入口交给统一归一化节点的桥接元数据：反馈候选、日期锚点、控制标志和来源。","parse_initial、patch_pending","normalize_extraction 消费后立即清空为 {}；不包含授权令牌，也不是健康事实。"],
         ["correction_candidates","list[dict] · 最多 5 项","纠错目标不唯一时，由本地检索固定下来的候选快照。","prepare_clarification","clarify 展示并校验用户选择；候选记录 ID 不发送给模型，不能替换为任意 ID。"],
-        ["correction_version","int | None","纠错目标绑定时读取的记录版本，用于检测并发修改。","parse_initial","patch_pending / persist 执行乐观并发校验；版本变化时拒绝静默覆盖。"]
+        ["correction_version","int | None","纠错目标绑定时读取的记录版本，用于检测并发修改。","parse_initial","patch_pending / persist 执行乐观并发校验；版本变化时拒绝静默覆盖。"],
+        ["source_message_id","str · 当前用户消息 ID","当前输入的来源消息标识；补充时使用对应恢复请求 ID。","初始状态 / clarify","证据绑定、事实来源及精准删除；与源文本一同保存在 checkpoint。"],
+        ["source_text","str · 当前来源原文","不使用拼接后的回复替代源消息；长期事实检查其所在原文分句。","初始状态 / clarify","ground_event、save_fact(context_text)、纠错与来源验证。"],
+        ["safety_input_text","str · 待检查输入","首次输入、补充或附言中本次需要检查的原话。","API / clarify","安全入口及缓存指纹；恢复时继续检查。"],
+        ["safety","dict · 本地或模型复核结果","最终风险类别、原因、策略版本与操作能力。","safety_gate / classify_safety","路由、写入前与输出前检查；不作为用户诊断保存。"],
+        ["safety_context","dict · 最小分类上下文","本轮必要原话与有限档案信息。","安全入口","分类模型和本地校验；范围受发送边界约束。"],
+        ["safety_fingerprint","str · 安全上下文指纹","输入、必要限制及策略/模型版本共同确定的判断身份。","安全入口 / fact","require_safety 检查缓存是否仍适用；事实变化后重新核对。"],
+        ["safety_classification","dict · 结果与指纹缓存","同一有效输入重放时复用分类结果，避免重复模型调用。","classify_safety","恢复时先比较指纹，不可直接当作新的调用授权。"],
+        ["fact_id","str · 事实保存后产生","实际保存或去重复用的长期事实 ID，不一定等于 thread_id。","fact","respond 查询实际确认/生命周期状态并生成准确回执；随 checkpoint 保存。"]
       ]
     }
     </script>
@@ -5065,7 +5187,7 @@ deletion_job = {
             name: "保存或修正事件",
             kind: "业务代码 / 事务写入",
             description:
-              "读取已经过营养准备的事件并按操作键去重保存；纠错前重新核验绑定 ID 与版本，保持类型和原日期。数据变化使现有规律过期。",
+              "读取已经过营养准备的事件并按操作键去重保存；纠错前重新核验绑定 ID 与版本，保持类型和原日期。来源变化使受影响规律与复盘过时，计划提示复核。",
             input: ["prepared_events", "correction_id", "saved_indexes"],
             output: ["record_ids", "events / revisions", "data_version"],
             source: "workflows/chat_flow.py · Engine.persist() / repositories/events.py",
@@ -5075,11 +5197,11 @@ deletion_job = {
             name: "保存长期事实",
             kind: "用户明确提供的偏好",
             description:
-              "把用户主动表达的偏好或已知限制写入 facts，来源为 user，状态为 confirmed。它不把模型推断自动确认为用户事实。",
+              "本地服务核对原文语气、偏好对象、冲突和有效期，保存 facts / fact_details / fact_revisions。返回 fact_id，候选和冲突不作为普通建议中的有效已确认事实。",
             input: ["parsed.fact_text", "thread_id"],
-            output: ["facts", "data_version"],
+            output: ["fact_id", "事实状态与修订", "data_version"],
             source: "workflows/chat_flow.py · Engine.fact()",
-            sub: "facts · 用户明确表达",
+            sub: "确认 / 冲突 / 有效期",
           },
           respond: {
             name: "组织回答与证据",
@@ -5701,6 +5823,11 @@ deletion_job = {
           'harness-case': 'data-harness',
           'grounding-harness': 'data-harness',
           'memory-system': 'memory-system',
+          'memory-working': 'memory-system',
+          'memory-ledger': 'memory-system',
+          'memory-facts': 'memory-system',
+          'memory-derived': 'memory-system',
+          'memory-guards': 'memory-system',
           'prompt-system': 'memory-system',
           'tool-runtime': 'memory-system',
           'plan-branches': 'memory-system',

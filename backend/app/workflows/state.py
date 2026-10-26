@@ -59,3 +59,4 @@ class State(TypedDict, total=False):
     parse_context: dict[str, Any]
     correction_candidates: list[dict]
     correction_version: int | None
+    fact_id: str

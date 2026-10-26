@@ -52,6 +52,7 @@ import type {
   Targets,
   Workflow,
 } from "./types";
+import { DerivedNote, ExpiredContexts, FactManager, RevisionHistory } from "./MemoryPanels";
 
 type Tab = "chat" | "history" | "plans" | "insights" | "settings";
 function deletionCountLabel(key: string) {
@@ -404,7 +405,7 @@ export default function App() {
       api<Event[]>("/events"),
       api<Daily[]>("/trends"),
       api<Plan[]>("/plans"),
-      api<Insight[]>("/insights"),
+      api<Insight[]>("/insights?include_stale=true"),
       api<Review[]>("/reviews"),
       api<Notice[]>("/notifications"),
       api<Workflow[]>("/workflows"),
@@ -520,11 +521,13 @@ export default function App() {
       await task();
       await refresh();
       if (success) setToast(success);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "请求失败");
       // An error can arrive after the server accepted an answer or activated a
       // plan. Refresh recovery information instead of offering another answer.
       await refresh().catch(() => {});
+      return false;
     } finally {
       setBusy(false);
     }
@@ -981,6 +984,8 @@ export default function App() {
                     <div ref={bottom} />
                   </div>
                   <div className="composer-area">
+                    <ExpiredContexts key={`expired-${privacyGeneration.current}`} refreshKey={messages.length + pending.length}
+                      restart={() => { setSelectedWorkflow("new"); setInput(""); lastRequest.current = null; }} />
                     {currentPending && (
                       <div className="pending-strip">
                         <CircleHelp size={15} />
@@ -1289,6 +1294,7 @@ export default function App() {
                         <small>{i.data.window.join(" — ")}</small>
                       </div>
                       <h2>{i.data.title}</h2>
+                      <DerivedNote memory={i.data.memory} />
                       <p>{i.data.description}</p>
                       <div className="insight-facts">
                         <span>{i.data.sample_size} 个样本</span>
@@ -1306,7 +1312,7 @@ export default function App() {
                       <div className="insight-feedback">
                         <span>这个观察符合你的实际情况吗？</span>
                         <button
-                          disabled={busy || i.feedback === "accepted"}
+                          disabled={busy || i.feedback === "accepted" || ["stale", "needs_review"].includes(i.data.memory?.status ?? "")}
                           onClick={() =>
                             act(
                               () =>
@@ -1355,6 +1361,7 @@ export default function App() {
                         </small>
                       </div>
                       <p>{r.data.summary}</p>
+                      <DerivedNote memory={r.data.memory} />
                       <div className="review-metrics">
                         <div>
                           <b>{r.data.record_count}</b>
@@ -1384,6 +1391,7 @@ export default function App() {
             )}
             {tab === "settings" && preferences && (
               <Settings
+                key={`facts-${privacyGeneration.current}`}
                 preferences={preferences}
                 facts={facts}
                 profile={profile}
@@ -1395,6 +1403,7 @@ export default function App() {
                 removeFact={(f) => {
                   void previewDeletion("fact", f.id);
                 }}
+                mutateFact={(path, method, body) => act(() => api(path, method, body), "长期信息已更新")}
                 health={{ ...health, local_only: localOnly || health.local_only }}
               />
             )}
@@ -1703,6 +1712,7 @@ function History({
                     </small>
                   </div>
                   <p>{e.raw_text}</p>
+                  <RevisionHistory eventId={e.id} version={e.version} />
                   {e.kind === "meal" && (
                     <small>
                       {e.data.items
@@ -1742,6 +1752,7 @@ function History({
           {months.map((m) => (
             <div className="state-row" key={m.month}>
               <b>{m.month}</b>
+              <DerivedNote memory={m.data.memory} />
               <span>
                 {m.data.record_count} 条记录 · {m.data.meal_count} 餐 · 平均体重{" "}
                 {value(m.data.avg_weight_kg, 1)} kg
@@ -2004,6 +2015,7 @@ function Plans({
           </div>
           {active ? (
             <>
+              <DerivedNote memory={active.data.memory} />
               <div className="active-target">
                 <strong>
                   {active.data.targets.kcal}
@@ -2110,6 +2122,7 @@ function Settings({
   editProfile,
   save,
   removeFact,
+  mutateFact,
   health,
 }: {
   preferences: Preferences;
@@ -2119,6 +2132,7 @@ function Settings({
   editProfile: () => void;
   save: (p: Preferences) => void;
   removeFact: (f: Fact) => void;
+  mutateFact: (path: string, method: string, body: unknown) => Promise<boolean>;
   health: Health;
 }) {
   const [draft, setDraft] = useState(preferences);
@@ -2179,28 +2193,7 @@ function Settings({
             <b>长期信息</b>
             <BookOpen size={17} />
           </div>
-          <p className="muted">
-            在聊天中告诉我饮食偏好、忌口或已知限制。这里只保存你明确表达的信息。
-          </p>
-          {facts.length ? (
-            facts.map((f) => (
-              <div className="fact-row" key={f.id}>
-                <span>{f.content}</span>
-                <button
-                  className="icon-button"
-                  disabled={busy}
-                  aria-label="删除长期信息"
-                  onClick={() => removeFact(f)}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))
-          ) : (
-            <div className="simple-empty small">
-              还没有长期偏好。试着说“我不喜欢燕麦”。
-            </div>
-          )}
+          <FactManager facts={facts} busy={busy} mutate={mutateFact} remove={removeFact} />
         </section>
       </div>
       <form

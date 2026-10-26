@@ -64,16 +64,21 @@ class PrivacyDeletionService:
                         group['spans'].append((entry['start'], entry['end']))
         else:
             fact = self.repo.conn.execute('SELECT content FROM facts WHERE id=?', (object_id,)).fetchone()
+            contents = [fact[0]] if fact else []
+            contents.extend(json.loads(row[0])['content'] for row in self.repo.conn.execute(
+                'SELECT data FROM fact_revisions WHERE fact_id=?', (object_id,)))
             for row in self.repo.conn.execute(
                 'SELECT o.source_id FROM provenance_occurrences o JOIN provenance_nodes n ON n.node_id=o.holder_node_id '
                 "WHERE n.object_type='fact' AND n.object_id=?", (object_id,),
             ):
                 message = self.repo.conn.execute('SELECT text FROM messages WHERE id=?', (row[0],)).fetchone()
                 if message and fact:
-                    text, offset, spans = message[0], 0, []
-                    while (offset := text.find(fact[0], offset)) >= 0:
-                        spans.append((offset, offset + len(fact[0])))
-                        offset += max(1, len(fact[0]))
+                    text, spans = message[0], []
+                    for content in set(contents):
+                        offset = 0
+                        while (offset := text.find(content, offset)) >= 0:
+                            spans.append((offset, offset + len(content)))
+                            offset += max(1, len(content))
                     bounds[row[0]] = {'hash': hashlib.sha256(text.encode()).hexdigest(), 'spans': spans}
         return bounds
 
@@ -283,6 +288,7 @@ class PrivacyDeletionService:
         repo = self.repo
         retained_plans = []
         for thread in manifest['threads']:
+            repo.conn.execute('DELETE FROM context_expirations WHERE thread_id=?', (thread,))
             requests = {row[0] for row in repo.conn.execute('SELECT request_id FROM workflows WHERE id=?', (thread,))}
             for table in ('receipts', 'resume_attempts'):
                 requests.update(row[0] for row in repo.conn.execute(f'SELECT request_id FROM {table} WHERE thread_id=?', (thread,)))
@@ -317,6 +323,12 @@ class PrivacyDeletionService:
                 repo.conn.execute('UPDATE plans SET data=? WHERE id=?', (dump(data), object_id))
                 retained_plans.append(object_id)
             else:
+                if kind == 'event':
+                    for expired in repo.conn.execute('SELECT thread_id,record_ids FROM context_expirations').fetchall():
+                        ids = json.loads(expired['record_ids'])
+                        if object_id in ids:
+                            repo.conn.execute('UPDATE context_expirations SET record_ids=? WHERE thread_id=?',
+                                              (dump([value for value in ids if value != object_id]), expired['thread_id']))
                 if kind == 'notification':
                     row = repo.conn.execute('SELECT dedupe_key FROM notifications WHERE id=?', (object_id,)).fetchone()
                     if row:
@@ -343,6 +355,9 @@ class PrivacyDeletionService:
                     "SELECT node_id FROM provenance_nodes WHERE object_type='event' AND object_id=? AND is_current=1", (event_id,),
                 ))
             repo.persist_provenance('summary', batch['month'], sources=sources, use_reads=False)
+            summary_node = repo.provenance_node('summary', batch['month'])
+            repo.conn.execute('UPDATE monthly_summaries SET data=? WHERE month=?',
+                              (dump({**batch['data'], **repo.dependency_metadata(summary_node)}), batch['month']))
             repo.conn.execute("DELETE FROM meta WHERE key LIKE ?", (f"complete:{batch['month']}-%",))
         # No broad insight invalidation: independent reports stay usable.
         repo._bump()

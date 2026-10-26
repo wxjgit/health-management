@@ -4,6 +4,7 @@ import json
 
 from ...common.clock import stamp
 from .common import dump
+from ...health.derived import derived_metadata, derived_view
 
 
 class MaintenanceRepositoryMixin:
@@ -41,7 +42,7 @@ class MaintenanceRepositoryMixin:
 
     def summaries(self):
         return [
-            {**dict(row), 'data': json.loads(row['data'])}
+            {**dict(row), 'data': derived_view(json.loads(row['data']))}
             for row in self.conn.execute(
                 'SELECT * FROM monthly_summaries ORDER BY month DESC'
             )
@@ -52,6 +53,7 @@ class MaintenanceRepositoryMixin:
         archived = []
         with self.lock, self.conn:
             for month, events, data in batches:
+                data = derived_metadata('summary', data)
                 self.conn.execute(
                     'INSERT OR REPLACE INTO monthly_summaries VALUES (?,?,?)',
                     (month, dump(data), stamp()),
@@ -118,11 +120,15 @@ class MaintenanceRepositoryMixin:
                     )
 
     def export(self):
+        facts = self.facts(include_inactive=True)
+        events = self.events()
         return {
             'profile': self.get_meta('profile'),
             'preferences': self.get_meta('preferences'),
-            'events': self.events(),
-            'facts': self.facts(),
+            'events': events,
+            'event_revisions': {event['id']: self.event_revisions(event['id']) for event in events},
+            'facts': facts,
+            'fact_revisions': {fact['id']: self.fact_revisions(fact['id']) for fact in facts},
             'plans': self.plans(),
             'insights': self.insights(),
             'monthly_summaries': self.summaries(),

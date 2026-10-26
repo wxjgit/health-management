@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
+from uuid import uuid4
 
 from ..common.clock import now
 from ..contracts.profile import Preferences, Profile
+from ..contracts.facts import FactInput, FactUpdate, FactDecision
 from ..health import suggest_weights
 from ..health.targets import default_targets
 from .deps import get_engine, protected_read
@@ -64,8 +66,36 @@ def weight_suggestion(engine=Depends(get_engine)):
 
 @router.get('/facts')
 @protected_read
-def facts(engine=Depends(get_engine)):
-    return engine.repo.facts()
+def facts(include_inactive: bool = False, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.facts(include_inactive=include_inactive)
+
+
+@router.post('/facts')
+def create_fact(body: FactInput, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.save_fact(str(uuid4()), body.content, structured=body)
+
+
+@router.put('/facts/{fact_id}')
+def update_fact(fact_id: str, body: FactUpdate, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.save_fact(fact_id, body.content,
+                                    structured=FactInput.model_validate(body.model_dump(exclude={'expected_version'})),
+                                    expected_version=body.expected_version)
+
+
+@router.patch('/facts/{fact_id}')
+def decide_fact(fact_id: str, body: FactDecision, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.decide_fact(fact_id, body.action, body.expected_version)
+
+
+@router.get('/facts/{fact_id}/revisions')
+@protected_read
+def fact_revisions(fact_id: str, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.fact_revisions(fact_id)
 
 
 @router.delete('/facts/{fact_id}')

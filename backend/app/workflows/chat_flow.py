@@ -164,6 +164,7 @@ class ChatFlowMixin:
                     [validated],
                     f'{state["thread_id"]}:event:{index}',
                     parsed.get('correction_id'),
+                    expected_version=state.get('correction_version'),
                 ))
         return {
             'record_ids': list(dict.fromkeys(ids)),
@@ -175,13 +176,16 @@ class ChatFlowMixin:
         }
 
     def fact(self, state):
-        self.repo.save_fact(state['thread_id'], state['parsed']['fact_text'])
+        fact = self.repo.save_fact(state['thread_id'], state['parsed']['fact_text'],
+                                   context_text=state.get('source_text') or state['input_text'],
+                                   source_message_id=state.get('source_message_id'))
         return {
+            'fact_id': fact['id'],
             'safety_fingerprint': self.safety_context(state)[1],
             'process_trace': self.traced(
                 state,
                 '保存长期信息',
-                '已由本地程序保存用户明确表达的偏好或限制。',
+                '长期信息存在冲突，待用户选择。' if fact['confirmation'] == 'conflict' else '已由本地程序保存用户明确表达的偏好或限制。',
             )
         }
 

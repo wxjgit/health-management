@@ -93,8 +93,10 @@ def build_advice_context(repo, question, conversation_id='main', thread_id=None,
                               for day in window if day['weight_kg'] is not None]
         return context, []
     facts = repo.facts()
-    constraints = [fact['content'][:500] for fact in facts if CONSTRAINT.search(fact['content'])][-8:]
-    preferences = [fact['content'][:500] for fact in facts if not CONSTRAINT.search(fact['content'])][-5:]
+    constraints = [fact['content'][:500] for fact in facts if fact.get('type') in ('allergy', 'restriction', 'professional_advice')
+                   or CONSTRAINT.search(fact['content'])][-8:]
+    preferences = [fact['content'][:500] for fact in facts if fact.get('type') not in ('allergy', 'restriction', 'professional_advice')
+                   and not CONSTRAINT.search(fact['content'])][-5:]
     active = repo.active_plan()
     profile = repo.get_meta('profile')
     context.update({

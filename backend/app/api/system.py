@@ -27,6 +27,7 @@ def router_for(settings):
     @router.get('/messages')
     @protected_read
     def messages(engine=Depends(get_engine)):
+        engine.prune_context()
         return engine.repo.messages()
 
     @router.get('/data/export')

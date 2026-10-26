@@ -196,7 +196,8 @@ class ProvenanceRepositoryMixin:
                     rows = self.events(**args)
                     value = [(row['id'], row['version']) for row in rows]
                 elif kind == 'facts':
-                    value = [(row['id'], row['content']) for row in self.facts()]
+                    value = [(row['id'], row['version'], row['content'], row['lifecycle'], row['confirmation'])
+                             for row in self.facts(**args)]
                 elif kind == 'insights':
                     value = [(row['id'], row['data'], row['status']) for row in self.insights(**args)]
                 elif kind == 'active_plan':
@@ -214,6 +215,7 @@ class ProvenanceRepositoryMixin:
         return hashlib.sha256(dump(values).encode()).hexdigest()
 
     def invalidate_dependencies(self, kind, object_id, *, before=None, after=None):
+        from ...health.derived import invalidate_data
         roots = {row[0] for row in self.conn.execute(
             'SELECT node_id FROM provenance_nodes WHERE object_type=? AND object_id=?', (kind, object_id),
         )}
@@ -226,6 +228,12 @@ class ProvenanceRepositoryMixin:
             row = self.conn.execute('SELECT * FROM provenance_nodes WHERE node_id=?', (node,)).fetchone()
             if row['object_type'] == 'insight':
                 self.conn.execute("UPDATE insights SET status='stale' WHERE id=? AND status='active'", (row['object_id'],))
+            if row['object_type'] in ('insight', 'review', 'plan') and row['part'] == 'whole':
+                table = {'insight': 'insights', 'review': 'reviews', 'plan': 'plans'}[row['object_type']]
+                artifact = self.conn.execute(f'SELECT data FROM {table} WHERE id=?', (row['object_id'],)).fetchone()
+                if artifact:
+                    data = invalidate_data(json.loads(artifact[0]), 'source_changed', plan=row['object_type'] == 'plan')
+                    self.conn.execute(f'UPDATE {table} SET data=? WHERE id=?', (dump(data), row['object_id']))
 
     def matching_scopes(self, kind, record):
         result = set()

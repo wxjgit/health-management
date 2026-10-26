@@ -30,6 +30,10 @@ class Engine(
     def __init__(self, settings):
         self.settings = settings
         self.repo = Repository(settings.data_dir / 'health.db')
+        self.repo.context_retention = {
+            'pending': settings.context_pending_days, 'plan': settings.context_plan_days,
+            'completed': settings.context_completed_days,
+        }
         self.lock = RLock()
         self.execution_locks = KeyedLocks()
         self.context_epoch = 0
@@ -45,6 +49,7 @@ class Engine(
             self.deletions.inventory_checkpoints()
             self.deletions.recover()
             self.repo.recover_resume_attempts()
+            self.recover_context_expirations()
         except Exception:
             self.close()
             raise

@@ -48,7 +48,8 @@ def text_risk(text):
 def local_safety(repo, texts=()):
     profile = repo.get_meta('profile') or {}
     categories = [text_risk(text) for text in texts]
-    categories.extend(text_risk(fact['content']) for fact in repo.safety_restrictions())
+    categories.extend('medical' if fact.get('type') in ('allergy', 'professional_advice')
+                      else text_risk(fact['content']) for fact in repo.safety_restrictions())
     age = profile.get('age')
     if (isinstance(age, int) and age < 18) or profile.get('nutrition_context') in ('pregnant', 'breastfeeding'):
         categories.append('special_population')
@@ -132,4 +133,4 @@ def offline_record(text, pending=False):
 
 def offline_preference(text):
     from ..parsing.demo import FOODS
-    return bool(re.fullmatch(r'我(?:不喜欢|喜欢|不吃)(?:' + '|'.join(map(re.escape, FOODS)) + r')[。！!]?', text.strip()))
+    return bool(re.fullmatch(r'我(?:这周|本周|今天)?(?:现在|已经)?(?:不喜欢|喜欢|不吃|可以接受|能接受)(?:' + '|'.join(map(re.escape, FOODS)) + r')[。！!]?', text.strip()))

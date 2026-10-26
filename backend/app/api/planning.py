@@ -41,8 +41,9 @@ def generate_review(body: ReviewRequest, engine=Depends(get_engine)):
 
 @router.get('/insights')
 @protected_read
-def insights(engine=Depends(get_engine)):
-    return engine.repo.insights()
+def insights(include_stale: bool = False, engine=Depends(get_engine)):
+    with engine.lock:
+        return engine.repo.insights(include_stale=include_stale)
 
 
 @router.patch('/insights/{insight_id}')

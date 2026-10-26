@@ -1,12 +1,24 @@
 """Workflow, message and idempotency receipt persistence."""
 
 import json
+from datetime import datetime, timedelta
 
 from ...common.clock import stamp
 from .common import dump
 
 
 class WorkflowRepositoryMixin:
+    def touch_workflow(self, thread_id):
+        workflow = self.workflow(thread_id)
+        if not workflow or workflow['status'] == 'expired':
+            return
+        policy = getattr(self, 'context_retention', {'pending': 7, 'plan': 7, 'completed': 30})
+        pending = workflow['status'] in ('waiting_input', 'resuming', 'resume_failed', 'running')
+        days = policy['plan' if pending and workflow['kind'] == 'plan' else 'pending' if pending else 'completed']
+        moment = stamp()
+        self.conn.execute('INSERT OR REPLACE INTO workflow_activity VALUES (?,?,?)',
+                          (thread_id, moment, (datetime.fromisoformat(moment) + timedelta(days=days)).isoformat()))
+
     def workflow(self, thread_id):
         with self.lock:
             row = self.conn.execute(
@@ -29,6 +41,7 @@ class WorkflowRepositoryMixin:
             )
             self.persist_provenance('workflow', thread_id, independent=True, use_reads=False)
             self.conn.execute('INSERT OR IGNORE INTO workflow_generations VALUES (?,0)', (thread_id,))
+            self.touch_workflow(thread_id)
 
     def workflow_result(self, thread_id, result):
         with self.lock, self.conn:
@@ -37,12 +50,15 @@ class WorkflowRepositoryMixin:
                 'UPDATE workflows SET status=?, result=? WHERE id=?',
                 (result['status'], dump(result), thread_id),
             )
+            self.touch_workflow(thread_id)
 
     def messages(self, conversation_id='main', limit=100):
         with self.lock:
             rows = self.conn.execute(
-                'SELECT * FROM messages WHERE conversation_id=? ORDER BY created_at DESC LIMIT ?',
-                (conversation_id, limit),
+                'SELECT * FROM messages WHERE conversation_id=? AND NOT EXISTS '
+                '(SELECT 1 FROM workflow_activity a WHERE a.thread_id=messages.thread_id '
+                'AND julianday(a.expires_at)<=julianday(?)) ORDER BY created_at DESC LIMIT ?',
+                (conversation_id, stamp(), limit),
             ).fetchall()
             return [
                 {
@@ -183,6 +199,7 @@ class WorkflowRepositoryMixin:
                 (payload['request_id'],),
             )
             self._resume_status(thread_id, payload, 'resuming')
+            self.touch_workflow(thread_id)
             self._insert_message(payload['request_id'], thread_id, 'user', display,
                                  conversation=conversation)
 
@@ -216,6 +233,7 @@ class WorkflowRepositoryMixin:
                 'UPDATE workflows SET status=?,result=? WHERE id=?',
                 (result['status'], dump(result), thread_id),
             )
+            self.touch_workflow(thread_id)
             self.conn.execute(
                 'INSERT INTO receipts VALUES (?,?,?,?)',
                 (payload['request_id'], thread_id, request_fingerprint, dump(result)),
@@ -246,6 +264,7 @@ class WorkflowRepositoryMixin:
             self.conn.execute(
                 "UPDATE workflows SET status='cancelled',result=? WHERE id=?", (dump(result), thread_id),
             )
+            self.touch_workflow(thread_id)
             self.conn.execute(
                 "UPDATE resume_attempts SET status='cancelled' WHERE thread_id=? AND status!='completed'",
                 (thread_id,),
@@ -254,12 +273,21 @@ class WorkflowRepositoryMixin:
     def waiting_workflows(self):
         with self.lock:
             rows = self.conn.execute(
-                "SELECT id FROM workflows WHERE status IN ('waiting_input','resuming','resume_failed') ORDER BY created_at"
+                "SELECT id FROM workflows WHERE status IN ('waiting_input','resuming','resume_failed') "
+                'AND NOT EXISTS (SELECT 1 FROM workflow_activity a WHERE a.thread_id=workflows.id '
+                'AND julianday(a.expires_at)<=julianday(?)) ORDER BY created_at', (stamp(),)
             ).fetchall()
             return [self.workflow(row['id'])['result'] for row in rows]
 
-    def expired_workflows(self, completed_before, pending_before):
+    def expired_workflows(self, completed_before, pending_before, reference=None):
         with self.lock:
+            if reference:
+                return [dict(row) for row in self.conn.execute(
+                    'SELECT w.id,w.kind FROM workflows w LEFT JOIN workflow_activity a ON a.thread_id=w.id '
+                    'WHERE (julianday(a.expires_at)<=julianday(?)) OR (a.thread_id IS NULL AND '
+                    "((w.status NOT IN ('waiting_input','resuming','resume_failed','running') AND julianday(w.created_at)<julianday(?)) "
+                    "OR (w.status IN ('waiting_input','resuming','resume_failed','running') AND julianday(w.created_at)<julianday(?))))",
+                    (reference, completed_before, pending_before))]
             rows = self.conn.execute(
                 "SELECT id,kind FROM workflows "
                 "WHERE (status NOT IN ('waiting_input','resuming','resume_failed') AND created_at<?) "
@@ -267,6 +295,33 @@ class WorkflowRepositoryMixin:
                 (completed_before, pending_before),
             ).fetchall()
             return [dict(row) for row in rows]
+
+    def expire_workflow(self, thread_id):
+        with self.lock, self.conn:
+            workflow = self.workflow(thread_id)
+            if not workflow:
+                return
+            requests = {workflow['request_id']}
+            for table in ('receipts', 'resume_attempts'):
+                requests.update(row[0] for row in self.conn.execute(
+                    f'SELECT request_id FROM {table} WHERE thread_id=?', (thread_id,)))
+            for request in requests:
+                self.conn.execute('INSERT OR IGNORE INTO expired_requests VALUES (?,?,?)', (request, thread_id, stamp()))
+            ids = workflow['result'].get('saved_record_ids', [])
+            for row in self.conn.execute('SELECT result FROM operations WHERE key LIKE ?', (f'{thread_id}:event:%',)):
+                ids.extend(json.loads(row[0]))
+            self.conn.execute('INSERT OR IGNORE INTO context_expirations VALUES (?,?,?,?)',
+                              (thread_id, dump(sorted(set(ids))), 'pending', stamp()))
+            self.conn.execute("UPDATE workflows SET status='expired',result='{}' WHERE id=?", (thread_id,))
+            self.conn.execute('UPDATE workflow_generations SET generation=generation+1 WHERE thread_id=?', (thread_id,))
+
+    def expired_contexts(self, limit=20):
+        return [{'thread_id': row['thread_id'], 'status': 'expired',
+                 'reply': '此事项已过期，请重新开始；此前已保存的记录仍保留。',
+                 'saved_record_ids': [event_id for event_id in json.loads(row['record_ids'])
+                                      if self.conn.execute('SELECT 1 FROM events WHERE id=?', (event_id,)).fetchone()],
+                 'cards': [], 'evidence_refs': [], 'process_trace': [], 'duration_ms': 0}
+                for row in self.conn.execute('SELECT * FROM context_expirations ORDER BY created_at DESC LIMIT ?', (limit,))]
 
     def prune_workflow_context(self, workflows, messages_before):
         with self.lock, self.conn:

@@ -5,61 +5,14 @@ from uuid import uuid4
 
 from ...common.clock import stamp
 from .common import dump
+from ...health.derived import derived_metadata, derived_view, invalidate_data
 
 
 class PlanningRepositoryMixin:
-    def safety_restrictions(self):
-        """Only actual risk restrictions become safety dependencies.
-
-        Ordinary food preferences do not influence safety clearance. Rechecks
-        before writes/output catch restrictions added during model I/O.
-        """
-        from ...health.safety import text_risk
-        records = [dict(row) for row in self.conn.execute(
-            "SELECT * FROM facts WHERE status='confirmed' ORDER BY created_at")]
-        restrictions = [record for record in records if text_risk(record['content']) != 'general']
-        for record in restrictions:
-            self.observe('fact', record['id'])
-        return restrictions
-
-    def facts(self):
-        records = [
-            dict(row)
-            for row in self.conn.execute(
-                "SELECT * FROM facts WHERE status='confirmed' ORDER BY created_at"
-            )
-        ]
-        self.observe_scope('facts')
-        for record in records:
-            self.observe('fact', record['id'])
-        return records
-
-    def delete_fact(self, fact_id):
-        raise RuntimeError('请通过 engine.delete_fact 执行可恢复的隐私清理')
-
-    def save_fact(self, fact_id, content):
-        with self.lock, self.conn:
-            inserted = self.conn.execute(
-                'INSERT OR IGNORE INTO facts VALUES (?,?,?,?,?,?)',
-                (fact_id, content, 'user', None, 'confirmed', stamp()),
-            ).rowcount
-            if inserted:
-                self._bump()
-                self.invalidate_dependencies('fact', fact_id)
-                node = self.provenance_node('fact', fact_id, '1', state='complete')
-                from ...privacy.provenance import collectors
-                for reads in collectors(self):
-                    reads.sources.add(node)
-                    if reads.target:
-                        self.conn.execute('INSERT OR IGNORE INTO provenance_dependencies VALUES (?,?)', (node, reads.target))
-                        for row in self.conn.execute('SELECT id FROM messages WHERE thread_id=? AND role=?',
-                                                     (self.conn.execute('SELECT object_id FROM provenance_nodes WHERE node_id=?', (reads.target,)).fetchone()[0], 'user')):
-                            self.link_source(node, row['id'], 'content')
-
     def plans(self):
         with self.lock:
             return [
-                {**dict(row), 'data': json.loads(row['data'])}
+                {**dict(row), 'data': derived_view(json.loads(row['data']))}
                 for row in self.conn.execute(
                     'SELECT * FROM plans ORDER BY created_at DESC'
                 )
@@ -81,6 +34,7 @@ class PlanningRepositoryMixin:
         return plan
 
     def save_plan(self, plan_id, op_key, data):
+        data = derived_metadata('plan', data)
         with self.lock, self.conn:
             inserted = self.conn.execute(
                 'INSERT OR IGNORE INTO plans VALUES (?,?,?,?,?)',
@@ -110,6 +64,7 @@ class PlanningRepositoryMixin:
                 node = self.provenance_node('plan', plan_id)
                 valid = (plan['data']['dependency_stamp'] == self.read_stamp(self.node_reads(node))
                          if 'dependency_stamp' in plan['data'] else plan['data']['data_version'] == self.version())
+                valid = valid and plan['data'].get('memory', {}).get('status', 'valid') == 'valid'
                 status = (
                     'active'
                     if valid
@@ -130,22 +85,26 @@ class PlanningRepositoryMixin:
             'SELECT * FROM insights ORDER BY created_at DESC'
         ).fetchall()
         records = [
-            {**dict(row), 'data': json.loads(row['data'])}
+            {**dict(row), 'data': derived_view(json.loads(row['data']), rolling=True)}
             for row in rows
-            if include_stale or row['status'] == 'active'
+            if include_stale or (row['status'] == 'active' and
+                                derived_view(json.loads(row['data']), rolling=True)['memory']['status'] not in ('stale', 'needs_review'))
         ]
         self.observe_scope('insights', include_stale=include_stale)
         for record in records:
             self.observe('insight', record['id'])
         return records
 
-    def invalidate_insights(self):
+    def invalidate_insights(self, templates=('sleep_intake', 'weekday_intake')):
         with self.lock, self.conn:
-            self.conn.execute(
-                "UPDATE insights SET status='stale' WHERE status='active'"
-            )
+            for template in templates:
+                row = self.conn.execute("SELECT id,data FROM insights WHERE template=? AND status='active'", (template,)).fetchone()
+                if row:
+                    self.conn.execute("UPDATE insights SET status='stale',data=? WHERE id=?",
+                                      (dump(invalidate_data(json.loads(row['data']), 'analysis_refreshed')), row['id']))
 
     def save_insight(self, template, data):
+        data = derived_metadata(template, data)
         with self.lock, self.conn:
             old = self.conn.execute(
                 'SELECT * FROM insights WHERE template=?', (template,)
@@ -155,7 +114,7 @@ class PlanningRepositoryMixin:
             insight_id = old['id'] if old else str(uuid4())
             self.conn.execute(
                 'INSERT INTO insights VALUES (?,?,?,?,?,?) '
-                'ON CONFLICT(template) DO UPDATE SET data=excluded.data,status=excluded.status',
+                'ON CONFLICT(template) DO UPDATE SET data=excluded.data,status=excluded.status,created_at=excluded.created_at',
                 (
                     insight_id,
                     template,
@@ -172,6 +131,11 @@ class PlanningRepositoryMixin:
 
     def insight_feedback(self, insight_id, feedback):
         with self.lock, self.conn:
+            row = next((r for r in self.insights(include_stale=True) if r['id'] == insight_id), None)
+            if not row:
+                raise ValueError('规律不存在')
+            if feedback == 'accepted' and (row['status'] != 'active' or row['data']['memory']['status'] in ('stale', 'needs_review')):
+                raise ValueError('此规律已过时，请重新生成复盘')
             self._bump()
             count = self.conn.execute(
                 'UPDATE insights SET feedback=?,status=? WHERE id=?',
@@ -185,6 +149,7 @@ class PlanningRepositoryMixin:
                 raise ValueError('规律不存在')
 
     def review(self, review_id, data):
+        data = derived_metadata('review', data)
         with self.lock, self.conn:
             self.conn.execute(
                 'INSERT OR REPLACE INTO reviews VALUES (?,?,?)',
@@ -196,7 +161,7 @@ class PlanningRepositoryMixin:
 
     def reviews(self):
         return [
-            {**dict(row), 'data': json.loads(row['data'])}
+            {**dict(row), 'data': derived_view(json.loads(row['data']))}
             for row in self.conn.execute(
                 'SELECT * FROM reviews ORDER BY created_at DESC LIMIT 30'
             )

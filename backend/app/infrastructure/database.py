@@ -117,6 +117,27 @@ def open_database(path):
         connection.execute(
             'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
         )
-    connection.execute('PRAGMA user_version=5')
+    connection.executescript('''
+        CREATE TABLE IF NOT EXISTS fact_details (
+            fact_id TEXT PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,
+            data TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS fact_revisions (
+            fact_id TEXT NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+            version INTEGER NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL,
+            PRIMARY KEY(fact_id, version));
+        CREATE TABLE IF NOT EXISTS workflow_activity (
+            thread_id TEXT PRIMARY KEY REFERENCES workflows(id) ON DELETE CASCADE,
+            last_activity_at TEXT NOT NULL, expires_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS expired_requests (
+            request_id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS context_expirations (
+            thread_id TEXT PRIMARY KEY, record_ids TEXT NOT NULL,
+            state TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS revision_context (
+            event_id TEXT NOT NULL, version INTEGER NOT NULL, op_key TEXT NOT NULL,
+            PRIMARY KEY(event_id, version),
+            FOREIGN KEY(event_id, version) REFERENCES revisions(event_id, version) ON DELETE CASCADE);
+    ''')
+    connection.execute('PRAGMA user_version=6')
     connection.commit()
     return connection

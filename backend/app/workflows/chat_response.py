@@ -7,6 +7,7 @@ from ..health import dashboard, evidence, meal_assessment, recommendation
 from ..health.nutrition import nutrition_summary
 from ..chat.replies import express_plan, make_plan, medical_question, record_receipt
 from ..contracts.workflows import PlannedAction
+from ..health.facts import fact_receipt
 
 
 class ChatResponseMixin:
@@ -42,7 +43,7 @@ class ChatResponseMixin:
             )
             trace = self.traced(state, '查询本地数据', f'按模型提取的条件检索到 {len(records)} 条记录。')
         elif parsed['intent'] == 'fact':
-            reply = '已保存为你明确提供的长期信息，后续建议会参考它：' + parsed['fact_text']
+            reply = fact_receipt(self.repo.fact(state.get('fact_id', state['thread_id'])), parsed['fact_text'])
         elif state.get('record_ids'):
             records = [self.repo.event(event_id) for event_id in state['record_ids']]
             records = [record for record in records if record]
@@ -133,8 +134,10 @@ class ChatResponseMixin:
             elif action.intent == 'fact':
                 if not action.fact_text or action.fact_text not in state['input_text']:
                     raise PolicyError('长期信息必须来自本次输入。')
-                self.repo.save_fact(f'{state["thread_id"]}:fact:{index}', action.fact_text)
-                reply += '\n已保存长期信息：' + action.fact_text
+                fact = self.repo.save_fact(f'{state["thread_id"]}:fact:{index}', action.fact_text,
+                                           context_text=state['input_text'],
+                                           source_message_id=state.get('source_message_id'))
+                reply += '\n' + fact_receipt(fact, action.fact_text)
 
         if parsed['intent'] != 'query':
             trace = list(state.get('process_trace', []))

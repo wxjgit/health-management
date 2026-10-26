@@ -55,13 +55,57 @@ SCHEMA = '''
 '''
 
 
+PROVENANCE_SCHEMA = '''
+    CREATE TABLE IF NOT EXISTS provenance_nodes (
+        node_id TEXT PRIMARY KEY, object_type TEXT NOT NULL, object_id TEXT NOT NULL,
+        version TEXT NOT NULL, part TEXT NOT NULL DEFAULT 'whole',
+        provenance_state TEXT NOT NULL, lifecycle TEXT NOT NULL DEFAULT 'live',
+        is_current INTEGER NOT NULL DEFAULT 1,
+        UNIQUE(object_type, object_id, version, part));
+    CREATE INDEX IF NOT EXISTS provenance_objects
+        ON provenance_nodes(object_type, object_id, is_current);
+    CREATE TABLE IF NOT EXISTS provenance_dependencies (
+        source_node_id TEXT NOT NULL REFERENCES provenance_nodes(node_id),
+        target_node_id TEXT NOT NULL REFERENCES provenance_nodes(node_id),
+        PRIMARY KEY(source_node_id, target_node_id));
+    CREATE INDEX IF NOT EXISTS provenance_dependents ON provenance_dependencies(target_node_id);
+    CREATE TABLE IF NOT EXISTS provenance_scopes (
+        target_node_id TEXT NOT NULL REFERENCES provenance_nodes(node_id),
+        scope_key TEXT NOT NULL, criteria TEXT NOT NULL,
+        PRIMARY KEY(target_node_id, scope_key));
+    CREATE TABLE IF NOT EXISTS provenance_occurrences (
+        source_id TEXT NOT NULL, holder_node_id TEXT NOT NULL REFERENCES provenance_nodes(node_id),
+        field_path TEXT NOT NULL,
+        PRIMARY KEY(source_id, holder_node_id, field_path));
+    CREATE INDEX IF NOT EXISTS provenance_copies ON provenance_occurrences(holder_node_id);
+    CREATE TABLE IF NOT EXISTS deletion_previews (
+        id TEXT PRIMARY KEY, target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+        scope_token TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS deletion_jobs (
+        id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL, target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL, state TEXT NOT NULL, manifest TEXT NOT NULL,
+        created_at TEXT NOT NULL, completed_at TEXT);
+    CREATE TABLE IF NOT EXISTS deletion_items (
+        deletion_id TEXT NOT NULL REFERENCES deletion_jobs(id), thread_id TEXT NOT NULL,
+        state TEXT NOT NULL, PRIMARY KEY(deletion_id, thread_id));
+    CREATE TABLE IF NOT EXISTS request_tombstones (
+        request_id TEXT PRIMARY KEY, deletion_id TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS workflow_generations (
+        thread_id TEXT PRIMARY KEY, generation INTEGER NOT NULL DEFAULT 0);
+    CREATE TABLE IF NOT EXISTS job_generations (
+        key TEXT PRIMARY KEY, generation INTEGER NOT NULL DEFAULT 0);
+'''
+
+
 def open_database(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path, check_same_thread=False, timeout=30)
     connection.row_factory = sqlite3.Row
     connection.execute('PRAGMA journal_mode=WAL')
     connection.execute('PRAGMA foreign_keys=ON')
+    connection.execute('PRAGMA secure_delete=ON')
     connection.executescript(SCHEMA)
+    connection.executescript(PROVENANCE_SCHEMA)
     columns = {
         row['name'] for row in connection.execute('PRAGMA table_info(messages)').fetchall()
     }
@@ -73,6 +117,6 @@ def open_database(path):
         connection.execute(
             'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
         )
-    connection.execute('PRAGMA user_version=4')
+    connection.execute('PRAGMA user_version=5')
     connection.commit()
     return connection

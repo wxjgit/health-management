@@ -249,6 +249,128 @@ const emptyDay = {
   events: [],
 };
 
+describe("隐私删除", () => {
+  const preview = () => ({ preview_id: "preview-1", target_type: "event", target_id: "weight-1",
+    counts: { "event:delete": 1, "message:delete": 2, "workflow:delete": 1 },
+    scope: "dependencies", reasons: [] });
+  const seedRecord = () => { records = [{ id: "weight-1", kind: "weight", day: "2026-10-08",
+    occurred_at: "2026-10-08T07:00:00+08:00", raw_text: "今天体重65公斤", version: 1,
+    data: { value: 65, items: [] } }]; };
+  const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+  it("先展示后端影响范围，确认后才执行删除", async () => {
+    seedRecord();
+    const original = fetch;
+    const executed = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (path === "/api/deletions/preview") return jsonResponse(preview());
+      if (path === "/api/deletions") {
+        executed(JSON.parse(options!.body as string)); records = [];
+        return jsonResponse({ ...preview(), deletion_id: "job-1", state: "completed", deleted: true });
+      }
+      return original(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "历史与趋势" }));
+    await userEvent.click(await screen.findByRole("button", { name: "删除今天体重65公斤" }));
+    await screen.findByRole("dialog", { name: "确认删除范围" });
+    expect(screen.getByText("聊天消息：2")).toBeTruthy();
+    expect(executed).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "确认删除" }));
+    await screen.findByText("记录及受影响的副本已删除，独立内容已保留");
+    expect(executed).toHaveBeenCalledTimes(1);
+    expect(executed.mock.calls[0][0].preview_id).toBe("preview-1");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("取消预览不执行删除", async () => {
+    seedRecord(); const original = fetch; const execute = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (path === "/api/deletions/preview") return jsonResponse(preview());
+      if (path === "/api/deletions") execute();
+      return original(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "历史与趋势" }));
+    await userEvent.click(await screen.findByRole("button", { name: "删除今天体重65公斤" }));
+    await userEvent.click(await screen.findByRole("button", { name: "暂不删除" }));
+    expect(execute).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("范围变化时展示新范围，等待再次确认", async () => {
+    seedRecord(); const original = fetch; let executions = 0;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (path === "/api/deletions/preview") return jsonResponse(preview());
+      if (path === "/api/deletions") {
+        executions++;
+        return jsonResponse({ code: "scope_changed", detail: "清理范围已变化，请重新查看影响范围。",
+          preview: { ...preview(), preview_id: "preview-2", counts: { "message:delete": 3 },
+            reasons: ["新增了一份相关副本。"] } }, 409);
+      }
+      return original(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "历史与趋势" }));
+    await userEvent.click(await screen.findByRole("button", { name: "删除今天体重65公斤" }));
+    await userEvent.click(await screen.findByRole("button", { name: "确认删除" }));
+    await screen.findByText("聊天消息：3");
+    expect(screen.getByText("新增了一份相关副本。")).toBeTruthy();
+    expect(executions).toBe(1);
+    expect(screen.getByRole("button", { name: "确认删除" })).toBeTruthy();
+  });
+
+  it("清理未完成时保留任务，并能继续清理", async () => {
+    seedRecord(); const original = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, options?: RequestInit) => {
+      if (path === "/api/deletions/preview") return jsonResponse(preview());
+      if (path === "/api/deletions") {
+        records = [];
+        return jsonResponse({ ...preview(), deletion_id: "job-pending", state: "pending", deleted: false });
+      }
+      if (path === "/api/deletions/job-pending/retry")
+        return jsonResponse({ ...preview(), deletion_id: "job-pending", state: "completed", deleted: true });
+      return original(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "历史与趋势" }));
+    await userEvent.click(await screen.findByRole("button", { name: "删除今天体重65公斤" }));
+    await userEvent.click(await screen.findByRole("button", { name: "确认删除" }));
+    await screen.findByRole("dialog", { name: "隐私清理进行中" });
+    await userEvent.click(await screen.findByRole("button", { name: "继续清理" }));
+    await screen.findByText("记录及受影响的副本已删除，独立内容已保留");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("其他标签页清理后，较早的慢响应不会恢复旧消息", async () => {
+    let channel: { onmessage: ((event: { data: { state: string } }) => void) | null };
+    vi.stubGlobal("BroadcastChannel", class {
+      onmessage = null;
+      constructor() { channel = this; }
+      postMessage() {}
+      close() {}
+    });
+    const oldMessages = [{ id: "old-copy", role: "assistant", text: "旧体重上下文65公斤",
+      cards: [], evidence_refs: [], process_trace: [], duration_ms: 0, created_at: "2026-10-08" }];
+    chatMessages = oldMessages;
+    const original = fetch;
+    const delayed = deferredResponse();
+    let holdNext = false;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (path === "/api/messages" && holdNext) { holdNext = false; return delayed.promise; }
+      return original(path, options);
+    }));
+    render(<App />);
+    await screen.findByText("旧体重上下文65公斤");
+    holdNext = true;
+    await act(async () => { channel.onmessage?.({ data: { state: "completed" } }); });
+    chatMessages = [];
+    await act(async () => { channel.onmessage?.({ data: { state: "completed" } }); });
+    await act(async () => { delayed.resolve(jsonResponse(oldMessages)); });
+    expect(screen.queryByText("旧体重上下文65公斤")).toBeNull();
+  });
+});
+
 beforeEach(() => {
   localStorage.clear();
   healthOverride = null;

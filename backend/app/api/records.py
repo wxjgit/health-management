@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..common.clock import now
 from ..health import dashboard, history_window
-from .deps import get_engine
+from .deps import get_engine, protected_read
 from .schemas import CompleteRequest
 
 
@@ -13,6 +13,7 @@ router = APIRouter(prefix='/api', tags=['records'])
 
 
 @router.get('/events')
+@protected_read
 def events(
     start: date | None = None,
     end: date | None = None,
@@ -34,11 +35,11 @@ def events(
 
 @router.delete('/events/{event_id}')
 def delete_event(event_id: str, engine=Depends(get_engine)):
-    engine.delete_event(event_id)
-    return {'deleted': True, 'context_cleared': True}
+    return engine.delete_event(event_id)
 
 
 @router.get('/dashboard')
+@protected_read
 def daily(day: date | None = Query(default=None, alias='date'), engine=Depends(get_engine)):
     with engine.lock:
         return dashboard(engine.repo, (day or now().date()).isoformat())
@@ -52,6 +53,7 @@ def complete(day: date, body: CompleteRequest, engine=Depends(get_engine)):
 
 
 @router.get('/trends')
+@protected_read
 def trends(days: int = Query(default=28, ge=7, le=366), engine=Depends(get_engine)):
     with engine.lock:
         return history_window(engine.repo, days)

@@ -16,6 +16,15 @@ def conflict_on_patch(runtime, controlled):
     pending = chat(runtime, '今天记录体重', conversation='recover')
     payload = resume_payload(pending, text='65公斤')
     controlled.arm('patch_draft')
+    original_patch = runtime.parser.patch
+
+    def related_patch(*args, **kwargs):
+        # Exercise consumed-interrupt recovery with a real observed dependency,
+        # rather than relying on the former global data_version conflict.
+        runtime.repo.events(kind='weight')
+        return original_patch(*args, **kwargs)
+
+    runtime.parser.patch = related_patch
     with ThreadPoolExecutor(max_workers=1) as pool:
         failed = pool.submit(runtime.resume, pending['thread_id'], payload)
         try:
@@ -23,6 +32,7 @@ def conflict_on_patch(runtime, controlled):
             chat(runtime, local=True, conversation='other')
         finally:
             controlled.release.set()
+            runtime.parser.patch = original_patch
         with pytest.raises(WorkflowConflict, match='数据已变化'):
             failed.result(timeout=3)
     return pending, payload
@@ -68,6 +78,14 @@ def test_api_recovery_payload_round_trip_and_changed_answer_conflict(settings, m
         path = f"/api/workflows/{pending['thread_id']}/resume"
         payload = resume_payload(pending, text='65公斤')
         model.arm('patch_draft')
+        runtime = client.app.state.engine
+        original_patch = runtime.parser.patch
+
+        def related_patch(*args, **kwargs):
+            runtime.repo.events(kind='weight')
+            return original_patch(*args, **kwargs)
+
+        runtime.parser.patch = related_patch
         with ThreadPoolExecutor(max_workers=1) as pool:
             failed = pool.submit(client.post, path, json=payload)
             try:
@@ -79,6 +97,7 @@ def test_api_recovery_payload_round_trip_and_changed_answer_conflict(settings, m
                 assert other.status_code == 200
             finally:
                 model.release.set()
+                runtime.parser.patch = original_patch
             assert failed.result(timeout=3).status_code == 409
         recovery = client.get('/api/workflows').json()[0]
         assert recovery['status'] == 'resume_failed'
@@ -352,7 +371,7 @@ def test_existing_database_migrates_without_losing_health_records(settings, mode
     runtime = Engine(settings)
     try:
         assert len(runtime.repo.events()) == 1
-        assert runtime.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 4
+        assert runtime.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 5
         assert runtime.repo.conn.execute('SELECT COUNT(*) FROM resume_attempts').fetchone()[0] == 0
     finally:
         runtime.close()

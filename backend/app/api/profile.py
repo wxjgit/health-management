@@ -4,13 +4,14 @@ from ..common.clock import now
 from ..contracts.profile import Preferences, Profile
 from ..health import suggest_weights
 from ..health.targets import default_targets
-from .deps import get_engine
+from .deps import get_engine, protected_read
 
 
 router = APIRouter(prefix='/api', tags=['profile'])
 
 
 @router.get('/profile')
+@protected_read
 def profile(engine=Depends(get_engine)):
     return engine.repo.get_meta('profile')
 
@@ -23,12 +24,14 @@ def update_profile(body: Profile, engine=Depends(get_engine)):
 
 
 @router.get('/targets/default')
+@protected_read
 def suggested_targets(engine=Depends(get_engine)):
     with engine.lock:
         return default_targets(engine.repo)
 
 
 @router.get('/preferences')
+@protected_read
 def preferences(engine=Depends(get_engine)):
     return engine.repo.get_meta('preferences')
 
@@ -53,20 +56,18 @@ def update_preferences(body: Preferences, engine=Depends(get_engine)):
 
 
 @router.get('/preferences/suggestion')
+@protected_read
 def weight_suggestion(engine=Depends(get_engine)):
     with engine.lock:
         return suggest_weights(engine.repo)
 
 
 @router.get('/facts')
+@protected_read
 def facts(engine=Depends(get_engine)):
     return engine.repo.facts()
 
 
 @router.delete('/facts/{fact_id}')
 def delete_fact(fact_id: str, engine=Depends(get_engine)):
-    with engine.lock:
-        engine.repo.delete_fact(fact_id)
-        engine.repo.erase_context()
-        engine.purge_checkpoints()
-    return {'deleted': True}
+    return engine.delete_fact(fact_id)

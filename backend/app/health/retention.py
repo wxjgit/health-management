@@ -5,7 +5,7 @@ from ..common import clock
 from .nutrition import meal_totals
 
 
-def archive(repo, reference=None):
+def archive(repo, reference=None, deletions=None):
     reference = reference or clock.now().date()
     try:
         cutoff = reference.replace(year=reference.year - 1)
@@ -38,6 +38,6 @@ def archive(repo, reference=None):
             'version': 1,
         }
         batches.append((month, events, data))
-    archived = repo.archive_months(batches)
-    repo.erase_context()
-    return archived
+    if deletions is None:
+        raise RuntimeError('归档需要统一隐私清理服务')
+    return deletions.archive(batches)

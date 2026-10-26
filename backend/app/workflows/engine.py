@@ -5,6 +5,7 @@ from threading import RLock
 
 from ..infrastructure.repositories.repository import Repository
 from ..modeling.parser import Parser
+from ..privacy.deletion import PrivacyDeletionService
 from .chat_flow import ChatFlowMixin
 from .chat_parsing import ChatParsingMixin
 from .chat_response import ChatResponseMixin
@@ -27,7 +28,6 @@ class Engine(
     def __init__(self, settings):
         self.settings = settings
         self.repo = Repository(settings.data_dir / 'health.db')
-        self.repo.recover_resume_attempts()
         self.lock = RLock()
         self.execution_locks = KeyedLocks()
         self.context_epoch = 0
@@ -35,8 +35,17 @@ class Engine(
             settings.data_dir / 'checkpoints.db', check_same_thread=False
         )
         self.cp_conn.execute('PRAGMA journal_mode=WAL')
+        self.cp_conn.execute('PRAGMA secure_delete=ON')
         self.checkpointer = GuardedSqliteSaver(self.cp_conn, self)
         self.checkpointer.setup()
+        self.deletions = PrivacyDeletionService(self)
+        try:
+            self.deletions.inventory_checkpoints()
+            self.deletions.recover()
+            self.repo.recover_resume_attempts()
+        except Exception:
+            self.close()
+            raise
         self.parser = Parser(settings, network_context=self.model_io)
         self.harness = PlanHarness(self.repo, self.parser)
         self.chat_graph = self.build_chat()

@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from ...common.clock import local_day, stamp
 from .common import dump
+from ...privacy.fragments import minimize_event
 
 
 class EventRepositoryMixin:
@@ -36,16 +37,23 @@ class EventRepositoryMixin:
             query += ' LIMIT ?'
             args.append(limit)
         with self.lock:
-            return [
+            records = [
                 self.event_row(row)
                 for row in self.conn.execute(query, args).fetchall()
             ]
+            self.observe_scope('events', start=start, end=end, event_kind=kind, search=search, limit=limit)
+            for record in records:
+                self.observe('event', record['id'], record['version'])
+            return records
 
     def event(self, event_id):
         with self.lock:
-            return self.event_row(self.conn.execute(
+            record = self.event_row(self.conn.execute(
                 'SELECT * FROM events WHERE id=?', (event_id,)
             ).fetchone())
+            if record:
+                self.observe('event', record['id'], record['version'])
+            return record
 
     def save_events(self, drafts, op_key, correction_id=None):
         with self.lock, self.conn:
@@ -67,6 +75,13 @@ class EventRepositoryMixin:
                     draft['occurred_at']
                 ).astimezone(timezone.utc).isoformat()
                 draft = {**draft, 'occurred_at': occurred}
+                original_draft = draft
+                try:
+                    draft = minimize_event(draft, sources_only=True)
+                except ValueError:
+                    # Legacy/imported inputs remain explicitly indexed; they
+                    # must not be silently upgraded to verified field evidence.
+                    pass
                 data = dump(draft)
                 if prior:
                     self.conn.execute(
@@ -108,11 +123,17 @@ class EventRepositoryMixin:
                     ),
                 )
                 saved.append(event_id)
+                self.invalidate_dependencies('event', event_id, before=prior,
+                                             after={'day': local_day(occurred), 'kind': draft['kind'], 'raw_text': draft['raw_text']})
+                self.register_event_provenance(event_id, revision, original_draft, op_key, stored=draft, prior=prior)
             self.conn.execute(
                 'INSERT INTO operations VALUES (?,?)', (op_key, dump(saved))
             )
             if saved:
                 self._bump()
+                self.persist_provenance('operation', op_key, sources=[
+                    self.provenance_node('event', event_id) for event_id in saved
+                ])
             return saved
 
     def mark_complete(self, day, complete):
@@ -122,14 +143,8 @@ class EventRepositoryMixin:
                 (f'complete:{day}', dump(complete)),
             )
             self._bump()
+            self.invalidate_dependencies('meta', f'complete:{day}')
+            self.provenance_node('meta', f'complete:{day}', stamp(), state='complete')
 
     def delete_event(self, event_id):
-        with self.lock, self.conn:
-            if not self.event(event_id):
-                raise ValueError('记录不存在')
-            self.conn.execute('DELETE FROM events WHERE id=?', (event_id,))
-            self.conn.execute(
-                'DELETE FROM facts WHERE source_event=?', (event_id,)
-            )
-            self._bump()
-        self.erase_context()
+        raise RuntimeError('请通过 engine.delete_event 执行可恢复的隐私清理')

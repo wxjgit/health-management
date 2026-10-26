@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from ..contracts.profile import PlanRequest
-from .deps import get_engine
+from .deps import get_engine, protected_read
 from .schemas import FeedbackRequest, ReviewRequest
 
 
@@ -9,6 +9,7 @@ router = APIRouter(prefix='/api', tags=['planning'])
 
 
 @router.get('/plans')
+@protected_read
 def plans(engine=Depends(get_engine)):
     return engine.repo.plans()
 
@@ -28,6 +29,7 @@ def propose(body: PlanRequest, engine=Depends(get_engine)):
 
 
 @router.get('/reviews')
+@protected_read
 def reviews(engine=Depends(get_engine)):
     return engine.repo.reviews()
 
@@ -38,6 +40,7 @@ def generate_review(body: ReviewRequest, engine=Depends(get_engine)):
 
 
 @router.get('/insights')
+@protected_read
 def insights(engine=Depends(get_engine)):
     return engine.repo.insights()
 
@@ -50,6 +53,7 @@ def feedback(insight_id: str, body: FeedbackRequest, engine=Depends(get_engine))
 
 
 @router.get('/notifications')
+@protected_read
 def notifications(engine=Depends(get_engine)):
     return engine.repo.notifications()
 
@@ -61,5 +65,6 @@ def read_notice(notification_id: str, engine=Depends(get_engine)):
 
 
 @router.get('/monthly-summaries')
+@protected_read
 def summaries(engine=Depends(get_engine)):
     return engine.repo.summaries()

@@ -9,21 +9,19 @@ from .common import dump
 
 class PlanningRepositoryMixin:
     def facts(self):
-        return [
+        records = [
             dict(row)
             for row in self.conn.execute(
                 "SELECT * FROM facts WHERE status='confirmed' ORDER BY created_at"
             )
         ]
+        self.observe_scope('facts')
+        for record in records:
+            self.observe('fact', record['id'])
+        return records
 
     def delete_fact(self, fact_id):
-        with self.lock, self.conn:
-            deleted = self.conn.execute(
-                'DELETE FROM facts WHERE id=?', (fact_id,)
-            ).rowcount
-            if deleted:
-                self._bump()
-            return bool(deleted)
+        raise RuntimeError('请通过 engine.delete_fact 执行可恢复的隐私清理')
 
     def save_fact(self, fact_id, content):
         with self.lock, self.conn:
@@ -33,6 +31,16 @@ class PlanningRepositoryMixin:
             ).rowcount
             if inserted:
                 self._bump()
+                self.invalidate_dependencies('fact', fact_id)
+                node = self.provenance_node('fact', fact_id, '1', state='complete')
+                from ...privacy.provenance import collectors
+                for reads in collectors(self):
+                    reads.sources.add(node)
+                    if reads.target:
+                        self.conn.execute('INSERT OR IGNORE INTO provenance_dependencies VALUES (?,?)', (node, reads.target))
+                        for row in self.conn.execute('SELECT id FROM messages WHERE thread_id=? AND role=?',
+                                                     (self.conn.execute('SELECT object_id FROM provenance_nodes WHERE node_id=?', (reads.target,)).fetchone()[0], 'user')):
+                            self.link_source(node, row['id'], 'content')
 
     def plans(self):
         with self.lock:
@@ -44,19 +52,34 @@ class PlanningRepositoryMixin:
             ]
 
     def active_plan(self):
-        return next(
+        plan = next(
             (plan for plan in self.plans() if plan['status'] == 'active'), None
         )
+        self.observe_scope('active_plan')
+        if plan:
+            self.observe('plan', plan['id'], part='targets')
+        return plan
 
     def plan(self, plan_id):
-        return next((plan for plan in self.plans() if plan['id'] == plan_id), None)
+        plan = next((plan for plan in self.plans() if plan['id'] == plan_id), None)
+        if plan:
+            self.observe('plan', plan_id)
+        return plan
 
     def save_plan(self, plan_id, op_key, data):
         with self.lock, self.conn:
-            self.conn.execute(
+            inserted = self.conn.execute(
                 'INSERT OR IGNORE INTO plans VALUES (?,?,?,?,?)',
-                (plan_id, op_key, dump(data), 'pending', stamp()),
-            )
+                (plan_id, op_key, '{}', 'pending', stamp()),
+            ).rowcount
+            if inserted:
+                node = self.persist_provenance('plan', plan_id, data)
+                self.persist_provenance('plan', plan_id, sources=data.get('_target_sources', []),
+                                        part='targets', independent=True, use_reads=False)
+                stored = {key: value for key, value in data.items() if key != '_target_sources'}
+                stored.update(self.dependency_metadata(node))
+                stored['dependency_stamp'] = self.read_stamp(self.node_reads(node))
+                self.conn.execute('UPDATE plans SET data=? WHERE id=?', (dump(stored), plan_id))
 
     def decide_plan(self, plan_id, approved):
         with self.lock, self.conn:
@@ -70,9 +93,12 @@ class PlanningRepositoryMixin:
             else:
                 active = self.active_plan()
                 actual_base = active['id'] if active else None
+                node = self.provenance_node('plan', plan_id)
+                valid = (plan['data']['dependency_stamp'] == self.read_stamp(self.node_reads(node))
+                         if 'dependency_stamp' in plan['data'] else plan['data']['data_version'] == self.version())
                 status = (
                     'active'
-                    if plan['data']['data_version'] == self.version()
+                    if valid
                     and plan['data']['base_plan_id'] == actual_base
                     else 'stale'
                 )
@@ -89,11 +115,15 @@ class PlanningRepositoryMixin:
         rows = self.conn.execute(
             'SELECT * FROM insights ORDER BY created_at DESC'
         ).fetchall()
-        return [
+        records = [
             {**dict(row), 'data': json.loads(row['data'])}
             for row in rows
             if include_stale or row['status'] == 'active'
         ]
+        self.observe_scope('insights', include_stale=include_stale)
+        for record in records:
+            self.observe('insight', record['id'])
+        return records
 
     def invalidate_insights(self):
         with self.lock, self.conn:
@@ -121,6 +151,9 @@ class PlanningRepositoryMixin:
                     stamp(),
                 ),
             )
+            node = self.persist_provenance('insight', insight_id, data)
+            stored = {**data, **self.dependency_metadata(node)}
+            self.conn.execute('UPDATE insights SET data=? WHERE id=?', (dump(stored), insight_id))
             return insight_id
 
     def insight_feedback(self, insight_id, feedback):
@@ -143,6 +176,9 @@ class PlanningRepositoryMixin:
                 'INSERT OR REPLACE INTO reviews VALUES (?,?,?)',
                 (review_id, dump(data), stamp()),
             )
+            node = self.persist_provenance('review', review_id, data)
+            self.conn.execute('UPDATE reviews SET data=? WHERE id=?',
+                              (dump({**data, **self.dependency_metadata(node)}), review_id))
 
     def reviews(self):
         return [
@@ -152,12 +188,15 @@ class PlanningRepositoryMixin:
             )
         ]
 
-    def notify(self, key, title, body):
+    def notify(self, key, title, body, *, sources=None):
         with self.lock, self.conn:
-            self.conn.execute(
+            notification_id = str(uuid4())
+            inserted = self.conn.execute(
                 'INSERT OR IGNORE INTO notifications VALUES (?,?,?,?,?,?)',
-                (str(uuid4()), key, title, body, 0, stamp()),
-            )
+                (notification_id, key, title, body, 0, stamp()),
+            ).rowcount
+            if inserted:
+                self.persist_provenance('notification', notification_id, sources=sources)
 
     def notifications(self):
         return [

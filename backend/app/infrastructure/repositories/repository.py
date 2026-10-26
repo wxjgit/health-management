@@ -4,10 +4,12 @@ from .common import RepositoryBase
 from .events import EventRepositoryMixin
 from .maintenance import MaintenanceRepositoryMixin
 from .planning import PlanningRepositoryMixin
+from .provenance import ProvenanceRepositoryMixin
 from .workflows import WorkflowRepositoryMixin
 
 
 class Repository(
+    ProvenanceRepositoryMixin,
     EventRepositoryMixin,
     WorkflowRepositoryMixin,
     PlanningRepositoryMixin,

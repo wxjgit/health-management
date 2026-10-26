@@ -7,6 +7,7 @@ from functools import wraps
 from threading import Lock, RLock
 
 from langgraph.checkpoint.sqlite import SqliteSaver
+from ..privacy.provenance import ReadSet, capture, current_reads
 
 
 _execution = ContextVar('workflow_execution', default=None)
@@ -15,6 +16,10 @@ _node_engine = ContextVar('workflow_node_engine', default=None)
 
 class WorkflowConflict(RuntimeError):
     """Stop obsolete work; model fallback handlers must not swallow this error."""
+
+
+class RequestErased(WorkflowConflict):
+    """An old request may not recreate explicitly erased content."""
 
 
 class KeyedLocks:
@@ -50,6 +55,7 @@ class WorkflowExecution:
     engine: object
     thread_id: str
     epoch: int
+    generation: int
 
 
 class GuardedSqliteSaver(SqliteSaver):
@@ -70,13 +76,25 @@ class GuardedSqliteSaver(SqliteSaver):
 class WorkflowConcurrencyMixin:
     def capture_execution(self, thread_id):
         # Called under engine.lock when the request is registered/located.
-        return WorkflowExecution(self, thread_id, self.context_epoch)
+        row = self.repo.conn.execute('SELECT generation FROM workflow_generations WHERE thread_id=?', (thread_id,)).fetchone()
+        return WorkflowExecution(self, thread_id, self.context_epoch, row[0] if row else 0)
+
+    def check_request(self, request_id):
+        if self.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
+            raise WorkflowConflict('隐私清理尚未完成，请稍后重试。')
+        if self.repo.conn.execute('SELECT 1 FROM request_tombstones WHERE request_id=?', (request_id,)).fetchone():
+            raise RequestErased('此请求的相关内容已删除，请使用新请求重新输入。')
 
     def check_execution(self, execution=None):
         execution = execution or _execution.get()
         if execution is None or execution.engine is not self:
             return
+        if self.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
+            raise WorkflowConflict('隐私清理尚未完成，请稍后重试。')
         if execution.epoch != self.context_epoch:
+            raise WorkflowConflict('相关记录或上下文已清理，本次处理已停止，请重新提交。')
+        row = self.repo.conn.execute('SELECT generation FROM workflow_generations WHERE thread_id=?', (execution.thread_id,)).fetchone()
+        if row and row[0] != execution.generation:
             raise WorkflowConflict('相关记录或上下文已清理，本次处理已停止，请重新提交。')
         workflow = self.repo.workflow(execution.thread_id)
         if not workflow or workflow['status'] == 'cancelled':
@@ -104,7 +122,8 @@ class WorkflowConcurrencyMixin:
                 self.check_execution()
                 token = _node_engine.set(self)
                 try:
-                    return operation(state)
+                    with capture(self.repo, self.repo.workflow_node(state['thread_id'])):
+                        return operation(state)
                 finally:
                     _node_engine.reset(token)
         return guarded
@@ -125,12 +144,16 @@ class WorkflowConcurrencyMixin:
             raise WorkflowConflict('模型请求必须在受保护的工作流步骤中执行。')
         self.check_execution()
         # Processing plans contain only current input, not mutable health history.
-        version = self._model_context_version() if purpose != 'processing_plan' else None
+        reads = current_reads(self.repo)
+        if reads:
+            reads = ReadSet(self.repo, sources=set(reads.sources), scopes=dict(reads.scopes))
+        version = self.repo.read_stamp(reads) if reads else self._model_context_version()
         self.lock.release()
         try:
             yield
         finally:
             self.lock.acquire()
             self.check_execution()
-            if version is not None and version != self._model_context_version():
+            current = self.repo.read_stamp(reads) if reads else self._model_context_version()
+            if version != current:
                 raise WorkflowConflict('模型处理期间相关数据已变化，请使用原请求重试。')

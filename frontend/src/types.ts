@@ -35,6 +35,19 @@ export type Health = {
   scheduler_enabled: boolean;
 };
 export type Evidence = { id: string; date: string; kind: string; text: string };
+export type DeletionPreview = {
+  preview_id: string;
+  target_type: "event" | "fact";
+  target_id: string;
+  counts: Record<string, number>;
+  scope: "dependencies" | "shared_source" | "legacy_context";
+  reasons: string[];
+};
+export type DeletionResult = Omit<DeletionPreview, "preview_id"> & {
+  deletion_id: string;
+  state: "pending" | "completed";
+  deleted: boolean;
+};
 export type ProcessStep = {
   title: string;
   detail: string;

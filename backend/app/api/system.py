@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from ..common.clock import now
-from .deps import get_engine
+from .deps import get_engine, protected_read
 
 
 def router_for(settings):
@@ -25,10 +25,12 @@ def router_for(settings):
         }
 
     @router.get('/messages')
+    @protected_read
     def messages(engine=Depends(get_engine)):
         return engine.repo.messages()
 
     @router.get('/data/export')
+    @protected_read
     def export(engine=Depends(get_engine)):
         with engine.lock:
             return JSONResponse(

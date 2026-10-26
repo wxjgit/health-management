@@ -9,8 +9,11 @@ from .common import dump
 class MaintenanceRepositoryMixin:
     def compact(self):
         with self.lock:
-            self.conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+            if self.conn.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()[0]:
+                raise RuntimeError('数据库正忙，清理尚未完成')
             self.conn.execute('VACUUM')
+            if self.conn.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()[0]:
+                raise RuntimeError('数据库正忙，清理尚未完成')
 
     def start_job(self, key, kind):
         with self.lock, self.conn:
@@ -65,6 +68,10 @@ class MaintenanceRepositoryMixin:
                     self.conn.execute(
                         'DELETE FROM events WHERE id=?', (event['id'],)
                     )
+                    self.conn.execute("UPDATE provenance_nodes SET lifecycle='archived' WHERE object_type='event' AND object_id=?", (event['id'],))
+                self.persist_provenance('summary', month, sources=[
+                    self.provenance_node('event', event['id'], event['version']) for event in events
+                ], use_reads=False)
                 completion_keys = [
                     row['key']
                     for row in self.conn.execute(

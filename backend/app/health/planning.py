@@ -4,11 +4,14 @@ from statistics import mean
 from ..common import clock
 from .targets import default_targets
 from .dashboard import evidence, history_window, recommendation
+from ..privacy.provenance import tracked
 
 
+@tracked
 def plan_draft(repo, targets, note='', target_source='manual', suggestion_fingerprint=None):
     active = repo.active_plan()
     current_targets = active['data']['targets'] if active else None
+    inherited = targets is None and current_targets and target_source != 'system_default'
     target_metadata = None
     if targets is None and current_targets and target_source != 'system_default':
         targets = current_targets
@@ -59,6 +62,10 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
         )
         schedule.append({'date': day, 'food': food, 'exercise': activity})
     return {
+        '_target_sources': ([repo.provenance_node('plan', active['id'], part='targets')] if inherited else
+                            [repo.provenance_node('meta', 'profile'),
+                             *[repo.provenance_node('fact', fact['id']) for fact in repo.facts()]]
+                            if target_source == 'system_default' else []),
         'targets': targets,
         'schedule': schedule,
         'next_meal': recommendation(repo)[0],

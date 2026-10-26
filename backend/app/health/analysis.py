@@ -4,6 +4,7 @@ from statistics import mean
 from ..common import clock
 from .nutrition import meal_totals
 from .dashboard import evidence, history_window
+from ..privacy.provenance import tracked
 
 
 def meal_assessment(repo, event, today):
@@ -44,6 +45,7 @@ def meal_assessment(repo, event, today):
     }
 
 
+@tracked
 def analyze(repo, end=None):
     end = end or clock.now().date()
     days = history_window(repo, 28, end)
@@ -113,6 +115,7 @@ def analyze(repo, end=None):
     return repo.insights()
 
 
+@tracked
 def review(repo, period='week', end=None):
     end = end or clock.now().date()
     days = history_window(repo, 7 if period == 'week' else 1, end)

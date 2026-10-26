@@ -34,6 +34,8 @@ import type {
   Card,
   Daily,
   DefaultTargets,
+  DeletionPreview,
+  DeletionResult,
   Event,
   Evidence,
   Fact,
@@ -52,6 +54,16 @@ import type {
 } from "./types";
 
 type Tab = "chat" | "history" | "plans" | "insights" | "settings";
+function deletionCountLabel(key: string) {
+  const [kind, action] = key.split(":");
+  const names: Record<string, string> = {
+    event: "健康记录", fact: "长期信息", message: "聊天消息", workflow: "流程及其全部进度",
+    plan: "计划", insight: "规律", review: "复盘", notification: "通知",
+    operation: "关联保存操作", summary: "月度摘要", checkpoint: "历史流程进度", receipts: "结果回执", resume_attempts: "补充回答副本",
+  };
+  const suffix = action === "minimize" ? "（清除共享原文）" : action === "keep_targets" ? "（清除安排，保留独立目标）" : "";
+  return (names[kind] || kind) + suffix;
+}
 const labels: Record<string, string> = {
   meal: "饮食",
   weight: "体重",
@@ -333,6 +345,11 @@ export default function App() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [facts, setFacts] = useState<Fact[]>([]);
   const [months, setMonths] = useState<Month[]>([]);
+  const [deletion, setDeletion] = useState<DeletionPreview | null>(null);
+  const [deletionJob, setDeletionJob] = useState<string | null>(null);
+  const deletionRequest = useRef<string | null>(null);
+  const privacyGeneration = useRef(0);
+  const privacyChannel = useRef<BroadcastChannel | null>(null);
   const [input, setInput] = useState("");
   const [localOnly, setLocalOnly] = useState(() => localStorage.getItem("health-local-only") === "true");
   const [busy, setBusy] = useState(false);
@@ -370,12 +387,14 @@ export default function App() {
   }, []);
 
   const refreshPlanStatus = useCallback(async () => {
+    const generation = privacyGeneration.current;
     const sequence = ++planReadSequence.current;
     const [pl, w] = await Promise.all([api<Plan[]>("/plans"), api<Workflow[]>("/workflows")]);
-    applyPlanStatus(pl, w, sequence);
+    if (generation === privacyGeneration.current) applyPlanStatus(pl, w, sequence);
   }, [applyPlanStatus]);
 
   const refresh = useCallback(async () => {
+    const generation = privacyGeneration.current;
     const sequence = ++planReadSequence.current;
     const [h, p, d, m, e, t, pl, i, r, n, w, pr, f, mo, dt] = await Promise.all([
       api<Health>("/health"),
@@ -394,6 +413,7 @@ export default function App() {
       api<Month[]>("/monthly-summaries"),
       api<DefaultTargets>("/targets/default"),
     ]);
+    if (generation !== privacyGeneration.current) return { plans: [], workflows: [] };
     setHealth(h);
     setProfile(p);
     setDefaultTargets(dt);
@@ -410,6 +430,29 @@ export default function App() {
     setMonths(mo);
     return { plans: pl, workflows: w };
   }, [applyPlanStatus]);
+
+  const clearPrivateCache = useCallback(() => {
+    privacyGeneration.current++;
+    setMessages([]); setEvents([]); setDays([]); setToday(null);
+    setPlans([]); setInsights([]); setReviews([]); setNotices([]);
+    setPending([]); setFacts([]); setMonths([]); setInput("");
+    setDefaultTargets(null); setSelectedEvent(null); setSelectedWorkflow("new");
+    lastRequest.current = null;
+    planPayloads.current.clear();
+    latestPlans.current = [];
+  }, []);
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel("health-privacy-cleanup");
+    privacyChannel.current = channel;
+    channel.onmessage = (event: MessageEvent<{ state?: string }>) => {
+      clearPrivateCache();
+      if (event.data.state !== "started")
+        refresh().catch(() => setError("隐私清理后刷新失败，请刷新页面。"));
+    };
+    return () => { channel.close(); privacyChannel.current = null; };
+  }, [clearPrivateCache, refresh]);
 
   useEffect(() => {
     refresh()
@@ -436,13 +479,14 @@ export default function App() {
   }, [processingStartedAt]);
   useEffect(() => {
     const t = setInterval(() => {
+      const generation = privacyGeneration.current;
       if (!document.hidden)
         Promise.all([
           api<Notice[]>("/notifications"),
           refreshPlanStatus(),
         ])
           .then(([n]) => {
-            setNotices(n);
+            if (generation === privacyGeneration.current) setNotices(n);
           })
           .catch(() => {});
     }, 60000);
@@ -619,14 +663,45 @@ export default function App() {
       "已取消待处理事项",
     );
   };
-  const removeEvent = (e: Event) => {
-    if (
-      !confirm(
-        `删除“${e.raw_text}”？\n为清理数据副本，聊天上下文、关联分析与待处理事项也会清空，其他健康记录保留。`,
-      )
-    )
-      return;
-    act(() => api(`/events/${e.id}`, "DELETE"), "记录与相关上下文已删除");
+  const previewDeletion = async (target_type: "event" | "fact", target_id: string) => {
+    await act(async () => {
+      const preview = await api<DeletionPreview>("/deletions/preview", "POST", { target_type, target_id });
+      deletionRequest.current = requestId();
+      setDeletionJob(null);
+      setDeletion(preview);
+    });
+  };
+  const removeEvent = (e: Event) => { void previewDeletion("event", e.id); };
+
+  const executeDeletion = async () => {
+    if (!deletion || busy) return;
+    setBusy(true); setError("");
+    try {
+      // Discard responses started before deletion, including in other tabs.
+      clearPrivateCache();
+      privacyChannel.current?.postMessage({ state: "started" });
+      const result = deletionJob
+        ? await api<DeletionResult>(`/deletions/${deletionJob}/retry`, "POST")
+        : await api<DeletionResult>("/deletions", "POST", {
+            preview_id: deletion.preview_id, request_id: deletionRequest.current,
+          });
+      privacyGeneration.current++;
+      if (result.state === "completed") {
+        setDeletion(null); setDeletionJob(null); deletionRequest.current = null;
+        setToast("记录及受影响的副本已删除，独立内容已保留");
+        privacyChannel.current?.postMessage({ state: "completed" });
+      } else {
+        setDeletionJob(result.deletion_id);
+        setError("清理尚未完成，相关恢复入口已停用。请点击继续清理。");
+      }
+      await refresh();
+    } catch (e) {
+      if (e instanceof ApiError && e.preview) {
+        setDeletion(e.preview); deletionRequest.current = requestId();
+      }
+      setError(e instanceof Error ? e.message : "删除未完成，请重试。");
+      await refresh().catch(() => {});
+    } finally { setBusy(false); }
   };
 
   const nav = [
@@ -717,7 +792,7 @@ export default function App() {
             </button>
           </div>
         </header>
-        {error && (
+        {error && !deletion && (
           <div className="error-banner" role="alert">
             <CircleHelp size={17} />
             <span>{error}</span>
@@ -1315,20 +1390,34 @@ export default function App() {
                   act(() => api("/preferences", "PUT", body), "设置已保存")
                 }
                 removeFact={(f) => {
-                  if (
-                    confirm(
-                      "删除这条长期信息也会清空相关聊天上下文和待处理事项，确定继续？",
-                    )
-                  )
-                    act(
-                      () => api(`/facts/${f.id}`, "DELETE"),
-                      "长期信息已删除",
-                    );
+                  void previewDeletion("fact", f.id);
                 }}
                 health={{ ...health, local_only: localOnly || health.local_only }}
               />
             )}
           </>
+        )}
+        {deletion && (
+          <div className="modal-backdrop">
+            <section className="profile-modal deletion-modal" role="dialog" aria-modal="true" aria-labelledby="deletion-title">
+              <h2 id="deletion-title">{deletionJob ? "隐私清理进行中" : "确认删除范围"}</h2>
+              <p>将删除这条{deletion.target_type === "event" ? "健康记录" : "长期信息"}，并处理以下受影响内容：</p>
+              <ul className="deletion-counts">
+                {Object.entries(deletion.counts).filter(([, count]) => count > 0).map(([key, count]) => (
+                  <li key={key}>{deletionCountLabel(key)}：{count}</li>
+                ))}
+              </ul>
+              {deletion.reasons.map((reason) => <p className="deletion-reason" key={reason}>{reason}</p>)}
+              {error && <p role="alert" className="deletion-reason">{error}</p>}
+              <p>能够证明独立的记录和流程将保留。清理后不能撤销。</p>
+              <div className="button-row">
+                {!deletionJob && <button disabled={busy} onClick={() => setDeletion(null)}>暂不删除</button>}
+                <button className="primary" disabled={busy} onClick={() => void executeDeletion()}>
+                  {busy ? "正在清理…" : deletionJob ? "继续清理" : "确认删除"}
+                </button>
+              </div>
+            </section>
+          </div>
         )}
         <footer>
           轻记 · 个人减脂 Agent <span>记录 → 理解 → 调整</span>

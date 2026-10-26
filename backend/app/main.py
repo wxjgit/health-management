@@ -7,13 +7,16 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .api.planning import router as planning_router
+from .api.deletions import router as deletion_router
 from .api.profile import router as profile_router
 from .api.records import router as records_router
 from .api.system import router_for as system_router_for
 from .api.workflows import router as workflows_router
 from .common.config import ROOT, Settings
 from .workflows.engine import Engine
-from .workflows.concurrency import WorkflowConflict
+from .workflows.concurrency import RequestErased, WorkflowConflict
+from .privacy.deletion import DeletionError
+from .privacy.provenance import untracked
 from .jobs.scheduler import scheduler_loop
 
 
@@ -34,6 +37,13 @@ def create_app(settings=None):
             app.state.engine.close()
 
     app = FastAPI(title='轻记 · Personal Health Agent', version='0.1.0', lifespan=lifespan)
+
+    @app.middleware('http')
+    async def isolate_request_provenance(request, call_next):
+        # Nested TestClient calls and unrelated HTTP reads must not inherit the
+        # caller's capture. Workflow nodes explicitly start their own capture.
+        with untracked():
+            return await call_next(request)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
@@ -54,11 +64,22 @@ def create_app(settings=None):
             content={'detail': '服务处理失败，请使用同一请求重试或检查本地服务状态。'},
         )
 
+    @app.exception_handler(DeletionError)
+    async def deletion_error(_, error):
+        return JSONResponse(status_code=error.status, content={
+            'detail': str(error), 'code': error.code, 'preview': error.preview,
+        })
+
+    @app.exception_handler(RequestErased)
+    async def erased_request(_, error):
+        return JSONResponse(status_code=410, content={'detail': str(error), 'code': 'request_erased'})
+
     app.include_router(system_router_for(settings))
     app.include_router(profile_router)
     app.include_router(workflows_router)
     app.include_router(records_router)
     app.include_router(planning_router)
+    app.include_router(deletion_router)
 
     dist = ROOT / 'frontend' / 'dist'
     if dist.exists():

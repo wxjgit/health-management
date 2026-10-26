@@ -1857,6 +1857,23 @@ details[open] > summary > svg:last-child {
   max-height: 95vh;
   overflow: auto;
 }
+.deletion-counts {
+  padding-left: 22px;
+  line-height: 1.9;
+  margin: 16px 0;
+}
+.deletion-reason {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff0db;
+  color: #704820;
+}
+.deletion-modal .button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
 .modal-close {
   position: absolute;
   right: 15px;

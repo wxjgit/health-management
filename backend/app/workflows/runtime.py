@@ -63,6 +63,7 @@ class WorkflowRuntimeMixin:
         with self.execution_locks.hold(('request', request_id)):
             request_fingerprint = fingerprint({'kind': kind, 'data': request_data})
             with self.lock:
+                self.check_request(request_id)
                 existing = self.repo.workflow_by_request(request_id)
                 if existing:
                     if existing['fingerprint'] != request_fingerprint:
@@ -153,6 +154,7 @@ class WorkflowRuntimeMixin:
         with self.execution_locks.hold(('request', payload['request_id'])):
             request_fingerprint = fingerprint(payload)
             with self.lock:
+                self.check_request(payload['request_id'])
                 receipt = self._resume_receipt(thread_id, payload, request_fingerprint)
                 if receipt is not None:
                     return receipt
@@ -253,6 +255,7 @@ class WorkflowRuntimeMixin:
                     raise
 
     def _resume_receipt(self, thread_id, payload, request_fingerprint):
+        self.check_request(payload['request_id'])
         receipt = self.repo.receipt(payload['request_id'])
         if not receipt:
             return None
@@ -292,17 +295,15 @@ class WorkflowRuntimeMixin:
         self.cp_conn.execute('VACUUM')
         self.repo.compact()
 
-    def delete_event(self, event_id):
-        with self.lock:
-            self.repo.delete_event(event_id)
-            self.purge_checkpoints()
+    def delete_event(self, event_id, preview_id=None, request_id=None):
+        return self.deletions.delete('event', event_id, preview_id=preview_id, request_id=request_id)
+
+    def delete_fact(self, fact_id, preview_id=None, request_id=None):
+        return self.deletions.delete('fact', fact_id, preview_id=preview_id, request_id=request_id)
 
     def archive(self, reference=None):
         with self.lock:
-            months = archive(self.repo, reference)
-            if months:
-                self.purge_checkpoints()
-            return months
+            return archive(self.repo, reference, self.deletions)
 
     def prune_context(self, reference=None):
         with self.lock:

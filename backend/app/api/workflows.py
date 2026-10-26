@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..contracts.workflows import ChatRequest, ResumeRequest
-from .deps import get_engine
+from .deps import get_engine, protected_read
 
 
 router = APIRouter(prefix='/api', tags=['workflows'])
@@ -18,11 +18,13 @@ def chat(body: ChatRequest, engine=Depends(get_engine)):
 
 
 @router.get('/workflows')
+@protected_read
 def workflows(engine=Depends(get_engine)):
     return engine.repo.waiting_workflows()
 
 
 @router.get('/workflows/{thread_id}')
+@protected_read
 def workflow(thread_id: str, engine=Depends(get_engine)):
     result = engine.repo.workflow(thread_id)
     if not result:

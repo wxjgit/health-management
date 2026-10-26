@@ -27,9 +27,12 @@ class WorkflowRepositoryMixin:
                 'INSERT INTO workflows VALUES (?,?,?,?,?,?,?)',
                 (thread_id, request_id, fingerprint, kind, 'running', '{}', stamp()),
             )
+            self.persist_provenance('workflow', thread_id, independent=True, use_reads=False)
+            self.conn.execute('INSERT OR IGNORE INTO workflow_generations VALUES (?,0)', (thread_id,))
 
     def workflow_result(self, thread_id, result):
         with self.lock, self.conn:
+            result.update(self.dependency_metadata(self.workflow_node(thread_id)))
             self.conn.execute(
                 'UPDATE workflows SET status=?, result=? WHERE id=?',
                 (result['status'], dump(result), thread_id),
@@ -54,12 +57,15 @@ class WorkflowRepositoryMixin:
     def previous_reference_ids(self, conversation_id, excluding_thread):
         # Reference resolution reads only local result metadata, not chat text.
         row = self.conn.execute(
-            "SELECT evidence_refs FROM messages WHERE conversation_id=? AND role='assistant' "
+            "SELECT id,evidence_refs FROM messages WHERE conversation_id=? AND role='assistant' "
             'AND thread_id!=? ORDER BY created_at DESC, rowid DESC LIMIT 1',
             (conversation_id, excluding_thread),
         ).fetchone()
+        self.observe_scope('references', conversation_id=conversation_id, excluding_thread=excluding_thread)
+        if row:
+            self.observe('message', row['id'])
         return (
-            list(dict.fromkeys(ref['id'] for ref in json.loads(row[0])))[:5]
+            list(dict.fromkeys(ref['id'] for ref in json.loads(row['evidence_refs'])))[:5]
             if row else []
         )
 
@@ -103,6 +109,11 @@ class WorkflowRepositoryMixin:
                 max(0, int(duration_ms)),
             ),
         )
+        workflow_node = self.workflow_node(thread_id)
+        node = self.persist_provenance('message', message_id, sources=[workflow_node], use_reads=False)
+        if role == 'user':
+            self.link_source(node, message_id, 'text')
+            self.link_source(workflow_node, message_id, 'input')
 
     def receipt(self, request_id):
         with self.lock:
@@ -189,6 +200,7 @@ class WorkflowRepositoryMixin:
     def finish_resume(self, thread_id, payload, request_fingerprint, result, conversation):
         """Commit result, receipt, attempt and assistant reply in one transaction."""
         with self.lock, self.conn:
+            result.update(self.dependency_metadata(self.workflow_node(thread_id)))
             self.conn.execute(
                 'UPDATE workflows SET status=?,result=? WHERE id=?',
                 (result['status'], dump(result), thread_id),

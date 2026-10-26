@@ -21,6 +21,7 @@ class RepositoryBase:
             self.set_meta('preferences', Preferences().model_dump())
         if self.get_meta('data_version') is None:
             self.set_meta('data_version', 0)
+        self.migrate_provenance()
 
     def close(self):
         self.conn.close()
@@ -54,13 +55,19 @@ class RepositoryBase:
             row = self.conn.execute(
                 'SELECT value FROM meta WHERE key=?', (key,)
             ).fetchone()
+            if key in ('profile', 'preferences') or key.startswith('complete:'):
+                self.observe('meta', key)
             return json.loads(row['value']) if row else default
 
     def set_meta(self, key, value):
         with self.lock, self.conn:
+            previous = self.conn.execute('SELECT value FROM meta WHERE key=?', (key,)).fetchone()
             self.conn.execute(
                 'INSERT OR REPLACE INTO meta VALUES (?,?)', (key, dump(value))
             )
+            if (not previous or previous[0] != dump(value)) and (key in ('profile', 'preferences') or key.startswith('complete:')):
+                self.invalidate_dependencies('meta', key)
+                self.provenance_node('meta', key, stamp(), state='complete')
 
     def version(self):
         return self.get_meta('data_version', 0)
@@ -71,9 +78,6 @@ class RepositoryBase:
             'INSERT OR REPLACE INTO meta VALUES (?,?)',
             ('data_version', dump(value)),
         )
-        self.conn.execute(
-            "UPDATE insights SET status='stale' WHERE status='active'"
-        )
 
     def update_profile(self, value):
         with self.lock, self.conn:
@@ -82,3 +86,5 @@ class RepositoryBase:
                 ('profile', dump(value)),
             )
             self._bump()
+            self.invalidate_dependencies('meta', 'profile')
+            self.provenance_node('meta', 'profile', stamp(), state='complete')

@@ -143,12 +143,9 @@ def test_slow_model_does_not_block_independent_operations(engine, model, entry, 
             assert not slow.done(), 'model I/O was supposed to remain paused'
         finally:
             model.release.set()
-        # A concurrent health update may invalidate a history-based draft patch.
-        if entry == 'resume' and operation in ('other_chat', 'plan_confirmation'):
-            with pytest.raises(WorkflowConflict, match='数据已变化'):
-                slow.result(timeout=3)
-        else:
-            assert slow.result(timeout=3)['status'] == 'completed'
+        # A fresh draft patch uses only its own input; unrelated writes and plan
+        # confirmation must no longer invalidate it through a global version.
+        assert slow.result(timeout=3)['status'] == 'completed'
 
 
 @pytest.mark.parametrize('task', ['processing_plan', 'patch_draft', 'personalized_advice'])
@@ -171,14 +168,22 @@ def test_delete_during_model_io_does_not_restore_erased_context(engine, model, t
             assert not slow.done()
         finally:
             model.release.set()
-        with pytest.raises(WorkflowConflict):
-            slow.result(timeout=3)
-    assert engine.repo.events() == []
-    assert engine.repo.messages() == []
-    assert engine.repo.conn.execute('SELECT COUNT(*) FROM workflows').fetchone()[0] == 0
-    assert engine.repo.conn.execute('SELECT COUNT(*) FROM receipts').fetchone()[0] == 0
-    assert engine.repo.conn.execute('SELECT COUNT(*) FROM model_calls').fetchone()[0] == 0
-    assert list(engine.checkpointer.list(None)) == []
+        if task == 'personalized_advice':
+            with pytest.raises(WorkflowConflict):
+                slow.result(timeout=3)
+        else:
+            assert slow.result(timeout=3)['status'] == 'completed'
+    assert engine.repo.event(event_id) is None
+    if task == 'personalized_advice':
+        assert engine.repo.events() == []
+        assert engine.repo.messages() == []
+        assert list(engine.checkpointer.list(None)) == []
+    else:
+        # This is a separate user request with a different source message, not
+        # replay of the erased request. Its own record and progress survive.
+        assert len(engine.repo.events()) == 1
+        assert len(engine.repo.messages('slow')) >= 2
+        assert engine.repo.conn.execute('SELECT COUNT(*) FROM workflows').fetchone()[0] == 1
 
 
 def test_cancel_during_resume_wins_over_late_model_output(engine, model):
@@ -199,7 +204,7 @@ def test_cancel_during_resume_wins_over_late_model_output(engine, model):
     assert engine.repo.conn.execute('SELECT COUNT(*) FROM receipts').fetchone()[0] == 0
 
 
-def test_api_returns_conflict_for_model_output_after_deletion(settings, model):
+def test_api_preserves_independent_model_input_after_deletion(settings, model):
     with TestClient(create_app(settings)) as client:
         seed = client.post('/api/chat', json={
             'request_id': str(uuid4()), 'text': '今天体重65公斤', 'processing_mode': 'local_only',
@@ -217,9 +222,10 @@ def test_api_returns_conflict_for_model_output_after_deletion(settings, model):
                 assert deleted.status_code == 200
             finally:
                 model.release.set()
-            assert slow.result(timeout=3).status_code == 409
-        assert client.get('/api/events').json() == []
-        assert client.get('/api/messages').json() == []
+            assert slow.result(timeout=3).status_code == 200
+        assert client.app.state.engine.repo.event(event_id) is None
+        assert len(client.get('/api/events').json()) == 1
+        assert len(client.get('/api/messages').json()) == 2
 
 
 def test_concurrent_duplicate_run_only_calls_model_once(engine, model):

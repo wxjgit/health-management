@@ -43,6 +43,7 @@ class PlanningRepositoryMixin:
                 (plan_id, op_key, '{}', 'pending', stamp()),
             ).rowcount
             if inserted:
+                self.quality_insert('plan', plan_id, 'plan_outcome', numerator=1, outcome='pending')
                 node = self.persist_provenance('plan', plan_id, data)
                 self.persist_provenance('plan', plan_id, sources=data.get('_target_sources', []),
                                         part='targets', independent=True, use_reads=False)
@@ -51,7 +52,7 @@ class PlanningRepositoryMixin:
                 stored['dependency_stamp'] = self.read_stamp(self.node_reads(node))
                 self.conn.execute('UPDATE plans SET data=? WHERE id=?', (dump(stored), plan_id))
 
-    def decide_plan(self, plan_id, approved):
+    def decide_plan(self, plan_id, approved, *, decision_source='manual'):
         with self.lock, self.conn:
             plan = self.plan(plan_id)
             if not plan:
@@ -92,6 +93,7 @@ class PlanningRepositoryMixin:
             self.conn.execute(
                 'UPDATE plans SET status=? WHERE id=?', (status, plan_id)
             )
+            self.quality_plan_outcome(plan_id, 'active_decision' if status == 'active' else status, decision_source)
             return status
 
     def insights(self, include_stale=False):

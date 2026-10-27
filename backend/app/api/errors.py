@@ -30,7 +30,7 @@ PREVIEW_COUNT_KEYS = frozenset({
     for kind in ('event', 'fact', 'workflow', 'message', 'plan', 'insight', 'review',
                  'notification', 'operation', 'summary', 'checkpoint', 'meta', 'receipt')
     for action in ('delete', 'minimize', 'keep_targets')
-}) | {'receipts', 'resume_attempts'}
+}) | {'receipts', 'resume_attempts', 'scheduled_jobs', 'outbox_events', 'quality_observations'}
 
 
 def safe_preview(preview):
@@ -70,6 +70,8 @@ def error_response(request, status, code, detail, **extra):
     response = JSONResponse(status_code=status, content={
         'detail': detail, 'code': code, 'request_id': correlation, **extra,
     }, headers={'X-Request-ID': correlation})
+    if code == 'runtime_busy':
+        response.headers['Retry-After'] = '1'
     if status == 500:
         request.state.safe_error_response = True
     return response

@@ -2610,6 +2610,74 @@
         #memory-system .memory-flow svg { min-width: 0; }
         #memory-system .memfix-code, #memory-system .memfix-rules article { break-inside: avoid; }
       }
+      /* Runtime minimum-privilege explanation; keep styles scoped to this chapter. */
+      #runtime-sandbox { padding: 28px; min-width: 0; }
+      #runtime-sandbox h2 { font-size: 25px; color: #213d35; }
+      #runtime-sandbox h3 { scroll-margin-top: 76px; margin: 24px 0 12px; font-size: 18px; color: #263d34; }
+      #runtime-sandbox p { font-size: 15px; line-height: 1.9; color: #3d5148; }
+      #runtime-sandbox .rt-kicker { margin-bottom: 6px; font-size: 12px; font-weight: 700; color: #52735e; letter-spacing: 1px; }
+      #runtime-sandbox .rt-lead { margin-top: 10px; }
+      #runtime-sandbox .rt-background { margin-top: 20px; padding: 18px 20px; background: #fffbf3; border: 1px solid #e7d5b9; border-radius: 12px; }
+      #runtime-sandbox .rt-background h3 { margin-top: 0; }
+      #runtime-sandbox .rt-background p + p { margin-top: 10px; }
+      #runtime-sandbox .rt-pair, #runtime-sandbox .rt-code-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+      #runtime-sandbox .rt-pair article { min-width: 0; padding: 15px; border: 1px solid #d8e2d7; border-radius: 9px; background: #fff; }
+      #runtime-sandbox .rt-pair b { display: block; font-size: 15px; color: #2b513d; margin-bottom: 6px; }
+      #runtime-sandbox .rt-shell { margin-top: 20px; padding: 18px; background: #f5f8f2; border: 1px solid #bdd1bf; border-radius: 12px; }
+      #runtime-sandbox .rt-shell-label { display: block; margin-bottom: 13px; font-size: 14px; color: #34583e; }
+      #runtime-sandbox .rt-flow { display: flex; align-items: stretch; gap: 8px; }
+      #runtime-sandbox .rt-flow article { flex: 1 1 0; min-width: 0; padding: 13px 10px; border: 1px solid #cbdacc; background: #fff; border-radius: 8px; }
+      #runtime-sandbox .rt-flow b { display: block; font-size: 14px; color: #2d5039; }
+      #runtime-sandbox .rt-flow span { display: block; font-size: 13px; color: #49624e; margin-top: 7px; overflow-wrap: anywhere; }
+      #runtime-sandbox .rt-arrow { align-self: center; color: #728f77; font-size: 18px; font-style: normal; }
+      #runtime-sandbox .rt-caption { margin-top: 10px; font-size: 13px; color: #56685c; }
+      #runtime-sandbox .rt-code-grid details { min-width: 0; padding: 16px; border: 1px solid #d3dfd1; border-radius: 10px; background: #fafcf8; }
+      #runtime-sandbox .rt-code-grid summary { color: #31543e; font-size: 16px; font-weight: 650; cursor: pointer; }
+      #runtime-sandbox .rt-code-grid p { margin-top: 10px; font-size: 14px; }
+      #runtime-sandbox pre { margin: 12px 0; padding: 14px; border-radius: 8px; background: #20392f; color: #e9f3eb; font: 12px/1.85 Consolas, "Cascadia Code", monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+      #runtime-sandbox .rt-source { display: block; margin-top: 10px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+      #runtime-sandbox .rt-switch { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+      #runtime-sandbox .rt-switch button { padding: 9px 12px; border: 1px solid #bdcebf; border-radius: 8px; color: #365945; background: #fff; font-size: 14px; }
+      #runtime-sandbox .rt-switch button[aria-pressed="true"] { color: #fff; background: #3e6b55; border-color: #3e6b55; }
+      #runtime-sandbox .rt-example { padding: 17px 19px; background: #edf4e9; border: 1px solid #cadbc4; border-radius: 10px; }
+      #runtime-sandbox .rt-example b { display: block; color: #2b5037; font-size: 16px; }
+      #runtime-sandbox .rt-example p { margin-top: 8px; }
+      #runtime-sandbox .rt-checks { display: flex; flex-wrap: wrap; gap: 9px; margin: 18px 0 10px; }
+      #runtime-sandbox .rt-checks span { padding: 7px 11px; border: 1px solid #c9d9c6; background: #f0f6ec; border-radius: 7px; color: #355b40; font-size: 14px; }
+      #runtime-sandbox .rt-boundary { margin-top: 16px; padding: 16px 18px; border-left: 4px solid #b58a48; background: #fff7e9; border-radius: 0 9px 9px 0; }
+      #runtime-sandbox .rt-boundary p + p { margin-top: 9px; }
+      #runtime-sandbox .rt-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #dfe7da; font-size: 13px; }
+      @media (max-width: 1000px) { #runtime-sandbox .rt-flow { flex-direction: column; } #runtime-sandbox .rt-arrow { transform: rotate(90deg); } }
+      @media (max-width: 760px) { #runtime-sandbox { padding: 18px; } #runtime-sandbox h2 { font-size: 23px; } #runtime-sandbox .rt-pair, #runtime-sandbox .rt-code-grid { grid-template-columns: 1fr; } }
+      @media print { #runtime-sandbox .rt-switch { display: none; } #runtime-sandbox pre { background: #f0f4ef; color: #20392f; } #runtime-sandbox details { break-inside: avoid; } }
+      /* Scheduler reliability: scoped to keep the existing engineering map intact. */
+      #scheduler-reliability { padding: 28px; }
+      #scheduler-reliability h2 { font-size: 24px; color: #2e503d; }
+      #scheduler-reliability h3 { margin: 22px 0 10px; font-size: 17px; }
+      #scheduler-reliability p { font-size: 14px; line-height: 1.85; }
+      #scheduler-reliability .sched-kicker { color: #75876d; font-size: 11px; letter-spacing: .5px; margin-bottom: 8px; }
+      #scheduler-reliability .sched-lead { margin-top: 12px; color: #4e6555; }
+      #scheduler-reliability .sched-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+      #scheduler-reliability .sched-card { min-width: 0; border: 1px solid #dce5d7; border-radius: 9px; padding: 16px; background: #f6f9f2; }
+      #scheduler-reliability .sched-card.before { background: #fff8ee; border-color: #ead8bc; }
+      #scheduler-reliability .sched-card b { display: block; font-size: 15px; margin-bottom: 7px; }
+      #scheduler-reliability .sched-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+      #scheduler-reliability .sched-step { min-width: 0; padding: 15px; border-radius: 9px; border: 1px solid #d5e2d0; background: #eef4e9; }
+      #scheduler-reliability .sched-step b { display: block; font-size: 15px; color: #35583f; }
+      #scheduler-reliability .sched-step span { display: block; margin-top: 8px; font-size: 13px; line-height: 1.8; color: #566951; }
+      #scheduler-reliability code { overflow-wrap: anywhere; }
+      #scheduler-reliability .sched-code { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+      #scheduler-reliability details { min-width: 0; border: 1px solid #dce5d7; border-radius: 9px; padding: 15px; background: #fafcf7; }
+      #scheduler-reliability summary { cursor: pointer; font-size: 15px; font-weight: 650; color: #35583f; }
+      #scheduler-reliability details p { margin-top: 10px; }
+      #scheduler-reliability .sched-source { display: block; font-size: 12px; margin-top: 10px; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+      #scheduler-reliability .sched-outbox { margin: 12px 0; padding: 16px 18px; border-left: 4px solid #6c9870; background: #edf4e9; border-radius: 0 9px 9px 0; }
+      #scheduler-reliability .sched-boundary { margin-top: 16px; padding: 16px 18px; border-left: 4px solid #b58a48; background: #fff7e9; border-radius: 0 9px 9px 0; }
+      #scheduler-reliability .sched-boundary p + p { margin-top: 8px; }
+      #scheduler-reliability .sched-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 15px; padding-top: 12px; border-top: 1px solid #dfe7da; font-size: 12px; }
+      @media (max-width: 1100px) { #scheduler-reliability .sched-flow { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 760px) { #scheduler-reliability { padding: 18px; } #scheduler-reliability h2 { font-size: 21px; } #scheduler-reliability .sched-compare, #scheduler-reliability .sched-code, #scheduler-reliability .sched-flow { grid-template-columns: 1fr; } }
+      @media print { #scheduler-reliability .sched-card, #scheduler-reliability .sched-step { break-inside: avoid; } }
     </style>
   </head>
   <body>
@@ -2621,9 +2689,10 @@
         <a href="#data-harness">数据边界</a>
         <a href="#memory-system">运行机制</a>
         <a href="#concurrency-recovery">并发可靠性</a>
+        <a href="#runtime-sandbox">运行安全</a>
         <a href="#privacy-deletion">精准删除</a>
       </nav>
-      <span class="site-meta">离线自包含 · 更新 2026-10-26</span>
+      <span class="site-meta">离线自包含 · 更新 2026-10-27</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
@@ -2657,8 +2726,12 @@
         </div>
         <div class="nav-group"><span class="nav-label">05 · 并发可靠性</span>
           <a href="#concurrency-recovery">锁、取消与失败恢复</a>
+          <a class="nav-subsection" href="#scheduler-reliability">后台任务：领单、续期与恢复</a>
         </div>
-        <div class="nav-group"><span class="nav-label">06 · 隐私清理</span>
+        <div class="nav-group"><span class="nav-label">06 · 运行安全</span>
+          <a href="#runtime-sandbox">最小权限：修复背景与代码</a>
+        </div>
+        <div class="nav-group"><span class="nav-label">07 · 隐私清理</span>
           <a href="#privacy-deletion">精准删除：成因与修复</a>
           <a class="nav-subsection" href="#privacy-root-cause">① 前因：为什么原来会全清</a>
           <a class="nav-subsection" href="#privacy-read-tracking">② 补来源：读数据时记账</a>
@@ -3856,9 +3929,9 @@ require_resolved(view)</code></pre>
                 <div class="llm-contract-head"><div><small>prepare_clarification / respond 节点</small><b>phrase_reply()</b></div><span class="llm-risk fallback">可降级</span></div>
                 <div class="llm-contract-body">
                   <div class="llm-contract-row"><b>触发</b><span>本轮存在 salty / oily / overeating / hungry 反馈，且本地 make_plan 产生批准要点。</span></div>
-                  <div class="llm-contract-row"><b>输入</b><span><code>plan.points / feedback 标签 / stage / context.foods[:3] / boundary / schema</code>；不读取历史聊天。</span></div>
-                  <div class="llm-contract-row"><b>输出</b><span><code>ContextualReply</code>：每个 segment 必须保留 point_id，只负责自然表达。</span></div>
-                  <div class="llm-contract-row"><b>复核</b><span>点位与顺序完全一致；检查主题锚点、长度、数字、日期、保存状态、诊疗和新增建议。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span><code>plan.points / options / feedback 标签 / stage / context.foods[:3] / boundary / schema</code>；options 是本地批准的表达版本，不读取历史聊天。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>ContextualReply</code>：每个 segment 只含 point_id / variant_id，选择 default 或 warm。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>点位与顺序完全一致；拒绝自由正文和额外字段，从本地批准目录取表达。</span></div>
                   <div class="llm-contract-row"><b>失败</b><span>使用本地 ACK / GUIDANCE 原文；医学或钠边界由程序追加，记录写入结果不受影响。</span></div>
                 </div>
               </article>
@@ -3866,9 +3939,9 @@ require_resolved(view)</code></pre>
                 <div class="llm-contract-head"><div><small>respond 节点 · 普通咨询</small><b>answer_advice()</b></div><span class="llm-risk fallback">可降级</span></div>
                 <div class="llm-contract-body">
                   <div class="llm-contract-row"><b>触发</b><span>intent=advice，且不是医疗边界、保存回执、查询或 feedback-only 路径。</span></div>
-                  <div class="llm-contract-row"><b>输入</b><span>仅批准的视图：单餐、指定日期、≤7 天饮食、≤28 天体重或分量档案；历史聊天原文不发送。</span></div>
-                  <div class="llm-contract-row"><b>输出</b><span><code>AdviceReply.answer</code>：直接回答重点，最多两条可执行建议。</span></div>
-                  <div class="llm-contract-row"><b>复核</b><span>禁止上下文外数字、诊疗结论、把不完整记录说成全天结论、把剩余额度说成必须吃满。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span>获准的最小 context 和本地生成的 options；视图限单餐、指定日期、≤7 天饮食、≤28 天体重或分量档案，历史聊天原文不发送。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>AdviceReply.point_ids</code>：从本次批准的目录选择一到两项，不生成回复正文。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>检查编号范围与重复项；事实、数值角色、完整性和估算说明由本地生成，模型不能删改。</span></div>
                   <div class="llm-contract-row"><b>失败</b><span>按同一个 context 生成 fallback_advice；不会将失败回答写成事实或事件。</span></div>
                 </div>
               </article>
@@ -3887,7 +3960,7 @@ require_resolved(view)</code></pre>
               <div class="llm-scenario"><b>纯本地模式</b><code>本地解析 → 查询 / 校验 / 保存 / 本地兜底 · 0 次模型调用</code></div>
             </div>
             <div class="llm-write-boundary">
-              <b>模型输出</b><span>只是候选结构、估算或文字</span><span class="arrow">→</span>
+              <b>模型输出</b><span>只是候选结构、估算数值或选择标识</span><span class="arrow">→</span>
               <span><b>本地代码决定落库</b> 事件经校验、营养准备和 Repository 写入；事实来自本次原文，亦可由 respond 执行附加 fact；建议与润色不会成为长期事实。</span>
             </div>
             <div class="llm-source-grid" aria-label="LLM 调用代码位置">
@@ -3896,8 +3969,9 @@ require_resolved(view)</code></pre>
               <a href="backend/app/modeling/boundary.py"><b>modeling/boundary.py</b>精确授权</a>
               <a href="backend/app/workflows/chat_flow.py"><b>workflows/chat_flow.py</b>节点触发条件与失败分支</a>
               <a href="backend/app/health/nutrition.py"><b>health/nutrition.py</b>营养候选、校验与 provenance</a>
-              <a href="backend/app/chat/replies.py"><b>chat/replies.py</b>反馈策略与 phrase 校验</a>
-              <a href="backend/app/health/advice.py"><b>health/advice.py</b>咨询上下文、回答校验与兜底</a>
+              <a href="backend/app/chat/replies.py"><b>chat/replies.py</b>反馈表达计划与模型选择</a>
+              <a href="backend/app/health/advice.py"><b>health/advice.py</b>咨询上下文和来源投影</a>
+              <a href="backend/app/policy/output.py"><b>policy/output.py</b>公共输出策略：选项范围、本地事实与问句</a>
             </div>
           </div>
         </div>
@@ -4188,7 +4262,7 @@ with self.lock, self.conn:
           <div class="recovery-card"><b>同一 health.db 事务</b><p><code>finish_resume()</code> 将 workflow 结果、成功 receipt、attempt 完成标记和助手回复一起提交。<code>cancel_workflow()</code> 将待确认计划拒绝与 workflow 取消一起提交。内部使用不自行提交的消息插入函数，避免嵌套方法提前提交。workflow、receipt、messages 和 plans 的查询也获取 Repository 锁，防止同一 SQLite 连接读到尚未提交的中间值。</p></div>
           <div class="recovery-card"><b>不宣称跨数据库整体回滚</b><p>Graph checkpoint 在独立的 checkpoints.db；健康记录也可能已由前序节点提交。本方案用答案绑定、进度恢复、业务写入去重及删除 / 取消检查协调它们，不把 HTTP 报错解释为业务全部撤销。</p></div>
         </div>
-        <p class="recovery-notice"><b>范围：</b>当前原型采用单进程协调，工作流锁不是跨进程分布式锁。等待模型仍释放全局锁，调度器也不再外层持锁调用 Graph。重试可能再次调用失败步骤中的模型，计入现有持久化预算；程序不会无限自动重试。本节恢复机制最初在数据库 v4 引入；当前已增加 v5 血缘与删除作业，resume_attempts 按实际影响范围清理，迁移本身不删除业务记录。<a href="#privacy-deletion">精准删除的最新行为见下一节。</a></p>
+        <p class="recovery-notice"><b>范围：</b>当前原型采用单进程协调，工作流锁不是跨进程分布式锁。等待模型仍释放全局锁，调度器也不再外层持锁调用 Graph。重试可能再次调用失败步骤中的模型，计入现有持久化预算；程序不会无限自动重试。本节恢复机制最初在数据库 v4 引入；当前已增加 v5 血缘与删除作业，resume_attempts 按实际影响范围清理，迁移本身不删除业务记录。<a href="#privacy-deletion">精准删除的最新行为见隐私清理章节。</a></p>
         <p><b>验证方法：</b>使用事件暂停模型请求或 Graph 完成后的提交窗口，确定性地插入数据修改 / 取消；还用 SQLite 触发器模拟事务中途失败。覆盖原答案与不同答案、重启前后、计划激活前后、清理、旧数据库迁移以及网页上的恢复按钮。测试均使用临时数据库和模拟模型。</p>
         <div class="recovery-sources">
           <a href="backend/app/workflows/runtime.py">runtime.py · resume / cancel</a>
@@ -4200,6 +4274,190 @@ with self.lock, self.conn:
           <a href="frontend/src/App.test.tsx">前端恢复交互测试</a>
         </div>
       </section>
+      <section class="section panel" id="scheduler-reliability" data-chapter aria-labelledby="scheduler-reliability-title">
+        <p class="sched-kicker">后台任务可靠性 · 对应 Review 7.1 · A 期代码与验证核对：2026-10-27</p>
+        <h2 id="scheduler-reliability-title">日报和周报怎样做到：不重复领单，中断后还能接着做？</h2>
+        <p class="sched-lead">可以把 scheduler 理解成“定时看待办清单的人”。现在它只负责把到期任务记下来，后台执行器再逐个领单。<b>待办、领取记录和结果都写进数据库</b>，服务重启后可以查清：哪些已经做完，哪些需要继续。</p>
+
+        <div class="sched-compare">
+          <article class="sched-card before"><b>修改前：标了“正在做”，别人仍能再领</b><p>旧 <code>start_job()</code> 没有排除 <code>running</code>。A 开始生成周报时，B 仍可能领到同一任务；A 写“已完成”之后，B 的失败回执还能把任务改回“待执行”。已有的通知去重只能减少重复通知，管不住这段执行过程。</p></article>
+          <article class="sched-card"><b>修改后：领单要拿凭证，交结果也要核对凭证</b><p>任务只能通过一次不可被其他领取插入的数据库操作取得执行权。执行者拿到一张有有效期的“领单凭证”；续期、保存结果和结束任务都要核对。凭证失效后，迟到的成功或失败回执都会被拦住。</p></article>
+        </div>
+
+        <div class="sched-flow" role="group" aria-label="后台任务从规划、持久化、领取到完成的四步流程">
+          <div class="sched-step"><b>① 到点登记</b><span><code>plan_jobs()</code> 扫描日报、周报和提醒；这里只排待办，不执行 Graph。</span></div>
+          <div class="sched-step"><b>② 待办落库</b><span><code>scheduled_jobs</code> 保存任务。同一业务编号、同一代次只登记一份，例如当天午餐的餐前提醒。</span></div>
+          <div class="sched-step"><b>③ 领单执行</b><span><code>run_one()</code> 先申请运行名额，再领取一条任务；默认后台一次做一件。</span></div>
+          <div class="sched-step"><b>④ 提交或恢复</b><span>核对凭证后记为完成。中断后租约过期，按窗口与次数决定重试、跳过或失败。</span></div>
+        </div>
+
+        <h3>结合代码：四件容易混淆的事</h3>
+        <div class="sched-code">
+          <details><summary>1 · 只有一个 Engine，为什么还要加锁？</summary><p><code>Engine.__init__()</code> 在打开数据库之前，先取得 <code>DataOwner</code> 的操作系统文件锁。第二个服务如果使用同一个数据目录，会在开库前退出。这样避免工作流锁、进度存档和删除恢复分散在两个 Engine 中，各管各的。</p><a class="sched-source" href="backend/app/infrastructure/data_owner.py">data_owner.py · 数据目录只能有一个所有者</a><a class="sched-source" href="backend/app/workflows/engine.py">engine.py · 先取得目录锁，再初始化数据库</a></details>
+          <details><summary>2 · “领取凭证”为什么要有有效期？</summary><p><code>claim_job()</code> 在短事务中领取任务，并生成 <code>lease_token</code>。默认租约 90 秒，独立连接每 20 秒报告一次“我还在执行”并续期。执行者崩溃后心跳停止，<code>recover_jobs()</code> 才能回收；旧凭证不能续期复活，也不能覆盖接手后的结果。</p><a class="sched-source" href="backend/app/infrastructure/repositories/jobs.py">jobs.py · claim_job / assert_lease / recover_jobs</a><a class="sched-source" href="backend/app/jobs/runner.py">runner.py · 独立心跳与运行额度</a></details>
+          <details><summary>3 · 重试会不会再生成一份周报或计划？</summary><p>同一任务重试继续使用原 <code>request_id</code> 和已保存进度，不因为“第二次尝试”就换一个业务编号。报告日期、计划起始日期也固定下来，跨午夜恢复不会自动挪到另一天。默认最多尝试 3 次；过期提醒直接跳过，需要用户确认的计划仍等用户确认。</p><a class="sched-source" href="backend/app/jobs/handlers.py">handlers.py · weekly / auto_plan / 固定业务日期</a><a class="sched-source" href="backend/app/workflows/runtime.py">runtime.py · 复用结果与恢复进度</a></details>
+          <details><summary>4 · 删除记录后，旧任务还会把内容写回来吗？</summary><p>删除预览会计算关联任务和后续事件。确认删除时撤销旧凭证、清掉路由副本，并提升业务 <code>generation</code>，相当于宣布“这一代任务作废”。业务写入和 checkpoint 提交前都检查执行权；纯本地模式也跟着任务和后续事件保存，恢复时不能自动放宽。</p><a class="sched-source" href="backend/app/privacy/deletion.py">deletion.py · 删除清单与任务代次失效</a><a class="sched-source" href="backend/app/jobs/context.py">context.py · 写入前检查领单凭证</a><a class="sched-source" href="backend/app/workflows/concurrency.py">concurrency.py · checkpoint 提交前复核</a></details>
+        </div>
+
+        <h3>周报做好了，下一步计划还没生成，服务却重启了怎么办？</h3>
+        <p>这里用 <b>outbox，也就是“后续待办箱”</b>：周报收尾时，把周报完成登记和“接下来需要生成计划”一起保存。另一轮再读取待办箱，创建计划任务。计划失败只处理自己的失败，不会把已经完成的周报改回待执行。</p>
+        <div class="sched-outbox"><p><b>周报结果已落库 → 同一事务保存「周报完成 + 站内通知（开关允许时）+ 生成计划的待办」→ 消费待办并创建唯一计划任务。</b></p><p>日报则把报告、站内通知和任务完成状态一起提交。前提不满足时不自动生成计划；用户后来换了生效计划，旧待办也不能覆盖新选择。</p></div>
+        <p><a class="sched-source" href="backend/app/infrastructure/repositories/outbox.py">outbox.py · 消费后续待办与创建计划任务一起提交</a><a class="sched-source" href="backend/app/infrastructure/unit_of_work.py">unit_of_work.py / BudgetConnection · 外层事务与嵌套保存点</a></p>
+
+        <div class="sched-boundary">
+          <p><b>现在已经实现：</b>A 期持久化任务、领取凭证、心跳恢复和 outbox。规划器与执行器目前仍在同一业务进程内，共用唯一 Engine；独立 Engine 运行服务和多实例执行属于后续阶段。</p>
+          <p><b>边界：</b>健康库和进度库仍是两份数据库，通过检查、去重和恢复协调；不能把一次报错理解为所有步骤都撤销。已被供应商受理、但本地还没记住结果的模型请求，恢复时仍可能再次调用。</p>
+          <p><b>验证：</b>Windows 本地完整后端 538 项测试通过；最后一次迁移窗口调整后，调度专项 33 项通过。覆盖真实双进程抢任务、旧回执写回、事务中断、强制退出后恢复与删除失效；Linux／容器专项部署仍待验收。</p>
+        </div>
+        <div class="sched-links">
+          <a href="backend/app/jobs/planner.py">任务规划代码</a>
+          <a href="backend/tests/test_scheduler_reliability.py">故障与恢复测试</a>
+          <a href="backend/tests/test_scheduler_operations.py">数据库竞争与运维测试</a>
+          <a href="docs/调度器可靠性与独立Worker开发方案.md">完整开发方案与实施记录</a>
+          <a href="docs/evidence/scheduler-validation-summary.json">验证摘要与未验证边界</a>
+        </div>
+      </section>
+      <section class="section panel" id="runtime-sandbox" data-chapter aria-labelledby="runtime-sandbox-title">
+        <p class="rt-kicker">运行安全与部署 · 对应 Review 6.3 · 代码与验证核对：2026-10-27</p>
+        <h2 id="runtime-sandbox-title">运行环境最小权限：把权限、数量和时间都设上限</h2>
+        <p class="rt-lead">模型可以提出处理计划，程序仍要决定这次请求能读写哪里、占多少资源、执行多久。这次修复同时补上<b>运行环境的权限限制</b>和<b>请求执行中的资源检查</b>，保留已有的数据授权、安全路由和幂等恢复机制。</p>
+
+        <div class="rt-background" aria-labelledby="rt-background-title">
+          <h3 id="rt-background-title">修改背景：已有模型权限检查，为什么还需要这一层？</h3>
+          <p>《架构与安全 Review 建议》6.3 指出：原启动脚本直接用当前登录账户运行 Python，仓库没有独立低权限账户、只读文件系统或默认拒绝的网络出口。即使正常代码只往 <code>data</code> 写数据库，也没有操作系统规则禁止进程访问启动账户有权限访问的其他位置。</p>
+          <p>此外，原来的“聊天最多 4000 字符”是在 JSON 读入后校验；模型 HTTP 的超时也不等于整轮任务的总期限。超大正文、持续缓慢返回的模型响应和大量同时到来的请求，都需要更早、更完整的限制。</p>
+          <div class="rt-pair">
+            <article><b>原来已有：限制模型能申请什么</b><p><code>ModelBoundary</code> 检查用途、数据视图和一次性授权，模型不能任意选记录、SQL 或字段；但这层检查不能收缩 Python 进程的系统权限。</p></article>
+            <article><b>这次补上：限制进程和请求能消耗什么</b><p>容器收缩文件、身份和网络范围；应用在接收正文、进入工作流、调用模型及提交数据库时检查大小、数量和时间。</p></article>
+          </div>
+          <p class="rt-caption">这是运行隔离与资源控制缺口，不代表已经发现“提示注入直接执行 Shell”的利用路径。当前工程没有向模型提供 Shell 工具；非 root 和只读配置也不能被解释成“操作系统禁止所有子进程”。</p>
+        </div>
+
+        <h3>修复后的主路径：每到一个关口，先检查再继续</h3>
+        <div class="rt-shell" role="group" aria-label="加固部署的运行边界和请求处理流程">
+          <b class="rt-shell-label">容器外层：普通账户 · 源码只读 · 数据卷与临时目录可写 · CPU / 内存 / PID 配额</b>
+          <div class="rt-flow">
+            <article><b>① 接收正文</b><span>最多 64 KiB<br>总共 10 秒<br>超限时还未进入业务</span></article><i class="rt-arrow" aria-hidden="true">→</i>
+            <article><b>② 申请执行名额</b><span>工作流 2 个<br>管理操作单独 1 个<br>满额立即返回 503</span></article><i class="rt-arrow" aria-hidden="true">→</i>
+            <article><b>③ 执行工作流</b><span>本轮共享 120 秒<br>等待锁也计时<br>后续步骤不重置期限</span></article><i class="rt-arrow" aria-hidden="true">→</i>
+            <article><b>④ 按需调用模型</b><span>已有授权检查<br>固定出口与目标<br>响应最多 1 MiB</span></article><i class="rt-arrow" aria-hidden="true">→</i>
+            <article><b>⑤ 检查后提交</b><span>SQL / 提交前查预算<br>未提交事务可回滚<br>已保存独立记录保留</span></article>
+          </div>
+          <p class="rt-caption">这是可能需要模型并写入数据的主路径示意；本地模式和查询会跳过不需要的步骤。加固模式的模型请求走“应用内部网络 → 出口代理 → 批准供应商”，应用自身不加入外网网络。</p>
+        </div>
+
+        <h3 id="rt-code-title">结合代码：展开查看各层具体做了什么</h3>
+        <p class="rt-caption">下面是当前代码的关键节选；带“…”的地方省略了参数、收包或异常处理，不是可直接粘贴的完整函数。</p>
+        <div class="rt-code-grid">
+          <details open><summary>1 · 给进程划范围：普通账户、只读、独立数据卷</summary>
+            <pre># compose.hardened.yaml · 公共限制 + app 配置节选
+read_only: true
+cap_drop: [ALL]
+security_opt: [no-new-privileges:true]
+
+user: "10001:10001"
+cpus: 1
+mem_limit: 512m
+pids_limit: 128</pre>
+            <p>这些配置由容器运行时执行。源码和依赖保持只读，数据库写到独立 <code>/data</code>，临时文件写到限额 <code>/tmp</code>；不挂载个人主目录、开发工作区或 Docker socket。</p>
+            <a class="rt-source" href="compose.hardened.yaml">代码：compose.hardened.yaml · 服务身份、挂载与资源配额</a>
+          </details>
+          <details open><summary>2 · 在 JSON 解析前拦截大请求和慢速上传</summary>
+            <pre># api/request_limits.py · 接收循环节选
+async with asyncio.timeout(self.settings.request_body_seconds):
+    ...
+    if len(body) + len(chunk) &gt; self.settings.request_max_bytes:
+        return await self.reject(
+            scope, receive, send, 'request_body_too_large'
+        )</pre>
+            <p>累计的是实际收到的字节，不只相信客户端声明的长度。64 KiB 之外的正文返回 413；持续分块发送也共享 10 秒期限，超时返回 408。压缩正文直接拒绝，防止解压后突然变大。</p>
+            <a class="rt-source" href="backend/app/api/request_limits.py">代码：RequestLimitsMiddleware · 业务执行前的有界接收</a>
+          </details>
+          <details><summary>3 · 两个工作流在忙时，第三个不无限排队</summary>
+            <pre># common/execution_budget.py · 三类执行名额
+self.slots = BoundedSemaphore(settings.runtime_max_executions)
+self.management = BoundedSemaphore(1)
+self.reads = BoundedSemaphore(8)
+
+# 获取名额时不阻塞等待
+if not semaphore.acquire(False):
+    raise RuntimeLimitError()</pre>
+            <p>工作流默认 2 个，本地查询及普通读写 8 个，删除/取消有独立的管理名额。满额返回 503；已经完成的同一请求可以重放原结果。执行真正结束才归还名额，浏览器断开不会提前放行更多任务。</p>
+            <a class="rt-source" href="backend/app/common/execution_budget.py">代码：RuntimeLimiter.execution · 名额、期限与真实执行生命周期</a>
+            <a class="rt-source" href="backend/app/api/deletions.py">代码：删除执行端点的 @managed_api · 查询预览前先准入</a>
+          </details>
+          <details><summary>4 · 模型只能走指定出口，响应也不能无限接收</summary>
+            <pre># modeling/transport.py · HTTP 客户端参数节选
+follow_redirects=False, trust_env=False,
+proxy=settings.model_egress_proxy or None,
+
+# 读取响应的循环节选
+async for chunk in response.aiter_raw():
+    check_budget()
+    if len(payload) + len(chunk) &gt; settings.model_response_max_bytes:
+        raise UpstreamModelError(code='model_response_too_large')</pre>
+            <p>加固模式必须配置固定代理，忽略环境代理、不跟随重定向。代理再检查精确供应商域名、443 端口和目标地址。响应超过 1 MiB 就关闭连接，压缩响应被拒绝；模型故障是否能局部降级，仍由原业务规则决定。</p>
+            <a class="rt-source" href="backend/app/modeling/transport.py">代码：fetch_model · 显式出口、有界读取与可取消 I/O</a>
+            <a class="rt-source" href="deploy/egress/squid.conf">配置：Squid · 允许指定目标，其他访问默认拒绝</a>
+          </details>
+          <details><summary>5 · 整轮共享期限，数据库提交前再确认一次</summary>
+            <pre># common/execution_budget.py
+def remaining_seconds(default):
+    budget = _budget.get()
+    return min(default, budget.remaining()) if budget else default
+
+# infrastructure/budget_connection.py
+def commit(self):
+    check_budget()
+    return super().commit()</pre>
+            <p>本轮默认 120 秒；安全分类最多 8 秒，其他模型调用最多 45 秒，还要取本轮剩余时间的较小值。例如只剩 10 秒，模型就不能再获得 45 秒。超期的未提交事务回滚，此前已经提交的独立记录继续保留。</p>
+            <a class="rt-source" href="backend/app/infrastructure/budget_connection.py">代码：BudgetConnection · SQL、显式提交和事务退出检查</a>
+          </details>
+          <details><summary>6 · 同步线程卡死：真实回收进程，再按原请求恢复</summary>
+            <pre># common/execution_budget.py · watchdog 节选
+if any(snapshot['heartbeat'] &gt; d + self.settings.execution_grace_seconds
+       for d in snapshot['deadlines']):
+    os._exit(70)</pre>
+            <p>120 秒到期先合作式停止；再经过默认 15 秒宽限仍未结束，加固模式的 watchdog 退出应用进程。独立 healthcheck 和宿主机监督还会检测进程整体无响应；测试中暂停应用后约 19 秒重启恢复。</p>
+            <p>整体回收会中断同进程的其他请求。重启后依靠原来的 checkpoint、回执、调用预算和删除保护恢复，不能自动更换请求编号，也不能声称整轮操作都已撤销。</p>
+            <a class="rt-source" href="scripts/supervise-runtime.py">代码：宿主机监督 · 固定服务身份检查与有限重启</a>
+            <a class="rt-source" href="backend/tests/test_runtime_recovery.py">验证：同步任务硬退出、两库事务恢复和完成结果重放</a>
+          </details>
+          <details><summary>7 · 密钥离开源码，只在运行时读取必要的秘密文件</summary>
+            <pre># common/config.py · 密钥来源节选
+key_file = os.getenv('MODEL_API_KEY_FILE', '')
+
+# compose.hardened.yaml · 应用读取的路径
+MODEL_API_KEY_FILE: /run/secrets/model_api_key</pre>
+            <p>原硬编码密钥已移除。加固模式只从只读秘密文件加载，禁止环境明文密钥与多个来源冲突。秘密源文件放在仓库与构建上下文之外，镜像不打包个人配置；旧密钥仍需在供应商侧撤销并更换。</p>
+            <a class="rt-source" href="backend/app/common/config.py">代码：Settings.from_env · 秘密文件、配置冲突与目标校验</a>
+          </details>
+        </div>
+
+        <h3 id="rt-examples-title">用一个异常请求，看看限制在哪一步生效</h3>
+        <div class="rt-switch" role="group" aria-label="运行资源限制示例">
+          <button type="button" data-runtime-case="large" aria-pressed="true">70 KiB 输入</button>
+          <button type="button" data-runtime-case="busy" aria-pressed="false">第三个工作流</button>
+          <button type="button" data-runtime-case="slow" aria-pressed="false">模型一直慢慢返回</button>
+          <button type="button" data-runtime-case="commit" aria-pressed="false">超时后还想提交</button>
+        </div>
+        <div class="rt-example" aria-live="polite" aria-atomic="true">
+          <b id="rt-example-title">入口就返回 413，不启动工作流</b>
+          <p id="rt-example-text">70 KiB 大于完整正文的 64 KiB 上限。网关或 ASGI 接收层会拒绝它；这次请求不会因为已经上传了一部分，就开始解析、调用模型或保存健康记录。</p>
+        </div>
+        <p class="rt-caption">这些按钮只切换本地说明，不发送请求、不运行命令、不读取或修改个人数据库。</p>
+
+        <div class="rt-checks" aria-label="已记录的验证结果">
+          <span><b>500</b> 后端测试通过</span><span><b>56</b> 前端测试通过</span><span><b>13</b> 真实网关检查通过</span><span><b>19</b> 容器基础检查通过</span>
+        </div>
+        <p class="rt-caption">以上来自 2026-10-27 的验证记录，使用合成数据、独立测试卷和假密钥；模型测试使用测试桩，代理允许路径只建立 CONNECT，没有发送真实模型请求。</p>
+        <div class="rt-boundary">
+          <p><b>生效范围：</b><code>start.ps1</code> 仍是开发入口，只启用应用层限额；使用 <code>compose.hardened.yaml</code> 才启用容器身份、只读、挂载和资源边界。<code>runtime_profile=hardened</code> 表示配置档位，不代表自动证明宿主机全部隔离措施有效。</p>
+          <p><b>生产验收还没全部结束：</b>宿主机防火墙、DNS 重绑定、完整 IPv6/压力测试、全部业务阶段的故障回收，以及正式密钥撤销/切换和迁移回退仍需完成。Windows Docker Desktop 的内部网络不能单独当作宿主机防火墙证明。</p>
+        </div>
+        <div class="rt-links"><a href="docs/架构与安全Review建议.md">修改背景 · Review 6.3</a><a href="docs/运行环境最小权限修复开发方案.md">完整开发方案与验收状态</a><a href="docs/evidence/runtime-validation-summary.json">测试与镜像验证汇总</a><a href="docs/evidence/runtime-supervision.json">外部监督故障恢复记录</a><a href="deploy/network-policy.md">部署网络策略与平台边界</a></div>
+      </section>
+
       <section class="section panel" id="privacy-deletion" data-chapter aria-labelledby="privacy-title">
         <div class="section-head"><div>
           <div class="privacy-kicker">BUG CASE STUDY / 从全局清理到按来源删除</div>
@@ -4665,28 +4923,34 @@ deletion_job = {
           "related":["prepare_nutrition","route_chat","clarify","repository_rules"],"sources":[["backend/app/workflows/chat_flow.py","Engine.save_ready"],["backend/app/infrastructure/repositories/events.py","Repository.save_events"]]
         },
         {
-          "id":"prepare_clarification","group":"chat","title":"在暂停前准备追问表达与候选",
+          "id":"prepare_clarification",
+          "group":"chat",
+          "title":"在暂停前准备追问表达与候选",
           "purpose":"把本地决定的问题与本轮反馈回应组合成用户可读的追问，并在真正 interrupt 之前保存表达结果，避免恢复时重复调用上一轮润色模型。",
           "input":[["parsed.question / correction_id","具体问题，以及纠错目标是否还未明确。"],["conversation_feedback / guided_topics / extraction.events","本工作流的反馈、已经讲过的引导主题，以及当前已知食物。"]],
           "output":[["clarification_reply / reply_plan","组合好的追问文本与本地批准的回应要点。"],["correction_candidates / guided_topics / guidance_shown","纠错候选快照、已讲过的建议主题和标记。"]],
-          "steps":["correct 且未绑定 correction_id 时，从本地最近事件取最多 5 条，生成 ID 与截断标签；这份候选不发给模型。","本地 make_plan 按反馈、是否医疗问题、已讲过的主题决定确认句和允许的引导句。","context.foods 只取当前提取事件中最多 3 个不同食物名。","express_plan 在有 points 且允许模型时才润色；否则直接用本地批准的原句。","将 narrative 与 parsed.question 拼接，并更新 guided_topics，之后进入 clarify。"],
-          "branches":[["没有反馈要点","只使用固定追问，不调用表达模型。"],["有反馈且允许模型","phrase_reply 只改写本地批准的 points。"],["纠错目标不明","固定最多 5 条候选，恢复时核对这份快照。"]],
+          "steps":["correct 且未绑定 correction_id 时，从本地最近事件取最多 5 条，生成 ID 与截断标签；这份候选不发给模型。","本地 make_plan 按反馈、是否医疗问题、已讲过的主题决定确认句和允许的引导句。","context.foods 只取当前提取事件中最多 3 个不同食物名。","express_plan 在存在要点且允许模型时，请模型选择批准的表达版本；否则使用本地 default。","按 pending_fields 和食物索引生成本地问句，与 narrative 拼接；保存 clarification_selection 和 reply_plan，供中断恢复时复核。"],
+          "branches":[["没有反馈要点","只使用本地追问，不调用表达选择模型。"],["有反馈且允许模型","phrase_reply 只选择已批准的表达版本。"],["纠错目标不明","固定最多 5 条候选，恢复时核对这份快照。"]],
           "sideEffects":["可能读取本地候选并调用表达模型；不写 events / facts。","表达和候选随 State 落 checkpoint，成为本次追问的一部分。"],
-          "errors":["表达模型失败或改写未通过校验时用本地句子，追问仍可继续。"],
-          "example":"体验：昨天吃得有点咸\n本地先决定回应偏咸的关注点与边界\n再追加可选问题：主要吃了什么？\n恢复补充时不会重新生成已保存的这段前置表达。",
-          "related":["reply_rules","feedback_rules","clarify","executor"],"sources":[["backend/app/workflows/chat_flow.py","Engine.prepare_clarification"],["backend/app/chat/replies.py","make_plan / express_plan"]]
+          "errors":["表达选择失败或未通过校验时使用本地句子；追问仍可继续。"],
+          "example":"体验：昨天吃得有点咸\n程序生成确认句和边界，模型可以选择表达版本\n本地再追加可选复盘问题\n恢复时重新渲染，不重发前一轮模型请求。",
+          "related":["reply_rules","feedback_rules","clarify","executor"],
+          "sources":[["backend/app/workflows/chat_flow.py","Engine.prepare_clarification"],["backend/app/chat/replies.py","make_plan / express_plan"]]
         },
         {
-          "id":"clarify","group":"chat","title":"暂停工作流并把用户答案送回解析",
+          "id":"clarify",
+          "group":"chat",
+          "title":"暂停工作流并把用户答案送回解析",
           "purpose":"这是 chat_graph 唯一的人类输入暂停节点。它只发出问题、接收答案和更新恢复字段；不会在这里调用模型或直接保存健康事件。",
-          "input":[["clarification_reply / parsed.question / pending_*","已经准备好的展示文本、必需或可选标记、待补位置。"],["record_ids / correction_candidates","展示已经保存的独立记录数量，以及本次已固定的候选。"],["恢复答案 text / event_id","由 Engine.resume 校验 interrupt_id 后提供。"]],
+          "input":[["reply_plan / clarification_selection / pending_*","本地批准的表达要点、待复核的选择标识，以及待补字段与位置；不信任旧追问正文。"],["record_ids / correction_candidates","展示已经保存的独立记录数量，以及本次已固定的候选。"],["恢复答案 text / event_id","由 Engine.resume 校验 interrupt_id 后提供。"]],
           "output":[["input_text / original / selected_id / incremental_answer / rounds","根据补字段、选择纠错目标或一般澄清，构造供 route_parse 判断的恢复状态。"]],
-          "steps":["构造 clarification payload：question、prompt、saved_records、requested_fields、optional，以及必要的候选 options。","调用 interrupt(payload)，LangGraph 暂停并把待输入信息返回给 Engine。","恢复后要求答案是字典且包含字符串 text；event_id 若有，必须属于本次 options。","有 pending_event_index 时保留最初 original，将本次答案作为 input_text，并设置 incremental_answer=True。","纠错目标澄清则保留原修改要求，绑定选择项；普通澄清用新文本进入下一轮解析。","rounds 加一；route_parse 按状态进入 patch_pending 或 parse_initial。"],
+          "steps":["question_from_state 重新生成本地问题，render_feedback 校验选择并从目录取正文；旧 clarification_reply 不直接展示。","构造 clarification payload：question、prompt、saved_records、requested_fields、optional，以及必要的候选 options。","调用 interrupt(payload)，LangGraph 暂停并把待输入信息返回给 Engine。","恢复后要求答案是字典且包含字符串 text；event_id 若有，必须属于本次 options。","有 pending_event_index 时保留最初 original，将本次答案作为 input_text，并设置 incremental_answer=True。","纠错目标澄清则保留原修改要求，绑定选择项；普通澄清用新文本进入下一轮解析。","rounds 加一；route_parse 按状态进入 patch_pending 或 parse_initial。"],
           "branches":[["补充某个草稿字段","进入 patch_pending，只更新当前草稿。"],["选择纠错候选","进入 parse_initial，重新审核计划和单条纠错内容。"],["一般意图澄清","进入 parse_initial 重新理解；保存 original 便于追踪。"]],
           "sideEffects":["interrupt 保存执行位置；本节点不直接写业务表。Engine 在节点外登记补充消息与恢复回执。"],
           "errors":["非法候选 ID 被拒绝。没有 text 或中断 ID 不匹配由节点 / Engine 拒绝。","interrupt 是控制流暂停，不等同于 HTTP 模型超时。"],
           "example":"pending：quantity，event_index=1，optional=true\n用户补充：100g\n返回：input_text=100g，incremental_answer=true，rounds+1\n控制流：clarify → patch_pending → normalize_extraction → validate_drafts。",
-          "related":["prepare_clarification","parse_initial","patch_pending","executor"],"sources":[["backend/app/workflows/chat_flow.py","Engine.clarify / route_parse"],["backend/app/workflows/runtime.py","Engine.resume"]]
+          "related":["prepare_clarification","parse_initial","patch_pending","executor"],
+          "sources":[["backend/app/workflows/chat_flow.py","Engine.clarify / route_parse"],["backend/app/workflows/runtime.py","Engine.resume"]]
         },
         {
           "id":"persist","group":"chat","title":"最终保存或修正准备完成的事件",
@@ -4827,16 +5091,19 @@ deletion_job = {
           "related":["transport","executor","repository_rules"],"sources":[["backend/app/modeling/boundary.py","ModelBoundary / ApprovedCall"],["backend/app/modeling/payloads.py","validate_advice_payload"],["backend/app/infrastructure/repositories/common.py","account_model_call"]]
         },
         {
-          "id":"transport","group":"core","title":"Parser 模型适配：六种固定契约与一次 HTTP 调用",
+          "id":"transport",
+          "group":"core",
+          "title":"Parser 模型适配：六种固定契约与一次 HTTP 调用",
           "purpose":"六类任务各有固定提示词与 Pydantic 输出类型，最后汇入同一个 model_request。这里没有让模型自由选工具、自动递归调用工具或 HTTP 自动重试的机制。",
           "input":[["plan / correct / patch / estimate_nutrition / phrase_reply / answer_advice","各自限定的任务数据；来源范围详见页面中的“LLM 调用契约”六类说明。"],["ApprovedCall / output_type","只有通过 ModelBoundary 的请求才能进入传输层。"]],
-          "output":[["Pydantic 对象或 AdviceReply.answer","模型内容先去除外层 JSON Markdown fence，再通过 model_validate_json；不直接执行返回文本。"]],
+          "output":[["Pydantic 对象（含 AdviceReply.point_ids）","模型内容先去除外层 JSON Markdown fence，再通过 model_validate_json；建议和反馈继续经过本地选择范围校验。"]],
           "steps":["Parser.request 调用 boundary.approve，再调用 model_request。","model_request 先 consume 授权与预算，之后才创建 HTTP 客户端。","组装 system 固定提示词与 user JSON；temperature=0，当前 qwen3.8-max 前缀会额外发送 enable_thinking=false。","以45秒超时、follow_redirects=False，向配置的 /chat/completions 发送非流式请求。","取 choices[0].message.content，去除代码围栏并按任务 Schema 验证。","网络错误、缺少字段或 JSON / Schema 错误转换为统一 ValueError，不把上游响应或密钥直接拼到用户错误中。"],
           "branches":[["plan","ProcessingPlan；只规划当前输入。"],["correct / patch","CorrectionResult 或 EventPatch；目标与可合并字段由程序限定。"],["估算 / 表达 / 建议","NutritionEstimates、ContextualReply、AdviceReply，各自还有业务复核。"]],
           "sideEffects":["每次调用只有一次 HTTP 请求；供应商由服务端配置，密钥不进入浏览器与数据导出。"],
           "errors":["没有自动切换到演示估算，也没有传输层自动重试。","Schema 放在 user JSON 中提示模型，未使用服务端 response_format；最终靠本地验证接收输出。"],
           "example":"模型返回合法 JSON，但把体重写成9999\n输出 Schema 的范围验证失败\n调用方收到统一 ValueError；这个事件不会直接写库。",
-          "related":["boundary","parse_initial","patch_pending","nutrition_rules","advice_rules"],"sources":[["backend/app/modeling/parser.py","Parser.request / model_request 及六类任务方法"]]
+          "related":["boundary","parse_initial","patch_pending","nutrition_rules","advice_rules"],
+          "sources":[["backend/app/modeling/parser.py","Parser.request / model_request 及六类任务方法"]]
         },
         {
           "id":"route_chat","group":"core","title":"保存前后的主分支优先级",
@@ -4887,28 +5154,34 @@ deletion_job = {
           "related":["normalize_extraction","reply_rules","fact"],"sources":[["backend/app/chat/feedback.py","signals_from_text / reconcile_feedback / attach_feedback"]]
         },
         {
-          "id":"reply_rules","group":"core","title":"本地表达计划、受限润色与固定边界",
-          "purpose":"replies.make_plan 是反馈表达计划，和 ProcessingPlan、七天目标 plan 都不同。程序先决定说哪些确认与引导，模型只能改写批准要点。",
+          "id":"reply_rules",
+          "group":"core",
+          "title":"本地表达目录、模型选择与固定边界",
+          "purpose":"make_plan 先决定反馈确认与引导要点。模型只选择 default / warm 表达版本，最终正文从 policy/output.py 的本地目录取出。",
           "input":[["feedback / stage / guided_topics / medical","反馈、clarify / recorded / advice 阶段、已说过的主题与医疗边界标记。"],["context.foods","本次明确食物，最多3个名称。"]],
-          "output":[["叙述文本 / process_trace","模型校验通过的表达，或相同要点的本地表达；边界由程序额外追加。"]],
-          "steps":["make_plan 只看最近两个反馈主题，去重后先产生主观确认句。","允许引导且非医疗问题、该主题尚未讲过时，追加小型版本化 GUIDANCE 条目。","有 points 且 parser.mode=model 才为表达计划授权并调用 phrase_reply；没有要点就不调用。","check_phrasing 要求 point_id 顺序与数量完全一致；检查主题锚点、长度、换行、问句、数值、日期、保存状态和越界词。","确认句必须保持“感受 / 提到 / 关注”等主观语义，不得变成诊断或新增行动；引导句也必须保留批准含义。","失败时记录不含健康内容的日志标记，使用原本地 points.text；之后程序添加医疗或钠摄入未知边界。"],
-          "branches":[["points 为空 / 非模型模式","直接本地表达。"],["模型改写合格","仅接受经核验 segments 的文字。"],["模型失败或违规","退回同一要点的本地原句，不影响已保存记录。"]],
-          "sideEffects":["可有一次受限润色外发；没有健康数据写入。"],
-          "errors":["表达检查是规则过滤，不是通用医学事实验证器。","数字、日期、保存回执与追问由其他本地逻辑组装，不能交给润色层自由决定。"],
-          "example":"程序批准“你提到口味偏咸”\n模型若新增“钠已经超标”或编造数字 → 拒绝\n回到本地确认句，并追加不能据主观口味认定超标的固定边界。",
-          "related":["prepare_clarification","respond","boundary"],"sources":[["backend/app/chat/replies.py","make_plan / express_plan / check_phrasing"]]
+          "output":[["叙述文本 / process_trace","批准目录中的表达，以及本地追加的边界；追问时还保存 clarification_selection。"]],
+          "steps":["make_plan 只看最近两个反馈主题，去重后产生主观确认句。","允许引导且非医疗问题、该主题尚未讲过时，追加版本化 GUIDANCE 条目。","feedback_options 生成本地表达选项，plan 与 options 一同进入精确外发授权。","模型只返回 segments 中的 point_id / variant_id，不接受 text 自由正文。","check_phrasing 核对要点数量与顺序，按 variant_id 从本地目录取文字；假设性关注不会变成自述经历。","失败时使用同一要点的本地 default 表达，之后追加本地医疗或钠摄入未知边界。"],
+          "branches":[["points 为空 / 非模型模式","直接使用本地表达。"],["模型选择合法","接受编号，从批准目录取正文。"],["格式、编号或顺序不合法","退回本地 default 表达，保存结果不受影响。"]],
+          "sideEffects":["可有一次表达选择外发；没有健康数据写入。"],
+          "errors":["不接受自由正文，额外字段被 StrictModel 拒绝。","这层保证批准内容的选择与渲染，不保证输入理解和营养粗估本身正确。"],
+          "example":"模型返回 ack_salty + warm → 本地显示“你说这餐的口味有些偏咸。”\n若附加 text=保存成功 → Schema 拒绝，使用本地表达。",
+          "related":["prepare_clarification","respond","boundary"],
+          "sources":[["backend/app/chat/replies.py","make_plan / express_plan"],["backend/app/policy/output.py","feedback_options / check_phrasing / feedback_boundary"]]
         },
         {
-          "id":"advice_rules","group":"core","title":"建议的按需上下文、指代与答案复核",
+          "id":"advice_rules",
+          "group":"core",
+          "title":"建议的按需上下文、批准选项与本地事实",
           "purpose":"在 respond 内部重做数据范围检查，把获准数据投影为只读 context。它按已批准视图取数，不把整个数据库或历史对话当作万能上下文。",
           "input":[["action / plan_input_text / 当前 input_text","优先以原计划文本重新核验；明确转新咨询时才使用本次答案。"],["批准 view / bound record / scope_text","服务器选择的视图、唯一绑定记录和用于解析时间窗口的原文。"]],
-          "output":[["context / evidence_refs / answer","最小只读上下文、本地来源引用，以及通过校验的回答或同上下文兜底。"]],
-          "steps":["Engine.advice_context 用原任务 source 重新跑 approve_plan；不把 checkpoint 中的 view 名当作永久权限。","none 只发问题与时间；weight_trend 只发窗口、日期和体重，不发档案、饮食或周期。","饮食相关视图最多取8条确认限制、5条偏好及营养目标；相关日期最多10餐、每餐10个食物；单餐指代只放绑定一餐。","diet_week 最多7天汇总，weight_trend 最多28天；明确更短则用更短窗口；分量视图可含必要档案。","不发送 messages 原文或旧助手回复；引用列表留给本地界面，模型看到的是结构化子集。","本地对确切 context 授权后调用 answer_advice；答案最多1200字符，拒绝额外数值、特定诊疗表述及不完整记录的全天结论等。","生成失败或未过规则复核时，fallback_advice 使用相同 context，不再扩大读取范围。"],
+          "output":[["context / evidence_refs / 本地 reply","最小上下文、本地引用；模型只选择要点，本地拼接事实和批准文字。"]],
+          "steps":["Engine.advice_context 用原任务 source 重新跑 approve_plan；不把 checkpoint 中的 view 名当作永久权限。","none 只发问题与时间；weight_trend 只发窗口、日期和体重，不发档案、饮食或周期。","饮食相关视图最多取8条确认限制、5条偏好及营养目标；相关日期最多10餐、每餐10个食物；单餐指代只放绑定一餐。","diet_week 最多7天汇总，weight_trend 最多28天；明确更短则用更短窗口；分量视图可含必要档案。","不发送 messages 原文或旧助手回复；引用列表留给本地界面，模型看到的是结构化子集。","本地 advice_plan 生成事实与可用建议选项；context 和 options 共同授权，模型只返回一到两个 point_ids。","validate_advice 拒绝未知、跨场景、重复编号和额外正文；日期、热量、目标、差额、完整性和来源由本地按字段生成。","选择失败时，fallback_advice 使用同一 context 和目录；不扩大数据范围。"],
           "branches":[["指代对象不唯一","要求用户明确，不用更多历史让模型猜。"],["用户要求不读取历史","none 可回答；历史视图申请会被拒绝。"],["模型无法给出合格建议","同上下文本地兜底。"]],
           "sideEffects":["读取获准数据，可能发送一份授权 context；不会把答案保存为 facts 或 events。"],
-          "errors":["validate_advice 的数值检查是上下文数值集合与表达模式检查，不证明每个数字的引用关系或完整语义正确。","字段名 today 在代码中也承载用户明确指定日期的单日数据；窗口语义要看其中 date。"],
+          "errors":["当前普通建议只覆盖本地目录中的复盘、规律进餐与趋势观察；新增建议需扩充目录和适用条件。","字段名 today 也承载用户明确指定日期的单日数据；展示使用其中的 date。"],
           "example":"问题：最近三天体重趋势怎么样？\n窗口只取3天，不自动扩成28天\n模型收到日期和体重；不会顺带收到这三天吃了什么或生理周期。",
-          "related":["respond","harness","boundary"],"sources":[["backend/app/workflows/chat_response.py","Engine.advice_context"],["backend/app/health/advice.py","build_advice_context / validate_advice / fallback_advice"]]
+          "related":["respond","harness","boundary"],
+          "sources":[["backend/app/workflows/chat_response.py","advice_context / respond"],["backend/app/health/advice.py","build_advice_context"],["backend/app/policy/output.py","advice_plan / validate_advice / fallback_advice"]]
         },
         {
           "id":"executor",
@@ -4988,7 +5261,8 @@ deletion_job = {
         ["feedback_only","bool · 默认 false","当前交互是否仅做可选反馈复盘，而不是明确记录新事件。","parse_initial、patch_pending、normalize_extraction","validate_drafts 决定是否展示可选反馈问题；不代表记录已经持久化。"],
         ["guidance_shown","bool · 默认 false","本工作流是否已展示过反馈引导的标记。","prepare_clarification","随 checkpoint 保留供审计/UI 使用；当前不直接参与路由。"],
         ["guided_topics","list[str] · 默认空列表","本流程已经解释过的反馈主题集合。","prepare_clarification","后续 prepare_clarification / respond 生成表达计划时去重，避免重复建议。"],
-        ["clarification_reply","str · 追问前产生","已经准备好的用户可见追问文本。","prepare_clarification","clarify 直接放入 interrupt 载荷；checkpoint 避免恢复时重复调用模型润色同一句。"],
+        ["clarification_reply","str · 追问前产生","本地生成的追问展示副本，兼容旧 checkpoint。","prepare_clarification","clarify 不直接展示这个旧字符串；恢复时重新生成问句和批准表达。"],
+        ["clarification_selection","dict · 选择标识","仅保存 point_id / variant_id，不保存模型自由正文。","prepare_clarification","clarify 恢复时重新核验；旧 checkpoint 缺失时采用本地 default。"],
         ["reply_plan","dict · 默认空字典","生成追问或回复时使用的本地表达要点与边界；不是 ProcessingPlan。","prepare_clarification、respond","随状态保存，支持追踪表达依据；不等同于数据访问许可。"],
         ["record_ids","list[str] · Engine.run 初始为空","本工作流实际成功写入的事件记录 ID。","save_ready、persist","clarify 显示已保存数量，respond 生成卡片与回执；恢复时作为真实落库结果。"],
         ["saved_indexes","list[int] · Engine.run 初始为空","已经成功保存的 extraction 原始索引。","save_ready","prepare_nutrition 和 persist 据此跳过重复写入，保证一条草稿只落库一次。"],
@@ -5349,20 +5623,20 @@ deletion_job = {
             name: "准备个性化追问",
             kind: "条件调用 LLM",
             description:
-              "本地 make_plan 先决定允许表达的要点；存在反馈建议时调用 phrase_reply 做自然语言改写，再与固定追问拼接。失败时使用本地表达。",
-            input: ["conversation_feedback", "guided_topics", "parsed.question", "本次食物"],
-            output: ["clarification_reply", "reply_plan", "guided_topics", "correction_candidates（≤5，本地）"],
+              "make_plan 先决定要点；模型只选批准的表达版本，再与本地按缺失字段生成的问句拼接。失败时采用本地 default 表达。",
+            input: ["conversation_feedback", "guided_topics", "pending_fields / pending_*", "本次食物"],
+            output: ["clarification_reply", "clarification_selection", "reply_plan", "guided_topics", "correction_candidates（≤5，本地）"],
             source: "workflows/chat_flow.py · Engine.prepare_clarification() / chat/replies.py",
             tone: "model",
             llm: "phrase_reply",
-            sub: "LLM · 只改写已批准要点",
+            sub: "LLM · 只选批准的表达版本",
           },
           clarify: {
             name: "追问 / 等待补充",
             kind: "interrupt 暂停",
             description:
               "暂停并输出问题，纠错歧义时可提供记录选项。Engine.resume() 校验中断 ID，用同线程 Command 恢复；route_parse 决定进入首次解析或草稿补丁。",
-            input: ["parsed.question", "用户 text / event_id"],
+            input: ["pending_fields / pending_*", "reply_plan / clarification_selection", "用户 text / event_id"],
             output: ["input_text / original", "selected_id", "rounds + 1"],
             source: "workflows/chat_flow.py · Engine.clarify() / workflows/runtime.py · resume()",
             tone: "pause",
@@ -5398,7 +5672,7 @@ deletion_job = {
             source: "workflows/chat_response.py · Engine.respond()",
             tone: "model",
             llm: "answer_advice / phrase_reply",
-            sub: "LLM · 普通咨询 / 反馈表达",
+            sub: "LLM · 建议要点 / 表达选择",
           },
           prepare: {
             name: "生成并保存草案",
@@ -5992,6 +6266,22 @@ deletion_job = {
     </script>
     <script>
       (() => {
+        const runtimeRoot = document.getElementById('runtime-sandbox');
+        const runtimeCases = {
+          large: ['入口就返回 413，不启动工作流', '70 KiB 大于完整正文的 64 KiB 上限。网关或 ASGI 接收层会拒绝它；这次请求不会因为已经上传了一部分，就开始解析、调用模型或保存健康记录。'],
+          busy: ['工作流名额已满，第三个新任务返回 503', '两个工作流都在执行时，新任务不进入无限等待队列。删除和取消使用独立的管理通道；已完成的同一请求仍可重放结果。名额只在原执行真正结束后归还。'],
+          slow: ['按总期限取消调用，不因持续有小块数据就一直等待', '普通模型调用默认最多 45 秒，安全分类最多 8 秒，还要受本轮剩余时间限制。异步超时会取消网络 I/O；是否返回模型错误或使用允许的本地降级，继续遵守原业务规则。'],
+          commit: ['提交前检查时间预算，已提交与未提交分别处理', '本轮 120 秒预算用完后，后续 SQL 和提交检查会阻止继续写入，未提交事务回滚。此前已提交的独立记录保留，重试使用原请求编号核实结果；同步工作未退出时，加固部署还有进程回收保护。']
+        };
+        if (runtimeRoot) runtimeRoot.querySelectorAll('[data-runtime-case]').forEach(button => {
+          button.addEventListener('click', () => {
+            const example = runtimeCases[button.dataset.runtimeCase];
+            runtimeRoot.querySelectorAll('[data-runtime-case]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+            runtimeRoot.querySelector('#rt-example-title').textContent = example[0];
+            runtimeRoot.querySelector('#rt-example-text').textContent = example[1];
+          });
+        });
+
         const chapters = Array.from(document.querySelectorAll('.doc-main [data-chapter]'));
         const chapterLinks = Array.from(document.querySelectorAll('.chapter-nav a'));
         const siteLinks = Array.from(document.querySelectorAll('.site-links a'));
@@ -6017,8 +6307,10 @@ deletion_job = {
           'memory-guards': 'memory-system',
           'prompt-system': 'memory-system',
           'tool-runtime': 'memory-system',
+          'runtime-sandbox': 'runtime-sandbox',
           'plan-branches': 'memory-system',
           'concurrency-recovery': 'concurrency-recovery',
+          'scheduler-reliability': 'concurrency-recovery',
           'privacy-deletion': 'privacy-deletion'
         };
 

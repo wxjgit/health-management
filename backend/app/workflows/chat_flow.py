@@ -177,6 +177,7 @@ class ChatFlowMixin:
                     f'{state["thread_id"]}:event:{index}',
                     parsed.get('correction_id'),
                     expected_version=state.get('correction_version'),
+                    user_correction=True,
                 ))
         return {
             'record_ids': list(dict.fromkeys(ids)),

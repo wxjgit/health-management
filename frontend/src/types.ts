@@ -27,6 +27,7 @@ export type DefaultTargets = {
   sources: { title: string; url: string }[];
 };
 export type Health = {
+  runtime_profile?: "development" | "hardened";
   mode: "model" | "demo";
   today: string;
   timezone: string;

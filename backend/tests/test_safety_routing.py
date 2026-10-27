@@ -34,7 +34,7 @@ def post(client, text, **values):
 
 def install(monkeypatch, classify=GENERAL, planner=None):
     calls = []
-    original = httpx.Client
+    original = httpx.AsyncClient
     def handler(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
         calls.append(data)
@@ -47,7 +47,7 @@ def install(monkeypatch, classify=GENERAL, planner=None):
         if isinstance(value, httpx.Response):
             return value
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(value)}}]})
-    monkeypatch.setattr('app.modeling.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
     return calls
 

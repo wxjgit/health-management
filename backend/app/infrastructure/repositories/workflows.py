@@ -35,7 +35,7 @@ class WorkflowRepositoryMixin:
             ).fetchone()
             return self.workflow(row['id']) if row else None
 
-    def register_workflow(self, thread_id, request_id, fingerprint, kind):
+    def register_workflow(self, thread_id, request_id, fingerprint, kind, *, mode=None):
         with self.lock, self.conn:
             self.conn.execute(
                 'INSERT INTO workflows VALUES (?,?,?,?,?,?,?)',
@@ -45,8 +45,13 @@ class WorkflowRepositoryMixin:
             self.conn.execute('INSERT OR IGNORE INTO workflow_generations VALUES (?,0)', (thread_id,))
             self.touch_workflow(thread_id)
 
+            if kind == 'chat':
+                self.quality_insert('workflow', thread_id, 'required_clarification', mode=mode)
+
     def workflow_result(self, thread_id, result):
         with self.lock, self.conn:
+            self.quality_prune()
+            self.quality_clarification(thread_id, result)
             result.update(self.dependency_metadata(self.workflow_node(thread_id)))
             self.conn.execute(
                 'UPDATE workflows SET status=?, result=? WHERE id=?',
@@ -230,6 +235,8 @@ class WorkflowRepositoryMixin:
     def finish_resume(self, thread_id, payload, request_fingerprint, result, conversation):
         """Commit result, receipt, attempt and assistant reply in one transaction."""
         with self.lock, self.conn:
+            self.quality_prune()
+            self.quality_clarification(thread_id, result)
             result.update(self.dependency_metadata(self.workflow_node(thread_id)))
             self.conn.execute(
                 'UPDATE workflows SET status=?,result=? WHERE id=?',
@@ -261,6 +268,7 @@ class WorkflowRepositoryMixin:
                 if not plan or plan['status'] != 'pending':
                     raise WorkflowStateError()
                 self.conn.execute("UPDATE plans SET status='rejected' WHERE id=?", (thread_id,))
+                self.quality_plan_outcome(thread_id, 'cancelled')
             result = {'thread_id': thread_id, 'status': 'cancelled',
                       'reply': '已取消待处理事项，已保存的独立记录保留。'}
             self.conn.execute(
@@ -303,6 +311,8 @@ class WorkflowRepositoryMixin:
             workflow = self.workflow(thread_id)
             if not workflow:
                 return
+            if workflow['kind'] == 'plan' and workflow['status'] in ('waiting_input', 'resuming', 'resume_failed', 'running'):
+                self.quality_plan_outcome(thread_id, 'expired')
             requests = {workflow['request_id']}
             for table in ('receipts', 'resume_attempts'):
                 requests.update(row[0] for row in self.conn.execute(

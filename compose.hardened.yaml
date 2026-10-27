@@ -1,0 +1,100 @@
+name: qingji-hardened
+x-security: &security
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: "on-failure:3"
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+services:
+  gateway:
+    <<: *security
+    image: public.ecr.aws/docker/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    entrypoint: [nginx]
+    command: ["-g", "daemon off;"]
+    user: "101:101"
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+    ports: ["127.0.0.1:8000:8080"]
+    volumes:
+      - ./deploy/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    tmpfs: ["/tmp:size=16m,uid=101,gid=101,mode=700,noexec,nosuid,nodev"]
+    networks:
+      ingress: {ipv4_address: 172.30.80.2}
+      frontend: {ipv4_address: 172.30.83.2}
+    depends_on: [app]
+  app:
+    <<: *security
+    image: qingji-runtime:local
+    build: .
+    user: "10001:10001"
+    cpus: 1
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    init: true
+    sysctls: {net.ipv6.conf.all.disable_ipv6: "1"}
+    dns: ["127.0.0.1"]
+    extra_hosts: ["egress:172.30.81.2"]
+    environment:
+      RUNTIME_PROFILE: hardened
+      DATA_DIR: /data
+      PROCESSING_MODE: ${PROCESSING_MODE:-model_allowed}
+      MODEL_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
+      MODEL_NAME: ${MODEL_NAME:-qwen3.8-max}
+      MODEL_ALLOWED_HOSTS: dashscope.aliyuncs.com
+      MODEL_API_KEY_FILE: /run/secrets/model_api_key
+      MODEL_EGRESS_PROXY: http://egress:3128
+      SCHEDULER_ENABLED: "true"
+      JOB_RUNNER_ENABLED: "true"
+      JOB_LEASE_SECONDS: "90"
+      JOB_HEARTBEAT_SECONDS: "20"
+    secrets: [model_api_key]
+    volumes: ["health-data:/data"]
+    tmpfs: ["/tmp:size=64m,uid=10001,gid=10001,mode=700,noexec,nosuid,nodev"]
+    networks:
+      ingress: {ipv4_address: 172.30.80.3}
+      model: {ipv4_address: 172.30.81.3}
+    healthcheck:
+      test: [CMD, python, /app/scripts/runtime-healthcheck.py]
+      interval: 2s
+      timeout: 1s
+      retries: 1
+      start_period: 60s
+    depends_on: [egress]
+  egress:
+    <<: *security
+    build: ./deploy/egress
+    image: qingji-egress:local
+    user: "13:13"
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+    volumes:
+      - ./deploy/egress/squid.conf:/etc/squid/squid.conf:ro
+    tmpfs: ["/tmp:size=16m,uid=13,gid=13,mode=700,noexec,nosuid,nodev"]
+    networks:
+      model: {ipv4_address: 172.30.81.2}
+      uplink: {ipv4_address: 172.30.82.2}
+networks:
+  frontend:
+    enable_ipv6: false
+    ipam: {config: [{subnet: 172.30.83.0/28}]}
+  ingress:
+    internal: true
+    enable_ipv6: false
+    ipam: {config: [{subnet: 172.30.80.0/28}]}
+  model:
+    internal: true
+    enable_ipv6: false
+    ipam: {config: [{subnet: 172.30.81.0/28}]}
+  uplink:
+    enable_ipv6: false
+    ipam: {config: [{subnet: 172.30.82.0/28}]}
+volumes:
+  health-data:
+secrets:
+  model_api_key:
+    file: ${MODEL_API_KEY_SOURCE_FILE:?Set an absolute secret path outside the build context}

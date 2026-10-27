@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-27T06:39:41.652569+00:00",
+  "project": "qingji-runtime-test",
+  "image": "sha256:4e1cfef6e82ed61119b933e0bfa2cb881698ecfa1b62c1d9d38386290306405b",
+  "checks": {
+    "non_root": true,
+    "read_only": true,
+    "capabilities": true,
+    "no_new_privileges": true,
+    "no_privileged_or_host_namespaces": true,
+    "mount_allowlist": true,
+    "secret_readonly": true,
+    "memory": true,
+    "cpu": true,
+    "pids": true,
+    "no_app_port_publishing": true,
+    "healthcheck": true,
+    "probe_uid": true,
+    "probe_code": true,
+    "probe_data": true,
+    "probe_temporary": true,
+    "probe_metadata": true,
+    "probe_host_gateway": true,
+    "probe_public_direct": true
+  },
+  "unverified": [
+    "controlled_public_positive_and_negative",
+    "proxy_dns_rebinding",
+    "host_firewall_and_ipv6",
+    "hard_recovery_and_two_database_consistency",
+    "resource_stress_and_disk_full"
+  ],
+  "accepted": false
+}

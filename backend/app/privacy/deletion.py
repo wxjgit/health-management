@@ -1,5 +1,7 @@
 """Plan exact deletion, fence writes, and recover two-database cleanup."""
 
+from ..common.execution_budget import runtime_operation
+
 import hashlib
 import json
 from uuid import uuid4
@@ -232,9 +234,21 @@ class PrivacyDeletionService:
                 'SELECT * FROM provenance_nodes WHERE is_current=1') if row['node_id'] in affected
                 or (row['object_type'] == 'event' and row['object_id'] in sanitize)),
         }
+        manifest['scheduled_jobs'] = repo.jobs_for_deletion(manifest['items'], threads, kind, object_id)
+        manifest['counts']['scheduled_jobs'] = len(manifest['scheduled_jobs'])
+        manifest['counts']['outbox_events'] = sum(repo.conn.execute(
+            'SELECT count(*) FROM outbox_events WHERE source_job_id=?', (job_id,)).fetchone()[0]
+            for job_id in manifest['scheduled_jobs'])
+        subjects = {(item['kind'], item['id']) for item in manifest['items'] if item['kind'] in ('event', 'workflow', 'plan')}
+        subjects.update(('workflow', thread) for thread in threads)
+        manifest['quality_subjects'] = sorted(subjects)
+        manifest['counts']['quality_observations'] = sum(repo.conn.execute(
+            'SELECT count(*) FROM quality_observations WHERE subject_type=? AND subject_id=?', subject).fetchone()[0]
+            for subject in subjects)
         manifest['scope_token'] = hashlib.sha256(dump(manifest).encode()).hexdigest()
         return manifest
 
+    @runtime_operation('management')
     def preview(self, kind, object_id):
         with self.engine.lock, untracked():
             manifest = self._plan(kind, object_id)
@@ -248,6 +262,7 @@ class PrivacyDeletionService:
     def _public(manifest, **extra):
         return {key: manifest[key] for key in ('target_type', 'target_id', 'counts', 'scope', 'reasons')} | extra
 
+    @runtime_operation('management')
     def delete(self, kind, object_id, *, preview_id=None, request_id=None, require_preview=False):
         request_id = request_id or str(uuid4())
         with self.engine.lock, untracked():
@@ -286,6 +301,12 @@ class PrivacyDeletionService:
 
     def _erase_business(self, job, manifest):
         repo = self.repo
+        for subject in manifest.get('quality_subjects', []):
+            repo.conn.execute('DELETE FROM quality_observations WHERE subject_type=? AND subject_id=?', subject)
+        keys = {row['logical_key'] for job_id in manifest.get('scheduled_jobs', [])
+                if (row := repo.scheduled_job(job_id))}
+        for key in keys:
+            self._reset_job(key)
         retained_plans = []
         for thread in manifest['threads']:
             repo.conn.execute('DELETE FROM context_expirations WHERE thread_id=?', (thread,))
@@ -365,7 +386,9 @@ class PrivacyDeletionService:
         repo._bump()
 
     def _reset_job(self, key):
-        self.repo.conn.execute("UPDATE jobs SET status='pending',attempts=0 WHERE key=?", (key,))
+        if key.startswith('auto-plan:'):
+            key = key[len('auto-plan:'):]
+        self.repo.reset_scheduled_key(key)
         self.repo.conn.execute('INSERT INTO job_generations VALUES (?,1) ON CONFLICT(key) DO UPDATE SET generation=generation+1', (key,))
 
     def _minimize(self, event_id):
@@ -474,6 +497,7 @@ class PrivacyDeletionService:
             manifest = {'target_type': 'archive', 'target_id': ','.join(batch['month'] for batch in archive_batches),
                         'nodes': sorted(nodes), 'threads': sorted(threads), 'items': list(items.values()),
                         'archive_batches': archive_batches, 'counts': {}, 'scope': 'retention', 'reasons': []}
+            manifest['scheduled_jobs'] = sorted({job_id for plan in plans for job_id in plan.get('scheduled_jobs', [])})
             deletion_id = str(uuid4())
             with self.repo.conn:
                 self.repo.conn.execute('INSERT INTO deletion_jobs VALUES (?,?,?,?,?,?,?,NULL)',
@@ -488,6 +512,7 @@ class PrivacyDeletionService:
                 raise RuntimeError('归档清理尚未完成')
             return [batch['month'] for batch in archive_batches]
 
+    @runtime_operation('management')
     def status(self, deletion_id, *, retry=False):
         with self.engine.lock, untracked():
             job = self.repo.conn.execute('SELECT * FROM deletion_jobs WHERE id=?', (deletion_id,)).fetchone()

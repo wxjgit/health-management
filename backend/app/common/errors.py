@@ -52,6 +52,14 @@ class PrivacyCleanupPending(AppError):
     default_code = 'privacy_cleanup_pending'
 
 
+class RuntimeLimitError(AppError):
+    default_code = 'runtime_busy'
+
+
+class ExecutionDeadlineExceeded(RuntimeLimitError):
+    default_code = 'execution_deadline_exceeded'
+
+
 @dataclass(frozen=True)
 class ErrorSpec:
     kind: type[AppError]
@@ -60,6 +68,14 @@ class ErrorSpec:
 
 
 ERRORS = {
+    'job_lease_lost': ErrorSpec(ConflictError, 409, '后台任务执行权已失效，请刷新状态。'),
+    'runtime_busy': ErrorSpec(RuntimeLimitError, 503, '服务正在处理其他请求，请稍后使用原请求重试。'),
+    'execution_deadline_exceeded': ErrorSpec(ExecutionDeadlineExceeded, 504, '本次处理已超时；此前已保存的记录保留，请刷新或使用原请求重试。'),
+    'request_body_too_large': ErrorSpec(RuntimeLimitError, 413, '请求内容过大，请缩小范围。'),
+    'request_body_timeout': ErrorSpec(RuntimeLimitError, 408, '接收请求超时，请重新发送原请求。'),
+    'request_encoding_unsupported': ErrorSpec(RuntimeLimitError, 415, '不支持压缩请求内容。'),
+    'request_headers_too_large': ErrorSpec(RuntimeLimitError, 431, '请求头超过限制。'),
+    'model_response_too_large': ErrorSpec(UpstreamModelError, 502, '模型响应超过大小限制，请缩小范围后重试。'),
     'internal_error': ErrorSpec(AppError, 500, '服务处理失败，请使用同一请求重试或检查本地服务状态。'),
     'privacy_cleanup_pending': ErrorSpec(PrivacyCleanupPending, 503, '相关隐私清理尚未完成，请重试删除任务。'),
     'domain_validation_failed': ErrorSpec(DomainValidationError, 422, '操作参数不合法，请检查后重试。'),

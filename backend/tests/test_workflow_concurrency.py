@@ -73,8 +73,8 @@ class ControlledModel:
 @pytest.fixture
 def model(monkeypatch):
     controlled = ControlledModel()
-    original = httpx.Client
-    monkeypatch.setattr('app.modeling.parser.httpx.Client', lambda *args, **kwargs: original(
+    original = httpx.AsyncClient
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient', lambda *args, **kwargs: original(
         *args, **kwargs, transport=httpx.MockTransport(safety_transport(controlled.handle))
     ))
     return controlled

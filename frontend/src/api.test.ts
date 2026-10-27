@@ -116,3 +116,26 @@ describe("API error contract", () => {
     });
   });
 });
+
+it("keeps the original id and never automatically retries an overloaded request", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    code: "runtime_busy", detail: "服务繁忙，请使用原请求重试。",
+    request_id: "12345678-1234-1234-1234-123456789abc",
+  }), { status: 503, headers: { "Content-Type": "application/json" } }));
+  vi.stubGlobal("fetch", fetchMock);
+  const original = { request_id: "original-business-request", text: "合成输入" };
+  const error = await api("/chat", "POST", original).catch((value) => value);
+  expect(error).toBeInstanceOf(ApiError);
+  if (!(error instanceof ApiError)) throw new Error("Expected ApiError");
+  expect(error.code).toBe("runtime_busy");
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body).request_id).toBe(original.request_id);
+});
+
+it("shows a safe timeout fallback for a non-JSON gateway response", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>gateway</html>", { status: 504 })));
+  const error = await api("/chat", "POST", { request_id: "original" }).catch((value) => value);
+  if (!(error instanceof ApiError)) throw new Error("Expected ApiError");
+  expect(error.message).toContain("此前已保存的记录保留");
+  expect(error.message).not.toContain("<html>");
+});

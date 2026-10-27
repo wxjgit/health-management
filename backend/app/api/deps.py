@@ -1,15 +1,19 @@
 from fastapi import Request
 from functools import wraps
 from inspect import signature
-from ..common.errors import PrivacyCleanupPending
+from ..common.errors import PrivacyCleanupPending, RuntimeLimitError
 
 
 def get_engine(request: Request):
     engine = request.app.state.engine
-    with engine.lock:
+    if not engine.lock.acquire(timeout=1):
+        raise RuntimeLimitError()
+    try:
         pending = engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone()
         if pending and request.url.path != '/api/deletions' and not request.url.path.startswith('/api/deletions/'):
             raise PrivacyCleanupPending()
+    finally:
+        engine.lock.release()
     return engine
 
 
@@ -20,8 +24,23 @@ def protected_read(operation):
     @wraps(operation)
     def guarded(*args, **kwargs):
         engine = parameters.bind_partial(*args, **kwargs).arguments['engine']
-        with engine.lock:
+        with engine.runtime.execution('read'), engine.lock:
             if engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
                 raise PrivacyCleanupPending()
             return operation(*args, **kwargs)
     return guarded
+
+
+def bounded_api(operation, lane='read'):
+    parameters = signature(operation)
+
+    @wraps(operation)
+    def bounded(*args, **kwargs):
+        engine = parameters.bind_partial(*args, **kwargs).arguments['engine']
+        with engine.runtime.execution(lane):
+            return operation(*args, **kwargs)
+    return bounded
+
+
+def managed_api(operation):
+    return bounded_api(operation, 'management')

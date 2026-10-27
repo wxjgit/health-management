@@ -57,7 +57,7 @@ class EventRepositoryMixin:
                 self.observe('event', record['id'], record['version'])
             return record
 
-    def save_events(self, drafts, op_key, correction_id=None, expected_version=None):
+    def save_events(self, drafts, op_key, correction_id=None, expected_version=None, *, user_correction=False):
         with self.lock, self.conn:
             old = self.conn.execute(
                 'SELECT result FROM operations WHERE key=?', (op_key,)
@@ -134,6 +134,7 @@ class EventRepositoryMixin:
                 self.invalidate_dependencies('event', event_id, before=prior,
                                              after={'day': local_day(occurred), 'kind': draft['kind'], 'raw_text': draft['raw_text']})
                 self.register_event_provenance(event_id, revision, original_draft, op_key, stored=draft, prior=prior)
+                self.quality_record(event_id, draft, correction=prior is not None, user_correction=user_correction)
             self.conn.execute(
                 'INSERT INTO operations VALUES (?,?)', (op_key, dump(saved))
             )

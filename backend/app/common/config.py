@@ -1,44 +1,199 @@
-from dataclasses import dataclass
+"""Explicit runtime configuration. Configuration failures never include values."""
+from dataclasses import dataclass, field
 from pathlib import Path
+import ipaddress
+import math
 import os
+import re
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(ROOT / '.env')
 
-MODEL_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-MODEL_API_KEY = 'sk-034f66dbb4954e688ec5075e3fbe254f'
-MODEL_NAME = 'qwen3.8-max'
+
+class ConfigurationError(RuntimeError):
+    pass
+
+
+def invalid(name):
+    raise ConfigurationError('invalid_configuration:' + name)
+
+
+def host_name(value):
+    value = value.lower()
+    if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?', value) or '..' in value:
+        invalid('MODEL_ALLOWED_HOSTS')
+    try:
+        ipaddress.ip_address(value)
+    except ValueError:
+        return value
+    invalid('MODEL_ALLOWED_HOSTS')
 
 
 @dataclass
 class Settings:
     data_dir: Path = ROOT / 'data'
     model_base_url: str = ''
-    model_api_key: str = ''
+    model_api_key: str = field(default='', repr=False)
     model_name: str = ''
     scheduler_enabled: bool = True
+    job_runner_enabled: bool = True
+    job_poll_seconds: float = 2
+    job_lease_seconds: float = 90
+    job_heartbeat_seconds: float = 20
+    job_shutdown_grace_seconds: float = 15
+    job_max_attempts: int = 3
+    job_catchup_days: int = 7
     local_only: bool = False
     context_pending_days: int = 7
     context_plan_days: int = 7
     context_completed_days: int = 30
+    runtime_profile: str = 'development'
+    model_allowed_hosts: tuple[str, ...] = ('dashscope.aliyuncs.com',)
+    model_egress_proxy: str = ''
+    request_max_bytes: int = 65536
+    request_body_seconds: float = 10
+    model_response_max_bytes: int = 1048576
+    model_timeout_seconds: float = 45
+    safety_timeout_seconds: float = 8
+    runtime_max_executions: int = 2
+    execution_seconds: float = 120
+    execution_grace_seconds: float = 15
+    obs_enabled: bool = True
+    obs_log_level: str = 'INFO'
+    obs_metrics_enabled: bool = False
+    obs_quality_export_enabled: bool = False
+    obs_thread_link_enabled: bool = False
+    obs_thread_link_key_file: str = field(default='', repr=False)
+    obs_thread_link_key_version: str = ''
+    obs_thread_link_key: bytes = field(default=b'', init=False, repr=False)
+
+    def __post_init__(self):
+        self.data_dir = Path(self.data_dir)
+        for name in ('obs_enabled', 'obs_metrics_enabled', 'obs_quality_export_enabled', 'obs_thread_link_enabled'):
+            if type(getattr(self, name)) is not bool:
+                invalid(name.upper())
+        if self.obs_log_level not in ('INFO', 'WARNING'):
+            invalid('OBS_LOG_LEVEL')
+        if (self.obs_quality_export_enabled and not self.obs_metrics_enabled
+                or self.obs_metrics_enabled and not self.obs_enabled):
+            invalid('OBS_METRICS_ENABLED')
+        if self.obs_thread_link_enabled:
+            if not re.fullmatch(r'[a-zA-Z0-9_-]{1,24}', self.obs_thread_link_key_version):
+                invalid('OBS_THREAD_LINK_KEY_VERSION')
+            try:
+                with open(self.obs_thread_link_key_file, 'rb') as handle:
+                    key = handle.read(4097)
+                if not 32 <= len(key) <= 4096 or key == self.model_api_key.encode():
+                    invalid('OBS_THREAD_LINK_KEY_FILE')
+                self.obs_thread_link_key = key
+            except OSError:
+                invalid('OBS_THREAD_LINK_KEY_FILE')
+        if self.runtime_profile not in ('development', 'hardened'):
+            invalid('RUNTIME_PROFILE')
+        for name in ('request_max_bytes', 'model_response_max_bytes', 'runtime_max_executions',
+                     'context_pending_days', 'context_plan_days', 'context_completed_days', 'job_max_attempts', 'job_catchup_days'):
+            value = getattr(self, name)
+            if type(value) is not int or not 1 <= value <= 100000000:
+                invalid(name)
+        for name in ('request_body_seconds', 'model_timeout_seconds', 'safety_timeout_seconds',
+                     'execution_seconds', 'execution_grace_seconds', 'job_poll_seconds', 'job_lease_seconds',
+                     'job_heartbeat_seconds', 'job_shutdown_grace_seconds'):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 < value <= 3600:
+                invalid(name)
+        if self.job_heartbeat_seconds >= self.job_lease_seconds / 3 or self.job_catchup_days > 7:
+            invalid('JOB_LEASE_OR_CATCHUP')
+        if type(self.job_runner_enabled) is not bool:
+            invalid('JOB_RUNNER_ENABLED')
+        if self.runtime_profile == 'hardened':
+            if str(self.data_dir).replace('\\', '/') != '/data':
+                invalid('DATA_DIR')
+            if not self.local_only:
+                if not all((self.model_base_url, self.model_name, self.model_api_key)):
+                    invalid('MODEL_CONFIGURATION')
+                self.validate_model_target()
+
+    def validate_model_target(self):
+        try:
+            url = urlsplit(self.model_base_url)
+            hosts = tuple(host_name(h) for h in self.model_allowed_hosts)
+            if (url.scheme != 'https' or url.username or url.password or url.query or url.fragment
+                    or url.port not in (None, 443) or not url.hostname
+                    or host_name(url.hostname) not in hosts or '%' in url.netloc):
+                invalid('MODEL_BASE_URL')
+            if self.model_egress_proxy != 'http://egress:3128':
+                invalid('MODEL_EGRESS_PROXY')
+        except ValueError:
+            invalid('MODEL_BASE_URL')
 
     @classmethod
     def from_env(cls):
-        return cls(
-            data_dir=Path(os.getenv('DATA_DIR') or str(ROOT / 'data')),
-            model_base_url=MODEL_BASE_URL,
-            model_api_key=MODEL_API_KEY,
-            model_name=MODEL_NAME,
-            scheduler_enabled=os.getenv('SCHEDULER_ENABLED', 'true').lower() == 'true',
-            local_only=os.getenv('PROCESSING_MODE', 'model_allowed') == 'local_only',
-            context_pending_days=max(1, int(os.getenv('CONTEXT_PENDING_DAYS', '7'))),
-            context_plan_days=max(1, int(os.getenv('CONTEXT_PLAN_DAYS', '7'))),
-            context_completed_days=max(1, int(os.getenv('CONTEXT_COMPLETED_DAYS', '30'))),
-        )
+        if os.getenv('RUNTIME_PROFILE', 'development') != 'hardened':
+            load_dotenv(ROOT / '.env')
+        profile = os.getenv('RUNTIME_PROFILE', 'development')
+        mode = os.getenv('PROCESSING_MODE', 'model_allowed')
+        if mode not in ('model_allowed', 'local_only'):
+            invalid('PROCESSING_MODE')
+        key, key_file = os.getenv('MODEL_API_KEY', ''), os.getenv('MODEL_API_KEY_FILE', '')
+        if key and key_file:
+            invalid('MODEL_API_KEY_SOURCE')
+        if profile == 'hardened' and key:
+            invalid('MODEL_API_KEY_SOURCE')
+        if key_file:
+            if profile == 'hardened' and key_file != '/run/secrets/model_api_key':
+                invalid('MODEL_API_KEY_FILE')
+            try:
+                with open(key_file, 'rb') as handle:
+                    raw = handle.read(4097)
+                if len(raw) > 4096:
+                    invalid('MODEL_API_KEY_FILE')
+                key = raw.decode('utf-8').strip()
+                if not key or '\n' in key or '\r' in key:
+                    invalid('MODEL_API_KEY_FILE')
+            except (OSError, UnicodeError):
+                invalid('MODEL_API_KEY_FILE')
+        base, model = os.getenv('MODEL_BASE_URL', '').rstrip('/'), os.getenv('MODEL_NAME', '')
+        if mode != 'local_only' and any((base, model, key)) and not all((base, model, key)):
+            invalid('MODEL_CONFIGURATION')
+        if profile == 'hardened' and mode != 'local_only' and not key_file:
+            invalid('MODEL_API_KEY_FILE')
+        values = dict(data_dir=Path(os.getenv('DATA_DIR') or ('/data' if profile == 'hardened' else ROOT / 'data')),
+                      model_base_url=base, model_api_key=key, model_name=model,
+                      runtime_profile=profile, local_only=mode == 'local_only',
+                      model_egress_proxy=os.getenv('MODEL_EGRESS_PROXY', ''),
+                      model_allowed_hosts=tuple(os.getenv('MODEL_ALLOWED_HOSTS', 'dashscope.aliyuncs.com').split(',')))
+        scheduler = os.getenv('SCHEDULER_ENABLED', 'true').lower()
+        if scheduler not in ('true', 'false'):
+            invalid('SCHEDULER_ENABLED')
+        values['scheduler_enabled'] = scheduler == 'true'
+        runner = os.getenv('JOB_RUNNER_ENABLED', 'true').lower()
+        if runner not in ('true', 'false'):
+            invalid('JOB_RUNNER_ENABLED')
+        values['job_runner_enabled'] = runner == 'true'
+        for name in ('obs_enabled', 'obs_metrics_enabled', 'obs_quality_export_enabled', 'obs_thread_link_enabled'):
+            value = os.getenv(name.upper(), 'true' if name == 'obs_enabled' else 'false').lower()
+            if value not in ('true', 'false'):
+                invalid(name.upper())
+            values[name] = value == 'true'
+        for name in ('obs_log_level', 'obs_thread_link_key_file', 'obs_thread_link_key_version'):
+            if name.upper() in os.environ:
+                values[name] = os.environ[name.upper()]
+        for name, typ in (('context_pending_days', int), ('context_plan_days', int), ('context_completed_days', int),
+                          ('request_max_bytes', int), ('request_body_seconds', float),
+                          ('model_response_max_bytes', int), ('model_timeout_seconds', float),
+                          ('safety_timeout_seconds', float), ('runtime_max_executions', int),
+                          ('execution_seconds', float), ('execution_grace_seconds', float),
+                          ('job_poll_seconds', float), ('job_lease_seconds', float), ('job_heartbeat_seconds', float),
+                          ('job_shutdown_grace_seconds', float), ('job_max_attempts', int), ('job_catchup_days', int)):
+            if name.upper() in os.environ:
+                try:
+                    values[name] = typ(os.environ[name.upper()])
+                except ValueError:
+                    invalid(name.upper())
+        return cls(**values)
 
     @property
     def mode(self):
         return 'model' if self.model_base_url and self.model_name and self.model_api_key else 'demo'
-

@@ -177,7 +177,7 @@ def test_chat_persists_locally_grounded_value_and_provenance(tmp_path, monkeypat
         data_dir=tmp_path, model_base_url='https://model.test.invalid/v1',
         model_name='test-model', model_api_key='test-key', scheduler_enabled=False,
     )
-    original = httpx.Client
+    original = httpx.AsyncClient
 
     def handler(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
@@ -193,7 +193,7 @@ def test_chat_persists_locally_grounded_value_and_provenance(tmp_path, monkeypat
         }, ensure_ascii=False)}}]})
 
     monkeypatch.setattr(
-        'app.modeling.parser.httpx.Client',
+        'app.modeling.transport.httpx.AsyncClient',
         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(handler))),
     )
 

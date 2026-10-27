@@ -1,5 +1,14 @@
 import sqlite3
 
+SCHEMA_VERSION = 9
+
+
+def execute_schema(connection, script):
+    # These schemas contain DDL only; execute without executescript implicit commits.
+    for statement in script.split(';'):
+        if statement.strip():
+            connection.execute(statement)
+
 
 SCHEMA = '''
     CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -97,49 +106,63 @@ PROVENANCE_SCHEMA = '''
 
 
 def open_database(path):
+    from .budget_connection import BudgetConnection
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path, check_same_thread=False, timeout=30)
+    connection = sqlite3.connect(path, check_same_thread=False, timeout=30, factory=BudgetConnection)
     connection.row_factory = sqlite3.Row
-    if connection.execute('PRAGMA user_version').fetchone()[0] > 7:
+    if connection.execute('PRAGMA user_version').fetchone()[0] > SCHEMA_VERSION:
         connection.close()
         raise ValueError('数据库版本高于当前程序，请升级程序')
     connection.execute('PRAGMA journal_mode=WAL')
     connection.execute('PRAGMA foreign_keys=ON')
     connection.execute('PRAGMA secure_delete=ON')
-    connection.executescript(SCHEMA)
-    connection.executescript(PROVENANCE_SCHEMA)
-    columns = {
-        row['name'] for row in connection.execute('PRAGMA table_info(messages)').fetchall()
-    }
-    if 'process_trace' not in columns:
-        connection.execute(
-            "ALTER TABLE messages ADD COLUMN process_trace TEXT NOT NULL DEFAULT '[]'"
-        )
-    if 'duration_ms' not in columns:
-        connection.execute(
-            'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
-        )
-    connection.executescript('''
-        CREATE TABLE IF NOT EXISTS fact_details (
-            fact_id TEXT PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,
-            data TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS fact_revisions (
-            fact_id TEXT NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
-            version INTEGER NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL,
-            PRIMARY KEY(fact_id, version));
-        CREATE TABLE IF NOT EXISTS workflow_activity (
-            thread_id TEXT PRIMARY KEY REFERENCES workflows(id) ON DELETE CASCADE,
-            last_activity_at TEXT NOT NULL, expires_at TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS expired_requests (
-            request_id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, created_at TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS context_expirations (
-            thread_id TEXT PRIMARY KEY, record_ids TEXT NOT NULL,
-            state TEXT NOT NULL, created_at TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS revision_context (
-            event_id TEXT NOT NULL, version INTEGER NOT NULL, op_key TEXT NOT NULL,
-            PRIMARY KEY(event_id, version),
-            FOREIGN KEY(event_id, version) REFERENCES revisions(event_id, version) ON DELETE CASCADE);
-    ''')
-    connection.execute('PRAGMA user_version=7')
-    connection.commit()
+    try:
+        connection.execute('BEGIN IMMEDIATE')
+        execute_schema(connection, SCHEMA)
+        execute_schema(connection, PROVENANCE_SCHEMA)
+        columns = {
+            row['name'] for row in connection.execute('PRAGMA table_info(messages)').fetchall()
+        }
+        if 'process_trace' not in columns:
+            connection.execute(
+                "ALTER TABLE messages ADD COLUMN process_trace TEXT NOT NULL DEFAULT '[]'"
+            )
+        if 'duration_ms' not in columns:
+            connection.execute(
+                'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
+            )
+        execute_schema(connection, '''
+            CREATE TABLE IF NOT EXISTS fact_details (
+                fact_id TEXT PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,
+                data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS fact_revisions (
+                fact_id TEXT NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+                version INTEGER NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL,
+                PRIMARY KEY(fact_id, version));
+            CREATE TABLE IF NOT EXISTS workflow_activity (
+                thread_id TEXT PRIMARY KEY REFERENCES workflows(id) ON DELETE CASCADE,
+                last_activity_at TEXT NOT NULL, expires_at TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS expired_requests (
+                request_id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, created_at TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS context_expirations (
+                thread_id TEXT PRIMARY KEY, record_ids TEXT NOT NULL,
+                state TEXT NOT NULL, created_at TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS revision_context (
+                event_id TEXT NOT NULL, version INTEGER NOT NULL, op_key TEXT NOT NULL,
+                PRIMARY KEY(event_id, version),
+                FOREIGN KEY(event_id, version) REFERENCES revisions(event_id, version) ON DELETE CASCADE);
+        ''')
+        from ..jobs.schema import SCHEMA as JOB_SCHEMA, migrate_legacy
+        execute_schema(connection, JOB_SCHEMA)
+        if connection.execute('PRAGMA user_version').fetchone()[0] < 8:
+            migrate_legacy(connection)
+        from ..observability.schema import SCHEMA as QUALITY_SCHEMA, install_triggers
+        execute_schema(connection, QUALITY_SCHEMA)
+        install_triggers(connection)
+        connection.execute(f'PRAGMA user_version={SCHEMA_VERSION}')
+        connection.commit()
+    except BaseException:
+        connection.rollback()
+        connection.close()
+        raise
     return connection

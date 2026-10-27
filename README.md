@@ -35,7 +35,7 @@
 
 ## 模型配置与演示模式
 
-模型地址、API Key 和模型名称当前直接配置在后端 `app/common/config.py` 中，`Settings.from_env()` 默认启用该模型。用户在网页中提交自然语言后，内容会发送给配置的外部模型服务。
+模型配置由运行环境显式提供，源码不再包含 API Key。复制 `.env.example` 为 `.env`，配置 `MODEL_BASE_URL`、`MODEL_NAME` 和 `MODEL_API_KEY_FILE`（密钥文件放在仓库外）；开发模式也支持 `MODEL_API_KEY`，不能同时配置两种密钥来源。全部未配置时进入演示模式，部分配置缺失则启动失败。模型模式下，网页自然语言内容会发送给配置的外部模型服务。
 
 代码测试可以显式构造无模型配置的 `Settings` 进入演示模式。演示解析覆盖常见中文表达，页面明确提示其营养数值来自固定示例，不是完整或已核验的营养数据库。无法识别的食物保存为营养未知，不算成零。
 
@@ -178,6 +178,50 @@ frontend/src/
 
 完整设计见 [开发文档](docs/开发文档.md)。原型使用 Python 自带 SQLite Repository 和版本化初始化，暂未引入 SQLAlchemy/Alembic；页面部署采用同一 FastAPI 进程。只监听本机，不包含公网访问保护或多用户隔离。
 
-长期事实采用 v2 结构化信息：同一食物的明确长期更新保留替代历史，临时偏好经选择后只在期限内覆盖，到期恢复原偏好；过敏和健康限制不能由普通喜好解除。管理界面支持期限、陈述状态和转述专业建议来源；建议与一周安排使用按日期解析的事实视图。数据库版本为 7，旧文本与修订保持兼容。实现与边界见 [四层记忆实现说明](docs/四层记忆实现说明.md)，修改范围见 [长期事实修改方案](docs/长期事实结构化与冲突处理修改方案.md)。
+长期事实采用 v2 结构化信息：同一食物的明确长期更新保留替代历史，临时偏好经选择后只在期限内覆盖，到期恢复原偏好；过敏和健康限制不能由普通喜好解除。管理界面支持期限、陈述状态和转述专业建议来源；建议与一周安排使用按日期解析的事实视图。数据库版本为 9，旧文本与修订保持兼容。实现与边界见 [四层记忆实现说明](docs/四层记忆实现说明.md)，修改范围见 [长期事实修改方案](docs/长期事实结构化与冲突处理修改方案.md)。
 
 初版仍需要继续完善：经核验的营养数据来源、更细的偏好/限制匹配、基于实际执行效果的个性化计划生成、更多统计模板和设备级通知。当前数值目标由用户提供，规律与权重学习是明确的规则模板，不能承诺医学适配或减重效果。
+
+
+## 可观测性与健康数据保护
+
+运行日志只记录固定事件、耗时、结果和服务端关联 ID，保存在 `DATA_DIR/observability/`，总大小最多 30 MiB，保留最近 7 个 UTC 自然日。健康原文、prompt、模型响应、SQL 参数、凭据和异常原文不进入该出口；默认关闭 thread 关联和业务质量指标外发。LangGraph 执行显式关闭第三方内容 tracing。
+
+营养未知率、必需追问率、记录纠正率及计划处理结果通过业务库中的事务账本统计，重放不重复计数，删除同步清理；窗口为最近 30 个上海自然日。数据库迁移到版本 9，不回填推测的旧指标。
+
+内部指标默认关闭。本机需要时设置 `OBS_METRICS_ENABLED=true`，从回环地址访问 `/internal/metrics`；只有再设置 `OBS_QUALITY_EXPORT_ENABLED=true` 才包含质量聚合。加固网关拒绝 `/internal/`，不会自动对宿主机或公网开放指标。`OBS_ENABLED=false` 关闭运行遥测，质量账本仍随业务事务维护。
+
+完整配置、统计口径及验收见 [可观测性与健康数据保护开发方案](docs/可观测性与健康数据保护开发方案.md)。合成性能验证入口为 `python scripts/benchmark-observability.py`，仅创建临时数据库，不读取个人数据。
+
+## 运行环境加固
+
+直接运行 `start.ps1` 属于本地开发模式，没有操作系统级沙箱。开发模式同样启用完整请求体 64 KiB、接收总时限10秒、模型响应1 MiB、全局2个活跃工作流和默认120秒执行期限。
+
+单机 Linux 容器部署配置位于 `compose.hardened.yaml`：非 root、只读代码和依赖、独立数据卷、限额临时目录、受控 HTTPS 出口代理与容器资源配额。模型密钥从只读秘密文件注入；容器启动不安装依赖，不挂载开发目录或个人主目录。基础镜像使用可访问的 Docker Official Images 公共镜像并锁定 digest。
+
+Windows 检查入口：`powershell -File scripts/start-hardened.ps1 -SecretFile C:\private\qingji-model-key.txt`。它不会回退到本机 Python；首次创建独立命名卷，不自动导入个人数据库。先完成 [网络策略](deploy/network-policy.md)、[独立监督](deploy/health-supervision.md) 与实际探测，再接受加固部署。Windows Docker Desktop 的宿主机网络隔离尚需单独验收。
+
+检查命令：`python scripts/verify-runtime.py --project qingji-hardened --output output/runtime-verification.json`。报告只含配置/权限/配额与合成探测结果，不读取个人数据库；未验证项保持未验收。配置文件存在不代表所有隔离项通过。
+
+完整设计、限制与验收条件见 [运行环境最小权限修复开发方案](docs/运行环境最小权限修复开发方案.md)。迁移前停机并一致性备份两份 SQLite 数据库及必要 WAL，不允许本机与容器服务同时操作同一数据目录。原源码密钥必须在供应商侧撤销并更换，移除源码不会自动撤销密钥。
+
+## 后台任务与恢复
+
+日报、周报、归档和提醒使用持久化任务表；领取执行、续租、失败重试和结束状态带有执行凭证。每轮扫描只规划待办，后台并发为 1，各任务独立使用运行额度。周报通过 outbox 创建幂等计划任务，继续遵守计划确认与隐私删除规则。
+
+当前仍只支持同一数据目录一个 Engine，进程在数据库初始化前取得 OS 文件锁。不要添加多个 Uvicorn worker，也不要让本机与容器同时使用同一数据目录。关闭通知后，报告计算继续，站内提醒停止；失效提醒不会跨窗口补发。
+
+`SCHEDULER_ENABLED=false` 停止规划新周期任务，`JOB_RUNNER_ENABLED=false` 停止后台领取。`GET /api/jobs/status` 提供脱敏的队列数量、失败任务编号及最近规划时间。配置项见 `.env.example`。
+
+离线管理前先停止服务，在 `backend` 目录执行以下命令（数据目录必须指向需要管理的目录）：
+
+```powershell
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data status
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data pause
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data resume
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data retry TASK_UUID --reason upstream_recovered
+```
+
+`pause` 持久化停止领取，重启服务后仍保持暂停，`resume` 解除。重试仅接受未过期且来源有效的 failed 任务，并记录操作原因。管理命令不发送模型请求；运行中的数据目录会拒绝离线管理。升级至 schema 8 后，旧二进制不能直接打开新数据库；回滚需要停服恢复成对备份。
+
+方案、任务状态和故障验收见 [调度器可靠性与独立 Worker 开发方案](docs/调度器可靠性与独立Worker开发方案.md)。本次实施 A 期；独立 Engine 运行服务和多实例扩容属于后续阶段。

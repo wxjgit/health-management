@@ -26,7 +26,7 @@ def settings(tmp_path):
 
 
 def mock_model(monkeypatch, handler):
-    original = httpx.Client
+    original = httpx.AsyncClient
     def isolated_handler(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
         if data.get('task') == 'contextual_reply':
@@ -39,7 +39,7 @@ def mock_model(monkeypatch, handler):
         response = handler(request)
         content = json.loads(response.json()['choices'][0]['message']['content'])
         return model_response(planned_content(data, content))
-    monkeypatch.setattr('app.modeling.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(isolated_handler))))
 
 

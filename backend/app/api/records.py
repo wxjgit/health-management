@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..common.clock import now
 from ..health import dashboard, history_window
-from .deps import get_engine, protected_read
+from .deps import get_engine, protected_read, bounded_api
 from .schemas import CompleteRequest
 
 
@@ -56,6 +56,7 @@ def daily(day: date | None = Query(default=None, alias='date'), engine=Depends(g
 
 
 @router.put('/days/{day}/complete')
+@bounded_api
 def complete(day: date, body: CompleteRequest, engine=Depends(get_engine)):
     with engine.lock:
         engine.repo.mark_complete(day.isoformat(), body.complete)

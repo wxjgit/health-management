@@ -1,0 +1,301 @@
+{
+  "date": "2026-10-27",
+  "status": "local_implementation_verified",
+  "base_commit": "ea3ccdb",
+  "worktree_dirty": true,
+  "application_digest_after_verification": "c8ca0aeecaa7c8744547d84593664138f8d361de61c3b1317f62394ec39430a1",
+  "schema_version": 9,
+  "python_version": "3.14.5",
+  "prometheus_client_version": "0.21.1",
+  "verification": {
+    "backend_full": {
+      "passed": 579,
+      "failed": 0,
+      "duration_seconds": 130.51,
+      "command": "python -m pytest -q --basetemp=../output/observability-release-check --disable-warnings -o faulthandler_timeout=60"
+    },
+    "new_observability_cases": 41,
+    "dependency_check": "No broken requirements found.",
+    "diff_whitespace_check": "passed",
+    "gateway_check": "configuration assertions only; not a live container probe",
+    "test_data": "isolated temporary databases, synthetic inputs and MockTransport; no personal database access or real provider requests"
+  },
+  "benchmarks": {
+    "initial": {
+      "date_utc": "2026-10-27T08:10:12.806741+00:00",
+      "scenario": "synthetic_local_weight_workflow",
+      "samples_per_mode": 200,
+      "warmup_per_round": 5,
+      "rounds": [
+        {
+          "disabled": {
+            "p50_seconds": 0.06472969998139888,
+            "p95_seconds": 0.07565489993430674,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.07121345004998147,
+            "p95_seconds": 0.09142830013297498,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.07329349999781698,
+            "p95_seconds": 0.08506240020506084,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.0664605499478057,
+            "p95_seconds": 0.0850654998794198,
+            "dropped_events": 0
+          }
+        },
+        {
+          "disabled": {
+            "p50_seconds": 0.06344099994748831,
+            "p95_seconds": 0.08471550000831485,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.07321630010847002,
+            "p95_seconds": 0.10103229992091656,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.06887024990282953,
+            "p95_seconds": 0.08946409984491765,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.06534169998485595,
+            "p95_seconds": 0.07649949984624982,
+            "dropped_events": 0
+          }
+        }
+      ],
+      "disabled_p95_seconds": 0.0850654998794198,
+      "enabled_p95_seconds": 0.09537449991330504,
+      "p95_relative_increase": 0.12118896671974211,
+      "target_relative_increase": 0.05,
+      "target_met_in_this_run": false,
+      "limitations": [
+        "Single machine, local synthetic workflow only.",
+        "Scheduler and model network calls disabled; no production latency claim.",
+        "Concurrent workload and filesystem noise can affect comparisons."
+      ]
+    },
+    "batched": {
+      "date_utc": "2026-10-27T08:12:09.001633+00:00",
+      "scenario": "synthetic_local_weight_workflow",
+      "samples_per_mode": 200,
+      "warmup_per_round": 5,
+      "rounds": [
+        {
+          "disabled": {
+            "p50_seconds": 0.06431539996992797,
+            "p95_seconds": 0.07990959985181689,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.07174350006971508,
+            "p95_seconds": 0.10084319999441504,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.07208120007999241,
+            "p95_seconds": 0.09356889990158379,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.06605669995769858,
+            "p95_seconds": 0.08351700007915497,
+            "dropped_events": 0
+          }
+        },
+        {
+          "disabled": {
+            "p50_seconds": 0.06441444996744394,
+            "p95_seconds": 0.07365439995191991,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.07070740009658039,
+            "p95_seconds": 0.08497769990935922,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.06843299989122897,
+            "p95_seconds": 0.0825940000358969,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.06533600005786866,
+            "p95_seconds": 0.07402429985813797,
+            "dropped_events": 0
+          }
+        }
+      ],
+      "disabled_p95_seconds": 0.08336020004935563,
+      "enabled_p95_seconds": 0.09356889990158379,
+      "p95_relative_increase": 0.12246491546546001,
+      "target_relative_increase": 0.05,
+      "target_met_in_this_run": false,
+      "limitations": [
+        "Single machine, local synthetic workflow only.",
+        "Scheduler and model network calls disabled; no production latency claim.",
+        "Concurrent workload and filesystem noise can affect comparisons."
+      ]
+    },
+    "contention_only": {
+      "date_utc": "2026-10-27T08:15:12.446548+00:00",
+      "scenario": "synthetic_local_weight_workflow",
+      "samples_per_mode": 200,
+      "warmup_per_round": 5,
+      "rounds": [
+        {
+          "disabled": {
+            "p50_seconds": 0.06304379994980991,
+            "p95_seconds": 0.08216329989954829,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.06753754999954253,
+            "p95_seconds": 0.07546869991347194,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.06487080012448132,
+            "p95_seconds": 0.07721549994312227,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.0648770498810336,
+            "p95_seconds": 0.07810209994204342,
+            "dropped_events": 0
+          }
+        },
+        {
+          "disabled": {
+            "p50_seconds": 0.06468555005267262,
+            "p95_seconds": 0.08561780001036823,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.06912724999710917,
+            "p95_seconds": 0.09384099999442697,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.07117459992878139,
+            "p95_seconds": 0.08469079993665218,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.06552660011220723,
+            "p95_seconds": 0.08278920012526214,
+            "dropped_events": 0
+          }
+        }
+      ],
+      "disabled_p95_seconds": 0.08486609999090433,
+      "enabled_p95_seconds": 0.08739889995194972,
+      "p95_relative_increase": 0.029844660722206484,
+      "target_relative_increase": 0.05,
+      "target_met_in_this_run": true,
+      "limitations": [
+        "Single machine, local synthetic workflow only.",
+        "Scheduler and model network calls disabled; no production latency claim.",
+        "Concurrent workload and filesystem noise can affect comparisons."
+      ]
+    },
+    "release": {
+      "date_utc": "2026-10-27T08:22:33.724482+00:00",
+      "scenario": "synthetic_local_weight_workflow",
+      "samples_per_mode": 200,
+      "warmup_per_round": 5,
+      "rounds": [
+        {
+          "disabled": {
+            "p50_seconds": 0.0652832998894155,
+            "p95_seconds": 0.08100310014560819,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.06895284994971007,
+            "p95_seconds": 0.08312080008909106,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.06998699984978884,
+            "p95_seconds": 0.08525949995964766,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.06408234988339245,
+            "p95_seconds": 0.07566359988413751,
+            "dropped_events": 0
+          }
+        },
+        {
+          "disabled": {
+            "p50_seconds": 0.06994329998269677,
+            "p95_seconds": 0.08692890009842813,
+            "dropped_events": 0
+          },
+          "enabled": {
+            "p50_seconds": 0.0739199499366805,
+            "p95_seconds": 0.09783069998957217,
+            "dropped_events": 0
+          }
+        },
+        {
+          "enabled": {
+            "p50_seconds": 0.06541415001265705,
+            "p95_seconds": 0.0782449000980705,
+            "dropped_events": 0
+          },
+          "disabled": {
+            "p50_seconds": 0.061137499986216426,
+            "p95_seconds": 0.08041010005399585,
+            "dropped_events": 0
+          }
+        }
+      ],
+      "disabled_p95_seconds": 0.08376539987511933,
+      "enabled_p95_seconds": 0.08783130021765828,
+      "p95_relative_increase": 0.04853913845812885,
+      "target_relative_increase": 0.05,
+      "target_met_in_this_run": true,
+      "limitations": [
+        "Single machine, local synthetic workflow only.",
+        "Scheduler and model network calls disabled; no production latency claim.",
+        "Concurrent workload and filesystem noise can affect comparisons."
+      ]
+    }
+  },
+  "remaining_deployment_validation": [
+    "Windows log directory ACL under the actual service account",
+    "Linux container filesystem permissions and live gateway metrics denial",
+    "Host or centralized stdout/stderr retention policy"
+  ],
+  "known_limits": [
+    "Runtime counters reset on restart and asynchronous logs may be lost on hard termination.",
+    "Quality ledger writes participate in business transaction rollback; exporter failures remain best effort.",
+    "When scheduling is disabled and the application stays idle, physical quality pruning waits until another operation or restart; queries always exclude old cohorts.",
+    "Token usage, cost estimation and external telemetry exporters are not enabled.",
+    "Benchmark is a single-machine synthetic local workflow comparison, not a production latency guarantee."
+  ]
+}

@@ -1,5 +1,4 @@
-import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import asynccontextmanager
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
@@ -11,12 +10,12 @@ from .api.profile import router as profile_router
 from .api.records import router as records_router
 from .api.system import router_for as system_router_for
 from .api.workflows import router as workflows_router
+from .api.observability import router as observability_router
 from .api.errors import register_error_handlers
 from .api.request_context import RequestContextFastAPI
 from .common.config import ROOT, Settings
 from .workflows.engine import Engine
 from .privacy.provenance import untracked
-from .jobs.scheduler import scheduler_loop
 
 
 def create_app(settings=None):
@@ -25,17 +24,17 @@ def create_app(settings=None):
     @asynccontextmanager
     async def lifespan(app):
         app.state.engine = Engine(settings)
-        task = asyncio.create_task(scheduler_loop(app.state.engine)) if settings.scheduler_enabled else None
+        app.state.engine.observability.routes.update(
+            route.path for route in app.routes if isinstance(getattr(route, 'path', None), str))
+        app.state.engine.runtime.start()
+        app.state.engine.jobs.start()
         try:
             yield
         finally:
-            if task:
-                task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await task
             app.state.engine.close()
 
     app = RequestContextFastAPI(title='轻记 · Personal Health Agent', version='0.1.0', lifespan=lifespan)
+    app.state.settings = settings
 
     @app.middleware('http')
     async def isolate_request_provenance(request, call_next):
@@ -51,6 +50,7 @@ def create_app(settings=None):
     app.include_router(records_router)
     app.include_router(planning_router)
     app.include_router(deletion_router)
+    app.include_router(observability_router)
 
     dist = ROOT / 'frontend' / 'dist'
     if dist.exists():
@@ -58,7 +58,7 @@ def create_app(settings=None):
 
         @app.get('/{path:path}')
         def frontend(path: str):
-            if path.startswith('api/'):
+            if path.startswith(('api/', 'internal/')):
                 raise HTTPException(404, '接口不存在')
             return FileResponse(dist / 'index.html')
 

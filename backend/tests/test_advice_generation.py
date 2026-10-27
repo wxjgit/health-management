@@ -27,7 +27,7 @@ def settings(tmp_path):
 
 def install_model(monkeypatch, answer):
     calls = {'advice': []}
-    original = httpx.Client
+    original = httpx.AsyncClient
 
     def handler(request):
         body = json.loads(request.content)
@@ -41,7 +41,7 @@ def install_model(monkeypatch, answer):
         content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
-    monkeypatch.setattr('app.modeling.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient',
                         lambda *args, **kwargs: original(*args, **kwargs, transport=httpx.MockTransport(safety_transport(handler))))
     return calls
 

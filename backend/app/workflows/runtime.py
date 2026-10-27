@@ -13,6 +13,7 @@ from ..common import clock
 from ..health import archive
 from ..infrastructure.repositories.common import dump
 from .concurrency import WorkflowConflict
+from ..common.execution_budget import runtime_operation
 
 
 def fingerprint(value):
@@ -20,15 +21,41 @@ def fingerprint(value):
 
 
 class WorkflowRuntimeMixin:
-    def invoke(self, kind, invocation, thread_id, local_only=False):
-        with self.parser.boundary.request(
-            local_only,
-            lambda purpose, size: self.repo.account_model_call(thread_id, purpose, size),
-        ) as scope:
-            state = self.graph_for(kind).invoke(
-                invocation, {'configurable': {'thread_id': thread_id}}
-            )
-            return state, scope.disclosures
+    def _observe_replay(self, kind, operation):
+        self.observability.emit('workflow_finished', kind=kind, operation=operation,
+                                outcome='replayed', duration_seconds=0)
+
+    def _observe_resume_replay(self, thread_id):
+        try:
+            workflow = self.repo.workflow(thread_id)
+            if workflow:
+                self._observe_replay(workflow['kind'], 'resume')
+        except Exception:
+            pass
+
+    def invoke(self, kind, invocation, thread_id, local_only=False, operation='run'):
+        from ..observability.context import bind, emit
+        from ..observability.spans import error_outcome
+        from langsmith import tracing_context
+        mode = 'local_only' if local_only else 'model_allowed' if self.settings.mode == 'model' else 'demo'
+        started, outcome = time.monotonic(), 'ok'
+        with tracing_context(enabled=False), bind(self.observability, operation=True, thread=thread_id, mode=mode, kind=kind):
+            try:
+                with self.parser.boundary.request(
+                    local_only,
+                    lambda purpose, size: self.repo.account_model_call(thread_id, purpose, size),
+                ) as scope:
+                    state = self.graph_for(kind).invoke(
+                        invocation, {'configurable': {'thread_id': thread_id}}
+                    )
+                    outcome = 'interrupted' if state.get('__interrupt__') else 'ok'
+                    return state, scope.disclosures
+            except BaseException as error:
+                outcome = error_outcome(error)
+                raise
+            finally:
+                emit('workflow_finished', kind=kind, operation=operation, outcome=outcome,
+                     duration_seconds=time.monotonic()-started)
 
     def graph_for(self, kind):
         return {
@@ -64,6 +91,20 @@ class WorkflowRuntimeMixin:
         return result
 
     def run(self, kind, request_id, request_data, initial, conversation='main'):
+        # Replays require the same validation/fingerprint, but no execution slot.
+        if self.lock.acquire(False):
+            try:
+                self.check_request(request_id)
+                current = self.repo.workflow_by_request(request_id)
+                if current and current['fingerprint'] == fingerprint({'kind': kind, 'data': request_data}) and current['status'] in ('completed', 'waiting_input'):
+                    self._observe_replay(kind, 'run')
+                    return current['result']
+            finally:
+                self.lock.release()
+        return self._run(kind, request_id, request_data, initial, conversation)
+
+    @runtime_operation()
+    def _run(self, kind, request_id, request_data, initial, conversation='main'):
         started = time.perf_counter()
         with self.execution_locks.hold(('request', request_id)):
             request_fingerprint = fingerprint({'kind': kind, 'data': request_data})
@@ -77,7 +118,8 @@ class WorkflowRuntimeMixin:
                 else:
                     thread_id = str(uuid4())
                     self.repo.register_workflow(
-                        thread_id, request_id, request_fingerprint, kind
+                        thread_id, request_id, request_fingerprint, kind,
+                        mode='local_only' if initial.get('processing_mode') == 'local_only' else None,
                     )
                 execution = self.capture_execution(thread_id)
             with self.serialized_execution(
@@ -88,10 +130,17 @@ class WorkflowRuntimeMixin:
                     if current['status'] in ('resuming', 'resume_failed'):
                         raise WorkflowConflict()
                     if current['status'] in ['completed', 'waiting_input']:
+                        self._observe_replay(kind, 'run')
                         return current['result']
                     saved = self.graph_for(kind).get_state({
                         'configurable': {'thread_id': thread_id}
                     }).values
+                    # Legacy scheduled checkpoints predate immutable business dates.
+                    # Bind missing dates once from the durable task, never from wall time.
+                    dates = {key: initial[key] for key in ('period_end', 'schedule_anchor')
+                             if initial.get(key) and not saved.get(key)} if saved else {}
+                    if dates:
+                        self.graph_for(kind).update_state({'configurable': {'thread_id': thread_id}}, dates)
                     invocation = (
                         None if saved else self._initial_state(
                             initial, request_id, thread_id, conversation
@@ -155,6 +204,18 @@ class WorkflowRuntimeMixin:
         }
 
     def resume(self, thread_id, payload):
+        if self.lock.acquire(False):
+            try:
+                receipt = self._resume_receipt(thread_id, payload, fingerprint(payload))
+                if receipt is not None:
+                    self._observe_resume_replay(thread_id)
+                    return receipt
+            finally:
+                self.lock.release()
+        return self._resume(thread_id, payload)
+
+    @runtime_operation()
+    def _resume(self, thread_id, payload):
         started = time.perf_counter()
         with self.execution_locks.hold(('request', payload['request_id'])):
             request_fingerprint = fingerprint(payload)
@@ -162,6 +223,7 @@ class WorkflowRuntimeMixin:
                 self.check_request(payload['request_id'])
                 receipt = self._resume_receipt(thread_id, payload, request_fingerprint)
                 if receipt is not None:
+                    self._observe_resume_replay(thread_id)
                     return receipt
                 workflow = self.repo.workflow(thread_id)
                 if not workflow:
@@ -178,6 +240,7 @@ class WorkflowRuntimeMixin:
                     # Recheck after waiting for another execution of this workflow.
                     receipt = self._resume_receipt(thread_id, payload, request_fingerprint)
                     if receipt is not None:
+                        self._observe_resume_replay(thread_id)
                         return receipt
                     workflow = self.repo.workflow(thread_id)
                     if workflow['status'] not in ('waiting_input', 'resuming', 'resume_failed'):
@@ -239,7 +302,7 @@ class WorkflowRuntimeMixin:
                                 config, {'processing_mode': 'local_only'}
                             )
                     state, disclosures = self.invoke(
-                        workflow['kind'], invocation, thread_id, local_only
+                        workflow['kind'], invocation, thread_id, local_only, operation='resume'
                     )
                     with self.lock:
                         self.check_execution()
@@ -269,6 +332,7 @@ class WorkflowRuntimeMixin:
             raise ConflictError(code='request_payload_conflict')
         return receipt['result']
 
+    @runtime_operation('management')
     def cancel(self, thread_id):
         with self.lock:
             workflow = self.repo.workflow(thread_id)

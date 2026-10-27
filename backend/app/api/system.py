@@ -14,6 +14,7 @@ def router_for(settings):
     def health():
         return {
             'status': 'ok',
+            'runtime_profile': settings.runtime_profile,
             'mode': settings.mode,
             'model_name': settings.model_name if settings.mode == 'model' else None,
             'model_provider': urlsplit(settings.model_base_url).hostname if settings.model_base_url else None,
@@ -38,5 +39,10 @@ def router_for(settings):
                 engine.repo.export(),
                 headers={'Content-Disposition': 'attachment; filename="health-records.json"'},
             )
+
+    @router.get('/jobs/status')
+    @protected_read
+    def jobs_status(engine=Depends(get_engine)):
+        return engine.repo.job_status()
 
     return router

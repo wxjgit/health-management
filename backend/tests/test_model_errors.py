@@ -42,7 +42,7 @@ SECRET = 'synthetic-upstream-body-key-health'
 def test_required_model_errors_are_classified(tmp_path, monkeypatch, caplog, failure, status, code):
     settings = Settings(data_dir=tmp_path, model_base_url='https://test.invalid/v1',
                         model_name='test', model_api_key=SECRET, scheduler_enabled=False)
-    original = httpx.Client
+    original = httpx.AsyncClient
     dispatches = []
 
     def wire(request):
@@ -73,7 +73,7 @@ def test_required_model_errors_are_classified(tmp_path, monkeypatch, caplog, fai
             ]}
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
-    monkeypatch.setattr('app.modeling.parser.httpx.Client', lambda *a, **kw:
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient', lambda *a, **kw:
                         original(*a, **kw, transport=httpx.MockTransport(wire)))
     with TestClient(create_app(settings), raise_server_exceptions=False) as client:
         response = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '今天体重65公斤'})
@@ -117,7 +117,7 @@ def test_local_fallbacks_only_catch_known_model_errors(kind):
 def test_advice_fallback_does_not_hide_program_errors(tmp_path, monkeypatch, kind, status):
     settings = Settings(data_dir=tmp_path, model_base_url='https://test.invalid/v1',
                         model_name='test', model_api_key='test-only', scheduler_enabled=False)
-    original = httpx.Client
+    original = httpx.AsyncClient
 
     def wire(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
@@ -128,7 +128,7 @@ def test_advice_fallback_does_not_hide_program_errors(tmp_path, monkeypatch, kin
             content = {'actions': [{'intent': 'advice', 'text': data['text']}]}
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
-    monkeypatch.setattr('app.modeling.parser.httpx.Client', lambda *a, **kw:
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient', lambda *a, **kw:
                         original(*a, **kw, transport=httpx.MockTransport(wire)))
     with TestClient(create_app(settings)) as client:
         def fail(*args, **kwargs):

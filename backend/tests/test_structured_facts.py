@@ -259,10 +259,11 @@ def test_v6_migration_keeps_legacy_details_and_snapshots(engine):
         legacy = {'type': 'legacy_text', 'source_kind': 'legacy', 'version': 1, 'schema_version': 1}
         engine.repo.conn.execute('INSERT INTO fact_details VALUES (?,?)', ('v6', json.dumps(legacy)))
         engine.repo.conn.execute('PRAGMA user_version=6')
+    engine.close()
     for _ in range(2):
         restarted = Engine(engine.settings)
         try:
-            assert restarted.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 7
+            assert restarted.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 9
             record = restarted.repo.fact('v6')
             assert record['content'] == '医生要求控制饮食'
             assert record['source_kind'] == 'legacy'
@@ -277,7 +278,7 @@ def test_v6_migration_keeps_legacy_details_and_snapshots(engine):
 def test_model_fact_draft_is_preserved_through_real_chat_workflow(tmp_path, monkeypatch):
     settings = Settings(data_dir=tmp_path, scheduler_enabled=False, model_base_url='https://test.invalid/v1',
                         model_name='test', model_api_key='test-only')
-    original = httpx.Client
+    original = httpx.AsyncClient
     text = '我不喜欢吃燕麦'
     draft = parse_fact(text).model_dump(mode='json', exclude={'content', 'source_kind', 'supersedes'})
 
@@ -290,7 +291,7 @@ def test_model_fact_draft_is_preserved_through_real_chat_workflow(tmp_path, monk
             output = {'actions': [{'intent': 'fact', 'text': text, 'fact_text': text, 'fact_draft': draft}]}
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(output)}}]})
 
-    monkeypatch.setattr('app.modeling.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(handler)))
     with TestClient(create_app(settings)) as client:
         result = client.post('/api/chat', json={'request_id': 'structured-chat', 'text': text})

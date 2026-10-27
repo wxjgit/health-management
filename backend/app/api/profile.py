@@ -6,7 +6,7 @@ from ..contracts.profile import Preferences, Profile
 from ..contracts.facts import FactInput, FactUpdate, FactDecision
 from ..health import suggest_weights
 from ..health.targets import default_targets
-from .deps import get_engine, protected_read
+from .deps import get_engine, protected_read, bounded_api
 
 
 router = APIRouter(prefix='/api', tags=['profile'])
@@ -19,6 +19,7 @@ def profile(engine=Depends(get_engine)):
 
 
 @router.put('/profile')
+@bounded_api
 def update_profile(body: Profile, engine=Depends(get_engine)):
     with engine.lock:
         engine.repo.update_profile(body.model_dump(mode='json'))
@@ -39,6 +40,7 @@ def preferences(engine=Depends(get_engine)):
 
 
 @router.put('/preferences')
+@bounded_api
 def update_preferences(body: Preferences, engine=Depends(get_engine)):
     with engine.lock:
         previous = engine.repo.get_meta('preferences')
@@ -72,12 +74,14 @@ def facts(include_inactive: bool = False, engine=Depends(get_engine)):
 
 
 @router.post('/facts')
+@bounded_api
 def create_fact(body: FactInput, engine=Depends(get_engine)):
     with engine.lock:
         return engine.repo.save_fact(str(uuid4()), body.content, structured=body)
 
 
 @router.put('/facts/{fact_id}')
+@bounded_api
 def update_fact(fact_id: str, body: FactUpdate, engine=Depends(get_engine)):
     with engine.lock:
         return engine.repo.save_fact(fact_id, body.content,
@@ -86,6 +90,7 @@ def update_fact(fact_id: str, body: FactUpdate, engine=Depends(get_engine)):
 
 
 @router.patch('/facts/{fact_id}')
+@bounded_api
 def decide_fact(fact_id: str, body: FactDecision, engine=Depends(get_engine)):
     with engine.lock:
         return engine.repo.decide_fact(fact_id, body.action, body.expected_version,

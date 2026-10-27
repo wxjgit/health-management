@@ -1,5 +1,7 @@
 """Plan confirmation and periodic analysis workflow graphs."""
 
+from datetime import date
+
 from ..common.errors import DomainValidationError, SafetyPolicyError
 
 from langgraph.graph import StateGraph, START, END
@@ -18,6 +20,7 @@ class PlanningWorkflowMixin:
             state.get('input_text', ''),
             requested.get('target_source', 'manual'),
             requested.get('suggestion_fingerprint'),
+            state.get('schedule_anchor'),
         )
         plan_id = state.get('plan_id') or state['thread_id']
         self.repo.save_plan(plan_id, state['thread_id'], plan)
@@ -53,7 +56,8 @@ class PlanningWorkflowMixin:
         return {'approved': answer['approved']}
 
     def activate_plan(self, state):
-        status = self.repo.decide_plan(state['plan_id'], state['approved'])
+        status = self.repo.decide_plan(state['plan_id'], state['approved'],
+            decision_source='manual' if state['plan']['needs_confirmation'] else 'automatic')
         replies = {
             'active': '计划已生效。可在计划页查看下一餐、次日重点和一周安排。',
             'rejected': '已拒绝这份草案，原计划保持不变。',
@@ -83,14 +87,16 @@ class PlanningWorkflowMixin:
 
     def build_analysis(self):
         graph = StateGraph(State)
-        graph.add_node('analyze', self.guarded_node(lambda state: {'analysis': analyze(self.repo)}))
+        graph.add_node('analyze', self.guarded_node(lambda state: {'analysis': analyze(
+            self.repo, date.fromisoformat(state['period_end']) if state.get('period_end') else None)}, node_name='analyze'))
         graph.add_node('review', self.guarded_node(lambda state: {
             'cards': [{
                 'type': 'review',
-                **review(self.repo, state.get('period', 'week')),
+                **review(self.repo, state.get('period', 'week'),
+                         date.fromisoformat(state['period_end']) if state.get('period_end') else None),
             }],
             'reply': '复盘已更新。规律仅引用足够完整的记录；数据不足时不会制造结论。',
-        }))
+        }, node_name='review'))
         graph.add_edge(START, 'analyze')
         graph.add_edge('analyze', 'review')
         graph.add_edge('review', END)

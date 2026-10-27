@@ -5,6 +5,7 @@ langgraph-checkpoint-sqlite>=3,<4
 pydantic>=2.10,<3
 httpx>=0.28,<1
 python-dotenv>=1,<2
+prometheus-client==0.21.1
 tzdata>=2025.2
 pytest>=8,<10
 

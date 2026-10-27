@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from ..contracts.profile import PlanRequest
-from .deps import get_engine, protected_read
+from .deps import get_engine, protected_read, bounded_api
 from .schemas import FeedbackRequest, ReviewRequest
 
 
@@ -47,6 +47,7 @@ def insights(include_stale: bool = False, engine=Depends(get_engine)):
 
 
 @router.patch('/insights/{insight_id}')
+@bounded_api
 def feedback(insight_id: str, body: FeedbackRequest, engine=Depends(get_engine)):
     with engine.lock:
         engine.repo.insight_feedback(insight_id, body.feedback)
@@ -60,6 +61,7 @@ def notifications(engine=Depends(get_engine)):
 
 
 @router.patch('/notifications/{notification_id}')
+@bounded_api
 def read_notice(notification_id: str, engine=Depends(get_engine)):
     engine.repo.read_notification(notification_id)
     return {'read': True}

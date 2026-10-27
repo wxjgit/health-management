@@ -51,6 +51,8 @@ class State(TypedDict, total=False):
     plan: dict
     approved: bool
     period: str
+    period_end: str
+    schedule_anchor: str
     analysis: list[dict]
     process_trace: list[dict]
     processing_mode: str

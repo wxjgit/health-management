@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-27",
+  "phase": "A",
+  "status": "local_regression_passed",
+  "platform": "Windows",
+  "python": "3.14.5",
+  "database_schema": 8,
+  "reports": {
+    "full_backend": {
+      "tests": 538,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 99.349,
+      "junit_path": "output/scheduler-acceptance.xml"
+    },
+    "post_legacy_expiry_adjustment": {
+      "tests": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 8.486,
+      "junit_path": "output/scheduler-migration-final.xml"
+    },
+    "operations": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 6.024,
+      "junit_path": "output/scheduler-operations.xml"
+    }
+  },
+  "commands": [
+    ".\\.venv\\Scripts\\python.exe -u -m pytest backend/tests -q --basetemp=output/pytest-scheduler-acceptance --junitxml=output/scheduler-acceptance.xml -o faulthandler_timeout=45",
+    ".\\.venv\\Scripts\\python.exe -u -m pytest backend/tests/test_scheduler_reliability.py -q --basetemp=output/pytest-scheduler-migration-final --junitxml=output/scheduler-migration-final.xml"
+  ],
+  "test_sources": [
+    "backend/tests/test_scheduler_reliability.py",
+    "backend/tests/test_scheduler_operations.py"
+  ],
+  "fault_injection": [
+    "two_subprocess_claim_race",
+    "os_exit_after_workflow_commit",
+    "expired_attempt_write_fence",
+    "checkpoint_rollback",
+    "outbox_child_insert_rollback",
+    "migration_rollback",
+    "shutdown_late_write_fence",
+    "sqlite_busy_without_attempt_consumption"
+  ],
+  "user_database_accessed": false,
+  "real_model_calls": false,
+  "unimplemented": [
+    "phase_B_independent_engine_service",
+    "phase_C_multiple_engine_workers"
+  ],
+  "not_validated": [
+    "Linux_file_lock_branch",
+    "container_deployment_combination",
+    "production_database_upgrade"
+  ],
+  "limits": [
+    "One Engine owner per data directory",
+    "Two SQLite databases recover via idempotent workflows, not atomic cross-database commits",
+    "Shutdown grace is not a development-mode hard termination guarantee",
+    "Model requests may repeat if accepted remotely before local persistence"
+  ]
+}

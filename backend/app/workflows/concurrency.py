@@ -5,9 +5,11 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from functools import wraps
 from threading import Lock, RLock
+import time
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from ..common.errors import ConflictError
+from ..common.execution_budget import BudgetLock, check_budget
 from ..privacy.provenance import ReadSet, capture, current_reads
 
 
@@ -38,7 +40,8 @@ class KeyedLocks:
             yield True
             return
         with self._guard:
-            entry = self._entries.setdefault(key, [RLock(), 0])
+            role = 'conversation' if isinstance(key, tuple) and key[0] == 'conversation' else 'workflow'
+            entry = self._entries.setdefault(key, [BudgetLock(role=role), 0])
             entry[1] += 1
         acquired = False
         try:
@@ -70,10 +73,28 @@ class GuardedSqliteSaver(SqliteSaver):
 
     @contextmanager
     def cursor(self, transaction=True):
-        with self.engine.lock:
+        with self.engine.lock, self.lock:
             self.engine.check_execution()
-            with super().cursor(transaction) as cursor:
-                yield cursor
+            self.setup()
+            cursor = self.conn.cursor()
+            started = time.monotonic()
+            try:
+                try:
+                    yield cursor
+                finally:
+                    # Cursor writes bypass Connection.execute; commit/rollback
+                    # still pass through the measured BudgetConnection.
+                    if self.conn.in_transaction and getattr(self.conn, '_transaction_started', None) is None:
+                        self.conn._transaction_started = started
+                self.engine.check_execution()
+                if transaction:
+                    self.conn.commit()
+            except BaseException:
+                if transaction:
+                    self.conn.rollback()
+                raise
+            finally:
+                cursor.close()
 
 
 class WorkflowConcurrencyMixin:
@@ -96,6 +117,9 @@ class WorkflowConcurrencyMixin:
             self.check_context_deadline(existing[0])
 
     def check_execution(self, execution=None):
+        check_budget()
+        from ..jobs.context import check_job
+        check_job()
         execution = execution or _execution.get()
         if execution is None or execution.engine is not self:
             return
@@ -133,10 +157,12 @@ class WorkflowConcurrencyMixin:
                 finally:
                     _execution.reset(token)
 
-    def guarded_node(self, operation):
+    def guarded_node(self, operation, node_name=None):
         @wraps(operation)
         def guarded(state):
-            with self.lock:
+            from ..observability.context import bind
+            from ..observability.spans import node_span
+            with bind(self.observability), self.lock, node_span(node_name or operation.__name__):
                 self.check_execution()
                 token = _node_engine.set(self)
                 try:

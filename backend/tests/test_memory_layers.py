@@ -221,6 +221,7 @@ def test_expiry_failure_is_recovered_at_restart(engine, monkeypatch):
         engine.prune_context(clock.now() + timedelta(days=8))
     assert engine.repo.workflow(pending['thread_id'])['status'] == 'expired'
     monkeypatch.setattr(engine.checkpointer, 'delete_thread', original)
+    engine.close()
     second = Engine(engine.settings)
     try:
         assert second.repo.workflow(pending['thread_id']) is None
@@ -250,9 +251,10 @@ def test_existing_schema_upgrades_without_altering_legacy_fact(engine):
         engine.repo.conn.execute('INSERT INTO facts VALUES (?,?,?,?,?,?)',
                                 ('old', '我不吃花生', 'user', None, 'confirmed', clock.stamp()))
         engine.repo.conn.execute('PRAGMA user_version=5')
+    engine.close()
     second = Engine(engine.settings)
     try:
-        assert second.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 7
+        assert second.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 9
         assert second.repo.fact('old')['content'] == '我不吃花生'
         assert second.repo.fact('old')['type'] == 'legacy_text'
     finally:
@@ -308,6 +310,7 @@ def test_expired_receipt_remains_rejected_after_restart(engine):
     answer = {'request_id': request, 'interrupt_id': pending['pending_input']['interrupt_id'], 'text': '一份'}
     engine.resume(pending['thread_id'], answer)
     engine.prune_context(clock.now() + timedelta(days=31))
+    engine.close()
     second = Engine(engine.settings)
     try:
         with pytest.raises(WorkflowConflict, match='过期'):

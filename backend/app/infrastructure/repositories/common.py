@@ -5,6 +5,7 @@ from ...common.errors import WorkflowStateError
 import json
 from pathlib import Path
 from threading import RLock
+from ...common.execution_budget import BudgetLock
 
 from ...common.clock import stamp
 from ...contracts.profile import Preferences
@@ -17,7 +18,7 @@ def dump(value):
 
 class RepositoryBase:
     def __init__(self, path: Path):
-        self.lock = RLock()
+        self.lock = BudgetLock()
         self.conn = open_database(path)
         if self.get_meta('preferences') is None:
             self.set_meta('preferences', Preferences().model_dump())

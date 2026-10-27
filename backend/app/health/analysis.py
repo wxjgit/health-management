@@ -86,7 +86,7 @@ def analyze(repo, end=None):
             'data_version': repo.version(),
         }
         insight_id = repo.save_insight('sleep_intake', data)
-        if insight_id and important:
+        if insight_id and important and repo.get_meta('preferences')['notifications_enabled']:
             repo.notify(
                 f'insight:{insight_id}:{end.isocalendar().week}',
                 '发现值得关注的重复模式',

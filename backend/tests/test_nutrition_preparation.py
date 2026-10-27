@@ -38,7 +38,7 @@ def rough(index, kcal=320):
 
 def mock_model(monkeypatch, extract, estimate):
     calls = {'parse': 0, 'nutrition': 0}
-    original = httpx.Client
+    original = httpx.AsyncClient
 
     def handler(request):
         body = json.loads(request.content)
@@ -59,7 +59,7 @@ def mock_model(monkeypatch, extract, estimate):
         content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content)}}]})
 
-    monkeypatch.setattr('app.modeling.parser.httpx.Client',
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient',
                         lambda *a, **kw: original(*a, **kw, transport=httpx.MockTransport(safety_transport(handler))))
     return calls
 

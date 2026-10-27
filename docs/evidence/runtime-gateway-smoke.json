@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27T06:40:42.038788+00:00",
+  "project": "qingji-runtime-test",
+  "checks": {
+    "health": true,
+    "body_65536_allowed_to_validation": true,
+    "body_65537_rejected": true,
+    "compressed_body_rejected": true,
+    "local_only_and_idempotent_replay": true,
+    "synthetic_record_cleanup": true,
+    "gateway_absolute_drip_deadline": true,
+    "proxy_denies_other_host": true,
+    "proxy_denies_literal": true,
+    "proxy_denies_metadata": true,
+    "proxy_denies_wrong_port": true,
+    "proxy_denies_suffix": true,
+    "proxy_approved_provider_connect": true
+  },
+  "passed": true,
+  "real_model_called": false
+}

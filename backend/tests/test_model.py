@@ -15,7 +15,7 @@ def model_settings(tmp_path):
 
 
 def fake_client(monkeypatch, handler):
-    original = httpx.Client
+    original = httpx.AsyncClient
     def wire_handler(request):
         response = handler(request)
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
@@ -28,7 +28,7 @@ def fake_client(monkeypatch, handler):
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(planned_content(data, content))}}]})
     def patched(*args, **kwargs):
         return original(*args, **kwargs, transport=httpx.MockTransport(safety_transport(wire_handler)))
-    monkeypatch.setattr('app.modeling.parser.httpx.Client', patched)
+    monkeypatch.setattr('app.modeling.transport.httpx.AsyncClient', patched)
 
 
 def test_model_schema_is_checked_and_secrets_are_not_exposed(model_settings, monkeypatch):

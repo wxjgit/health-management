@@ -3,7 +3,7 @@ import json
 import re
 from contextlib import nullcontext
 
-import httpx
+from .transport import request_model
 from pydantic import ValidationError
 
 from ..common.errors import DomainValidationError, ModelUnavailableError, UpstreamModelError
@@ -123,8 +123,28 @@ class Parser:
         return self.model_request(prompt, call, output_type)
 
     def model_request(self, prompt, call, output_type):
-        # Consume the immutable approval before opening a network connection.
+        # Authorization failures are not model attempts. Validate before telemetry
+        # inspects the approved purpose, and preserve the original PolicyError.
         data = self.boundary.consume(call)
+        import time
+        from ..observability.context import emit
+        from ..observability.spans import error_outcome
+        started = time.monotonic()
+        observation = {'outcome': 'transport_failed'}
+        try:
+            result = self._model_request(prompt, call, output_type, observation, data)
+            observation['outcome'] = 'ok'
+            return result
+        except BaseException as error:
+            classified = error_outcome(error)
+            if classified in ('cancelled', 'deadline', 'conflict'):
+                observation['outcome'] = classified
+            raise
+        finally:
+            emit('model_contract_finished', purpose=call.purpose,
+                 duration_seconds=time.monotonic()-started, **observation)
+
+    def _model_request(self, prompt, call, output_type, observation, data):
         body = {'model': self.settings.model_name, 'messages': [
                 {'role': 'system', 'content': prompt},
                 {'role': 'user', 'content': json.dumps(data, ensure_ascii=False)},
@@ -132,26 +152,9 @@ class Parser:
         # Construct local data outside the transport error boundary.
         if self.settings.model_name.startswith('qwen3.8-max'):
             body['enable_thinking'] = False
-        timeout = 8 if call.purpose == 'safety_classification' else 45
         with self.network_context(call.purpose):
-            try:
-                with httpx.Client(timeout=timeout, follow_redirects=False) as client:
-                    response = client.post(self.settings.model_base_url + '/chat/completions', headers={
-                        'Authorization': 'Bearer ' + self.settings.model_api_key,
-                    }, json=body)
-            except (httpx.TimeoutException, httpx.NetworkError, httpx.ProxyError) as error:
-                raise ModelUnavailableError() from error
-            except httpx.RequestError as error:
-                raise UpstreamModelError() from error
-            if response.status_code in (429, 503):
-                raise ModelUnavailableError(code='model_rate_limited' if response.status_code == 429
-                                            else 'model_service_unavailable')
-            if not response.is_success:
-                raise UpstreamModelError()
-            try:
-                envelope = response.json()
-            except ValueError as error:
-                raise UpstreamModelError(code='model_response_invalid') from error
+            envelope = request_model(self.settings, body, call.purpose)
+            observation['outcome'] = 'envelope_invalid'
             choices = envelope.get('choices') if isinstance(envelope, dict) else None
             first = choices[0] if isinstance(choices, list) and choices else None
             message = first.get('message') if isinstance(first, dict) else None
@@ -160,6 +163,7 @@ class Parser:
                 raise UpstreamModelError(code='model_response_invalid')
             content = re.sub(r'^```(?:json)?\s*|\s*```$', '', content.strip())
             try:
+                observation['outcome'] = 'schema_invalid'
                 return output_type.model_validate_json(content)
             except ValidationError as error:
                 raise UpstreamModelError(code='model_response_invalid') from error

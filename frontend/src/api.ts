@@ -30,6 +30,14 @@ function correlationId(value: unknown): string | undefined {
     : undefined;
 }
 
+const runtimeMessages: Record<number, string> = {
+  408: "接收请求超时，请重新发送原请求。",
+  413: "请求内容过大，请缩小范围。",
+  415: "不支持压缩请求内容。",
+  503: "服务繁忙或暂时不可用，请稍后使用原请求重试。",
+  504: "本次处理已超时；此前已保存的记录保留，请刷新或使用原请求重试。",
+};
+
 export async function api<T>(
   path: string,
   method = "GET",
@@ -49,7 +57,7 @@ export async function api<T>(
   if (!response.ok) {
     const parsed = await response
       .json()
-      .catch(() => ({ detail: "服务响应异常，请稍后重试" }));
+      .catch(() => ({ detail: runtimeMessages[response.status] ?? "服务响应异常，请稍后重试" }));
     const error = parsed && typeof parsed === "object" ? parsed : {};
     const detail =
       typeof error.detail === "string"

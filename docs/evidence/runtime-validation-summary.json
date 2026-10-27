@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-27T06:42:06.254205+00:00",
+  "status": "code_implemented_production_acceptance_pending",
+  "backend_source_sha256": "ea123d1e657b6f86a70b3c8109fa7591cd4b46ee4d0b53f1ef7a73c91a2d76e1",
+  "backend": {
+    "command": "python -m pytest backend/tests -q -p no:cacheprovider --basetemp <isolated-temp> --tb=short",
+    "passed": 500,
+    "failed": 0,
+    "seconds": 101.84
+  },
+  "frontend": {
+    "tests_passed": 56,
+    "failed": 0,
+    "production_build": "passed"
+  },
+  "docker": {
+    "engine": "29.6.2",
+    "compose": "v5.3.1",
+    "application_build": "passed",
+    "egress_build": "passed",
+    "app_image": "sha256:4e1cfef6e82ed61119b933e0bfa2cb881698ecfa1b62c1d9d38386290306405b",
+    "egress_image": "sha256:3c20d9bbba99885c8a00e10c6f59300e1a6929562e240a1f1922c6d02a652269",
+    "gateway_config": "nginx -t passed",
+    "egress_config": "squid -k parse passed",
+    "cgroup": {
+      "cpu.max": "100000 100000",
+      "memory.max": "536870912",
+      "pids.max": "128"
+    }
+  },
+  "container_checks_passed": 19,
+  "gateway_checks_passed": 13,
+  "external_supervision_recovery": true,
+  "external_supervision_recovery_seconds": 18.99,
+  "real_model_called": false,
+  "test_data": "synthetic temporary databases, dedicated named volume and synthetic key",
+  "evidence": [
+    "runtime-container-probes.json",
+    "runtime-gateway-smoke.json",
+    "runtime-supervision.json"
+  ],
+  "unverified": [
+    "controlled_public_positive_and_negative",
+    "proxy_dns_rebinding",
+    "host_firewall_and_ipv6",
+    "hard_recovery_and_two_database_consistency",
+    "resource_stress_and_disk_full",
+    "provider_key_revocation_and_real_secret_rollout",
+    "production_migration_and_rollback"
+  ],
+  "overall_hardened_accepted": false
+}

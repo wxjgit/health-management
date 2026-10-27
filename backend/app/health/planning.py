@@ -1,6 +1,6 @@
 
 from ..common.errors import ConflictError, DomainValidationError
-from datetime import timedelta
+from datetime import timedelta, date
 from statistics import mean
 
 from ..common import clock
@@ -13,7 +13,7 @@ from .facts import FACT_POLICY_VERSION
 
 
 @tracked
-def plan_draft(repo, targets, note='', target_source='manual', suggestion_fingerprint=None):
+def plan_draft(repo, targets, note='', target_source='manual', suggestion_fingerprint=None, schedule_anchor=None):
     require_plan_eligibility(repo, targets, note)
     active = repo.active_plan()
     current_targets = active['data']['targets'] if active else None
@@ -52,7 +52,7 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
     actual_durations = [event['data']['value'] for event in exercise_events[:5]]
     duration = round(mean(actual_durations)) if actual_durations else 20
     session_minutes = round(targets['exercise_minutes'] / 4)
-    start = clock.now().date() + timedelta(days=1)
+    start = date.fromisoformat(schedule_anchor) if schedule_anchor else clock.now().date() + timedelta(days=1)
     schedule = []
     for index in range(7):
         day = (start + timedelta(days=index)).isoformat()

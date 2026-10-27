@@ -16,30 +16,6 @@ class MaintenanceRepositoryMixin:
             if self.conn.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()[0]:
                 raise RuntimeError('数据库正忙，清理尚未完成')
 
-    def start_job(self, key, kind):
-        with self.lock, self.conn:
-            self.conn.execute(
-                'INSERT OR IGNORE INTO jobs VALUES (?,?,?,?,?)',
-                (key, kind, 'pending', 0, stamp()),
-            )
-            row = self.conn.execute(
-                'SELECT * FROM jobs WHERE key=?', (key,)
-            ).fetchone()
-            if row['status'] == 'done' or row['attempts'] >= 3:
-                return False
-            self.conn.execute(
-                "UPDATE jobs SET status='running',attempts=attempts+1 WHERE key=?",
-                (key,),
-            )
-            return True
-
-    def finish_job(self, key, ok=True):
-        with self.lock, self.conn:
-            self.conn.execute(
-                'UPDATE jobs SET status=? WHERE key=?',
-                ('done' if ok else 'pending', key),
-            )
-
     def summaries(self):
         return [
             {**dict(row), 'data': derived_view(json.loads(row['data']))}
@@ -91,6 +67,7 @@ class MaintenanceRepositoryMixin:
     def erase_context(self):
         # Queries/checkpoints can contain copies of the deleted event. Clear all transient context.
         with self.lock, self.conn:
+            self.conn.execute('DELETE FROM quality_observations')
             for table in [
                 'messages',
                 'workflows',

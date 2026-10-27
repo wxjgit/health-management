@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from ..privacy.deletion import DeletionError
-from .deps import get_engine
+from .deps import get_engine, managed_api
 
 
 router = APIRouter(prefix='/api/deletions', tags=['privacy'])
@@ -26,6 +26,7 @@ def preview(body: PreviewRequest, engine=Depends(get_engine)):
 
 
 @router.post('')
+@managed_api
 def execute(body: DeleteRequest, engine=Depends(get_engine)):
     with engine.lock:
         row = engine.repo.conn.execute('SELECT * FROM deletion_previews WHERE id=?', (body.preview_id,)).fetchone()

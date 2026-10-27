@@ -1,5 +1,7 @@
 """Regression cases for consumed interrupts and plan cancellation boundaries."""
 
+from app.common.errors import ConflictError, WorkflowStateError
+
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from threading import Event
@@ -33,7 +35,7 @@ def conflict_on_patch(runtime, controlled):
         finally:
             controlled.release.set()
             runtime.parser.patch = original_patch
-        with pytest.raises(WorkflowConflict, match='数据已变化'):
+        with pytest.raises(WorkflowConflict):
             failed.result(timeout=3)
     return pending, payload
 
@@ -56,7 +58,7 @@ def test_changed_answer_is_rejected_then_original_answer_can_retry(settings, mod
             {**payload, 'text': '改为67公斤'},
             {**payload, 'request_id': str(uuid4())},
         ):
-            with pytest.raises((WorkflowConflict, ValueError)):
+            with pytest.raises(ConflictError):
                 runtime.resume(pending['thread_id'], changed)
         assert len(model.calls) == calls
         assert len(runtime.repo.events()) == 1  # Only the independent update was saved.
@@ -117,7 +119,7 @@ def test_original_chat_request_cannot_bypass_failed_resume(engine, model):
             engine.resume(pending['thread_id'], resume_payload(pending, text='65公斤'))
     finally:
         engine.invoke = original
-    with pytest.raises(WorkflowConflict, match='原补充请求'):
+    with pytest.raises(WorkflowConflict):
         chat(engine, '今天记录体重', request_id=request_id)
 
 
@@ -205,7 +207,7 @@ def test_legacy_consumed_interrupt_without_binding_rejects_new_answer(engine, mo
     engine.repo.conn.execute('DELETE FROM resume_attempts')
     engine.repo.conn.commit()
     engine.repo.workflow_result(pending['thread_id'], pending)
-    with pytest.raises(WorkflowConflict, match='进度已变化'):
+    with pytest.raises(WorkflowConflict):
         engine.resume(pending['thread_id'], {**payload, 'request_id': str(uuid4()), 'text': '67公斤'})
     assert len(engine.repo.events()) == 1
 
@@ -258,7 +260,7 @@ def test_active_plan_after_failed_finalization_cannot_be_cancelled(settings, mod
         runtime.close()
     runtime = Engine(settings)
     try:
-        with pytest.raises(ValueError, match='已经处理'):
+        with pytest.raises(WorkflowStateError):
             runtime.cancel(pending['thread_id'])
         assert runtime.repo.workflow(pending['thread_id'])['status'] == 'resume_failed'
         assert runtime.resume(pending['thread_id'], payload)['status'] == 'completed'

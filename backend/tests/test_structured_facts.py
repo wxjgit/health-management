@@ -1,4 +1,6 @@
 """Behavioral coverage for dated facts, protection, boundaries and privacy."""
+
+from app.common.errors import ConflictError, DomainValidationError, ModelOutputError
 import json
 from datetime import timedelta
 
@@ -62,7 +64,7 @@ def test_ambiguous_temporary_period_is_not_permanent(engine, text):
     assert record['time_scope'] == 'temporary_unknown'
     assert record['confirmation'] == 'candidate'
     assert engine.repo.facts() == []
-    with pytest.raises(ValueError, match='期限'):
+    with pytest.raises(DomainValidationError):
         engine.repo.decide_fact('temp', 'confirm', record['version'])
 
 
@@ -120,7 +122,7 @@ def test_protective_fact_is_never_superseded_by_acceptance(engine):
     engine.repo.save_fact('accept', '我现在可以接受花生')
     assert engine.repo.fact('allergy')['lifecycle'] == 'active'
     assert local_safety(engine.repo)['category'] == 'medical'
-    with pytest.raises(ValueError, match='类型不同|保护性'):
+    with pytest.raises(ConflictError):
         engine.repo.save_fact('forged', '我喜欢花生', structured=FactInput(
             content='我喜欢花生', type='food_preference', subject='花生', value='like', supersedes=allergy['id']))
 
@@ -128,7 +130,7 @@ def test_protective_fact_is_never_superseded_by_acceptance(engine):
 def test_ambiguous_edit_cannot_remove_existing_protection(engine):
     initial = engine.repo.save_fact('allergy', '我对花生过敏', structured=FactInput(
         content='我对花生过敏', type='allergy', subject='花生', value='allergic'))
-    with pytest.raises(ValueError, match='原限制仍需保留'):
+    with pytest.raises(DomainValidationError):
         engine.repo.save_fact('allergy', '我对花生是否过敏', structured=FactInput(
             content='我对花生是否过敏', type='allergy', subject='花生', value='uncertain'),
             expected_version=initial['version'])
@@ -137,7 +139,7 @@ def test_ambiguous_edit_cannot_remove_existing_protection(engine):
 
 
 def test_reason_cannot_downgrade_clinical_content(engine):
-    with pytest.raises(ValueError, match='医疗限制'):
+    with pytest.raises(DomainValidationError):
         engine.repo.save_fact('forged', '我对花生过敏', structured=FactInput(
             content='我对花生过敏', type='food_preference', subject='花生', value='accept'))
     saved = engine.repo.save_fact('restriction', '我不吃花生', structured=FactInput(
@@ -146,10 +148,10 @@ def test_reason_cannot_downgrade_clinical_content(engine):
 
 
 def test_metadata_cannot_contradict_clear_content(engine):
-    with pytest.raises(ValueError, match='原文不一致'):
+    with pytest.raises(DomainValidationError):
         engine.repo.save_fact('bad', '我不喜欢燕麦', structured=FactInput(
             content='我不喜欢燕麦', type='food_preference', subject='燕麦', value='accept'))
-    with pytest.raises(ValueError, match='严重程度'):
+    with pytest.raises(DomainValidationError):
         engine.repo.save_fact('bad2', '我对花生过敏', structured=FactInput(
             content='我对花生过敏', type='allergy', subject='花生', value='allergic', reported_severity='severe'))
 
@@ -183,14 +185,14 @@ def test_more_than_budget_constraints_block_context_and_plans(engine):
         text = f'我不吃食物{number}'
         engine.repo.save_fact(str(number), text)
     assert local_safety(engine.repo)['category'] == 'uncertain'
-    with pytest.raises(ValueError, match='超过'):
+    with pytest.raises(DomainValidationError):
         build_advice_context(engine.repo, '今天吃饭注意什么', view='diet_today')
-    with pytest.raises(ValueError):
+    with pytest.raises(DomainValidationError):
         plan_draft(engine.repo, TARGETS)
 
 
 def test_model_draft_requires_evidence_and_does_not_choose_existing_ids(engine):
-    with pytest.raises(ValueError, match='证据'):
+    with pytest.raises(ModelOutputError):
         engine.repo.save_fact('model', '我不喜欢燕麦', draft={
             'type': 'food_preference', 'subject': '燕麦', 'value': 'dislike'})
     from app.contracts.facts import FactDraft
@@ -203,7 +205,7 @@ def test_model_draft_requires_evidence_and_does_not_choose_existing_ids(engine):
 
 def test_hypothesis_cannot_be_promoted_without_edit(engine):
     saved = engine.repo.save_fact('maybe', '我喜欢燕麦', context_text='如果我喜欢燕麦呢？')
-    with pytest.raises(ValueError, match='明确陈述'):
+    with pytest.raises(DomainValidationError):
         engine.repo.decide_fact('maybe', 'confirm', saved['version'])
     assert local_safety(engine.repo)['category'] == 'general'
 
@@ -219,7 +221,7 @@ def test_conflict_resolution_rejects_changed_peers(engine):
     base = engine.repo.save_fact('base', '我不喜欢燕麦')
     temp = engine.repo.save_fact('temp', '我今天可以接受燕麦')
     engine.repo.save_fact('base', '我喜欢燕麦', expected_version=base['version'])
-    with pytest.raises(ValueError, match='版本已变化'):
+    with pytest.raises(ConflictError):
         engine.repo.decide_fact('temp', 'confirm', temp['version'], 'temporary', {'base': base['version']})
 
 

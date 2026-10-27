@@ -2,7 +2,8 @@
 
 from ..health.advice import build_advice_context, context_trace
 from ..chat.feedback import wants_advice
-from ..modeling import PolicyError
+from ..common.errors import DomainValidationError, ModelError, ModelOutputError
+from ..common.request_context import log_failure
 from ..health import dashboard, evidence, meal_assessment, recommendation
 from ..health.nutrition import nutrition_summary
 from ..chat.replies import express_plan, make_plan, medical_question, record_receipt
@@ -83,15 +84,15 @@ class ChatResponseMixin:
                     'source': 'local',
                 })
                 try:
-                    if self.parser.mode != 'model':
-                        raise ValueError('演示模式不调用建议模型')
-                    reply = validate_advice(self.parser.answer_advice(context), context)
+                    reply = (validate_advice(self.parser.answer_advice(context), context)
+                             if self.parser.mode == 'model' else fallback_advice(context))
                     advice_traces.append({
                         'title': '生成个性化建议',
                         'detail': '模型仅选择本次批准的建议要点；正文、日期、数值、完整性和估算说明由本地程序生成。',
-                        'source': 'model',
+                        'source': 'model' if self.parser.mode == 'model' else 'local',
                     })
-                except (ValueError, TypeError):
+                except ModelError:
+                    log_failure('model_advice_fallback')
                     reply = fallback_advice(context)
                     advice_traces.append({
                         'title': '生成个性化建议',
@@ -124,7 +125,8 @@ class ChatResponseMixin:
                 refs.extend(additional_refs)
                 try:
                     answer = validate_advice(self.parser.answer_advice(context), context)
-                except (ValueError, TypeError):
+                except ModelError:
+                    log_failure('model_advice_fallback')
                     answer = fallback_advice(context)
                 reply += '\n' + answer
                 advice_traces.append({
@@ -134,7 +136,7 @@ class ChatResponseMixin:
                 })
             elif action.intent == 'fact':
                 if not action.fact_text or action.fact_text not in state['input_text']:
-                    raise PolicyError('长期信息必须来自本次输入。')
+                    raise ModelOutputError()
                 fact = self.repo.save_fact(f'{state["thread_id"]}:fact:{index}', action.fact_text,
                                            draft=action.fact_draft.model_dump(mode='json') if action.fact_draft else None,
                                            context_text=state['input_text'],
@@ -191,7 +193,7 @@ class ChatResponseMixin:
             plan_state, {'actions': [action.model_dump()]}
         )
         if approved[0].intent != 'advice':
-            raise PolicyError('建议中的指代尚未明确，请选择相关记录。')
+            raise DomainValidationError(code='policy_scope_denied')
         bound = (
             self.harness.resolve(plan_state, action)
             if approved[0].data_view != 'none'

@@ -1,3 +1,5 @@
+
+from ..common.errors import ConflictError, DomainValidationError
 from datetime import timedelta
 from statistics import mean
 
@@ -24,11 +26,11 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
     elif targets is None or target_source == 'system_default':
         suggestion = default_targets(repo)
         if suggestion['status'] != 'ready':
-            raise ValueError(suggestion['reason'])
+            raise DomainValidationError(code='default_targets_unavailable')
         if suggestion_fingerprint and suggestion_fingerprint != suggestion['fingerprint']:
-            raise ValueError('基础资料或限制已变化，请刷新并重新采用系统默认；你的手动目标没有被覆盖。')
+            raise ConflictError()
         if targets is not None and targets != suggestion['targets']:
-            raise ValueError('提交值不是当前系统默认；修改过的目标请作为手动目标提交。')
+            raise DomainValidationError(code='default_targets_mismatch')
         targets = suggestion['targets']
         target_source = 'system_default'
         target_metadata = suggestion
@@ -57,7 +59,7 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
         view = repo.resolve_facts(day, 'plan')
         require_resolved(view)
         if any(fact['enforcement'] == 'clinical_review' for fact in view['constraints']):
-            raise ValueError('计划日期存在需专业评估的信息，请先核对，暂不生成普通计划。')
+            raise DomainValidationError(code='safety_policy_denied')
         constraints = [fact['content'] for fact in view['effective']]
         food = '三餐规律进食；每餐安排蛋白质来源、蔬菜与适量主食，记录实际分量。'
         if constraints:

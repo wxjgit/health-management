@@ -11,6 +11,7 @@ from ..contracts.events import NutritionEstimates
 from ..contracts.safety import SafetyClassification, SafetyContext
 from ..contracts.facts import FactProjection
 from .errors import PolicyError
+from pydantic import ValidationError
 from ..policy.output import advice_plan, feedback_options
 
 
@@ -173,7 +174,7 @@ def validate_advice_payload(context):
         for fact in context.get(key, []):
             try:
                 FactProjection.model_validate(fact)
-            except ValueError as error:
+            except ValidationError as error:
                 raise PolicyError('事实投影字段不合法。') from error
     if 'profile' in context:
         fields(context['profile'], {

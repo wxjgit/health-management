@@ -3,7 +3,8 @@
 Numbers, dates, persistence receipts, questions and uncertainty boundaries never
 pass through the rephraser. This guard is deliberately not a medical verifier.
 """
-import logging
+from ..common.errors import ModelError
+from ..common.request_context import log_failure
 import re
 from datetime import timedelta
 
@@ -14,7 +15,6 @@ from ..policy.output import (
     check_phrasing, default_feedback_selection, feedback_boundary, feedback_options,
 )
 
-logger = logging.getLogger(__name__)
 
 
 def medical_question(text):
@@ -74,9 +74,9 @@ def express_plan(parser, plan, *, with_selection=False):
             selection = ContextualReply.model_validate(candidate).model_dump()
             source = 'model'
             reason = '模型仅选择本地批准的表达版本；正文、日期、数值、保存状态与追问由程序固定。'
-        except (ValueError, TypeError):
+        except ModelError:
             # No health input, credentials or upstream error bodies in logs.
-            logger.warning('contextual_reply_fallback')
+            log_failure('model_reply_fallback')
             reason = '回复润色失败或未通过校验，使用同一关注点的本地回复；记录结果不受影响。'
     if feedback_boundary(plan):
         texts.append(feedback_boundary(plan))

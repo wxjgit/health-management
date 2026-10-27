@@ -3,6 +3,9 @@
 Rules prioritize recall; neither a valid schema nor an unmatched phrase proves
 medical safety. This module never calls a model or saves a diagnosis.
 """
+
+from ..common.errors import ModelOutputError, SafetyPolicyError
+from ..common.safety_messages import REPLIES
 import hashlib
 import json
 import re
@@ -14,13 +17,6 @@ from .fact_resolution import pending_decisions
 POLICY_VERSION = 'hybrid-safety-facts-v2'
 PROMPT_VERSION = 'safety-classifier-v1'
 PRIORITY = ['emergency', 'eating_disorder', 'medical', 'special_population', 'uncertain', 'general']
-REPLIES = {
-    'emergency': '你提到的情况可能涉及立即危险。请立即联系当地急救服务或前往急诊，请可信任的人陪同，不要自行驾车或等待饮食建议。这里不能替代急救评估。',
-    'medical': '这涉及身体不适、疾病、用药或特殊医疗营养，请咨询医生或临床营养师。这里不能判断病因或调整药物，本次暂停营养估算、热量优化和饮食运动计划。若症状严重、迅速加重或出现胸痛、呼吸困难、意识异常，请立即寻求急救。',
-    'eating_disorder': '你提到的进食困扰或补偿行为值得认真对待，这不是意志力问题。请尽快联系医生或熟悉进食障碍的专业人员，也可以请可信任的人陪同。本次暂停热量、减重目标和计划，不提供催吐、滥用泻药、禁食或补偿性运动的方法。若已有晕厥、胸痛、意识异常或严重脱水，请立即寻求急救。',
-    'special_population': '这涉及孕产期、哺乳期或未成年人的营养需求，请由医生或合格营养师按具体阶段评估。本次不提供通用成人营养估算、减重目标和饮食运动计划。未成年人可以请可信任的成年人陪同咨询。',
-    'uncertain': '目前无法可靠完成本次安全判断，先暂停营养估算、热量优化、普通建议和计划生成。你可以补充情况；涉及身体不适时请咨询医生，存在立即危险时请寻求当地急救。',
-}
 RULES = {
     'emergency': r'胸痛|胸口.{0,5}(?:痛|压迫)|呼吸.{0,4}困难|喘不过气|无法呼吸|窒息|晕厥|晕倒|昏迷|意识(?:模糊|不清|异常)|叫不醒|抽搐|吐血|呕血|便血|黑便|严重脱水|大出血|(?:孕|产后).{0,20}(?:出血|剧痛)|自杀|自残|不想活|服药过量|药物过量|中毒|chestpain|shortnessofbreath|overdose',
     'eating_disorder': r'进食障碍|饮食障碍|厌食症|暴食|贪食症|催吐|抠吐|泻药|补偿性|(?:运动|跑步).{0,12}(?:抵消|补偿)|(?:吃|餐).{0,12}(?:内疚|罪恶|吐出来)|(?:不吃|少吃|跳餐|挨饿).{0,16}(?:补偿|抵消|补回来)|害怕.{0,5}(?:吃|变胖)|(?:不吃|禁食|绝食).{0,8}天|(?:每天|每日|一天|只吃).{0,8}(?<!\d)[1-9]\d{0,2}(?:kcal|千卡|大卡)|bulimia|anorexia|purging|eatingdisorder',
@@ -70,7 +66,7 @@ def merge_classification(result, context):
     for finding in parsed.findings:
         evidence = finding.evidence
         if evidence.source_id not in sources or evidence.quote not in sources[evidence.source_id]:
-            raise ValueError('安全分类证据不在已授权原文中')
+            raise ModelOutputError()
         if finding.assertion != 'denied':
             # Hypothetical/past medical questions still get a bounded response;
             # only an affirmed current emergency gets an emergency instruction.
@@ -101,7 +97,7 @@ def plan_eligibility(repo, targets=None, note=''):
 def require_plan_eligibility(repo, targets=None, note=''):
     result = plan_eligibility(repo, targets, note)
     if result['category'] != 'general':
-        raise ValueError(REPLIES[result['category']])
+        raise SafetyPolicyError(result['category'])
 
 
 def unsafe_generated_text(text):

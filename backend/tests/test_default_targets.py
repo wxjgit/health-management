@@ -42,7 +42,7 @@ def test_missing_profile_is_not_fabricated_and_default_read_is_non_mutating(clie
     assert result['targets'] is None
     assert client.get('/api/plans').json() == []
     assert client.get('/api/dashboard').json()['targets'] is None
-    assert propose(client).status_code == 409
+    assert propose(client).status_code == 422
 
 
 def test_formula_macro_conversion_and_provenance(client):
@@ -96,11 +96,11 @@ def test_stale_or_modified_default_values_cannot_be_mislabeled(client):
     stale = propose(client, targets=old['targets'], target_source='system_default',
                     suggestion_fingerprint=old['fingerprint'])
     assert stale.status_code == 409
-    assert '基础资料或限制已变化' in stale.json()['detail']
+    assert stale.json()['code'] == 'resource_version_conflict'
     fresh = client.get('/api/targets/default').json()
     modified = {**fresh['targets'], 'exercise_minutes': 180}
     assert propose(client, targets=modified, target_source='system_default',
-                   suggestion_fingerprint=fresh['fingerprint']).status_code == 409
+                   suggestion_fingerprint=fresh['fingerprint']).status_code == 422
     assert propose(client, targets=modified, target_source='manual').status_code == 200
     assert propose(client, targets=fresh['targets'], target_source='system_default').status_code == 422
 
@@ -175,7 +175,7 @@ def test_unsupported_profiles_do_not_receive_automatic_targets(client, values):
         assert response.status_code == 200
         assert response.json()['safety']['category'] != 'general'
     else:
-        assert response.status_code == 409
+        assert response.status_code == 422
 
 
 def test_known_medical_constraint_blocks_default_and_manual_plan_generation(client):

@@ -1,5 +1,9 @@
 """Safety nodes and replay-time capability checks shared by chat and plans."""
 import re
+from pydantic import ValidationError
+
+from ..common.errors import DomainValidationError, ModelError, ModelOutputError, WorkflowStateError
+from ..common.request_context import log_failure
 
 from ..contracts.safety import SafetyContext
 from ..health.fact_resolution import pending_decisions
@@ -80,7 +84,8 @@ class SafetyWorkflowMixin:
             }], 'safety_classification': {
                 'fingerprint': state['safety_fingerprint'], 'result': value,
             }}
-        except (ValueError, TypeError):
+        except (ModelError, ValidationError):
+            log_failure('model_classifier_fallback')
             return {'safety': decision('uncertain', 'classifier_failed')}
 
     def route_safety_result(self, state):
@@ -102,7 +107,9 @@ class SafetyWorkflowMixin:
         context, signature = self.safety_context(state)
         local = local_safety(self.repo, [source['text'] for source in context['sources']])
         if local['category'] != 'general':
-            raise ValueError(REPLIES[local['category']])
+            # Entry routing already handled the input; a new risk here invalidates
+            # the previously granted workflow capability (including plan replay).
+            raise WorkflowStateError()
         result = state.get('safety', {})
         unchanged = state.get('safety_fingerprint') == signature or (
             operation == 'activate_plan' and result.get('reason') == 'no_plan_note'
@@ -111,16 +118,16 @@ class SafetyWorkflowMixin:
         )
         if (result.get('category') != 'general' or not unchanged
                 or result.get('policy_version') != POLICY_VERSION):
-            raise ValueError(REPLIES['uncertain'])
+            raise WorkflowStateError()
         if result.get('capability') == 'record_only':
             parsed = state.get('parsed', state.get('extraction', {}))
             if parsed and (parsed.get('intent') not in ('record', 'correct', 'query')
                            or state.get('extra_actions')):
-                raise ValueError(REPLIES['uncertain'])
+                raise DomainValidationError(code='safety_policy_denied')
         if result.get('capability') == 'preference_only':
             parsed = state.get('parsed', {})
             if parsed and (parsed.get('intent') != 'fact' or state.get('extra_actions')):
-                raise ValueError(REPLIES['uncertain'])
+                raise DomainValidationError(code='safety_policy_denied')
         if operation in ('prepare_plan', 'activate_plan'):
             require_plan_eligibility(self.repo, state.get('plan', {}).get('targets'), state.get('input_text', ''))
 
@@ -129,11 +136,11 @@ class SafetyWorkflowMixin:
             self.require_safety(state, 'prepare_nutrition')
             parsed = state.get('parsed', {})
             if unsafe_generated_text(parsed.get('question') or ''):
-                raise ValueError('unapproved_question')
+                raise ModelOutputError()
             for raw in [state.get('original', ''), state.get('input_text', '')]:
                 if local_safety(self.repo, [raw])['category'] != 'general':
-                    raise ValueError('risk_recheck')
-        except ValueError:
+                    raise DomainValidationError(code='safety_policy_denied')
+        except (DomainValidationError, ModelOutputError):
             return {'safety': decision('uncertain', 'operation_not_authorized')}
         return {}
 

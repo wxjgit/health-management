@@ -1,6 +1,7 @@
-from fastapi import HTTPException, Request
+from fastapi import Request
 from functools import wraps
 from inspect import signature
+from ..common.errors import PrivacyCleanupPending
 
 
 def get_engine(request: Request):
@@ -8,7 +9,7 @@ def get_engine(request: Request):
     with engine.lock:
         pending = engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone()
         if pending and request.url.path != '/api/deletions' and not request.url.path.startswith('/api/deletions/'):
-            raise HTTPException(503, '相关隐私清理尚未完成，请重试删除任务。')
+            raise PrivacyCleanupPending()
     return engine
 
 
@@ -21,6 +22,6 @@ def protected_read(operation):
         engine = parameters.bind_partial(*args, **kwargs).arguments['engine']
         with engine.lock:
             if engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
-                raise HTTPException(503, '相关隐私清理尚未完成，请重试删除任务。')
+                raise PrivacyCleanupPending()
             return operation(*args, **kwargs)
     return guarded

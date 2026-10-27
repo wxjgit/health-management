@@ -1,3 +1,5 @@
+
+from app.common.errors import ModelOutputError
 import json
 from datetime import datetime
 from uuid import uuid4
@@ -266,9 +268,9 @@ def test_new_topic_has_its_own_guidance_and_previous_guidance_is_not_repeated():
 def test_unapproved_or_missing_response_points_are_rejected():
     signals = reconcile_feedback([], [], '昨天有点咸', '2026-10-08')
     plan = make_plan(signals, 'advice')
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_phrasing({'segments': [{'point_id': 'ack_salty', 'variant_id': 'warm'}]}, plan)
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_phrasing({'segments': [{'point_id': 'unknown', 'variant_id': 'warm'}]}, plan)
 
 

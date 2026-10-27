@@ -2,13 +2,15 @@
 import copy
 import hashlib
 import json
-import logging
 import re
+from pydantic import ValidationError
+
+from ..common.errors import ModelError, ModelOutputError
+from ..common.request_context import log_failure
 
 from ..contracts.events import NutritionEstimates, NutritionValues, PreparedEvent
 from ..policy.output import model_nutrition_uncertainty
 
-logger = logging.getLogger(__name__)
 # Serving tuples: kcal, protein, carbs, fat. Only used in clearly labelled demo mode.
 DEMO_FIXTURES = {
     '牛肉面': (550, 24, 70, 19), '米饭': (230, 4, 50, 1.5),
@@ -186,10 +188,10 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
             requested = {i['index'] for i in candidates}
             for result in response.items:
                 if result.index not in requested or result.index in estimates:
-                    raise ValueError('营养估算食物索引不匹配')
+                    raise ModelOutputError()
                 estimates[result.index] = result
-        except (ValueError, TypeError) as error:
-            logger.warning('Nutrition preparation failed (%s)', type(error.__cause__ or error).__name__)
+        except (ModelError, ValidationError):
+            log_failure('model_nutrition_fallback')
             failure = '营养估算暂时失败，食物和分量已保留，可稍后通过纠正记录重试。'
     for candidate in candidates:
         item = event['items'][candidate['index']]

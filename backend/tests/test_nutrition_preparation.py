@@ -356,13 +356,13 @@ def test_checkpoint_replay_after_commit_does_not_repeat_nutrition_call(settings,
     calls = mock_model(monkeypatch, lambda data: {'intent': 'record', 'events': [meal()]},
                        lambda items: {'items': [rough(0)]})
     payload = {'request_id': str(uuid4()), 'text': '昨天吃了100g炸鸡'}
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_app(settings), raise_server_exceptions=False) as client:
         def fail_format(*args):
             raise ValueError('模拟提交后响应失败')
         monkeypatch.setattr(client.app.state.engine, 'format_result', fail_format)
-        assert client.post('/api/chat', json=payload).status_code == 409
+        assert client.post('/api/chat', json=payload).status_code == 500
         assert len(client.get('/api/events').json()) == 1
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_app(settings), raise_server_exceptions=False) as client:
         response = client.post('/api/chat', json=payload)
         assert response.status_code == 200, response.text
         assert len(client.get('/api/events').json()) == 1

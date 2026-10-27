@@ -1,9 +1,10 @@
 """Chat workflow routing, persistence and graph construction."""
 
+from ..common.errors import ConflictError, DomainValidationError, ModelOutputError
+
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
-from ..modeling import PolicyError
 from ..chat.replies import express_plan, make_plan, medical_question
 from .state import State
 from ..policy.output import default_feedback_selection, question_from_state, render_feedback
@@ -92,7 +93,7 @@ class ChatFlowMixin:
         selection = state.get('clarification_selection') or default_feedback_selection(plan)
         try:
             narrative = render_feedback(selection, plan)
-        except (ValueError, TypeError):
+        except ModelOutputError:
             narrative = render_feedback(default_feedback_selection(plan), plan)
         payload = {
             'kind': 'clarification',
@@ -107,12 +108,12 @@ class ChatFlowMixin:
             payload['options'] = state.get('correction_candidates', [])
         answer = interrupt(payload)
         if not isinstance(answer, dict) or not isinstance(answer.get('text'), str):
-            raise ValueError('需要文字补充')
+            raise DomainValidationError()
         selected = answer.get('event_id') or parsed.get('correction_id') or state.get('selected_id')
         if answer.get('event_id') and answer['event_id'] not in {
             option['id'] for option in payload.get('options', [])
         }:
-            raise PolicyError('请选择本次提供的纠错候选记录。')
+            raise DomainValidationError()
         if state.get('pending_event_index') is not None:
             return {
                 'safety_input_text': answer['text'],
@@ -156,17 +157,17 @@ class ChatFlowMixin:
     def persist(self, state):
         parsed = state['parsed']
         if parsed.get('question'):
-            raise ValueError('待补充的记录不能直接保存')
+            raise RuntimeError()
         if parsed['intent'] == 'correct':
             # Rebind before every write, including checkpoint replay.
             bound = self.harness.resolve(state, None)
             if not bound or bound['id'] != parsed.get('correction_id'):
-                raise PolicyError('纠错目标已失效，请重新选择记录。')
+                raise ConflictError()
             if (
                 state.get('correction_version') is not None
                 and bound['version'] != state['correction_version']
             ):
-                raise PolicyError('纠错记录的版本已经变化，请重新选择记录。')
+                raise ConflictError()
         ids = list(state.get('record_ids', []))
         for index, draft in zip(state['event_indexes'], parsed['events']):
             if index not in state.get('saved_indexes', []):

@@ -1,4 +1,6 @@
 """Adversarial candidates must not acquire authority through response prose."""
+
+from app.common.errors import ModelOutputError
 from types import SimpleNamespace
 
 import pytest
@@ -49,7 +51,7 @@ def test_selected_advice_cannot_remove_facts_or_swap_their_roles(context):
     {'point_ids': []},
 ])
 def test_invalid_advice_candidates_are_rejected(candidate, context):
-    with pytest.raises((ValueError, TypeError)):
+    with pytest.raises(ModelOutputError):
         validate_advice(candidate, context)
 
 
@@ -78,7 +80,7 @@ def test_single_meal_options_cannot_request_other_scenes():
     context = {'scene': 'meal_reference', 'view': 'meal_reference', 'resolved_records': [
         {'date': '2026-10-12', 'items': [{'name': '米饭', 'nutrition_origins': ['user']}]}]}
     assert [p['point_id'] for p in advice_plan(context)['options']] == ['review_portion']
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         validate_advice({'point_ids': ['regular_meals']}, context)
     assert '2026-10-12' in fallback_advice(context)
 
@@ -96,7 +98,7 @@ def test_feedback_cannot_supply_free_text_even_with_valid_point_and_variant(text
     plan = make_plan([{'topic': 'salty', 'stance': 'experience'}], 'recorded')
     candidate = default_feedback_selection(plan)
     candidate['segments'][0]['text'] = text
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_phrasing(candidate, plan)
 
 
@@ -106,11 +108,11 @@ def test_feedback_keeps_subjectivity_and_rejects_variant_or_order_changes():
     candidate['segments'][0]['variant_id'] = 'warm'
     assert check_phrasing(candidate, plan)[0] == '你在关注吃得偏咸的问题。'
     candidate['segments'].reverse()
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_phrasing(candidate, plan)
     candidate = default_feedback_selection(plan)
     candidate['segments'][0]['variant_id'] = 'saved_successfully'
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_phrasing(candidate, plan)
 
 
@@ -132,7 +134,7 @@ def test_optional_clarification_uses_missing_field_without_model_question():
 
 
 def test_model_cannot_ask_about_known_field_using_another_incomplete_item():
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         check_drafts({'intent': 'record', 'events': [meal(items=[
             {'name': '米饭', 'quantity': 1, 'cooking': '蒸'}, {'name': '苹果', 'quantity': 1}])],
             'clarification_event_index': 0, 'clarification_item_index': 0, 'clarification_fields': ['cooking']})

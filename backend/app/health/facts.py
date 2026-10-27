@@ -1,4 +1,6 @@
 """Conservative, local normalization of explicit food preferences."""
+
+from ..common.errors import DomainValidationError, ModelOutputError
 import re
 import unicodedata
 from datetime import timedelta
@@ -28,7 +30,7 @@ def fact_period(period, today=None):
     if match:
         count = int(match[1]) if match[1].isdigit() else {'一': 1, '二': 2, '两': 2, '三': 3, '四': 4}[match[1]]
         if count < 1:
-            raise ValueError('临时期限必须大于零')
+            raise DomainValidationError(code='fact_period_invalid')
         return 'bounded', today + timedelta(days=count * (7 if match[2] == '周' else 1) - 1)
     if period in ('暂时', '临时', '最近', '这两周'):
         return 'temporary_unknown', None
@@ -99,33 +101,38 @@ def is_restriction(data):
 
 def validate_fact_content(payload, *, model_draft=False):
     """Return whether a proposal needs review, rejecting provable contradictions."""
+    def reject():
+        if model_draft:
+            raise ModelOutputError()
+        raise DomainValidationError(code='fact_content_mismatch')
+
     parsed = parse_fact(payload.content)
     if payload.type == 'food_preference' and enforcement({'type': 'legacy_text', 'content': payload.content}) == 'clinical_review':
-        raise ValueError('涉及医疗限制的原文不能保存为普通偏好')
+        reject()
     if payload.type == 'food_preference' and parsed.type == 'food_preference':
         if subject_key(payload.subject) != subject_key(parsed.subject) or payload.value != parsed.value:
-            raise ValueError('事实对象或取值与原文不一致，请核对')
+            reject()
         if parsed.time_scope == 'temporary_unknown' and not payload.valid_until:
             return True
         if model_draft and ((payload.valid_from and payload.valid_from != parsed.valid_from) or payload.valid_until != parsed.valid_until):
-            raise ValueError('事实期限与原文不一致，请核对')
+            reject()
     if payload.subject and subject_key(payload.subject) not in subject_key(payload.content):
-        raise ValueError('事实对象必须来自原文')
+        reject()
     source = payload.source_details
     if model_draft and any(value and value not in payload.content for value in (source.professional, source.institution, source.document)):
-        raise ValueError('来源详情必须来自原文')
+        reject()
     if model_draft and source.advised_on and source.advised_on.isoformat() not in payload.content:
-        raise ValueError('建议作出日期需要原文中的明确日期')
+        reject()
     if payload.reported_severity != 'unknown':
         terms = {'mild': '轻微|轻度', 'moderate': '中度', 'severe': '严重|重度'}
         if not re.search(terms[payload.reported_severity], payload.content):
-            raise ValueError('严重程度必须来自明确自述')
+            reject()
     if payload.type in ('allergy', 'health_condition', 'professional_advice') and payload.assertion != 'affirmed':
         return True
     if model_draft:
         fields = {e.field for e in payload.evidence}
         if not {'subject', 'value'} <= fields:
-            raise ValueError('结构化事实需要对象和取值的原文证据')
+            reject()
         if payload.type != parsed.type or parsed.type == 'legacy_text':
             return True  # Unsupported semantics never gain confirmation from a model alone.
     return payload.assertion != 'affirmed' or payload.time_scope == 'temporary_unknown'

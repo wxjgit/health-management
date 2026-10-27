@@ -629,7 +629,7 @@ export default function App() {
       setToast("已取消待处理计划");
     } catch (e) {
       setError(e instanceof ApiError && e.status === 409
-        && (planInFlight.current.has(id) || e.message.includes("计划正在确认"))
+        && (planInFlight.current.has(id) || e.code === "plan_confirmation_in_progress")
         ? "计划正在确认，暂时无法取消"
         : e instanceof Error ? e.message : "取消失败，请刷新状态");
     } finally {

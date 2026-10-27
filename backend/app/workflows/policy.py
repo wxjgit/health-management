@@ -5,7 +5,7 @@ import re
 
 from ..common import clock
 from ..evidence import ground_correction, ground_event
-from ..modeling.errors import PolicyError
+from ..common.errors import ConflictError, DomainValidationError, ModelOutputError
 from ..modeling.projections import record_projection
 from ..contracts.workflows import ExtractionResult, PlannedAction, ProcessingPlan
 
@@ -41,7 +41,7 @@ class PlanHarness:
             return None
         record = self.repo.event(selected)
         if record is None:
-            raise PolicyError('选中的记录不存在，请重新选择。')
+            raise ConflictError()
         return record
 
     def resolve(self, state, action):
@@ -63,7 +63,7 @@ class PlanHarness:
             return 1
         count = limit
         if re.search(r'上周|上个月|去年|前年', text):
-            raise PolicyError('建议暂不自动读取这个历史窗口，请先查询具体日期或改用近期范围。')
+            raise DomainValidationError(code='policy_scope_denied')
         match = re.search(
             r'(?:最近|过去|近)\s*([\d一二两三四五六七八九十]+)\s*(天|周|星期|个月|月)', text
         )
@@ -86,7 +86,7 @@ class PlanHarness:
         elif '本周' in text:
             count = clock.now().weekday() + 1
         if not 1 <= count <= limit:
-            raise PolicyError(f'这个建议视图最多读取近{limit}天，请缩小范围或使用本地查询。')
+            raise DomainValidationError(code='policy_scope_denied')
         return count
 
     @staticmethod
@@ -121,17 +121,17 @@ class PlanHarness:
             )]
         for action in plan.actions:
             if action.fact_draft is not None and action.intent != 'fact':
-                raise PolicyError('只有长期信息任务可以携带事实草稿。')
+                raise ModelOutputError()
             if action.text not in state['input_text']:
-                raise PolicyError('处理计划必须对应本次输入，不能自行扩展问题。')
+                raise ModelOutputError()
             if action.intent != 'record' and action.events:
-                raise PolicyError('规划阶段只有新增任务可以携带事件草稿。')
+                raise ModelOutputError()
             if action.data_view != 'none' and action.intent != 'advice':
-                raise PolicyError('此任务不能申请建议数据。')
+                raise ModelOutputError()
             if action.intent == 'advice':
                 if NO_HISTORY.search(state['input_text']):
                     if action.data_view != 'none':
-                        raise PolicyError('用户已要求不读取历史，不能批准历史数据视图。')
+                        raise ModelOutputError()
                     actions.append(action)
                     continue
                 bound = self.resolve(state, action)
@@ -160,17 +160,17 @@ class PlanHarness:
                     if action.data_view not in (
                         'none', 'diet_today', 'diet_portion', 'meal_reference'
                     ):
-                        raise PolicyError('单餐指代不能扩大为其他历史数据视图。')
+                        raise ModelOutputError()
                     view = 'meal_reference'
                     action = action.model_copy(update={'data_view': view})
                 if action.data_view not in ('none', view):
-                    raise PolicyError('申请的数据超出本次问题范围，请明确需要查看的记录类型。')
+                    raise ModelOutputError()
                 self.view_days(state['input_text'], view)
                 action = action.model_copy(update={'data_view': view})
             if action.intent == 'fact' and (
                 not action.fact_text or action.fact_text not in action.text
             ):
-                raise PolicyError('长期信息必须直接来自本次用户输入。')
+                raise ModelOutputError()
             if action.intent == 'query':
                 kinds = {
                     kind
@@ -178,14 +178,14 @@ class PlanHarness:
                     if re.search(pattern, action.text, re.I)
                 }
                 if action.query_kind and kinds and action.query_kind not in kinds:
-                    raise PolicyError('查询类型与本次问题不一致。')
+                    raise ModelOutputError()
                 if len(kinds) == 1:
                     action = action.model_copy(update={'query_kind': next(iter(kinds))})
                 if action.query_search and action.query_search not in action.text:
-                    raise PolicyError('查询关键词必须来自本次输入。')
+                    raise ModelOutputError()
                 if action.query_start and action.query_end:
                     if not 0 <= (action.query_end - action.query_start).days <= 365:
-                        raise PolicyError('查询时间范围应在一年以内。')
+                        raise ModelOutputError()
             if action.intent == 'record':
                 item_names = [
                     item.name
@@ -223,7 +223,7 @@ class PlanHarness:
             sum(action.intent == intent for action in actions) > 1
             for intent in ('query', 'advice', 'fact')
         ):
-            raise PolicyError('一次最多执行一个查询、一个建议和一项长期信息保存，请合并范围。')
+            raise ModelOutputError()
         return actions
 
     def prepare(self, state):
@@ -287,7 +287,7 @@ class PlanHarness:
             updated = self.parser.correct(correction.text, projection)
             if updated.event:
                 if updated.event.kind != prior['kind']:
-                    raise PolicyError('纠错不能改变记录类型，请另建记录。')
+                    raise ModelOutputError()
                 updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])
                 updated.event = ground_correction(
                     updated.event,

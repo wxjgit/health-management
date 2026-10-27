@@ -1,4 +1,7 @@
 """Local completeness checks and incremental updates for conversation drafts."""
+
+from ..common.errors import DomainValidationError, ModelOutputError
+from pydantic import ValidationError
 from ..contracts.events import EventDraft, ExtractionEvent
 from ..contracts.workflows import ExtractionResult
 from ..evidence import merge_patch_evidence
@@ -69,10 +72,10 @@ def check_drafts(extraction, rounds=0, skip_optional=False, abandoned=()):
                     item_index = next(i for i, item in enumerate(result.events[index].items)
                                       if getattr(item, fields[0]) is None)
                 if item_index >= len(result.events[index].items):
-                    raise ValueError('追问的食物不在草稿中')
+                    raise ModelOutputError()
                 if any(getattr(result.events[index].items[item_index], f) is not None
                        for f in fields if f in ('quantity', 'cooking')):
-                    raise ValueError('不能追问食物已经提供的字段')
+                    raise ModelOutputError()
             question = clarification_question(result.intent, result.events[index].model_dump(), fields[0], item_index)
             optional = (index, fields, False, question, item_index)
             waiting_indexes.append(index)
@@ -132,4 +135,8 @@ def merge_patch(event, patch, fields, answer, item_index=None):
             data[field] = update[field]
     data['raw_text'] = (data['raw_text'] + '，补充：' + answer)[:4000]
     data = merge_patch_evidence(data, patch)
-    return ExtractionEvent.model_validate(data).model_dump(mode='json')
+    try:
+        return ExtractionEvent.model_validate(data).model_dump(mode='json')
+    except ValidationError as error:
+        # Values have already been grounded to this explicit user answer.
+        raise DomainValidationError() from error

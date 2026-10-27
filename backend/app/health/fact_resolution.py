@@ -1,4 +1,6 @@
 """Pure, date-scoped fact resolution shared by advice, safety and planning."""
+
+from ..common.errors import ConflictError, DomainValidationError
 from .facts import FACT_POLICY_VERSION, is_restriction, normalize_fact
 
 
@@ -74,11 +76,11 @@ def fact_projection(record):
 
 def require_resolved(view, *, limit=8):
     if view['conflicts']:
-        raise ValueError('长期信息存在未解决的冲突，请先在设置中核对。')
+        raise ConflictError(code='fact_conflict_unresolved')
     if pending_decisions(view):
-        raise ValueError('长期信息的适用期限或含义待核对，请先在设置中补充。')
+        raise DomainValidationError(code='fact_confirmation_required')
     if len(view['constraints']) > limit:
-        raise ValueError('相关限制超过当前建议处理范围，请先核对限制信息。')
+        raise DomainValidationError(code='policy_scope_denied')
 
 
 def pending_decisions(view):

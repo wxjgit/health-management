@@ -1,9 +1,8 @@
 import asyncio
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .api.planning import router as planning_router
@@ -12,10 +11,10 @@ from .api.profile import router as profile_router
 from .api.records import router as records_router
 from .api.system import router_for as system_router_for
 from .api.workflows import router as workflows_router
+from .api.errors import register_error_handlers
+from .api.request_context import RequestContextFastAPI
 from .common.config import ROOT, Settings
 from .workflows.engine import Engine
-from .workflows.concurrency import RequestErased, WorkflowConflict
-from .privacy.deletion import DeletionError
 from .privacy.provenance import untracked
 from .jobs.scheduler import scheduler_loop
 
@@ -36,7 +35,7 @@ def create_app(settings=None):
                     await task
             app.state.engine.close()
 
-    app = FastAPI(title='轻记 · Personal Health Agent', version='0.1.0', lifespan=lifespan)
+    app = RequestContextFastAPI(title='轻记 · Personal Health Agent', version='0.1.0', lifespan=lifespan)
 
     @app.middleware('http')
     async def isolate_request_provenance(request, call_next):
@@ -44,35 +43,7 @@ def create_app(settings=None):
         # caller's capture. Workflow nodes explicitly start their own capture.
         with untracked():
             return await call_next(request)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
-        allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allow_headers=['Content-Type'],
-    )
-
-    @app.exception_handler(ValueError)
-    @app.exception_handler(WorkflowConflict)
-    async def invalid(_, error):
-        return JSONResponse(status_code=409, content={'detail': str(error)})
-
-    @app.exception_handler(Exception)
-    async def unexpected(_, error):
-        # Do not expose upstream responses, credentials, or health input in exception text.
-        return JSONResponse(
-            status_code=500,
-            content={'detail': '服务处理失败，请使用同一请求重试或检查本地服务状态。'},
-        )
-
-    @app.exception_handler(DeletionError)
-    async def deletion_error(_, error):
-        return JSONResponse(status_code=error.status, content={
-            'detail': str(error), 'code': error.code, 'preview': error.preview,
-        })
-
-    @app.exception_handler(RequestErased)
-    async def erased_request(_, error):
-        return JSONResponse(status_code=410, content={'detail': str(error), 'code': 'request_erased'})
+    register_error_handlers(app)
 
     app.include_router(system_router_for(settings))
     app.include_router(profile_router)

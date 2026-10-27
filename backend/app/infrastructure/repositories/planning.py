@@ -1,5 +1,7 @@
 """Facts, plans, insights, reviews and notification persistence."""
 
+from ...common.errors import ConflictError, DomainValidationError, WorkflowStateError
+
 import json
 from uuid import uuid4
 
@@ -53,7 +55,7 @@ class PlanningRepositoryMixin:
         with self.lock, self.conn:
             plan = self.plan(plan_id)
             if not plan:
-                raise ValueError('计划不存在')
+                raise WorkflowStateError()
             if plan['status'] != 'pending':
                 return plan['status']
             if not approved:
@@ -65,12 +67,12 @@ class PlanningRepositoryMixin:
                     from ...health.safety import require_plan_eligibility
                     require_plan_eligibility(self, plan['data'].get('targets'))
                     if plan['data']['fact_policy_version'] != FACT_POLICY_VERSION:
-                        raise ValueError('事实处理规则已更新，请重新生成计划')
+                        raise ConflictError()
                     for item in plan['data'].get('schedule', []):
                         view = self.resolve_facts(item['date'], 'plan')
                         require_resolved(view)
                         if any(r['enforcement'] == 'clinical_review' for r in view['constraints']):
-                            raise ValueError('计划日期存在需专业评估的信息，请重新核对')
+                            raise WorkflowStateError()
                 active = self.active_plan()
                 actual_base = active['id'] if active else None
                 node = self.provenance_node('plan', plan_id)
@@ -145,9 +147,9 @@ class PlanningRepositoryMixin:
         with self.lock, self.conn:
             row = next((r for r in self.insights(include_stale=True) if r['id'] == insight_id), None)
             if not row:
-                raise ValueError('规律不存在')
+                raise DomainValidationError()
             if feedback == 'accepted' and (row['status'] != 'active' or row['data']['memory']['status'] in ('stale', 'needs_review')):
-                raise ValueError('此规律已过时，请重新生成复盘')
+                raise ConflictError()
             self._bump()
             count = self.conn.execute(
                 'UPDATE insights SET feedback=?,status=? WHERE id=?',
@@ -158,7 +160,7 @@ class PlanningRepositoryMixin:
                 ),
             ).rowcount
             if not count:
-                raise ValueError('规律不存在')
+                raise DomainValidationError()
 
     def review(self, review_id, data):
         data = derived_metadata('review', data)

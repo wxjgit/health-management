@@ -1,4 +1,6 @@
 """Safety tests exercise the real model boundary; no production safety bypass."""
+
+from app.common.errors import DomainValidationError, ModelOutputError
 import json
 from uuid import uuid4
 from pathlib import Path
@@ -236,11 +238,11 @@ def test_plan_note_confirmation_and_numeric_bounds(settings, monkeypatch):
         response = client.post(f'/api/workflows/{pending["thread_id"]}/resume', json={
             'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'],
             'approved': True, 'text': '刚才低血糖了'})
-        assert response.status_code == 409
+        assert response.status_code == 422
         assert client.app.state.engine.repo.active_plan() is None
         extreme = {'kcal': 500, 'protein_g': 25, 'carbs_g': 66, 'fat_g': 15, 'exercise_minutes': 600}
         assert client.post('/api/plans/propose', json={
-            'request_id': str(uuid4()), 'targets': extreme}).status_code == 409
+            'request_id': str(uuid4()), 'targets': extreme}).status_code == 422
 
 
 def test_plan_activation_rechecks_known_limits_and_still_allows_rejection(settings):
@@ -259,7 +261,7 @@ def test_plan_activation_rechecks_known_limits_and_still_allows_rejection(settin
     '跳过晚餐能更快达到目标。', '建议催吐。', '把降糖药换成另一种。',
 ])
 def test_output_guard_rejects_unsafe_advice_even_after_false_general(text):
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelOutputError):
         validate_advice(text, {'scene': 'general', 'view': 'none'})
 
 
@@ -315,7 +317,7 @@ def test_confirmation_indirect_risk_is_classified_even_when_original_note_is_emp
         response = client.post(f'/api/workflows/{pending["thread_id"]}/resume', json={
             'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'],
             'approved': True, 'text': text})
-        assert response.status_code == 409
+        assert response.status_code == 422
         assert REPLIES['eating_disorder'] in response.json()['detail']
         assert client.app.state.engine.repo.active_plan() is None
     assert len(calls) == 1

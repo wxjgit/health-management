@@ -7,6 +7,7 @@ from functools import wraps
 from threading import Lock, RLock
 
 from langgraph.checkpoint.sqlite import SqliteSaver
+from ..common.errors import ConflictError
 from ..privacy.provenance import ReadSet, capture, current_reads
 
 
@@ -14,8 +15,10 @@ _execution = ContextVar('workflow_execution', default=None)
 _node_engine = ContextVar('workflow_node_engine', default=None)
 
 
-class WorkflowConflict(RuntimeError):
+class WorkflowConflict(ConflictError):
     """Stop obsolete work; model fallback handlers must not swallow this error."""
+
+    default_code = 'workflow_execution_conflict'
 
 
 class RequestErased(WorkflowConflict):
@@ -81,11 +84,11 @@ class WorkflowConcurrencyMixin:
 
     def check_request(self, request_id):
         if self.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
-            raise WorkflowConflict('隐私清理尚未完成，请稍后重试。')
+            raise WorkflowConflict(code='workflow_context_changed')
         if self.repo.conn.execute('SELECT 1 FROM request_tombstones WHERE request_id=?', (request_id,)).fetchone():
-            raise RequestErased('此请求的相关内容已删除，请使用新请求重新输入。')
+            raise RequestErased()
         if self.repo.conn.execute('SELECT 1 FROM expired_requests WHERE request_id=?', (request_id,)).fetchone():
-            raise WorkflowConflict('此请求已过期，请使用新请求重新输入；此前已保存的记录保留。')
+            raise WorkflowConflict(code='workflow_expired')
         existing = self.repo.conn.execute(
             'SELECT id FROM workflows WHERE request_id=? UNION SELECT thread_id FROM receipts WHERE request_id=?',
             (request_id, request_id)).fetchone()
@@ -97,15 +100,15 @@ class WorkflowConcurrencyMixin:
         if execution is None or execution.engine is not self:
             return
         if self.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
-            raise WorkflowConflict('隐私清理尚未完成，请稍后重试。')
+            raise WorkflowConflict(code='workflow_context_changed')
         if execution.epoch != self.context_epoch:
-            raise WorkflowConflict('相关记录或上下文已清理，本次处理已停止，请重新提交。')
+            raise WorkflowConflict(code='workflow_context_changed')
         row = self.repo.conn.execute('SELECT generation FROM workflow_generations WHERE thread_id=?', (execution.thread_id,)).fetchone()
         if row and row[0] != execution.generation:
-            raise WorkflowConflict('相关记录或上下文已清理，本次处理已停止，请重新提交。')
+            raise WorkflowConflict(code='workflow_context_changed')
         workflow = self.repo.workflow(execution.thread_id)
         if not workflow or workflow['status'] in ('cancelled', 'expired'):
-            raise WorkflowConflict('此流程已取消或记录已删除，本次处理已停止。')
+            raise WorkflowConflict(code='workflow_context_changed')
         self.check_context_deadline(execution.thread_id)
 
     def check_context_deadline(self, thread_id):
@@ -113,7 +116,7 @@ class WorkflowConcurrencyMixin:
         from ..common.clock import now
         row = self.repo.conn.execute('SELECT expires_at FROM workflow_activity WHERE thread_id=?', (thread_id,)).fetchone()
         if row and datetime.fromisoformat(row[0]) <= now():
-            raise WorkflowConflict('此事项已过期，请重新开始；此前已保存的记录保留。')
+            raise WorkflowConflict(code='workflow_expired')
 
     @contextmanager
     def serialized_execution(self, execution, conversation=None):
@@ -166,7 +169,7 @@ class WorkflowConcurrencyMixin:
         # Only a guarded node owns this acquisition, on this same Python thread.
         # Graph invocation itself never owns engine.lock.
         if _node_engine.get() is not self:
-            raise WorkflowConflict('模型请求必须在受保护的工作流步骤中执行。')
+            raise RuntimeError('model I/O outside guarded node')
         self.check_execution()
         # Processing plans contain only current input, not mutable health history.
         reads = current_reads(self.repo)
@@ -181,4 +184,4 @@ class WorkflowConcurrencyMixin:
             self.check_execution()
             current = self.repo.read_stamp(reads) if reads else self._model_context_version()
             if version != current:
-                raise WorkflowConflict('模型处理期间相关数据已变化，请使用原请求重试。')
+                raise WorkflowConflict(code='workflow_context_changed')

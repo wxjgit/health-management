@@ -1,4 +1,6 @@
 """Memory lifecycle tests using isolated databases; no external model calls."""
+
+from app.common.errors import ConflictError
 from datetime import timedelta
 from uuid import uuid4
 from threading import Event, Thread
@@ -74,7 +76,7 @@ def test_temporary_preference_does_not_erase_permanent_one(engine):
 def test_fact_edit_uses_expected_version_and_retains_snapshots(engine):
     first = engine.repo.save_fact('fact', '我不喜欢燕麦')
     changed = engine.repo.save_fact('fact', '我喜欢燕麦', expected_version=first['version'])
-    with pytest.raises(ValueError, match='版本'):
+    with pytest.raises(ConflictError):
         engine.repo.save_fact('fact', '我不吃燕麦', expected_version=first['version'])
     assert changed['version'] == 2
     assert [r['content'] for r in engine.repo.fact_revisions('fact')] == ['我不喜欢燕麦', '我喜欢燕麦']
@@ -231,7 +233,7 @@ def test_expiry_failure_is_recovered_at_restart(engine, monkeypatch):
 def test_event_revisions_reject_stale_writes_and_delete_all_versions(engine):
     event_id = record(engine)
     record(engine, 64, key='correction', event_id=event_id, expected_version=1)
-    with pytest.raises(ValueError, match='版本'):
+    with pytest.raises(ConflictError):
         record(engine, 63, event_id=event_id, expected_version=1)
     record(engine, 64, key='correction', event_id=event_id, expected_version=1)
     revisions = engine.repo.event_revisions(event_id)

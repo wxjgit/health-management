@@ -142,6 +142,22 @@ describe("计划确认的并发状态", () => {
     await act(async () => { response.resolve(confirmedResponse()); });
   });
 
+  it("取消确认中的计划按错误码判断，不依赖后端文案", async () => {
+    workflows = [confirmationDraft()]; storedPlans = [confirmationPlan()];
+    const originalFetch = fetch;
+    vi.stubGlobal("fetch", vi.fn((path: string, options?: RequestInit) => {
+      if (options?.method === "DELETE") return Promise.resolve(new Response(
+        JSON.stringify({ detail: "请求进度变化", code: "plan_confirmation_in_progress" }), { status: 409 },
+      ));
+      return originalFetch(path, options);
+    }));
+    render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "我的计划" }));
+    await userEvent.click(await screen.findByRole("button", { name: "取消待处理计划" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("计划正在确认，暂时无法取消");
+    expect(screen.queryByText("已取消待处理计划")).toBeNull();
+  });
+
   it("重新打开页面时根据后端显示确认中，并轮询至计划生效", async () => {
     workflows = [{ ...confirmationDraft("resuming"), retry_request: {
       request_id: "already-running", interrupt_id: "state-question", approved: true,

@@ -4,6 +4,10 @@ import re
 from contextlib import nullcontext
 
 import httpx
+from pydantic import ValidationError
+
+from ..common.errors import DomainValidationError, ModelUnavailableError, UpstreamModelError
+from .errors import PolicyError
 
 from ..common.clock import date_from_text, now
 from ..contracts.workflows import (
@@ -33,7 +37,7 @@ class Parser:
 
     def parse(self, text, recent, selected_id=None, original=None):
         if self.mode == 'model':
-            raise ValueError('模型解析必须通过处理计划和数据权限检查。')
+            raise PolicyError('模型解析必须通过处理计划和数据权限检查。')
         return self.demo_parse(text, recent, selected_id, original)
 
     def plan(self, text, selected=False):
@@ -121,25 +125,44 @@ class Parser:
     def model_request(self, prompt, call, output_type):
         # Consume the immutable approval before opening a network connection.
         data = self.boundary.consume(call)
-        try:
-            body = {'model': self.settings.model_name, 'messages': [
+        body = {'model': self.settings.model_name, 'messages': [
                 {'role': 'system', 'content': prompt},
                 {'role': 'user', 'content': json.dumps(data, ensure_ascii=False)},
-            ], 'temperature': 0}
-            # Qwen3.8-Max defaults to thinking; extraction should answer promptly.
-            if self.settings.model_name.startswith('qwen3.8-max'):
-                body['enable_thinking'] = False
-            timeout = 8 if call.purpose == 'safety_classification' else 45
-            with self.network_context(call.purpose), httpx.Client(timeout=timeout, follow_redirects=False) as client:
-                response = client.post(self.settings.model_base_url + '/chat/completions', headers={
-                    'Authorization': 'Bearer ' + self.settings.model_api_key,
-                }, json=body)
-                response.raise_for_status()
-                content = response.json()['choices'][0]['message']['content']
+        ], 'temperature': 0}
+        # Construct local data outside the transport error boundary.
+        if self.settings.model_name.startswith('qwen3.8-max'):
+            body['enable_thinking'] = False
+        timeout = 8 if call.purpose == 'safety_classification' else 45
+        with self.network_context(call.purpose):
+            try:
+                with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+                    response = client.post(self.settings.model_base_url + '/chat/completions', headers={
+                        'Authorization': 'Bearer ' + self.settings.model_api_key,
+                    }, json=body)
+            except (httpx.TimeoutException, httpx.NetworkError, httpx.ProxyError) as error:
+                raise ModelUnavailableError() from error
+            except httpx.RequestError as error:
+                raise UpstreamModelError() from error
+            if response.status_code in (429, 503):
+                raise ModelUnavailableError(code='model_rate_limited' if response.status_code == 429
+                                            else 'model_service_unavailable')
+            if not response.is_success:
+                raise UpstreamModelError()
+            try:
+                envelope = response.json()
+            except ValueError as error:
+                raise UpstreamModelError(code='model_response_invalid') from error
+            choices = envelope.get('choices') if isinstance(envelope, dict) else None
+            first = choices[0] if isinstance(choices, list) and choices else None
+            message = first.get('message') if isinstance(first, dict) else None
+            content = message.get('content') if isinstance(message, dict) else None
+            if not isinstance(content, str):
+                raise UpstreamModelError(code='model_response_invalid')
             content = re.sub(r'^```(?:json)?\s*|\s*```$', '', content.strip())
-            return output_type.model_validate_json(content)
-        except (httpx.HTTPError, KeyError, ValueError, TypeError, IndexError, AttributeError) as error:
-            raise ValueError('模型请求或结构化输出失败。请检查模型配置后重试；没有自动切换到演示估算。') from error
+            try:
+                return output_type.model_validate_json(content)
+            except ValidationError as error:
+                raise UpstreamModelError(code='model_response_invalid') from error
 
     def patch(self, text, draft, fields, item_index=None):
         if self.mode == 'model':
@@ -194,7 +217,10 @@ class Parser:
                            if word in text), None)
             if action:
                 update['cycle_action'] = action
-        return EventPatch.model_validate(update)
+        try:
+            return EventPatch.model_validate(update)
+        except ValidationError as error:
+            raise DomainValidationError() from error
 
     def phrase_reply(self, plan):
         prompt = (
@@ -234,5 +260,8 @@ class Parser:
                                           'schema': NutritionEstimates.model_json_schema()}, NutritionEstimates)
 
     def demo_parse(self, text, recent, selected_id=None, original=None):
-        return demo_parse(text, recent, selected_id, original)
+        try:
+            return demo_parse(text, recent, selected_id, original)
+        except ValidationError as error:
+            raise DomainValidationError() from error
 

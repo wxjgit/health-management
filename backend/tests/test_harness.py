@@ -211,7 +211,7 @@ def test_forged_or_cross_domain_requests_are_rejected_before_retrieval(settings,
         monkeypatch.setattr(repo, 'previous_reference_ids',
                             unexpected_previous_reference_read)
         response = post(client, text)
-        assert response.status_code == 409
+        assert response.status_code == 502
         assert len(calls) == 1  # Only the planner has been called, without history.
         assert 'HIDDEN_' not in json.dumps(calls)
 
@@ -222,7 +222,7 @@ def test_wrong_advice_classification_does_not_authorize_history(settings, monkey
     with TestClient(create_app(settings)) as client:
         seed(client.app.state.engine.repo)
         response = post(client, '今天体重65kg')
-        assert response.status_code == 409
+        assert response.status_code == 502
         assert len(calls) == 1
 
 
@@ -239,7 +239,7 @@ def test_user_refusal_of_history_cannot_be_overridden_by_plan(settings, monkeypa
     with TestClient(create_app(settings)) as client:
         seed(client.app.state.engine.repo)
         response = post(client, '最近体重趋势怎么样？不要读取历史记录')
-        assert response.status_code == (200 if requested_view == 'none' else 409)
+        assert response.status_code == (200 if requested_view == 'none' else 502)
         assert 'HIDDEN_' not in json.dumps(calls)
 
 
@@ -343,7 +343,7 @@ def test_unresolved_correction_asks_user_and_never_sends_candidates(settings, mo
         response = client.post(f'/api/workflows/{result["thread_id"]}/resume', json={
             'request_id': str(uuid4()), 'interrupt_id': result['pending_input']['interrupt_id'],
             'text': '任意记录', 'event_id': 'forged-id'})
-        assert response.status_code == 409
+        assert response.status_code == 422
         assert len(calls) == 1
         assert all(client.app.state.engine.repo.event(i)['version'] == 1 for i in ids)
 
@@ -444,9 +444,9 @@ def test_failed_retries_share_persistent_planning_budget(settings, monkeypatch):
     payload = {'request_id': str(uuid4()), 'text': '今天体重65kg'}
     with TestClient(create_app(settings)) as client:
         for _ in range(3):
-            assert client.post('/api/chat', json=payload).status_code == 409
+            assert client.post('/api/chat', json=payload).status_code == 503
     with TestClient(create_app(settings)) as client:
-        assert client.post('/api/chat', json=payload).status_code == 409
+        assert client.post('/api/chat', json=payload).status_code == 503
         assert client.post('/api/chat', json=payload).status_code == 409
         assert len(calls) == 4
         rows = client.app.state.engine.repo.conn.execute('SELECT purpose,payload_bytes FROM model_calls').fetchall()
@@ -553,7 +553,7 @@ def test_oversized_window_is_rejected_without_historical_request(settings, monke
     with TestClient(create_app(settings)) as client:
         seed(client.app.state.engine.repo)
         response = post(client, '最近30天体重趋势怎么样？')
-        assert response.status_code == 409
+        assert response.status_code == 422
         assert len(calls) == 1
         assert 'HIDDEN_' not in json.dumps(calls)
 
@@ -627,7 +627,7 @@ def test_correction_model_cannot_select_a_different_id(settings, monkeypatch):
     with TestClient(create_app(settings)) as client:
         ids = seed(client.app.state.engine.repo)
         response = post(client, '改成64kg', event_id=ids[2])
-        assert response.status_code == 409
+        assert response.status_code == 502
         assert all(client.app.state.engine.repo.event(i)['version'] == 1 for i in ids)
         assert len(calls) == 2
 

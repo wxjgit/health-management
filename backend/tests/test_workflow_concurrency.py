@@ -1,3 +1,5 @@
+
+from app.common.errors import WorkflowStateError
 from model_helpers import safety_transport
 """Exercise overlapping real graphs with model I/O controlled by events."""
 
@@ -265,7 +267,7 @@ def test_concurrent_resumes_only_advance_workflow_once(engine, model, same_reque
         if same_request:
             assert second.result(timeout=3) == result
         else:
-            with pytest.raises(ValueError, match='没有待回答问题'):
+            with pytest.raises(WorkflowStateError):
                 second.result(timeout=3)
     assert sum(call['task'] == 'patch_draft' for call in model.calls) == 1
     assert len(engine.repo.events()) == 1
@@ -302,7 +304,7 @@ def test_correction_rejects_model_result_based_on_changed_record(engine, model):
                 )
         finally:
             model.release.set()
-        with pytest.raises(WorkflowConflict, match='数据已变化'):
+        with pytest.raises(WorkflowConflict):
             slow.result(timeout=3)
     assert engine.repo.event(record['id'])['data']['value'] == 67
 

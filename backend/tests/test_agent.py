@@ -282,14 +282,14 @@ def test_different_meal_dates_are_not_merged(client):
 
 def test_resume_after_commit_but_before_response_is_replay_safe(settings, monkeypatch):
     payload = None
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_app(settings), raise_server_exceptions=False) as client:
         paused = chat(client, '中午吃了炸鸡')
         payload = {'request_id': uid(), 'interrupt_id': paused['pending_input']['interrupt_id'], 'text': '一小份'}
         def fail_after_commit(*args):
             raise ValueError('模拟响应前崩溃')
         monkeypatch.setattr(client.app.state.engine, 'format_result', fail_after_commit)
         path = f'/api/workflows/{paused["thread_id"]}/resume'
-        assert client.post(path, json=payload).status_code == 409
+        assert client.post(path, json=payload).status_code == 500
         assert len(client.get('/api/events').json()) == 1
     with TestClient(create_app(settings)) as client:
         response = client.post(path, json=payload)

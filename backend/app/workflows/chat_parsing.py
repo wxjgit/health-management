@@ -1,5 +1,7 @@
 """Chat workflow nodes that turn user input into persistence-ready drafts."""
 
+from ..common.errors import ConflictError, WorkflowStateError, ModelOutputError
+
 import json
 import re
 
@@ -12,7 +14,7 @@ from ..chat.feedback import (
 )
 from ..chat.drafts import check_drafts, merge_patch
 from ..evidence import assert_grounded, ground_patch
-from ..modeling import PolicyError, record_projection
+from ..modeling import record_projection
 from ..health.nutrition import prepare_nutrition
 from ..chat.replies import medical_question
 from ..contracts.events import EventDraft
@@ -78,18 +80,18 @@ class ChatParsingMixin:
     def patch_pending(self, state):
         """Merge one clarification answer into the already bounded draft."""
         if not state.get('incremental_answer') or not state.get('extraction'):
-            raise PolicyError('当前没有可补充的草稿，请重新提交完整输入。')
+            raise WorkflowStateError()
         calls_before = self.parser.boundary.call_count
         text = state['input_text']
         extraction = json.loads(json.dumps(state['extraction']))
         index = state.get('pending_event_index')
         if index is None or not 0 <= index < len(extraction['events']):
-            raise PolicyError('待补充记录已经失效，请重新提交。')
+            raise WorkflowStateError()
         bound_version = state.get('correction_version')
         if extraction['intent'] == 'correct' and bound_version is not None:
             prior = self.harness.selected(state)
             if not prior or prior['version'] != bound_version:
-                raise PolicyError('这条记录在补充期间已经变化，请重新选择后纠正。')
+                raise ConflictError()
         abandoned = list(state.get('abandoned_indexes', []))
         skip_optional = state.get('skip_optional', False)
         previous_feedback = state.get('conversation_feedback', [])
@@ -179,7 +181,7 @@ class ChatParsingMixin:
         """Apply local feedback rules and expose one stable extraction contract."""
         context = state.get('parse_context')
         if not context:
-            raise PolicyError('解析阶段缺少本地归一化上下文。')
+            raise RuntimeError('missing parse context')
         text = state['input_text']
         extraction = json.loads(json.dumps(state['extraction']))
         feedback = reconcile_feedback(
@@ -274,7 +276,7 @@ class ChatParsingMixin:
             if parsed.get('question'):
                 return {}
             if len(parsed['events']) != 1 or not parsed.get('correction_id'):
-                raise ValueError('一次纠错必须唯一对应一条完整记录')
+                raise ModelOutputError()
         meals = 0
         for index, draft in zip(state['event_indexes'], parsed['events']):
             if index in state.get('saved_indexes', []) or index in state.get('waiting_indexes', []):
@@ -311,7 +313,7 @@ class ChatParsingMixin:
     def prepared_record(self, state, index):
         record = state.get('prepared_events', {}).get(str(index))
         if record is None:
-            raise ValueError('记录尚未经过营养准备，不能保存')
+            raise RuntimeError()
         prior = None
         correction_id = state.get('parsed', {}).get('correction_id')
         if correction_id:

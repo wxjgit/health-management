@@ -1,5 +1,7 @@
 """Workflow invocation, idempotency, checkpoint and lifecycle operations."""
 
+from ..common.errors import ConflictError, DomainValidationError, WorkflowStateError
+
 import hashlib
 import time
 from datetime import timedelta, timezone
@@ -70,7 +72,7 @@ class WorkflowRuntimeMixin:
                 existing = self.repo.workflow_by_request(request_id)
                 if existing:
                     if existing['fingerprint'] != request_fingerprint:
-                        raise ValueError('同一个 request_id 不能用于不同请求')
+                        raise ConflictError(code='request_payload_conflict')
                     thread_id = existing['id']
                 else:
                     thread_id = str(uuid4())
@@ -84,7 +86,7 @@ class WorkflowRuntimeMixin:
                 with self.lock:
                     current = self.repo.workflow(thread_id)
                     if current['status'] in ('resuming', 'resume_failed'):
-                        raise WorkflowConflict('该流程已有已接收的补充，请重试原补充请求或取消后重新提交。')
+                        raise WorkflowConflict()
                     if current['status'] in ['completed', 'waiting_input']:
                         return current['result']
                     saved = self.graph_for(kind).get_state({
@@ -163,7 +165,7 @@ class WorkflowRuntimeMixin:
                     return receipt
                 workflow = self.repo.workflow(thread_id)
                 if not workflow:
-                    raise ValueError('此流程没有待回答问题，可能已取消或记录已删除')
+                    raise WorkflowStateError()
                 self.check_context_deadline(thread_id)
                 config = {'configurable': {'thread_id': thread_id}}
                 saved = self.graph_for(workflow['kind']).get_state(config).values
@@ -179,30 +181,30 @@ class WorkflowRuntimeMixin:
                         return receipt
                     workflow = self.repo.workflow(thread_id)
                     if workflow['status'] not in ('waiting_input', 'resuming', 'resume_failed'):
-                        raise ValueError('此流程没有待回答问题，可能已取消或记录已删除')
+                        raise WorkflowStateError()
                     pending = workflow['result']['pending_input']
                     if pending['interrupt_id'] != payload['interrupt_id']:
-                        raise ValueError('待回答问题已变化，请刷新')
+                        raise WorkflowStateError(code='workflow_interrupt_changed')
                     attempt = self.repo.attempt_for_interrupt(thread_id, payload['interrupt_id'])
                     by_request = self.repo.resume_attempt(payload['request_id'])
                     if by_request and (
                         by_request['thread_id'] != thread_id
                         or by_request['fingerprint'] != request_fingerprint
                     ):
-                        raise ValueError('重复请求内容不一致')
+                        raise ConflictError(code='request_payload_conflict')
                     if attempt and (
                         attempt['request_id'] != payload['request_id']
                         or attempt['fingerprint'] != request_fingerprint
                     ):
-                        raise WorkflowConflict('上一条补充尚未处理完成，请重试原答案，或取消后重新提交。')
+                        raise WorkflowConflict()
                     if pending['kind'] == 'plan_confirmation':
                         if type(payload.get('approved')) is not bool:
-                            raise ValueError('需要接受或拒绝计划')
+                            raise DomainValidationError()
                         answer = {'approved': payload['approved'], 'text': payload.get('text') or ''}
                         display = '接受计划' if payload['approved'] else '拒绝计划'
                     else:
                         if not payload.get('text'):
-                            raise ValueError('请输入补充信息')
+                            raise DomainValidationError()
                         answer = {
                             'text': payload['text'],
                             'event_id': payload.get('event_id'),
@@ -215,7 +217,7 @@ class WorkflowRuntimeMixin:
                         item.id for task in snapshot.tasks for item in task.interrupts
                     }
                     if not saved or (not attempt and payload['interrupt_id'] not in interrupt_ids):
-                        raise WorkflowConflict('原问题的进度已变化，无法安全接受新答案，请取消后重新提交。')
+                        raise WorkflowConflict()
                     # A retry may have already consumed the interrupt. Continue the
                     # failed node with its bound answer, instead of resuming again.
                     invocation = (
@@ -264,14 +266,14 @@ class WorkflowRuntimeMixin:
         if not receipt:
             return None
         if receipt['fingerprint'] != request_fingerprint or receipt['thread_id'] != thread_id:
-            raise ValueError('重复请求内容不一致')
+            raise ConflictError(code='request_payload_conflict')
         return receipt['result']
 
     def cancel(self, thread_id):
         with self.lock:
             workflow = self.repo.workflow(thread_id)
             if not workflow:
-                raise ValueError('没有待取消的流程')
+                raise WorkflowStateError()
             is_plan = workflow['kind'] == 'plan'
         # Never wait for a workflow lock under engine.lock. Plan confirmation
         # owns this lock through terminal result/receipt commit. Chat cancellation
@@ -279,7 +281,7 @@ class WorkflowRuntimeMixin:
         key = ('workflow', thread_id) if is_plan else None
         with self.execution_locks.hold(key, blocking=False) as acquired:
             if not acquired:
-                raise WorkflowConflict('计划正在确认，请稍后刷新状态，尚未取消。')
+                raise WorkflowConflict(code='plan_confirmation_in_progress')
             with self.lock:
                 self.repo.cancel_workflow(thread_id)
                 self.checkpointer.delete_thread(thread_id)

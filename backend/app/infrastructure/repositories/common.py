@@ -1,5 +1,7 @@
 """Repository connection, metadata and shared versioning primitives."""
 
+from ...common.errors import WorkflowStateError
+
 import json
 from pathlib import Path
 from threading import RLock
@@ -37,21 +39,21 @@ class RepositoryBase:
                 (thread_id,),
             ).fetchone()
             if count >= 32 or size + payload_bytes > 400000:
-                raise ValueError('本次流程已达到模型调用预算，请缩小任务或重新开始。')
+                raise WorkflowStateError(code='model_budget_exceeded')
             if purpose == 'safety_classification':
                 checks = self.conn.execute(
                     "SELECT COUNT(*) FROM model_calls WHERE thread_id=? AND purpose='safety_classification'",
                     (thread_id,),
                 ).fetchone()[0]
                 if checks >= 8:
-                    raise ValueError('本次流程已达到安全分类调用预算，请重新提交。')
+                    raise WorkflowStateError(code='model_budget_exceeded')
             if purpose == 'processing_plan':
                 plans = self.conn.execute(
                     "SELECT COUNT(*) FROM model_calls WHERE thread_id=? AND purpose='processing_plan'",
                     (thread_id,),
                 ).fetchone()[0]
                 if plans >= 4:
-                    raise ValueError('本次流程已达到重新规划上限，请明确任务后重新开始。')
+                    raise WorkflowStateError(code='model_budget_exceeded')
             self.conn.execute(
                 'INSERT INTO model_calls VALUES (?,?,?,?)',
                 (thread_id, purpose, payload_bytes, stamp()),

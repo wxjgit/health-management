@@ -328,7 +328,7 @@ def test_invalid_supplied_value_is_rejected_even_during_clarification(settings, 
     with TestClient(create_app(settings)) as client:
         pending = chat(client, '昨天称过体重')
         response = resume(client, pending, '9999公斤')
-        assert response.status_code == 409
+        assert response.status_code == 422
         assert client.get('/api/events').json() == []
 
 

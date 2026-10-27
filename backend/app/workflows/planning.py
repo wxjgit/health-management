@@ -1,10 +1,11 @@
 """Plan confirmation and periodic analysis workflow graphs."""
 
+from ..common.errors import DomainValidationError, SafetyPolicyError
+
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
 from ..health import analyze, plan_draft, review
-from ..health.safety import REPLIES
 from .state import State
 
 
@@ -38,7 +39,7 @@ class PlanningWorkflowMixin:
             'target_warnings': (plan.get('target_metadata') or {}).get('warnings', []),
         })
         if not isinstance(answer, dict) or type(answer.get('approved')) is not bool:
-            raise ValueError('需要明确接受或拒绝计划')
+            raise DomainValidationError()
         if answer['approved'] and answer.get('text'):
             updated = {**state, 'safety_input_text': answer['text'],
                        'original': state.get('input_text', '')}
@@ -46,7 +47,7 @@ class PlanningWorkflowMixin:
             if self.route_safety_gate(checked) == 'classify_safety':
                 checked.update(self.classify_safety({**updated, **checked}))
             if checked['safety']['category'] != 'general':
-                raise ValueError(REPLIES[checked['safety']['category']])
+                raise SafetyPolicyError(checked['safety']['category'])
             return {**checked, 'safety_input_text': answer['text'],
                     'original': state.get('input_text', ''), 'approved': True}
         return {'approved': answer['approved']}

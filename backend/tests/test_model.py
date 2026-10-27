@@ -53,7 +53,8 @@ def test_model_failure_never_falls_back_or_writes_fake_records(model_settings, m
     fake_client(monkeypatch, lambda request: httpx.Response(200, json={'choices': [{'message': {'content': '{"intent":"record","events":[{"kind":"weight","value":9999}]}'}}]}))
     with TestClient(create_app(model_settings)) as client:
         response = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '体重65公斤'})
-        assert response.status_code == 409
+        assert response.status_code == 502
+        assert response.json()['code'] == 'model_response_invalid'
         assert '没有自动切换' in response.json()['detail']
         assert client.get('/api/events').json() == []
 
@@ -62,5 +63,6 @@ def test_model_cannot_modify_unknown_record_id(model_settings, monkeypatch):
     fake_client(monkeypatch, lambda request: httpx.Response(200, json={'choices': [{'message': {'content': '{"intent":"correct","correction_id":"unknown","events":[]}'}}]}))
     with TestClient(create_app(model_settings)) as client:
         response = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '修改体重'})
-        assert response.status_code == 409
+        assert response.status_code == 502
+        assert response.json()['code'] == 'model_response_invalid'
         assert client.get('/api/events').json() == []

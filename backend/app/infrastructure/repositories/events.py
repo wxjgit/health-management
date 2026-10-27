@@ -1,5 +1,7 @@
 """Health event, revision and completion persistence."""
 
+from ...common.errors import ConflictError, DomainValidationError
+
 import json
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -64,14 +66,14 @@ class EventRepositoryMixin:
                 return json.loads(old['result'])
             saved = []
             if correction_id and len(drafts) != 1:
-                raise ValueError('一次纠错只能对应一条记录')
+                raise DomainValidationError()
             for index, draft in enumerate(drafts):
                 event_id = correction_id or str(uuid4())
                 prior = self.event(event_id) if correction_id else None
                 if correction_id and prior is None:
-                    raise ValueError('要修正的记录已不存在')
+                    raise ConflictError()
                 if prior and expected_version is not None and prior['version'] != expected_version:
-                    raise ValueError('纠错记录的版本已经变化，请重新选择记录')
+                    raise ConflictError()
                 revision = prior['version'] + 1 if prior else 1
                 occurred = datetime.fromisoformat(
                     draft['occurred_at']
@@ -100,7 +102,7 @@ class EventRepositoryMixin:
                         ),
                     ).rowcount
                     if changed != 1:
-                        raise ValueError('纠错记录的版本已经变化，请重新选择记录')
+                        raise ConflictError()
                 else:
                     self.conn.execute(
                         'INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?)',

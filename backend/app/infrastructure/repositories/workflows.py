@@ -1,5 +1,7 @@
 """Workflow, message and idempotency receipt persistence."""
 
+from ...common.errors import ConflictError, WorkflowStateError
+
 import json
 from datetime import datetime, timedelta
 
@@ -193,7 +195,7 @@ class WorkflowRepositoryMixin:
             )
             attempt = self.resume_attempt(payload['request_id'])
             if not attempt or attempt['thread_id'] != thread_id or attempt['fingerprint'] != request_fingerprint:
-                raise ValueError('本次补充已绑定其他请求，请重试原答案或取消后重新提交。')
+                raise ConflictError(code='request_payload_conflict')
             self.conn.execute(
                 "UPDATE resume_attempts SET status='executing' WHERE request_id=?",
                 (payload['request_id'],),
@@ -253,11 +255,11 @@ class WorkflowRepositoryMixin:
         with self.lock, self.conn:
             workflow = self.workflow(thread_id)
             if not workflow or workflow['status'] not in ('waiting_input', 'resuming', 'resume_failed'):
-                raise ValueError('没有待取消的流程')
+                raise WorkflowStateError()
             if workflow['kind'] == 'plan':
                 plan = self.plan(thread_id)
                 if not plan or plan['status'] != 'pending':
-                    raise ValueError('计划已经处理，无法取消，请刷新状态。')
+                    raise WorkflowStateError()
                 self.conn.execute("UPDATE plans SET status='rejected' WHERE id=?", (thread_id,))
             result = {'thread_id': thread_id, 'status': 'cancelled',
                       'reply': '已取消待处理事项，已保存的独立记录保留。'}

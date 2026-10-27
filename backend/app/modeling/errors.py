@@ -1,2 +1,2 @@
-class PolicyError(ValueError):
-    """A request exceeded a locally approved model or workflow boundary."""
+class PolicyError(RuntimeError):
+    """Internal model authorization invariant; never expose its exception text."""

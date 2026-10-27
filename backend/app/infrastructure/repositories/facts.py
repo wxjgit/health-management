@@ -1,4 +1,7 @@
 """Versioned long-term facts, with conservative conflict and expiry handling."""
+
+from ...common.errors import ConflictError, DomainValidationError, ModelOutputError
+from pydantic import ValidationError
 import json
 
 from ...common import clock
@@ -131,17 +134,25 @@ class FactRepositoryMixin:
             self.expire_facts()
             prior = self.fact(fact_id)
             if expected_version is not None and (not prior or prior['version'] != expected_version):
-                raise ValueError('长期信息不存在或版本已变化，请刷新后修改')
-            payload = structured or (FactInput(content=content, **draft) if draft else parse_fact(content))
+                raise ConflictError(code='resource_version_conflict')
+            if draft is not None:
+                try:
+                    payload = FactInput(content=content, **draft)
+                except ValidationError as error:
+                    raise ModelOutputError() from error
+            else:
+                payload = structured or parse_fact(content)
             if not isinstance(payload, FactInput):
                 payload = FactInput.model_validate(payload)
             if payload.content != content:
-                raise ValueError('事实内容必须与本次原文一致')
+                raise DomainValidationError(code='fact_content_mismatch')
             parsed = parse_fact(content)
             if parsed.time_scope == 'bounded' and parsed.type == payload.type:
                 if ((payload.valid_until and payload.valid_until != parsed.valid_until)
                         or (payload.valid_from and payload.valid_from != parsed.valid_from)):
-                    raise ValueError('事实期限与原文不一致，请核对')
+                    if draft is not None:
+                        raise ModelOutputError()
+                    raise DomainValidationError(code='fact_period_invalid')
                 payload = payload.model_copy(update={'valid_from': parsed.valid_from,
                                                     'valid_until': parsed.valid_until, 'time_scope': 'bounded'})
             elif parsed.time_scope == 'temporary_unknown' and not payload.valid_until:
@@ -158,7 +169,7 @@ class FactRepositoryMixin:
             if uncertain_assertion(content, context_text):
                 data['assertion'] = 'hypothetical' if any(w in (context_text or content) for w in ('如果', '假如')) else 'uncertain'
             if prior and is_restriction(prior) and (candidate or data['assertion'] != 'affirmed'):
-                raise ValueError('原限制仍需保留，请先明确核对；解除限制请使用撤回操作')
+                raise DomainValidationError(code='fact_restriction_protected')
             if candidate:
                 data['source_kind'] = 'unconfirmed_extraction'
             auto = (data['type'] == 'food_preference' and not is_restriction(data)
@@ -186,11 +197,11 @@ class FactRepositoryMixin:
             scheduled = bool(data['valid_from'] and data['valid_from'] > clock.now().date().isoformat())
             replacing = next((r for r in siblings if r['id'] == data.get('supersedes')), None)
             if data.get('supersedes') and not replacing:
-                raise ValueError('被替代的事实不存在、类型不同或已经失效')
+                raise ConflictError(code='resource_version_conflict')
             if replacing and (is_restriction(replacing) or is_restriction(data)):
-                raise ValueError('保护性信息请通过明确编辑或撤回处理，不能被偏好替代')
+                raise DomainValidationError(code='fact_restriction_protected')
             if data.get('supersedes') and data['valid_until']:
-                raise ValueError('临时信息应使用临时覆盖，不能永久替代旧信息')
+                raise DomainValidationError(code='fact_period_invalid')
             if not candidate and (auto or replacing):
                 for sibling in siblings:
                     if is_restriction(sibling) or (replacing and replacing['id'] != sibling['id']):
@@ -230,31 +241,31 @@ class FactRepositoryMixin:
             self.expire_facts()
             record = self.fact(fact_id)
             if not record or record['version'] != expected_version:
-                raise ValueError('长期信息不存在或版本已变化，请刷新')
+                raise ConflictError(code='resource_version_conflict')
             if action == 'confirm':
                 if record['lifecycle'] not in ('active', 'needs_review'):
-                    raise ValueError('此信息已失效，请重新编辑有效期后确认')
+                    raise DomainValidationError(code='fact_confirmation_required')
                 if record['time_scope'] == 'temporary_unknown' or record['assertion'] != 'affirmed':
-                    raise ValueError('请先补充期限或明确陈述内容，再确认')
+                    raise DomainValidationError(code='fact_confirmation_required')
                 peers = [r for r in self._fact_rows() if r['id'] != fact_id and same_subject(record, r)
                          and r['type'] == record['type'] and overlaps(record, r)
                          and r['lifecycle'] in ('active', 'needs_review', 'scheduled')
                          and r['confirmation'] != 'candidate']
                 if peer_versions is not None and peer_versions != {r['id']: r['version'] for r in peers}:
-                    raise ValueError('冲突信息版本已变化，请刷新后选择')
+                    raise ConflictError(code='resource_version_conflict')
                 if peers and any(is_restriction(r) for r in [record, *peers]):
-                    raise ValueError('保护性信息存在冲突，请明确编辑或撤回相关限制')
+                    raise DomainValidationError(code='fact_restriction_protected')
                 if resolution == 'permanent' and record.get('valid_until'):
-                    raise ValueError('永久更新请先编辑为长期信息，再确认')
+                    raise DomainValidationError(code='fact_period_invalid')
                 if resolution == 'temporary' and not record.get('valid_until'):
-                    raise ValueError('临时覆盖需要明确的结束日期')
+                    raise DomainValidationError(code='fact_period_invalid')
                 record['confirmation'] = 'confirmed'
                 if record['source_kind'] == 'unconfirmed_extraction':
                     record['source_kind'] = ('user_reported_professional' if record['type'] == 'professional_advice'
                                              else 'user_explicit')
                 if record.get('valid_until'):
                     if any(r.get('valid_until') for r in peers):
-                        raise ValueError('多个临时期限重叠，请编辑日期或撤回其中一条')
+                        raise DomainValidationError(code='fact_period_invalid')
                     record['overrides'] = [r['id'] for r in peers]
                 else:
                     for other in peers:
@@ -266,14 +277,14 @@ class FactRepositoryMixin:
             elif action == 'retract':
                 record['lifecycle'] = 'retracted'
             else:
-                raise ValueError('不支持的事实操作')
+                raise DomainValidationError(code='domain_validation_failed')
             record['version'] += 1
             self._write_fact(record, '用户确认' if action == 'confirm' else '用户撤回')
             return self.fact(fact_id)
 
     def fact_revisions(self, fact_id):
         if not self.fact(fact_id):
-            raise ValueError('长期信息不存在')
+            raise ConflictError(code='resource_version_conflict')
         return [json.loads(row[0]) for row in self.conn.execute(
             'SELECT data FROM fact_revisions WHERE fact_id=? ORDER BY version', (fact_id,))]
 

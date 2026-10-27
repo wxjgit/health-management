@@ -5,6 +5,8 @@ dates, quantities, receipts, uncertainty and clarification under local control.
 It does not try to establish the truth of arbitrary natural language with regex.
 """
 from ..contracts.workflows import AdviceReply, ContextualReply
+from pydantic import ValidationError
+from ..common.errors import ModelOutputError, WorkflowStateError
 
 POLICY_VERSION = 'local-output-v1'
 GUIDANCE = {
@@ -57,10 +59,13 @@ def default_feedback_selection(plan):
 
 
 def check_phrasing(candidate, plan):
-    candidate = ContextualReply.model_validate(candidate)
+    try:
+        candidate = ContextualReply.model_validate(candidate)
+    except ValidationError as error:
+        raise ModelOutputError() from error
     options = feedback_options(plan)
     if [s.point_id for s in candidate.segments] != [p['point_id'] for p in options]:
-        raise ValueError('回复要点与本地策略不一致')
+        raise ModelOutputError()
     return [point['variants'][segment.variant_id] for segment, point in zip(candidate.segments, options)]
 
 
@@ -118,7 +123,7 @@ def question_from_state(state):
     event = events[index] if index is not None and 0 <= index < len(events) else None
     fields = state.get('pending_fields', [])
     if fields and event is None:
-        raise ValueError('待补充记录已经失效')
+        raise WorkflowStateError()
     return clarification_question(state['parsed']['intent'], event, fields[0] if fields else None,
                                   state.get('pending_item_index'), feedback_only=state.get('feedback_only', False),
                                   has_target=bool(state['parsed'].get('correction_id')))
@@ -217,11 +222,14 @@ def advice_plan(context):
 
 
 def validate_advice(candidate, context):
-    selected = AdviceReply.model_validate(candidate)
+    try:
+        selected = AdviceReply.model_validate(candidate)
+    except ValidationError as error:
+        raise ModelOutputError() from error
     plan = advice_plan(context)
     options = {point['point_id']: point['text'] for point in plan['options']}
     if len(selected.point_ids) != len(set(selected.point_ids)) or any(key not in options for key in selected.point_ids):
-        raise ValueError('建议要点未获本次上下文批准或存在重复')
+        raise ModelOutputError()
     return ''.join([*plan['facts'], *[options[key] for key in selected.point_ids]])
 
 

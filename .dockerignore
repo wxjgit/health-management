@@ -5,15 +5,6 @@ backend/**
 !backend/app/
 !backend/app/**
 !backend/requirements.lock.txt
-!frontend/
-frontend/**
-!frontend/package.json
-!frontend/package-lock.json
-!frontend/index.html
-!frontend/tsconfig.json
-!frontend/vite.config.ts
-!frontend/src/
-!frontend/src/**
 !scripts/
 scripts/**
 !scripts/runtime-healthcheck.py

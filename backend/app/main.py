@@ -1,9 +1,5 @@
 from contextlib import asynccontextmanager
 
-from fastapi import HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-
 from .api.planning import router as planning_router
 from .api.deletions import router as deletion_router
 from .api.profile import router as profile_router
@@ -13,7 +9,7 @@ from .api.workflows import router as workflows_router
 from .api.observability import router as observability_router
 from .api.errors import register_error_handlers
 from .api.request_context import RequestContextFastAPI
-from .common.config import ROOT, Settings
+from .common.config import Settings
 from .workflows.engine import Engine
 from .privacy.provenance import untracked
 
@@ -51,16 +47,6 @@ def create_app(settings=None):
     app.include_router(planning_router)
     app.include_router(deletion_router)
     app.include_router(observability_router)
-
-    dist = ROOT / 'frontend' / 'dist'
-    if dist.exists():
-        app.mount('/assets', StaticFiles(directory=dist / 'assets'), name='assets')
-
-        @app.get('/{path:path}')
-        def frontend(path: str):
-            if path.startswith(('api/', 'internal/')):
-                raise HTTPException(404, '接口不存在')
-            return FileResponse(dist / 'index.html')
 
     return app
 

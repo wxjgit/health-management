@@ -65,8 +65,6 @@ def client(tmp_path):
         await asyncio.sleep(0.01)
         return {'before': before, 'after': request_id.get()}
 
-    # The optional built frontend installs a catch-all; probes precede that route.
-    app.router.routes.sort(key=lambda route: getattr(route, 'path', '') == '/{path:path}')
     with TestClient(app, raise_server_exceptions=False) as session:
         yield session
 
@@ -91,7 +89,7 @@ def client(tmp_path):
 ])
 def test_error_envelope_and_logs_are_safe(client, caplog, kind, status, code):
     response = client.get(f'/api/_probe/error/{kind}', headers={
-        'Origin': 'http://localhost:5173', 'X-Request-ID': SECRET,
+        'Origin': 'https://legacy-web.invalid', 'X-Request-ID': SECRET,
     })
     assert response.status_code == status
     body = response.json()
@@ -100,8 +98,7 @@ def test_error_envelope_and_logs_are_safe(client, caplog, kind, status, code):
     assert SECRET not in response.text
     assert SECRET not in str(dict(response.headers))
     assert SECRET not in caplog.text
-    assert response.headers['access-control-allow-origin'] == 'http://localhost:5173'
-    assert 'X-Request-ID' in response.headers['access-control-expose-headers']
+    assert 'access-control-allow-origin' not in response.headers
     assert body['request_id'] in caplog.text
 
 
@@ -175,16 +172,16 @@ def test_business_request_id_is_preserved_during_retry(client):
     assert len(client.get('/api/events').json()) == 1
 
 
-def test_preflight_success_and_failure_have_request_ids(client):
-    for origin, status in [('http://localhost:5173', 200), ('https://unknown.invalid', 400)]:
+def test_browser_preflight_is_not_enabled_and_has_request_ids(client):
+    for origin in ['https://legacy-web.invalid', 'https://unknown.invalid']:
         response = client.options('/api/chat', headers={
             'Origin': origin, 'Access-Control-Request-Method': 'POST',
         })
-        assert response.status_code == status
+        assert response.status_code == 405
         UUID(response.headers['x-request-id'])
-        if status == 400:
-            assert response.json()['code'] == 'http_400'
-            assert response.json()['request_id'] == response.headers['x-request-id']
+        assert response.json()['code'] == 'http_405'
+        assert response.json()['request_id'] == response.headers['x-request-id']
+        assert 'access-control-allow-origin' not in response.headers
 
 
 @pytest.mark.parametrize('suffix', ['', ':fact', ':fact:2'])

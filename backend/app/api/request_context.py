@@ -1,14 +1,12 @@
-"""Wrap even ServerErrorMiddleware so correlation and CORS cover HTTP 500."""
+"""Wrap even ServerErrorMiddleware so correlation covers HTTP 500."""
 
 from uuid import uuid4
 import time
 
 from fastapi import FastAPI
 from starlette.datastructures import MutableHeaders
-from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
 
-from ..common.request_context import log_failure, request_id
+from ..common.request_context import request_id
 from .request_limits import RequestLimitsMiddleware
 
 
@@ -74,26 +72,9 @@ class RequestContextMiddleware:
             request_id.reset(token)
 
 
-class CorrelatedCORSMiddleware(CORSMiddleware):
-    def preflight_response(self, request_headers):
-        response = super().preflight_response(request_headers)
-        if response.status_code == 400:
-            log_failure('http_400', status=400)
-            return JSONResponse(status_code=400, content={
-                'detail': '跨域请求不符合允许范围。', 'code': 'http_400',
-                'request_id': request_id.get(),
-            }, headers={key: value for key, value in response.headers.items()
-                        if key.startswith('access-control-') or key == 'vary'})
-        return response
-
-
 class RequestContextFastAPI(FastAPI):
     def build_middleware_stack(self):
         # Keep the FastAPI object (state, dependency overrides and lifespan) public.
-        return RequestContextMiddleware(CorrelatedCORSMiddleware(
+        return RequestContextMiddleware(
             RequestLimitsMiddleware(super().build_middleware_stack(), self.state.settings),
-            allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
-            allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            allow_headers=['Content-Type'],
-            expose_headers=['X-Request-ID'],
-        ), owner=self)
+            owner=self)

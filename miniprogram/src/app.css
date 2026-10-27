@@ -1,0 +1,163 @@
+page {
+  background: #f4f7f2;
+  color: #24382e;
+  font-size: 30px;
+}
+.page {
+  padding: 32px 28px calc(40px + env(safe-area-inset-bottom));
+}
+.title {
+  font-size: 44px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+.card {
+  background: white;
+  padding: 28px;
+  border-radius: 24px;
+  margin-bottom: 24px;
+}
+.muted {
+  color: #65756b;
+  font-size: 26px;
+  margin: 12px 0;
+}
+.error {
+  color: #a33333;
+  padding: 16px 0;
+}
+.message {
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+.user {
+  background: #e3efdf;
+}
+button {
+  margin: 16px 0;
+  font-size: 28px;
+}
+.primary {
+  background: #287653;
+  color: white;
+}
+input,
+textarea {
+  box-sizing: border-box;
+  background: #f3f5f1;
+  padding: 20px;
+  width: 100%;
+  border-radius: 12px;
+  margin: 14px 0;
+}
+textarea {
+  height: 200px;
+}
+.field {
+  padding: 14px 0;
+  border-bottom: 1px solid #edf0ea;
+}
+.eyebrow {
+  font-size: 24px;
+  color: #728475;
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+}
+.page-heading {
+  margin: 12px 0 32px;
+}
+.subtitle {
+  font-size: 34px;
+  font-weight: 600;
+  margin: 16px 0;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+.row button {
+  flex: 1;
+  min-width: 180px;
+}
+.warning {
+  background: #faf2dd;
+  color: #69572c;
+  border-radius: 14px;
+  padding: 18px;
+  line-height: 1.6;
+  margin: 18px 0;
+}
+.tag {
+  font-size: 24px;
+  color: #47745b;
+  margin: 12px 0;
+}
+.link {
+  color: #287653;
+  font-size: 26px;
+}
+.danger {
+  color: #a33333;
+}
+.fold {
+  border-top: 1px solid #e5eadf;
+  margin: 16px 0;
+}
+.fold-title {
+  padding: 22px 0;
+  color: #47745b;
+}
+.fold-body {
+  padding-bottom: 20px;
+}
+.inset {
+  margin: 20px 0;
+  padding: 22px;
+  border-radius: 16px;
+  background: #f5f8f2;
+}
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+.metric {
+  width: calc(50% - 12px);
+  padding: 10px 0;
+}
+.metric-value {
+  font-size: 38px;
+  font-weight: 600;
+}
+.highlight {
+  border: 3px solid #679a76;
+}
+.trend {
+  display: flex;
+  height: 200px;
+  gap: 3px;
+  margin: 24px 0;
+}
+.trend-column {
+  flex: 1;
+  min-width: 0;
+}
+.trend-track {
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
+  background: #f3f5f0;
+}
+.trend-bar {
+  width: 100%;
+  background: #6b9d7b;
+  border-radius: 5px 5px 0 0;
+}
+.trend-date {
+  font-size: 16px;
+  text-align: center;
+  color: #738273;
+}

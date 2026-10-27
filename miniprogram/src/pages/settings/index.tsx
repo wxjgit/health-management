@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Taro from "@tarojs/taro";
-import { Button, View } from "@tarojs/components";
+import { Button, Text, View } from "@tarojs/components";
 import type { Health, Profile } from "../../types";
 import { api, baseUrl } from "../../api";
 import {
@@ -23,6 +23,7 @@ import {
   go,
   Page,
   Select,
+  Icon,
 } from "../../components/common";
 
 const emptyForm = {
@@ -139,15 +140,54 @@ export default function Settings() {
       loading={resource.loading}
       refresh={resource.refresh}
     >
-      <View className="card">
+      <View className="profile-hero">
+        <View className="profile-avatar">
+          <Icon name="mine" active />
+        </View>
+        <View>
+          <View className="section-kicker">MY HEALTH JOURNAL</View>
+          <View className="subtitle">照顾自己，从了解自己开始</View>
+          <View className="muted">
+            {resource.data?.profile
+              ? `${resource.data.profile.height_cm} cm · 目标 ${resource.data.profile.goal_weight_kg} kg`
+              : "补充个人档案，积累属于你的健康记录"}
+          </View>
+        </View>
+      </View>
+      <View className="settings-hub">
         {[
-          ["facts", "长期信息与变更历史"],
-          ["preferences", "评分权重与提醒"],
-          ["notifications", "站内消息"],
-          ["privacy", "隐私清理与作业恢复"],
-        ].map(([page, title]) => (
-          <Button key={page} onClick={() => go(page)}>
-            {title}
+          {
+            page: "facts",
+            title: "长期信息",
+            detail: "偏好、限制与变更历史",
+            icon: "record" as const,
+          },
+          {
+            page: "preferences",
+            title: "权重与提醒",
+            detail: "定义适合自己的节奏",
+            icon: "plans" as const,
+          },
+          {
+            page: "notifications",
+            title: "站内消息",
+            detail: "复盘与提醒都在这里",
+            icon: "history" as const,
+          },
+          {
+            page: "privacy",
+            title: "隐私管理",
+            detail: "删除范围与清理恢复",
+            icon: "mine" as const,
+          },
+        ].map(({ page, title, detail, icon }) => (
+          <Button className="hub-tile" key={page} onClick={() => go(page)}>
+            <View className="hub-icon">
+              <Icon name={icon} active />
+            </View>
+            <View className="hub-title">{title}</View>
+            <View className="hub-detail">{detail}</View>
+            <Text className="hub-arrow">↗</Text>
           </Button>
         ))}
       </View>

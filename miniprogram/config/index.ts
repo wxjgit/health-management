@@ -9,5 +9,6 @@ export default defineConfig({
   outputRoot: "dist",
   framework: "react",
   compiler: "webpack5",
+  copy: { patterns: [{ from: "src/assets", to: "dist/assets" }], options: {} },
   mini: {},
 });

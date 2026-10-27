@@ -1,0 +1,59 @@
+.tab-shell {
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12rpx 22rpx calc(14rpx + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.tab-glass {
+  display: flex;
+  align-items: center;
+  padding: 10rpx;
+  min-height: 112rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.94);
+  border-radius: 58rpx;
+  background: linear-gradient(
+    105deg,
+    rgba(218, 245, 231, 0.96),
+    rgba(182, 229, 253, 0.96) 48%,
+    rgba(251, 239, 226, 0.97)
+  );
+  box-shadow: 0 12rpx 56rpx rgba(76, 101, 130, 0.14);
+  backdrop-filter: blur(24rpx);
+  -webkit-backdrop-filter: blur(24rpx);
+  pointer-events: auto;
+}
+.tab-item {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 106rpx;
+  border: 2rpx solid transparent;
+  border-radius: 50rpx;
+  color: #7b899a;
+}
+.tab-item.is-selected {
+  background: rgba(237, 249, 255, 0.78);
+  border-color: rgba(255, 255, 255, 0.97);
+  color: #2854ea;
+  box-shadow: 0 3rpx 12rpx rgba(60, 115, 192, 0.07);
+}
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-bottom: 7rpx;
+}
+.tab-label {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 23rpx;
+  line-height: 30rpx;
+}
+.is-selected .tab-label {
+  font-weight: 600;
+}

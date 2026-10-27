@@ -52,7 +52,9 @@ export default function History() {
       loading={resource.loading}
       refresh={resource.refresh}
     >
-      <View className="card">
+      <View className="card filter-card">
+        <View className="section-kicker">FIND YOUR MOMENTS</View>
+        <View className="subtitle">找一找，那天的记录</View>
         <Select
           label="类型"
           value={draft.kind}

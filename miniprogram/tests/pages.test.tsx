@@ -29,6 +29,7 @@ vi.mock("@tarojs/components", () => ({
   Input: "input",
   Textarea: "textarea",
   Switch: "switch",
+  Image: "image",
   Picker: "picker",
 }));
 vi.mock("../src/api", async (importOriginal) => ({
@@ -100,7 +101,11 @@ beforeEach(() => {
       model_provider: "provider",
       today: "2026-10-27",
     },
-    "/dashboard": { totals: { kcal: null, unknown_items: 1 }, record_count: 0 },
+    "/dashboard": {
+      date: "2026-10-27",
+      totals: { kcal: null, unknown_items: 1 },
+      record_count: 0,
+    },
     "/facts?include_inactive=true": [],
   };
   platform.api.mockImplementation(async (path: string, method = "GET") =>

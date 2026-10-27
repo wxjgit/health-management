@@ -30,7 +30,7 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],
-    "include": []
+    "include": [{ "type": "folder", "value": "assets/icons" }]
   },
   "editorSetting": {}
 }

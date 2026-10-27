@@ -13,13 +13,16 @@ export default defineAppConfig({
   ],
   window: {
     navigationBarTitleText: "轻记",
-    navigationBarBackgroundColor: "#f4f7f2",
+    navigationBarBackgroundColor: "#eef5f5",
     navigationBarTextStyle: "black",
+    backgroundColor: "#eef5f5",
   },
+  usingComponents: {},
   tabBar: {
-    color: "#758079",
-    selectedColor: "#287653",
-    backgroundColor: "#ffffff",
+    custom: true,
+    color: "#7b899a",
+    selectedColor: "#2854ea",
+    backgroundColor: "#eef5f5",
     list: [
       { pagePath: "pages/chat/index", text: "记录" },
       { pagePath: "pages/history/index", text: "历史" },

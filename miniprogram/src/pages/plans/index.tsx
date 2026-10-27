@@ -257,19 +257,21 @@ export default function Plans() {
           <View className="muted">
             已有生效目标不会被默认估算覆盖。修改字段后按手动目标处理。
           </View>
-          {targetKeys.map((key) => (
-            <Field
-              key={key}
-              label={`${labels[key]} ${key === "kcal" ? "kcal" : key === "exercise_minutes" ? "分钟/周" : "g"}`}
-              numeric
-              value={fields[key]}
-              onChange={(value) => {
-                dirty.current = true;
-                setUsingDefaults(false);
-                setFields({ ...fields, [key]: value });
-              }}
-            />
-          ))}
+          <View className="target-fields">
+            {targetKeys.map((key) => (
+              <Field
+                key={key}
+                label={`${labels[key]} ${key === "kcal" ? "kcal" : key === "exercise_minutes" ? "分钟/周" : "g"}`}
+                numeric
+                value={fields[key]}
+                onChange={(value) => {
+                  dirty.current = true;
+                  setUsingDefaults(false);
+                  setFields({ ...fields, [key]: value });
+                }}
+              />
+            ))}
+          </View>
           {data.defaults.status === "ready" && data.defaults.targets ? (
             <Button
               disabled={action.busy || !!pending}

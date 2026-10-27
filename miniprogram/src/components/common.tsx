@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Taro from "@tarojs/taro";
-import { Button, Input, Picker, Text, View } from "@tarojs/components";
+import { Button, Image, Input, Picker, Text, View } from "@tarojs/components";
 import type { PropsWithChildren } from "react";
 import type {
   Card,
@@ -56,6 +56,22 @@ export const confirm = async (title: string, content: string) =>
     })
   ).confirm;
 
+export function Icon({
+  name,
+  active = false,
+}: {
+  name: "record" | "history" | "plans" | "insights" | "mine";
+  active?: boolean;
+}) {
+  return (
+    <Image
+      className="ui-icon"
+      src={`/assets/icons/${name}${active ? "-active" : ""}.svg`}
+      mode="aspectFit"
+    />
+  );
+}
+
 export function Fold({
   title,
   children,
@@ -64,7 +80,8 @@ export function Fold({
   return (
     <View className="fold">
       <View className="fold-title" onClick={() => setOpen(!open)}>
-        {title} {open ? "⌃" : "⌄"}
+        <Text>{title}</Text>
+        <Text className={`fold-chevron ${open ? "is-open" : ""}`}>⌄</Text>
       </View>
       {open && <View className="fold-body">{children}</View>}
     </View>
@@ -114,7 +131,7 @@ export function Select({
       value={Math.max(0, keys.indexOf(value))}
       onChange={(event) => onChange(keys[Number(event.detail.value)])}
     >
-      <View className="field">
+      <View className="field select-field">
         {label}：{options[value] || "请选择"}　⌄
       </View>
     </Picker>
@@ -138,7 +155,7 @@ export function DateField({
         value={value}
         onChange={(event) => onChange(event.detail.value)}
       >
-        <View>
+        <View className="date-field">
           {label}：{value || "请选择"}　⌄
         </View>
       </Picker>
@@ -164,15 +181,34 @@ export function Page({
 }>) {
   return (
     <View className="page">
+      <View className="page-ambient" aria-hidden>
+        <View className="ambient-orb ambient-mint" />
+        <View className="ambient-orb ambient-blue" />
+      </View>
       <View className="page-heading">
-        <View className="eyebrow">轻记 · 个人健康空间</View>
+        <View className="brand-row">
+          <View className="brand-lockup">
+            <View className="brand-mark">
+              <Icon name="record" active />
+            </View>
+            <Text className="brand-name">轻记</Text>
+            <Text className="brand-divider">/</Text>
+            <Text className="brand-note">个人健康手记</Text>
+          </View>
+          <View className="brand-spark">✦</View>
+        </View>
+        <View className="eyebrow">把每一天，慢慢照顾好</View>
         <View className="title">{title}</View>
       </View>
       <OperationBanner />
       {error && <View className="error">{error}</View>}
       {loading && <View className="muted">正在读取…</View>}
       {children}
-      {refresh && <Button onClick={refresh}>刷新状态</Button>}
+      {refresh && (
+        <Button className="refresh-button" onClick={refresh}>
+          刷新状态
+        </Button>
+      )}
     </View>
   );
 }

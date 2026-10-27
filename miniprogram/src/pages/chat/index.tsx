@@ -20,9 +20,10 @@ import {
   MealCard,
   Page,
   tab,
-  TargetValues,
   Trace,
+  Icon,
 } from "../../components/common";
+import { DailyOverview } from "../../components/daily-overview";
 
 export default function Chat() {
   const resource = useResource(async () => {
@@ -41,7 +42,7 @@ export default function Chat() {
   const [selectedId, setSelectedId] = useState("");
   const [correction, setCorrection] = useState<Event | null>(null);
   const [localOnly, setLocalOnly] = useState(
-    Taro.getStorageSync("local-only") !== false,
+    () => Taro.getStorageSync("local-only") !== false,
   );
   const [elapsed, setElapsed] = useState(0);
   useDidShow(() => {
@@ -109,48 +110,68 @@ export default function Chat() {
   }
   return (
     <Page
-      title="今天，从一句话开始"
+      title="今天，记录一点好状态"
       error={action.error || resource.error}
       loading={resource.loading}
       refresh={resource.refresh}
     >
-      <View className="row">
-        <Button size="mini" onClick={() => go("today")}>
-          今日汇总
-        </Button>
-        <Button size="mini" onClick={() => go("notifications")}>
+      <View className="page-intro">
+        <Text>饮食、睡眠、运动，每一点都值得记下。</Text>
+        <Button
+          className="notice-button"
+          size="mini"
+          onClick={() => go("notifications")}
+        >
+          <Icon name="history" />
           站内消息
         </Button>
       </View>
       {data && (
         <>
-          <View className="card">
-            <View>
-              {data.health.today} · 今日已记录 {data.daily.record_count} 条
-            </View>
-            <TargetValues targets={data.daily.totals} />
-            {!!data.daily.totals.unknown_items && (
-              <View className="warning">营养尚不完整，未知不按零计。</View>
-            )}
+          <DailyOverview daily={data.daily} />
+          <View className="quick-records">
+            {[
+              { title: "饮食", mark: "食", text: "今天午餐吃了" },
+              { title: "体重", mark: "kg", text: "今天早上体重" },
+              { title: "睡眠", mark: "☾", text: "昨晚睡了" },
+              { title: "运动", mark: "↗", text: "今天运动" },
+            ].map((item) => (
+              <Button
+                className="quick-record"
+                key={item.title}
+                disabled={
+                  action.busy || !!pending || !!selected || !!correction
+                }
+                onClick={() => setText(item.text)}
+              >
+                <View className="quick-mark">{item.mark}</View>
+                <Text>{item.title}</Text>
+                <Text className="quick-plus">＋</Text>
+              </Button>
+            ))}
           </View>
           {data.health.mode === "demo" && (
-            <View className="warning">
+            <View className="mode-note">
               演示服务：固定营养示例未经核验；纯本地模式下缺失营养保持未知。
             </View>
           )}
           {!data.messages.length && (
-            <View className="card">
-              <View>记下吃了什么、睡得怎样、如何运动。</View>
-              {[
-                "今天早上体重65公斤",
-                "昨晚睡了7小时",
-                "今天跑步30分钟",
-                "中午吃了牛肉面",
-              ].map((example) => (
-                <Button key={example} onClick={() => setText(example)}>
-                  {example}
-                </Button>
-              ))}
+            <View className="card starter-card">
+              <View className="section-kicker">A LITTLE EVERY DAY</View>
+              <View className="subtitle">从第一条记录开始</View>
+              <View className="muted">不用填表，像聊天一样记下今天。</View>
+              <View className="starter-examples">
+                {[
+                  "今天早上体重65公斤",
+                  "昨晚睡了7小时",
+                  "今天跑步30分钟",
+                  "中午吃了牛肉面",
+                ].map((example) => (
+                  <Button key={example} onClick={() => setText(example)}>
+                    {example}
+                  </Button>
+                ))}
+              </View>
             </View>
           )}
           {data.messages.map((message) => (
@@ -158,8 +179,15 @@ export default function Chat() {
               key={message.id}
               className={`card message ${message.role === "user" ? "user" : ""}`}
             >
-              <View className="muted">
-                {message.role === "user" ? "我" : "轻记"}
+              <View className="message-meta">
+                <View
+                  className={`message-avatar ${message.role === "user" ? "is-user" : ""}`}
+                >
+                  {message.role === "user" ? "我" : "✦"}
+                </View>
+                <Text>
+                  {message.role === "user" ? "我" : "轻记 · 健康助手"}
+                </Text>
               </View>
               <Text userSelect>{message.text}</Text>
               {message.cards?.map((card, index) => (
@@ -267,6 +295,10 @@ export default function Chat() {
         </>
       )}
       <View className="card composer">
+        <View className="composer-heading">
+          <View className="subtitle">记下此刻</View>
+          <Text className="composer-caption">每一条，都有迹可循</Text>
+        </View>
         {correction && (
           <View className="warning">正在纠正：{correction.raw_text}</View>
         )}
@@ -287,9 +319,10 @@ export default function Chat() {
             另开一条新记录
           </Button>
         )}
-        <View>
+        <View className="local-mode-row">
           纯本地处理{" "}
           <Switch
+            color="#2854ea"
             checked={!!effectiveLocal}
             disabled={
               action.busy ||

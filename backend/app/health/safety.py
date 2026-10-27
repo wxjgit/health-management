@@ -9,8 +9,9 @@ import re
 import unicodedata
 
 from ..contracts.safety import SafetyClassification
+from .fact_resolution import pending_decisions
 
-POLICY_VERSION = 'hybrid-safety-v1'
+POLICY_VERSION = 'hybrid-safety-facts-v2'
 PROMPT_VERSION = 'safety-classifier-v1'
 PRIORITY = ['emergency', 'eating_disorder', 'medical', 'special_population', 'uncertain', 'general']
 REPLIES = {
@@ -48,8 +49,11 @@ def text_risk(text):
 def local_safety(repo, texts=()):
     profile = repo.get_meta('profile') or {}
     categories = [text_risk(text) for text in texts]
-    categories.extend('medical' if fact.get('type') in ('allergy', 'professional_advice')
+    categories.extend('medical' if fact.get('enforcement') == 'clinical_review'
                       else text_risk(fact['content']) for fact in repo.safety_restrictions())
+    view = repo.resolve_facts(purpose='safety')
+    if view['conflicts'] or pending_decisions(view) or len(view['constraints']) > 8:
+        categories.append('uncertain')
     age = profile.get('age')
     if (isinstance(age, int) and age < 18) or profile.get('nutrition_context') in ('pregnant', 'breastfeeding'):
         categories.append('special_population')
@@ -132,5 +136,9 @@ def offline_record(text, pending=False):
 
 
 def offline_preference(text):
+    if not text.strip():
+        return False
+    from ..health.facts import parse_fact
     from ..parsing.demo import FOODS
-    return bool(re.fullmatch(r'我(?:这周|本周|今天)?(?:现在|已经)?(?:不喜欢|喜欢|不吃|可以接受|能接受)(?:' + '|'.join(map(re.escape, FOODS)) + r')[。！!]?', text.strip()))
+    parsed = parse_fact(text)
+    return parsed.type == 'food_preference' and parsed.subject in FOODS

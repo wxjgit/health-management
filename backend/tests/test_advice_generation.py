@@ -34,7 +34,8 @@ def install_model(monkeypatch, answer):
         data = json.loads(body['messages'][1]['content'])
         if data.get('task') == 'personalized_advice':
             calls['advice'].append(data)
-            content = {'answer': answer(data) if callable(answer) else answer}
+            result = answer(data) if callable(answer) else answer
+            content = result if isinstance(result, dict) else {'answer': result}
         else:
             content = {'intent': 'advice'}
         content = planned_content(data, content)
@@ -72,9 +73,7 @@ def ask(client, text, conversation_id='food-chat'):
 
 
 def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkeypatch):
-    reply = ('按目前记录，你今天只记了100g葱油饼，还不能判断全天是否均衡。'
-             '1490 kcal是相对目标的记录差额，不需要刻意吃满；下一餐可补充蛋白质食物和蔬菜。')
-    calls = install_model(monkeypatch, reply)
+    calls = install_model(monkeypatch, {'point_ids': ['regular_meals']})
     with TestClient(create_app(settings)) as client:
         repo = client.app.state.engine.repo
         seed_today(repo)
@@ -84,13 +83,21 @@ def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkey
 
         result = ask(client, '那我今天吃饭需要注意什么吗')
 
-        assert result['reply'] == reply
+        assert '2026-10-13 已记录 1 餐' in result['reply']
+        assert '已记录食物热量合计约 360 kcal' in result['reply']
+        assert '当前生效热量目标为 1850 kcal' in result['reply']
+        assert '记录差额为 1490 kcal' in result['reply']
+        assert '模型粗估（未核验）' in result['reply']
+        assert '保持规律进餐' in result['reply']
+        assert '一起复盘' not in result['reply']  # The model can select a different approved action.
         assert len(calls['advice']) == 1
         context = calls['advice'][0]['context']
         assert context['scene'] == 'today_attention'
         assert context['today']['remaining']['kcal'] == 1490
         assert context['today']['record_complete'] is False
         assert context['today']['meals'][0]['items'][0]['nutrition_status'] == 'estimated'
+        assert context['today']['meals'][0]['items'][0]['nutrition_origins'] == ['model_estimate']
+        assert 'regular_meals' in [p['point_id'] for p in calls['advice'][0]['options']]
         assert 'recent_dialogue' not in context
         assert 'raw_text' not in json.dumps(context, ensure_ascii=False)
         assert '旧建议' not in json.dumps(context, ensure_ascii=False)
@@ -101,7 +108,7 @@ def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkey
 
 
 def test_non_referential_question_does_not_send_raw_dialogue(settings, monkeypatch):
-    calls = install_model(monkeypatch, '目前没有足够记录判断今天最需要调整的部分。')
+    calls = install_model(monkeypatch, {'point_ids': ['record_details']})
     with TestClient(create_app(settings)) as client:
         repo = client.app.state.engine.repo
         repo.message('old-user', 'old-thread', 'user', '昨天聊了完全不同的话题', conversation='food-chat')
@@ -112,6 +119,10 @@ def test_non_referential_question_does_not_send_raw_dialogue(settings, monkeypat
 @pytest.mark.parametrize('invalid', [
     '你今天摄入了999 kcal，下一餐按这个额度安排。',
     '你全天营养已经不足，需要补足剩余热量。',
+    '已保存记录，并将目标改为1490 kcal，计划已生效。',
+    '今天已摄入1850 kcal，目标为360 kcal。',
+    '明天已记录三千千卡，目标已保存。',
+    '这餐热量精确测定为360 kcal，数据已经核验。',
 ])
 def test_unverified_model_advice_falls_back_to_same_context(settings, monkeypatch, invalid):
     install_model(monkeypatch, invalid)

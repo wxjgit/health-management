@@ -59,6 +59,18 @@ class PlanningRepositoryMixin:
             if not approved:
                 status = 'rejected'
             else:
+                if plan['data'].get('fact_policy_version'):
+                    from ...health.facts import FACT_POLICY_VERSION
+                    from ...health.fact_resolution import require_resolved
+                    from ...health.safety import require_plan_eligibility
+                    require_plan_eligibility(self, plan['data'].get('targets'))
+                    if plan['data']['fact_policy_version'] != FACT_POLICY_VERSION:
+                        raise ValueError('事实处理规则已更新，请重新生成计划')
+                    for item in plan['data'].get('schedule', []):
+                        view = self.resolve_facts(item['date'], 'plan')
+                        require_resolved(view)
+                        if any(r['enforcement'] == 'clinical_review' for r in view['constraints']):
+                            raise ValueError('计划日期存在需专业评估的信息，请重新核对')
                 active = self.active_plan()
                 actual_base = active['id'] if active else None
                 node = self.provenance_node('plan', plan_id)

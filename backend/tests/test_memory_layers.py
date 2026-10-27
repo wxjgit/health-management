@@ -66,7 +66,9 @@ def test_temporary_preference_does_not_erase_permanent_one(engine):
     assert engine.repo.facts() == []
     chosen = engine.repo.decide_fact('temporary', 'confirm', temporary['version'])
     assert chosen['confirmation'] == 'confirmed'
-    assert engine.repo.fact('permanent')['lifecycle'] == 'superseded'
+    assert engine.repo.fact('permanent')['lifecycle'] == 'active'
+    assert chosen['overrides'] == ['permanent']
+    assert [f['id'] for f in engine.repo.facts()] == ['temporary']
 
 
 def test_fact_edit_uses_expected_version_and_retains_snapshots(engine):
@@ -83,7 +85,8 @@ def test_fact_edit_uses_expected_version_and_retains_snapshots(engine):
 def test_expired_preference_stops_and_expired_restriction_stays_protective(engine):
     yesterday = clock.now().date() - timedelta(days=1)
     engine.repo.save_fact('temporary', '临时不吃辣', structured=FactInput(
-        content='临时不吃辣', type='food_preference', subject='辣', value='avoid', valid_until=yesterday))
+        content='临时不吃辣', type='food_preference', subject='辣', value='avoid',
+        restriction_reason='preference', valid_until=yesterday))
     engine.repo.save_fact('allergy', '花生', structured=FactInput(
         content='花生', type='allergy', subject='花生', value='allergic', valid_until=yesterday))
     engine.repo.expire_facts()
@@ -247,7 +250,7 @@ def test_existing_schema_upgrades_without_altering_legacy_fact(engine):
         engine.repo.conn.execute('PRAGMA user_version=5')
     second = Engine(engine.settings)
     try:
-        assert second.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 6
+        assert second.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 7
         assert second.repo.fact('old')['content'] == '我不吃花生'
         assert second.repo.fact('old')['type'] == 'legacy_text'
     finally:
@@ -409,7 +412,7 @@ def test_unconfirmed_candidate_does_not_prevent_expired_conflict_from_resolving(
     today = clock.now()
     engine.repo.save_fact('original', '我不喜欢燕麦')
     engine.repo.save_fact('candidate', '我现在可以接受燕麦', context_text='如果我现在可以接受燕麦呢？')
-    engine.repo.save_fact('temporary', '我今天不吃燕麦')
+    engine.repo.save_fact('temporary', '我今天可以接受燕麦')
     monkeypatch.setattr(clock, 'now', lambda: today + timedelta(days=1))
     assert [fact['id'] for fact in engine.repo.facts()] == ['original']
 

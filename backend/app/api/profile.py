@@ -88,7 +88,8 @@ def update_fact(fact_id: str, body: FactUpdate, engine=Depends(get_engine)):
 @router.patch('/facts/{fact_id}')
 def decide_fact(fact_id: str, body: FactDecision, engine=Depends(get_engine)):
     with engine.lock:
-        return engine.repo.decide_fact(fact_id, body.action, body.expected_version)
+        return engine.repo.decide_fact(fact_id, body.action, body.expected_version,
+                                       body.resolution, body.peer_versions)
 
 
 @router.get('/facts/{fact_id}/revisions')

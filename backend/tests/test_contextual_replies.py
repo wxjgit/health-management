@@ -44,7 +44,7 @@ def install_model(monkeypatch, parse=None, phrase=None):
         if task == 'contextual_reply':
             calls['phrase'].append(data)
             content = phrase(data) if phrase else {'segments': [
-                {'point_id': p['point_id'], 'text': p['text']} for p in data['plan']['points']]}
+                {'point_id': p['point_id'], 'variant_id': 'default'} for p in data['plan']['points']]}
         elif task == 'estimate_nutrition':
             calls['nutrition'].append(data)
             content = {'items': [{'index': item['index'], 'kcal': 280, 'protein_g': 20,
@@ -267,21 +267,21 @@ def test_unapproved_or_missing_response_points_are_rejected():
     signals = reconcile_feedback([], [], '昨天有点咸', '2026-10-08')
     plan = make_plan(signals, 'advice')
     with pytest.raises(ValueError):
-        check_phrasing({'segments': [{'point_id': 'ack_salty', 'text': '你觉得偏咸。'}]}, plan)
+        check_phrasing({'segments': [{'point_id': 'ack_salty', 'variant_id': 'warm'}]}, plan)
     with pytest.raises(ValueError):
-        check_phrasing({'segments': [{'point_id': 'unknown', 'text': '你觉得偏咸。'}]}, plan)
+        check_phrasing({'segments': [{'point_id': 'unknown', 'variant_id': 'warm'}]}, plan)
 
 
 def test_valid_contextual_phrasing_is_adopted_but_receipt_remains_local(settings, monkeypatch):
     def phrase(data):
-        return {'segments': [{'point_id': 'ack_salty', 'text': '你说这餐炸鸡的口味有些偏咸。'},
-                             {'point_id': 'guide_salty', 'text': '下一餐可以减少盐和酱料，选少盐的做法。'}]}
+        return {'segments': [{'point_id': 'ack_salty', 'variant_id': 'warm'},
+                             {'point_id': 'guide_salty', 'variant_id': 'warm'}]}
     install_model(monkeypatch, parse=lambda data: {'intent': 'record', 'events': [meal([
         {'name': '炸鸡', 'quantity': 100, 'unit': 'g'}])]}, phrase=phrase)
     with TestClient(create_app(settings)) as client:
         result = chat(client, '昨天吃了100g炸鸡，有点咸')
         assert '已记下昨天的100g炸鸡。' in result['reply']
-        assert '你说这餐炸鸡的口味有些偏咸。' in result['reply']
+        assert '你说这餐的口味有些偏咸。' in result['reply']
         assert '280 kcal' in result['reply']
         assert any(t['title'] == '针对性回应' and t['source'] == 'model' for t in result['process_trace'])
 

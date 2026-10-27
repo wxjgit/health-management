@@ -6,6 +6,7 @@ import logging
 import re
 
 from ..contracts.events import NutritionEstimates, NutritionValues, PreparedEvent
+from ..policy.output import model_nutrition_uncertainty
 
 logger = logging.getLogger(__name__)
 # Serving tuples: kcal, protein, carbs, fat. Only used in clearly labelled demo mode.
@@ -73,6 +74,9 @@ def _reference(item, evidence, item_index):
 
 def _stamp(item, reason=None):
     sources = item['nutrition_sources']
+    if 'model_estimate' in sources.values():
+        # Free-form estimator commentary is never a source or a user-facing receipt.
+        item['uncertainty'] = model_nutrition_uncertainty()
     complete = all(item.get(key) is not None for key in KEYS)
     if not sources:
         item['nutrition_status'] = 'unavailable'
@@ -139,6 +143,8 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
                         'nutrition_reason', 'uncertainty', 'kcal_range'):
                 if key in old:
                     item[key] = copy.deepcopy(old[key])
+            if 'model_estimate' in item.get('nutrition_sources', {}).values():
+                _stamp(item, item.get('nutrition_reason'))
             continue
         # Ignore parse-time estimates. Their quantity/basis has not been checked by this step.
         for key in KEYS:
@@ -196,7 +202,7 @@ def prepare_nutrition(draft, mode, estimator, previous=None, user_text='', reuse
         elif candidate['index'] in estimates:
             result = estimates[candidate['index']]
             proposed = {k: getattr(result, k) for k in candidate['requested_nutrients'] if getattr(result, k) is not None}
-            uncertainty = result.uncertainty
+            uncertainty = model_nutrition_uncertainty()
         merged = {**{k: item.get(k) for k in KEYS}, **proposed}
         if all(merged[k] is not None for k in KEYS):
             macro_energy = merged['protein_g'] * 4 + merged['carbs_g'] * 4 + merged['fat_g'] * 9

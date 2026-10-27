@@ -120,6 +120,8 @@ class PlanHarness:
                 question='你已选中一条历史记录。请明确是修改这条记录，还是退出纠错后新增。',
             )]
         for action in plan.actions:
+            if action.fact_draft is not None and action.intent != 'fact':
+                raise PolicyError('只有长期信息任务可以携带事实草稿。')
             if action.text not in state['input_text']:
                 raise PolicyError('处理计划必须对应本次输入，不能自行扩展问题。')
             if action.intent != 'record' and action.events:

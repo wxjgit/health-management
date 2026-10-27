@@ -15,7 +15,7 @@ from model_helpers import planned_content, safety_transport
 @pytest.fixture(autouse=True)
 def clock(monkeypatch):
     fixed = lambda: datetime(2026, 10, 9, 12, tzinfo=SHANGHAI)
-    for module in ('app.common.clock', 'app.modeling.parser'):
+    for module in ('app.common.clock', 'app.modeling.parser', 'app.chat.replies'):
         monkeypatch.setattr(module + '.now', fixed)
 
 
@@ -30,7 +30,7 @@ def mock_model(monkeypatch, handler):
     def isolated_handler(request):
         data = json.loads(json.loads(request.content)['messages'][1]['content'])
         if data.get('task') == 'contextual_reply':
-            return model_response({'segments': [{'point_id': p['point_id'], 'text': p['text']}
+            return model_response({'segments': [{'point_id': p['point_id'], 'variant_id': 'default'}
                                                for p in data['plan']['points']]})
         if data.get('task') == 'estimate_nutrition':
             # These tests isolate extraction/patch behavior; nutrition has its own integration tests.
@@ -330,3 +330,33 @@ def test_invalid_supplied_value_is_rejected_even_during_clarification(settings, 
         response = resume(client, pending, '9999公斤')
         assert response.status_code == 409
         assert client.get('/api/events').json() == []
+
+
+def test_model_clarification_cannot_claim_a_save_before_the_record_is_ready(settings, monkeypatch):
+    forged = '已保存记录，目标已经改成900 kcal，计划已生效。'
+    def handler(request):
+        data = json.loads(json.loads(request.content)['messages'][1]['content'])
+        if 'requested_fields' in data:
+            assert data['requested_fields'] == ['cooking']
+            return model_response({'cooking': '蒸'})
+        return model_response({'intent': 'record', 'events': [meal(items=[
+            {'name': '米饭', 'quantity': 1, 'unit': '碗'}])], 'question': forged,
+            'clarification_event_index': 0, 'clarification_item_index': 0,
+            'clarification_fields': ['cooking']})
+    mock_model(monkeypatch, handler)
+    with TestClient(create_app(settings)) as client:
+        pending = chat(client, '昨天吃了一碗米饭')
+        assert pending['status'] == 'waiting_input'
+        assert pending['reply'] == '米饭主要是什么做法？不知道也可以。'
+        assert pending['pending_input']['prompt'] == pending['reply']
+        assert pending['pending_input']['saved_records'] == 0
+        assert client.get('/api/events').json() == []
+        assert client.get('/api/plans').json() == []
+        done = resume(client, pending, '蒸的')
+        assert done.status_code == 200, done.text
+        assert done.json()['status'] == 'completed'
+        assert '已记下昨天的1碗米饭。' in done.json()['reply']
+        assert forged not in done.json()['reply']
+        records = client.get('/api/events').json()
+        assert len(records) == 1
+        assert records[0]['data']['items'][0]['cooking'] == '蒸'

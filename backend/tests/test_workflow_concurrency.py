@@ -60,7 +60,7 @@ class ControlledModel:
             content = {'event': {'kind': 'weight', 'occurred_at': data['record']['occurred_at'],
                                  'raw_text': data['text'], 'value': 66}}
         elif data['task'] == 'personalized_advice':
-            content = {'answer': '记录还不足以判断稳定趋势，可以继续记录并观察。'}
+            content = {'point_ids': ['observe_weight']}
         else:
             raise AssertionError('unexpected model task: ' + data['task'])
         return httpx.Response(200, json={

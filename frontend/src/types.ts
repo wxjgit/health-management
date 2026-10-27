@@ -13,7 +13,8 @@ export type Profile = {
   goal_weight_kg: number;
   goal_date: string;
   activity: "sedentary" | "light" | "moderate" | "active";
-  nutrition_context?: "unspecified" | "general" | "pregnant" | "breastfeeding" | "clinical";
+  nutrition_context?:
+    "unspecified" | "general" | "pregnant" | "breastfeeding" | "clinical";
 };
 export type DefaultTargets = {
   status: "ready" | "needs_profile" | "unavailable";
@@ -144,7 +145,13 @@ export type Workflow = {
   pending_input?: Pending;
   processing_mode?: "model_allowed" | "local_only";
   safety?: {
-    category: "general" | "emergency" | "medical" | "eating_disorder" | "special_population" | "uncertain";
+    category:
+      | "general"
+      | "emergency"
+      | "medical"
+      | "eating_disorder"
+      | "special_population"
+      | "uncertain";
     reason: string;
     policy_version: string;
     capability?: "record_only" | "preference_only" | "plan";
@@ -228,16 +235,57 @@ export type Preferences = {
   notifications_enabled: boolean;
 };
 export type Fact = {
-  id: string; content: string; source: string;
-  type: "food_preference" | "restriction" | "allergy" | "professional_advice" | "legacy_text";
-  subject: string; value: string; version: number;
-  source_kind: string; confirmation: string; lifecycle: string;
-  valid_from: string | null; valid_until: string | null;
-  supersedes: string | null; evidence_message_id?: string | null;
+  id: string;
+  content: string;
+  source: string;
+  type:
+    | "food_preference"
+    | "restriction"
+    | "allergy"
+    | "health_condition"
+    | "professional_advice"
+    | "legacy_text";
+  subject: string;
+  value: string;
+  version: number;
+  source_kind: string;
+  confirmation: string;
+  lifecycle: string;
+  valid_from: string | null;
+  valid_until: string | null;
+  supersedes: string | null;
+  evidence_message_id?: string | null;
+  subject_key?: string;
+  subject_kind?: "food" | "condition" | "nutrient" | "activity" | "other";
+  time_scope?: "persistent" | "bounded" | "temporary_unknown" | "unknown";
+  assertion?: "affirmed" | "denied" | "uncertain" | "hypothetical";
+  restriction_reason?:
+    | "preference"
+    | "allergy"
+    | "health_condition"
+    | "professional_advice"
+    | "other"
+    | "unknown";
+  source_details?: {
+    professional?: string;
+    institution?: string;
+    advised_on?: string | null;
+    document?: string;
+  };
+  reported_severity?: "unknown" | "mild" | "moderate" | "severe";
+  enforcement?: string;
+  overrides?: string[];
+  temporarily_covered?: boolean;
+  review_reason?: string;
+  schema_version?: number;
 };
 export type DerivedMemory = {
-  generated_at?: string; window?: string[] | null; algorithm_version: string | null;
-  status: string; invalid_reason: string | null; recomputable?: boolean;
+  generated_at?: string;
+  window?: string[] | null;
+  algorithm_version: string | null;
+  status: string;
+  invalid_reason: string | null;
+  recomputable?: boolean;
 };
 export type Month = {
   month: string;

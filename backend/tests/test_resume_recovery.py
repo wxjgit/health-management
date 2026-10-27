@@ -371,7 +371,7 @@ def test_existing_database_migrates_without_losing_health_records(settings, mode
     runtime = Engine(settings)
     try:
         assert len(runtime.repo.events()) == 1
-        assert runtime.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 6
+        assert runtime.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 7
         assert runtime.repo.conn.execute('SELECT COUNT(*) FROM resume_attempts').fetchone()[0] == 0
     finally:
         runtime.close()

@@ -1,6 +1,6 @@
 """Chat workflow response assembly and advice context handling."""
 
-from ..health.advice import build_advice_context, context_trace, fallback_advice, validate_advice
+from ..health.advice import build_advice_context, context_trace
 from ..chat.feedback import wants_advice
 from ..modeling import PolicyError
 from ..health import dashboard, evidence, meal_assessment, recommendation
@@ -8,6 +8,7 @@ from ..health.nutrition import nutrition_summary
 from ..chat.replies import express_plan, make_plan, medical_question, record_receipt
 from ..contracts.workflows import PlannedAction
 from ..health.facts import fact_receipt
+from ..policy.output import advice_plan, fallback_advice, validate_advice
 
 
 class ChatResponseMixin:
@@ -87,7 +88,7 @@ class ChatResponseMixin:
                     reply = validate_advice(self.parser.answer_advice(context), context)
                     advice_traces.append({
                         'title': '生成个性化建议',
-                        'detail': '模型基于筛选后的结构化记录回答；数值、完整性和医疗边界由本地规则复核。',
+                        'detail': '模型仅选择本次批准的建议要点；正文、日期、数值、完整性和估算说明由本地程序生成。',
                         'source': 'model',
                     })
                 except (ValueError, TypeError):
@@ -123,7 +124,7 @@ class ChatResponseMixin:
                 refs.extend(additional_refs)
                 try:
                     answer = validate_advice(self.parser.answer_advice(context), context)
-                except ValueError:
+                except (ValueError, TypeError):
                     answer = fallback_advice(context)
                 reply += '\n' + answer
                 advice_traces.append({
@@ -135,6 +136,7 @@ class ChatResponseMixin:
                 if not action.fact_text or action.fact_text not in state['input_text']:
                     raise PolicyError('长期信息必须来自本次输入。')
                 fact = self.repo.save_fact(f'{state["thread_id"]}:fact:{index}', action.fact_text,
+                                           draft=action.fact_draft.model_dump(mode='json') if action.fact_draft else None,
                                            context_text=state['input_text'],
                                            source_message_id=state.get('source_message_id'))
                 reply += '\n' + fact_receipt(fact, action.fact_text)
@@ -205,5 +207,7 @@ class ChatResponseMixin:
             scope_text=source,
         )
         if self.parser.mode == 'model':
-            self.parser.boundary.grant('personalized_advice', {'context': context})
+            self.parser.boundary.grant('personalized_advice', {
+                'context': context, 'options': advice_plan(context)['options'],
+            })
         return context, refs

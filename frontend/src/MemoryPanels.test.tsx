@@ -130,6 +130,149 @@ describe("长期信息管理", () => {
   });
 });
 
+describe("结构化事实", () => {
+  function fetched(rows: Fact[]) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(rows), { status: 200 })),
+    );
+  }
+
+  it("临时选择提交相关版本并说明到期恢复", async () => {
+    const base: Fact = {
+      ...fact,
+      schema_version: 2,
+      subject_key: "燕麦",
+      confirmation: "conflict",
+    };
+    const temp: Fact = {
+      ...base,
+      id: "temp",
+      content: "我今天可以接受燕麦",
+      value: "accept",
+      valid_until: "2026-10-26",
+      time_scope: "bounded",
+      enforcement: "soft",
+      assertion: "affirmed",
+    };
+    fetched([base, temp]);
+    const mutate = vi.fn(async () => true);
+    render(
+      <FactManager
+        facts={[base, temp]}
+        busy={false}
+        mutate={mutate}
+        remove={vi.fn()}
+      />,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "仅在该期限采用" }),
+    );
+    expect(mutate).toHaveBeenCalledWith("/facts/temp", "PATCH", {
+      action: "confirm",
+      expected_version: 3,
+      resolution: "temporary",
+      peer_versions: { oat: 3 },
+    });
+  });
+
+  it("截止日期未知时不能一键确认成为长期事实", async () => {
+    const pending: Fact = {
+      ...fact,
+      confirmation: "candidate",
+      time_scope: "temporary_unknown",
+      review_reason: "临时信息缺少结束日期",
+    };
+    fetched([pending]);
+    render(
+      <FactManager
+        facts={[pending]}
+        busy={false}
+        mutate={vi.fn()}
+        remove={vi.fn()}
+      />,
+    );
+    expect(
+      (
+        (await screen.findByRole("button", {
+          name: "确认这条",
+        })) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(screen.getByRole("status").textContent).toContain("缺少结束日期");
+  });
+
+  it("专业建议提交独立来源和建议日期", async () => {
+    fetched([]);
+    const mutate = vi.fn(async () => true);
+    render(
+      <FactManager facts={[]} busy={false} mutate={mutate} remove={vi.fn()} />,
+    );
+    await userEvent.click(screen.getByText("新增长期信息"));
+    await userEvent.selectOptions(
+      screen.getByLabelText("事实类型"),
+      "professional_advice",
+    );
+    await userEvent.type(
+      screen.getByLabelText("长期信息内容"),
+      "医生建议限制燕麦",
+    );
+    await userEvent.type(screen.getByLabelText("事实对象"), "燕麦");
+    await userEvent.selectOptions(screen.getByLabelText("事实取值"), "limit");
+    await userEvent.type(screen.getByLabelText("专业人员称呼"), "某医生");
+    await userEvent.type(screen.getByLabelText("建议作出日期"), "2026-10-20");
+    await userEvent.click(screen.getByRole("button", { name: "保存长期信息" }));
+    expect(mutate).toHaveBeenCalledWith(
+      "/facts",
+      "POST",
+      expect.objectContaining({
+        type: "professional_advice",
+        value: "limit",
+        source_details: expect.objectContaining({
+          professional: "某医生",
+          advised_on: "2026-10-20",
+        }),
+      }),
+    );
+  });
+
+  it("临时覆盖展示原偏好，保护性冲突不能普通选择解除", async () => {
+    const covered: Fact = { ...fact, temporarily_covered: true };
+    const temporary: Fact = {
+      ...fact,
+      id: "temp",
+      content: "今天可以接受燕麦",
+      overrides: ["oat"],
+      valid_until: "2026-10-26",
+    };
+    const allergy: Fact = {
+      ...fact,
+      id: "allergy",
+      type: "allergy",
+      content: "自述燕麦过敏",
+      value: "allergic",
+      confirmation: "conflict",
+      enforcement: "clinical_review",
+    };
+    fetched([covered, temporary, allergy]);
+    render(
+      <FactManager
+        facts={[covered, temporary, allergy]}
+        busy={false}
+        mutate={vi.fn()}
+        remove={vi.fn()}
+      />,
+    );
+    expect(
+      await screen.findByText(/仅在有效期内采用；到期后恢复/),
+    ).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "采用这条" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+});
+
 describe("版本与过期提示", () => {
   it("修订内容更新后，旧的异步响应不能恢复旧历史", async () => {
     let finish!: (response: Response) => void;

@@ -337,6 +337,8 @@ class PrivacyDeletionService:
                     period, _, end = object_id.partition(':')
                     self._reset_job(f"{'daily' if period == 'day' else 'weekly'}:{end}")
                 table, column = TABLES[kind]
+                if kind == 'fact':
+                    repo.erase_fact_links(object_id)
                 repo.conn.execute(f'DELETE FROM {table} WHERE {column}=?', (object_id,))
         for node in manifest['nodes']:
             repo.conn.execute("UPDATE provenance_nodes SET lifecycle='deleted' WHERE node_id=?", (node,))

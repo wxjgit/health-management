@@ -3,7 +3,7 @@ from ..common import clock
 
 ALGORITHMS = {
     'sleep_intake': 'sleep-intake-v1', 'weekday_intake': 'weekday-intake-v1',
-    'review': 'review-v1', 'plan': 'editable-targets-v2', 'summary': 'monthly-summary-v1',
+    'review': 'review-v1', 'plan': 'editable-targets-facts-v3', 'summary': 'monthly-summary-v1',
 }
 
 def derived_metadata(kind, data):
@@ -38,6 +38,8 @@ def derived_view(data, *, rolling=False, reference=None):
     expected = ALGORITHMS.get(memory.get('algorithm'))
     if expected and memory.get('algorithm_version') != expected:
         return invalidate_data(data, 'algorithm_changed', plan=memory.get('algorithm') == 'plan')
+    if memory.get('algorithm') == 'plan' and data.get('fact_reference_date') and data['fact_reference_date'] != (reference or clock.now().date()).isoformat():
+        return invalidate_data(data, 'fact_date_changed', plan=True)
     if rolling and memory.get('window') and memory['window'][-1] != (reference or clock.now().date()).isoformat():
         return invalidate_data(data, 'window_changed')
     if memory.get('algorithm') == 'plan' and memory.get('window') and memory['window'][-1] < (reference or clock.now().date()).isoformat():

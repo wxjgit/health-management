@@ -6,6 +6,8 @@ from .targets import default_targets
 from .dashboard import evidence, history_window, recommendation
 from ..privacy.provenance import tracked
 from .safety import require_plan_eligibility
+from .fact_resolution import fact_projection, require_resolved
+from .facts import FACT_POLICY_VERSION
 
 
 @tracked
@@ -45,7 +47,6 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
     recent = repo.events(limit=30)
     sleep_events = [event for event in recent if event['kind'] == 'sleep']
     exercise_events = [event for event in recent if event['kind'] == 'exercise']
-    constraints = [fact['content'] for fact in repo.facts()]
     actual_durations = [event['data']['value'] for event in exercise_events[:5]]
     duration = round(mean(actual_durations)) if actual_durations else 20
     session_minutes = round(targets['exercise_minutes'] / 4)
@@ -53,9 +54,14 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
     schedule = []
     for index in range(7):
         day = (start + timedelta(days=index)).isoformat()
+        view = repo.resolve_facts(day, 'plan')
+        require_resolved(view)
+        if any(fact['enforcement'] == 'clinical_review' for fact in view['constraints']):
+            raise ValueError('计划日期存在需专业评估的信息，请先核对，暂不生成普通计划。')
+        constraints = [fact['content'] for fact in view['effective']]
         food = '三餐规律进食；每餐安排蛋白质来源、蔬菜与适量主食，记录实际分量。'
         if constraints:
-            food += ' 遵守：' + '；'.join(constraints[-3:])
+            food += ' 参考：' + '；'.join(constraints)
         if index == 0 and sleep_events and sleep_events[0]['data']['value'] < 420:
             food += ' 最近一次睡眠较短，提前安排方便准备的餐食，减少临时决策。'
         activity = (
@@ -63,7 +69,8 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
             if targets['exercise_minutes'] and index in [0, 2, 4, 6]
             else '恢复日，保持日常活动，不用补偿性运动抵消饮食。'
         )
-        schedule.append({'date': day, 'food': food, 'exercise': activity})
+        schedule.append({'date': day, 'food': food, 'exercise': activity,
+                         'facts': [fact_projection(fact) for fact in view['effective']]})
     return {
         '_target_sources': ([repo.provenance_node('plan', active['id'], part='targets')] if inherited else
                             [repo.provenance_node('meta', 'profile'),
@@ -86,7 +93,9 @@ def plan_draft(repo, targets, note='', target_source='manual', suggestion_finger
         'data_version': repo.version(),
         'base_plan_id': active['id'] if active else None,
         'evidence_refs': [evidence(event) for event in recent[:12]],
-        'strategy_version': 'editable-targets-v2',
+        'strategy_version': 'editable-targets-facts-v3',
+        'fact_policy_version': FACT_POLICY_VERSION,
+        'fact_reference_date': clock.now().date().isoformat(),
     }
 
 

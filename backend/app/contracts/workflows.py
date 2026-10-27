@@ -1,11 +1,12 @@
 """Conversation and workflow boundary contracts."""
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
 from .base import StrictModel
+from .facts import FactDraft
 from .events import (
     EvidenceSource,
     EventDraft,
@@ -32,6 +33,7 @@ class ExtractionResult(StrictModel):
     clarification_fields: list[ClarificationField] = Field(default_factory=list, max_length=8)
     correction_id: str | None = None
     fact_text: str | None = Field(default=None, max_length=500)
+    fact_draft: FactDraft | None = None
     query_start: date | None = None
     query_end: date | None = None
     query_kind: Literal['meal', 'weight', 'sleep', 'exercise', 'cycle'] | None = None
@@ -72,7 +74,7 @@ class EventPatch(StrictModel):
 
 class ReplySegment(StrictModel):
     point_id: str = Field(min_length=1, max_length=80)
-    text: str = Field(min_length=1, max_length=240)
+    variant_id: Literal['default', 'warm']
 
 
 class ContextualReply(StrictModel):
@@ -80,7 +82,7 @@ class ContextualReply(StrictModel):
 
 
 class AdviceReply(StrictModel):
-    answer: str = Field(min_length=1, max_length=1200)
+    point_ids: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(min_length=1, max_length=2)
 
 
 DataView = Literal[
@@ -103,6 +105,7 @@ class PlannedAction(StrictModel):
     clarification_item_index: int | None = Field(default=None, ge=0, le=39)
     clarification_fields: list[ClarificationField] = Field(default_factory=list, max_length=8)
     fact_text: str | None = Field(default=None, max_length=500)
+    fact_draft: FactDraft | None = None
     query_start: date | None = None
     query_end: date | None = None
     query_kind: Literal['meal', 'weight', 'sleep', 'exercise', 'cycle'] | None = None

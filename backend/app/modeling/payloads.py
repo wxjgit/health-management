@@ -9,7 +9,9 @@ from ..contracts.workflows import (
 )
 from ..contracts.events import NutritionEstimates
 from ..contracts.safety import SafetyClassification, SafetyContext
+from ..contracts.facts import FactProjection
 from .errors import PolicyError
+from ..policy.output import advice_plan, feedback_options
 
 
 ENVELOPES = {
@@ -19,8 +21,8 @@ ENVELOPES = {
     'patch_draft': {
         'task', 'now', 'text', 'draft', 'requested_fields', 'item_index', 'schema'
     },
-    'personalized_advice': {'task', 'context', 'schema'},
-    'contextual_reply': {'task', 'plan', 'schema'},
+    'personalized_advice': {'task', 'context', 'options', 'schema'},
+    'contextual_reply': {'task', 'plan', 'options', 'schema'},
     'estimate_nutrition': {'task', 'items', 'schema'},
 }
 
@@ -66,6 +68,8 @@ def validate_payload(purpose, data):
     if purpose == 'personalized_advice':
         forbid(data['context'], {'raw_text', 'quote', 'recent_dialogue', 'data'})
         validate_advice_payload(data['context'])
+        if data['options'] != advice_plan(data['context'])['options']:
+            raise PolicyError('建议选项必须由本地策略生成。')
     if purpose in ('correct_selected', 'patch_draft'):
         draft = data.get('record', data.get('draft'))
         allowed = {
@@ -98,6 +102,8 @@ def validate_payload(purpose, data):
                 raise PolicyError('营养估算只能使用批准的营养字段。')
     if purpose == 'contextual_reply':
         plan = data['plan']
+        if data['options'] != feedback_options(plan):
+            raise PolicyError('表达选项必须由本地策略生成。')
         if set(plan) - {'stage', 'points', 'feedback', 'boundary', 'context'}:
             raise PolicyError('回复润色包含未批准字段。')
         if any(
@@ -163,6 +169,12 @@ def validate_advice_payload(context):
         or len(context.get('preferences', [])) > 5
     ):
         raise PolicyError('长期信息超过发送条数上限。')
+    for key in ('constraints', 'preferences'):
+        for fact in context.get(key, []):
+            try:
+                FactProjection.model_validate(fact)
+            except ValueError as error:
+                raise PolicyError('事实投影字段不合法。') from error
     if 'profile' in context:
         fields(context['profile'], {
             'age', 'height_cm', 'weight_kg', 'goal_weight_kg', 'activity',
@@ -182,7 +194,10 @@ def validate_advice_payload(context):
         fields(today, {
             'date', 'meals', 'totals', 'remaining', 'targets', 'meal_count',
             'record_complete',
+            'nutrition_origins',
         })
+        if set(today.get('nutrition_origins', [])) - {'user', 'model_estimate', 'demo_fixture', 'unknown'}:
+            raise PolicyError('汇总营养来源类别未获批准。')
         if len(today['meals']) > 10:
             raise PolicyError('今日餐食超过视图上限。')
         meals.extend(today['meals'])
@@ -199,8 +214,11 @@ def validate_advice_payload(context):
             fields(item, {
                 'name', 'quantity', 'unit', 'size', 'cooking', 'nutrients',
                 'nutrition_status', 'nutrition_source', 'nutrition_reason',
+                'nutrition_origins',
             })
             fields(item['nutrients'], nutrient_keys)
+            if set(item.get('nutrition_origins', [])) - {'user', 'model_estimate', 'demo_fixture', 'unknown'}:
+                raise PolicyError('营养来源类别未获批准。')
     days = context.get('recent_days', [])
     if len(days) > 7:
         raise PolicyError('饮食汇总超出7天视图。')

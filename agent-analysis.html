@@ -2641,12 +2641,14 @@
           <a href="#data-harness">处理计划与数据权限</a>
           <a class="nav-subsection" href="#harness-case">纠错案例：65kg → 66kg</a>
           <a class="nav-subsection" href="#grounding-harness">提取结果的证据约束</a>
+          <a class="nav-subsection" href="#output-harness">输出约束：模型选，程序说</a>
         </div>
         <div class="nav-group"><span class="nav-label">04 · 运行机制</span>
           <a href="#memory-system">四层记忆系统</a>
           <a class="nav-subsection" href="#memory-working">① 工作记忆：过期与恢复</a>
           <a class="nav-subsection" href="#memory-ledger">② 事件账本：修订与冲突</a>
           <a class="nav-subsection" href="#memory-facts">③ 长期事实：确认与有效期</a>
+          <a class="nav-subsection" href="#memory-facts-v2">本次升级：偏好变化与临时例外</a>
           <a class="nav-subsection" href="#memory-derived">④ 派生记忆：依据与失效</a>
           <a class="nav-subsection" href="#memory-guards">共同保障与验证</a>
           <a class="nav-subsection" href="#prompt-system">LLM 调用契约</a>
@@ -3413,13 +3415,115 @@ if not _equal(replayed, _actual(event, evidence)):
         </div>
       </section>
 
+      <section class="section panel harness-case" id="output-harness" data-chapter aria-labelledby="output-harness-title">
+        <div class="support-head">
+          <span>07B</span>
+          <div>
+            <h2 id="output-harness-title">输出 Harness · 模型选内容，程序说事实</h2>
+            <p>前面的规则检查能读什么、能保存什么；这一层负责把真实结果准确地展示出来。</p>
+          </div>
+        </div>
+        <div class="support-body">
+          <div class="case-scene">
+            <div>
+              <h3>原来可能发生什么？</h3>
+              <p>还在等用户补充米饭的做法，记录尚未保存。模型的追问却可能夹带：</p>
+              <blockquote>已保存记录，目标已经改成900 kcal，计划已生效。</blockquote>
+              <p>写入权限虽然被挡住，用户仍可能相信这句话，关掉页面，以为事情已经办好了。</p>
+            </div>
+            <div>
+              <h3>现在怎么处理？</h3>
+              <p>程序检查待补字段是 <code>cooking</code>，只生成对应的本地问句：</p>
+              <blockquote>米饭主要是什么做法？不知道也可以。</blockquote>
+              <p>补充完成并真正保存后，程序才读取实际记录，生成“已记下……”的回执。输入理解和营养粗估仍由模型参与。</p>
+            </div>
+          </div>
+
+          <div class="case-flow" role="img" aria-label="本地生成可用选项，模型选择编号，本地校验编号，再把本地事实和批准文字拼成最终回复。">
+            <span>程序提供可用选项</span><b aria-hidden="true">→</b>
+            <span class="model">模型只选编号</span><b aria-hidden="true">→</b>
+            <span>校验格式与选择范围</span><b aria-hidden="true">→</b>
+            <span>本地事实 + 批准文字</span>
+          </div>
+
+          <ol class="case-steps">
+            <li class="case-step">
+              <h3>把回复变成“点菜单”</h3>
+              <p>例如，<code>review_portion</code> 对应“结合实际分量、饥饿程度和饱腹感复盘”。模型可以选择这个编号；最终文字从本地目录中取。</p>
+              <pre class="case-code"><code>// AdviceReply：模型可以提交的候选
+{"point_ids": ["review_portion"]}
+
+// 下面这种候选会被拒绝：多了未允许的 answer 字段
+{"point_ids": ["review_portion"], "answer": "计划已经生效。"}</code></pre>
+              <p><code>StrictModel</code> 使用 <code>extra='forbid'</code>，拒绝多出来的字段。反馈表达同样只能交 <code>point_id + variant_id</code>；<code>default / warm</code> 是两种本地写好的表达版本。</p>
+              <a class="case-source" href="backend/app/contracts/workflows.py">contracts/workflows.py · AdviceReply / ReplySegment</a> ·
+              <a class="case-source" href="backend/app/policy/output.py">policy/output.py · ADVICE / feedback_options</a>
+            </li>
+
+            <li class="case-step">
+              <h3>编号合法，还要检查本次能不能选</h3>
+              <p>本次讨论一餐，就只开放对应的复盘要点。模型不能擅自选体重趋势，也不能重复选择同一项。下面检查的是编号与集合，属于确定的程序规则。</p>
+              <details>
+                <summary>查看关键代码 · validate_advice（长条件等价换行）</summary>
+                <pre class="case-code"><code>selected = AdviceReply.model_validate(candidate)
+plan = advice_plan(context)
+options = {point['point_id']: point['text'] for point in plan['options']}
+if (len(selected.point_ids) != len(set(selected.point_ids))
+        or any(key not in options for key in selected.point_ids)):
+    raise ValueError('建议要点未获本次上下文批准或存在重复')</code></pre>
+              </details>
+              <div class="case-outcome">格式检查回答“表有没有填对”；本地策略再回答“这次允许选哪些内容”。遇到错误候选，工作流使用同一上下文的本地回复，不扩大取数范围。</div>
+              <a class="case-source" href="backend/app/policy/output.py">policy/output.py · advice_plan / validate_advice / fallback_advice</a>
+            </li>
+
+            <li class="case-step">
+              <h3>摄入量和目标，各自从对应字段取</h3>
+              <p>假设本地记录为：摄入 <strong>360 kcal</strong>、当前目标 <strong>1850 kcal</strong>、记录差额 <strong>1490 kcal</strong>。这些是说明用的示例数据。程序分别填入对应句子，模型没有位置把它们写反。</p>
+              <pre class="case-code"><code># advice_plan · 源码节选
+facts.append(f'{label}约 {totals["kcal"]:g} kcal。')
+facts.append(f'当前生效热量目标为 {targets["kcal"]:g} kcal。')
+
+# validate_advice · 最后拼接：本地事实 + 模型选中的批准文字
+return ''.join([*plan['facts'], *[options[key] for key in selected.point_ids]])</code></pre>
+              <p>记录未确认完整、部分营养未知、模型粗估未核验等说明，也放进本地的 <code>facts</code>。模型选择建议时，不能把这些必要说明删掉。</p>
+              <a class="case-source" href="backend/app/policy/output.py">policy/output.py · advice_plan / validate_advice</a> ·
+              <a class="case-source" href="backend/app/health/advice.py">health/advice.py · build_advice_context / 营养来源投影</a>
+            </li>
+
+            <li class="case-step">
+              <h3>缺信息先问，保存之后再给回执</h3>
+              <p>追问用什么句子，由缺失字段决定。保存回执则根据工作流读取到的实际记录生成；回执函数本身不执行保存。</p>
+              <pre class="case-code"><code># policy/output.py · clarification_question
+if field == 'items':
+    return '这餐具体吃了什么？'
+
+# chat/replies.py · record_receipt
+if not records:
+    return '本次没有保存记录。'</code></pre>
+              <p>恢复旧的待补流程时，<code>clarify()</code> 重新调用 <code>question_from_state(state)</code>，并校验已保存的表达选择。旧 <code>clarification_reply</code> 中的自由正文不会直接展示；模型营养误差说明也由本地固定提示替代。</p>
+              <a class="case-source" href="backend/app/workflows/chat_flow.py">workflows/chat_flow.py · prepare_clarification / clarify</a> ·
+              <a class="case-source" href="backend/app/chat/replies.py">chat/replies.py · record_receipt</a> ·
+              <a class="case-source" href="backend/app/health/nutrition.py">health/nutrition.py · _stamp / prepare_nutrition</a>
+            </li>
+          </ol>
+
+          <div class="case-outcome"><strong>这次保证什么：</strong>通过这层渲染的新回复，状态、日期、数值和必要边界由本地代码决定。关键词仍可用于其他识别任务，这层不靠关键词猜测任意正文的含义。<strong>当前限制：</strong>普通建议限于本地批准的目录；扩充建议要补充条目、适用条件和测试。模型的输入理解与营养粗估仍可能出错；已有完成会话的历史文字不做改写。</div>
+          <p class="case-note">验证快照：2026-10-27。后端全量 412 项通过，最后调整的专项回归 75 项通过，使用模拟模型和独立测试数据库。关键用例会故意让模型谎报保存、互换数字、在追问中夹带状态，并核对最终展示和数据库结果。</p>
+          <div class="llm-source-grid">
+            <a href="backend/tests/test_output_policy.py"><b>公共输出边界</b>自由正文、未知/重复编号、选项篡改、旧 checkpoint</a>
+            <a href="backend/tests/test_draft_clarification.py"><b>追问到保存的真实流程</b>追问阶段无记录，补充并写入后才有回执</a>
+            <a href="backend/tests/test_advice_generation.py"><b>模型建议的接入路径</b>事实按字段生成，非法候选使用本地兜底</a>
+          </div>
+        </div>
+      </section>
+
       <section class="section support-grid">
         <div class="panel memory-panel" id="memory-system" data-chapter>
           <div class="support-head">
             <span>08</span>
             <div>
               <h2>记忆系统 · 四层记忆与修复方案</h2>
-              <p>对应当前代码 · 2026-10-26 · 数据库 v6 · SQLite + LangGraph checkpoint</p>
+              <p>对应当前代码 · 2026-10-26 · 数据库 v7 / 长期事实 v2 · SQLite + LangGraph checkpoint</p>
             </div>
           </div>
           <div class="support-body memfix-body">
@@ -3528,12 +3632,93 @@ revision = prior['version'] + 1 if prior else 1
                 </div>
               </div>
               <div class="memfix-rules">
-                <article><b>临时例外 · “这周不吃燕麦”</b><p>与旧偏好冲突时请用户选择，不静默抹掉长期偏好。未选择的临时冲突到期后，原偏好可以恢复。</p></article>
+                <article><b>临时例外 · “今天可以接受燕麦”</b><p>与长期偏好冲突时请用户选择。确认后只在期限内覆盖，原偏好仍保留；到期、撤回或删除临时例外后，原偏好可以恢复。</p></article>
                 <article><b>未来日期 · “下周开始”</b><p>通过有效期字段保存为 scheduled；到达生效日期后，再处理替代或冲突，不提前改变当前偏好。</p></article>
                 <article><b>限制到期 · needs_review</b><p>过敏、专业限制等到期后转为待核对，继续保留保护；普通偏好更新不能自动解除这些限制。</p></article>
                 <article><b>撤回与删除分开</b><p>撤回停用但保留历史；删除进入原有影响范围预览与清理流程，覆盖事实快照和来源副本。</p></article>
               </div>
-              <div class="memory-guard"><b>确认的含义</b><span><code>confirmed</code> 仅表示用户明确陈述或确认，不等于医学核验；专业建议记录为用户转述。当前自然语言规范化只覆盖可完整匹配的明确偏好，不用相似度猜别名。</span></div>
+              <div class="memory-guard"><b>确认的含义</b><span><code>confirmed</code> 仅表示用户明确陈述或确认，不等于医学核验；专业建议记录为用户转述。自然语言规范化覆盖明确偏好，别名仅按受控规则处理；未支持的模型提取保留待核对。</span></div>
+            </section>
+
+            <section class="memfix-unit" id="memory-facts-v2" data-chapter aria-labelledby="memory-facts-v2-title">
+              <h3 id="memory-facts-v2-title">本次升级：偏好可以改变，临时例外到期后会恢复</h3>
+              <p class="memfix-lead">现在，一句偏好会被整理成一张“事实卡片”：说的是谁或什么、是什么意思、适用到哪天、来自哪里。原话仍然保留，程序再按要使用的日期，挑出有效的信息。</p>
+
+              <div class="memfix-grid">
+                <div>
+                  <p class="memfix-example">“我不喜欢吃燕麦” → 对象是“燕麦”，不是“吃燕麦”。</p>
+                  <div class="memfix-route" aria-label="原话被整理为可以比较的事实"><span>保留原话</span><i aria-hidden="true">→</i><span>找准对象<br/><b>燕麦</b></span><i aria-hidden="true">→</i><span>记录态度与期限<br/><b>不喜欢 / 长期</b></span></div>
+                  <p>这样，后来的“现在可以接受燕麦”才能与旧偏好对上。同义名称只按明确规则合并，例如“花生米”对应“花生”；“花生酱”不会因为含有同一个词就被当作同一种食物。</p>
+                  <a href="backend/app/health/facts.py">对应代码：parse_fact / normalize_fact</a>
+                </div>
+                <div class="memfix-code">
+                  <b>事实卡片示例 · “我今天可以接受燕麦”</b>
+                  <pre><code>{
+  "content": "我今天可以接受燕麦",
+  "subject_key": "燕麦",
+  "value": "accept",
+  "time_scope": "bounded",
+  "valid_until": "2026-10-26",
+  "source_kind": "user_explicit",
+  "enforcement": "soft",
+  "schema_version": 2
+}</code></pre>
+                  <p>示例假设在 2026-10-26 说出。“今天”会变成明确日期；重试同一请求，期限不会往后挪。若与旧偏好冲突，还需用户选择，才建立临时覆盖。</p>
+                  <a href="backend/app/contracts/facts.py">对应代码：FactInput / FactSource / FactEvidence</a>
+                </div>
+              </div>
+
+              <div class="memfix-rules">
+                <article>
+                  <b>① 长期更新：以后按新偏好来</b>
+                  <div class="memfix-route" aria-label="新长期偏好替代旧偏好"><span>原来不喜欢燕麦</span><i aria-hidden="true">→</i><span>现在可以接受<br/><b>采用新偏好</b></span></div>
+                  <p>普通长期偏好的明确更新会替代旧偏好，旧版本留在历史中。未来才生效的更新按生效日期排序，即使先录下周、后录明天，也不会提前改变今天。</p>
+                </article>
+                <article>
+                  <b>② 临时覆盖：只改这段时间</b>
+                  <div class="memfix-route" aria-label="确认临时覆盖后到期恢复"><span>今天可以接受<br/><b>用户选择后采用</b></span><i aria-hidden="true">→</i><span>明天到期<br/><b>恢复原偏好</b></span></div>
+                  <p>确认临时例外时，记录的是“这段时间覆盖哪条偏好”，不会永久作废原偏好。“暂时”“最近”没有明确截止日期时，先待核对；多个临时期限重叠时，需调整日期或撤回。</p>
+                </article>
+                <article>
+                  <b>③ 专业建议：分清谁说的、什么时候适用</b>
+                  <div class="memfix-route" aria-label="建议来源与日期分别记录"><span>用户转述<br/><b>人员 / 机构 / 文档</b></span><i aria-hidden="true">＋</i><span>建议作出日期<br/><b>另记适用起止日期</b></span></div>
+                  <p>录入时间不再冒充医生建议时间。来源详情在管理界面填写，始终标注为“用户转述”，不会因确认而变成医学核验；医疗聊天仍先经过原安全入口。</p>
+                </article>
+                <article>
+                  <b>④ 限制保护：喜欢了，不等于可以解除过敏</b>
+                  <div class="memfix-route" aria-label="不同信息采用不同执行策略"><span>普通喜好<br/><b>soft</b></span><i aria-hidden="true">／</i><span>需避免的事项<br/><b>avoid</b></span><i aria-hidden="true">／</i><span>需专业评估<br/><b>clinical_review</b></span></div>
+                  <p>过敏、健康状况和转述专业建议不能被一句“现在喜欢”自动解除，到期也先待核对。未说明原因的“不吃”保留避免信号；严重程度未知不代表低风险。这些标签决定程序怎么处理，不是临床危险程度排名。</p>
+                </article>
+              </div>
+
+              <div class="memory-subhead"><h3>保存之后，建议和计划如何使用？</h3><span>共用同一个日期解析入口</span></div>
+              <div class="memfix-route" aria-label="有效事实进入建议和每日计划的流程"><span>检查确认状态<br/>和适用日期</span><i aria-hidden="true">→</i><span>处理永久替代<br/>与临时覆盖</span><i aria-hidden="true">→</i><span>未决冲突先核对<br/>保留限制保护</span><i aria-hidden="true">→</i><span>普通建议<br/>或每日安排</span></div>
+              <div class="memfix-grid">
+                <div class="memfix-code">
+                  <b>代码里的共同入口 · 核心调用节选</b>
+                  <pre><code># health/advice.py：普通建议使用当前有效事实
+facts = repo.resolve_facts(purpose='advice')
+require_resolved(facts)
+
+# health/planning.py：一周内每一天分别解析
+view = repo.resolve_facts(day, 'plan')
+require_resolved(view)</code></pre>
+                  <p><code>resolve_records()</code> 负责找出当天有效、被覆盖、冲突和待核对的信息；<code>require_resolved()</code> 检查是否可以继续生成。</p>
+                  <a href="backend/app/health/fact_resolution.py">日期与冲突规则</a> · <a href="backend/app/infrastructure/repositories/facts.py">临时覆盖确认与版本检查</a>
+                </div>
+                <div>
+                  <p>建议收到的是带有对象、取值、期限和来源类别的结构化信息。一周安排会分别检查周一到周日，今天的临时偏好不会被直接复制到整周。</p>
+                  <div class="memfix-callout"><b>限制不能被“截掉”</b><p>普通偏好最多选取 5 条；相关限制超过 8 条时停止普通生成，请用户先核对，而不是丢掉几条限制继续生成。</p></div>
+                  <p>来源人员、机构和文档详情保留在本地。确认计划前会重查事实及规则版本；跨天后旧草案需更新。删除事实时，也会清理历史版本和其他事实中的覆盖、替代引用。</p>
+                </div>
+              </div>
+              <div class="llm-source-grid">
+                <a href="backend/app/health/advice.py"><b>建议如何取数</b>build_advice_context / 结构化投影</a>
+                <a href="backend/app/health/planning.py"><b>计划如何逐日处理</b>plan_draft / 每天的适用事实</a>
+                <a href="backend/app/health/safety.py"><b>限制如何继续保护</b>local_safety / 现有医疗安全入口</a>
+                <a href="backend/tests/test_structured_facts.py"><b>用测试核对行为</b>到期恢复、乱序日期、来源与精准删除</a>
+              </div>
+              <div class="memory-guard"><b>兼容原有记忆</b><span><code>facts.content</code> 继续保存原话，<code>fact_details</code> 保存 v2 结构，<code>fact_revisions</code> 保留变化。数据库升级到 v7；旧文本与历史修订原样保留，不批量猜测疾病、来源或有效期。</span></div>
             </section>
 
             <section class="memfix-unit" id="memory-derived" data-chapter aria-labelledby="memory-derived-title">
@@ -3583,7 +3768,7 @@ revision = prior['version'] + 1 if prior else 1
                 <div class="retention-item"><b>超过 1 年 · 月度归档</b><span>完整过期月份汇总并校验后清理明细，保留月级精度与来源版本。</span></div>
                 <div class="retention-item"><b>按事实有效期 · 长期信息</b><span>普通临时偏好到期停用；保护性限制到期继续待核对。profile 与 preferences 仍为独立用户设置。</span></div>
               </div>
-              <p class="memfix-validation"><b>已验证快照 · 2026-10-26：</b>后端 349 条、前端 40 条测试与生产构建通过。覆盖旧请求重放、跨时区过期、并行刷新、临时冲突恢复、未来生效、修订冲突及事务回滚。</p>
+              <p class="memfix-validation"><b>已验证快照 · 2026-10-26：</b>后端 377 条、前端 44 条测试与生产构建通过。覆盖旧请求重放、跨时区过期、并行刷新、临时覆盖恢复、未来更新乱序录入、来源投影、修订冲突、删除引用清理及事务回滚。</p>
               <div class="llm-source-grid">
                 <a href="backend/tests/test_memory_layers.py"><b>后端边界测试</b>事实、期限、来源与事务一致性</a>
                 <a href="frontend/src/MemoryPanels.test.tsx"><b>前端交互测试</b>修改、撤回、历史与过期提示</a>
@@ -5822,10 +6007,12 @@ deletion_job = {
           'data-harness': 'data-harness',
           'harness-case': 'data-harness',
           'grounding-harness': 'data-harness',
+          'output-harness': 'data-harness',
           'memory-system': 'memory-system',
           'memory-working': 'memory-system',
           'memory-ledger': 'memory-system',
           'memory-facts': 'memory-system',
+          'memory-facts-v2': 'memory-system',
           'memory-derived': 'memory-system',
           'memory-guards': 'memory-system',
           'prompt-system': 'memory-system',

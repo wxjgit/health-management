@@ -196,8 +196,10 @@ class ProvenanceRepositoryMixin:
                     rows = self.events(**args)
                     value = [(row['id'], row['version']) for row in rows]
                 elif kind == 'facts':
-                    value = [(row['id'], row['version'], row['content'], row['lifecycle'], row['confirmation'])
-                             for row in self.facts(**args)]
+                    if args.get('include_inactive'):
+                        value = self.facts(**args)
+                    else:
+                        value = self.resolve_facts(**args)
                 elif kind == 'insights':
                     value = [(row['id'], row['data'], row['status']) for row in self.insights(**args)]
                 elif kind == 'active_plan':

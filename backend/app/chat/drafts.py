@@ -2,6 +2,7 @@
 from ..contracts.events import EventDraft, ExtractionEvent
 from ..contracts.workflows import ExtractionResult
 from ..evidence import merge_patch_evidence
+from ..policy.output import clarification_question
 
 
 def optional_missing(event, field):
@@ -17,14 +18,7 @@ def optional_missing(event, field):
 
 
 def required_question(event, field):
-    if field == 'occurred_at':
-        return '这条记录发生在哪一天？可以说“昨天”或具体日期。'
-    if field == 'items':
-        return '这餐具体吃了什么？'
-    if field == 'cycle_action':
-        return '这次是生理周期开始、结束，还是补充备注？'
-    return {'weight': '这次体重大约多少公斤？', 'sleep': '睡了大约几小时？',
-            'exercise': '这次运动持续了多少分钟？'}[event.kind]
+    return clarification_question('record', event.model_dump(), field)
 
 
 def check_drafts(extraction, rounds=0, skip_optional=False, abandoned=()):
@@ -56,17 +50,17 @@ def check_drafts(extraction, rounds=0, skip_optional=False, abandoned=()):
                 if event.kind == 'meal' and item_index is not None:
                     waiting_indexes.append(index)
                     if optional is None:
-                        food = event.items[item_index].name
                         optional = (index, ['quantity'], False,
-                                    f'{food}大约吃了多少？可以说“一小碗”或“半份”；不知道也可以。', item_index)
+                                    clarification_question(result.intent, event.model_dump(), 'quantity', item_index), item_index)
                 elif optional_missing(event, 'intensity'):
                     waiting_indexes.append(index)
                     if optional is None:
-                        optional = (index, ['intensity'], False, '这次运动感觉轻松、有点累，还是很累？', None)
+                        optional = (index, ['intensity'], False,
+                                    clarification_question(result.intent, event.model_dump(), 'intensity'), None)
         # Model-suggested optional questions must identify the draft and missing fields.
         index = result.clarification_event_index
         fields = result.clarification_fields
-        if (pending is None and not skip_optional and rounds < 2 and result.question
+        if (pending is None and not skip_optional and rounds < 2
                 and index in indexes and fields
                 and all(optional_missing(result.events[index], f) for f in fields)):
             item_index = result.clarification_item_index
@@ -76,18 +70,23 @@ def check_drafts(extraction, rounds=0, skip_optional=False, abandoned=()):
                                       if getattr(item, fields[0]) is None)
                 if item_index >= len(result.events[index].items):
                     raise ValueError('追问的食物不在草稿中')
-            optional = (index, fields, False, result.question, item_index)
+                if any(getattr(result.events[index].items[item_index], f) is not None
+                       for f in fields if f in ('quantity', 'cooking')):
+                    raise ValueError('不能追问食物已经提供的字段')
+            question = clarification_question(result.intent, result.events[index].model_dump(), fields[0], item_index)
+            optional = (index, fields, False, question, item_index)
             waiting_indexes.append(index)
         pending = pending or optional
     if result.intent == 'correct' and not result.correction_id:
         # Resolve the historical target before applying a patch to any draft.
-        parsed['question'] = result.question or '要修改哪条记录？请在历史页选择，或提供日期和内容。'
+        parsed['question'] = clarification_question('correct')
         pending = None
     elif pending:
         parsed['question'] = pending[3]
     else:
         # Keep target/intent clarification when no event could yet be identified.
-        parsed['question'] = result.question if not result.events and not abandoned else None
+        parsed['question'] = (clarification_question(result.intent, has_target=bool(result.correction_id))
+                              if result.question and not result.events and not abandoned else None)
     return {
         'parsed': parsed, 'event_indexes': indexes, 'waiting_indexes': waiting_indexes,
         'pending_event_index': pending[0] if pending else None,

@@ -6,6 +6,7 @@ from langgraph.types import interrupt
 from ..modeling import PolicyError
 from ..chat.replies import express_plan, make_plan, medical_question
 from .state import State
+from ..policy.output import default_feedback_selection, question_from_state, render_feedback
 
 
 class ChatFlowMixin:
@@ -64,10 +65,11 @@ class ChatFlowMixin:
                 if item.get('name')
             ))[:3]
         }
-        narrative, trace = express_plan(self.parser, plan)
-        reply = '\n'.join(part for part in [narrative, state['parsed']['question']] if part)
+        narrative, trace, selection = express_plan(self.parser, plan, with_selection=True)
+        reply = '\n'.join(part for part in [narrative, question_from_state(state)] if part)
         return {
             'clarification_reply': reply,
+            'clarification_selection': selection,
             'reply_plan': plan,
             'correction_candidates': candidates,
             'guidance_shown': state.get('guidance_shown', False) or bool(plan['points']),
@@ -83,10 +85,19 @@ class ChatFlowMixin:
 
     def clarify(self, state):
         parsed = state['parsed']
+        # Checkpoint prose is not an execution receipt or a reusable output grant.
+        # Re-render selectors locally on replay, including pre-policy checkpoints.
+        question = question_from_state(state)
+        plan = state.get('reply_plan') or make_plan([], 'clarify')
+        selection = state.get('clarification_selection') or default_feedback_selection(plan)
+        try:
+            narrative = render_feedback(selection, plan)
+        except (ValueError, TypeError):
+            narrative = render_feedback(default_feedback_selection(plan), plan)
         payload = {
             'kind': 'clarification',
-            'question': state.get('clarification_reply') or parsed['question'],
-            'prompt': parsed['question'],
+            'question': '\n'.join(part for part in [narrative, question] if part),
+            'prompt': question,
             'saved_records': len(state.get('record_ids', [])),
             'requested_fields': state.get('pending_fields', []),
             'optional': not state.get('pending_required', True),
@@ -177,6 +188,7 @@ class ChatFlowMixin:
 
     def fact(self, state):
         fact = self.repo.save_fact(state['thread_id'], state['parsed']['fact_text'],
+                                   draft=state['parsed'].get('fact_draft'),
                                    context_text=state.get('source_text') or state['input_text'],
                                    source_message_id=state.get('source_message_id'))
         return {

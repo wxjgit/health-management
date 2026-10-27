@@ -2,6 +2,7 @@
 import re
 
 from ..contracts.safety import SafetyContext
+from ..health.fact_resolution import pending_decisions
 from ..health.safety import (
     POLICY_VERSION, REPLIES, decision, fingerprint, local_safety,
     merge_classification, offline_record, offline_preference, require_plan_eligibility,
@@ -23,7 +24,9 @@ class SafetyWorkflowMixin:
             if prior:
                 sources.append({'source_id': 'previous_user', 'text': prior})
         profile = self.repo.get_meta('profile') or {}
-        facts = [fact['content'] for fact in self.repo.safety_restrictions()]
+        view = self.repo.resolve_facts(purpose='safety')
+        facts = {key: view[key] for key in ('constraints', 'conflicts', 'pending', 'reference_date', 'policy_version')}
+        facts['pending'] = pending_decisions(view)
         context = SafetyContext.model_validate({
             'sources': sources or [{'source_id': 'current', 'text': '无文字附言'}],
             'profile': {key: profile[key] for key in ('age', 'nutrition_context') if key in profile},

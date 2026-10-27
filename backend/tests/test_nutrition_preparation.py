@@ -46,7 +46,7 @@ def mock_model(monkeypatch, extract, estimate):
         data = json.loads(body['messages'][1]['content'])
         if data.get('task') == 'contextual_reply':
             # Nutrition tests do not count or exercise the independent phrasing layer.
-            content = {'segments': [{'point_id': p['point_id'], 'text': p['text']}
+            content = {'segments': [{'point_id': p['point_id'], 'variant_id': 'default'}
                                     for p in data['plan']['points']]}
         elif data.get('task') == 'estimate_nutrition':
             calls['nutrition'] += 1

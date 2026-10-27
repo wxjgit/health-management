@@ -13,6 +13,7 @@ from app.common.config import Settings
 from app.modeling import PolicyError
 from app.main import create_app
 from app.contracts.workflows import ProcessingPlan
+from app.policy.output import advice_plan
 
 
 @pytest.fixture(autouse=True)
@@ -104,7 +105,7 @@ def test_previous_references_are_not_read_without_an_approved_reference_task(
             assert data['interaction'] == {'selected_record': False}
             return {'actions': [{'text': data['text'], **action}]}
         assert data['task'] == 'personalized_advice'
-        return {'answer': '目前信息有限，无法判断稳定趋势。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -142,7 +143,7 @@ def test_previous_reference_is_read_only_after_planning(settings, monkeypatch, i
         assert data['task'] == 'personalized_advice'
         assert data['context']['view'] == 'meal_reference'
         assert 'today' not in data['context']
-        return {'answer': '单餐记录不能代表全天饮食。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -232,7 +233,7 @@ def test_user_refusal_of_history_cannot_be_overridden_by_plan(settings, monkeypa
             return {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': requested_view}]}
         assert data['context']['view'] == 'none'
         assert set(data['context']) == {'question', 'scene', 'view', 'now'}
-        return {'answer': '没有使用历史，无法判断近期变化。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -255,7 +256,7 @@ def test_mixed_record_and_advice_only_sends_weight_view(settings, monkeypatch):
         context = data['context']
         assert set(context) == {'question', 'scene', 'view', 'now', 'weights', 'window'}
         assert {w['weight_kg'] for w in context['weights']} == {65, 66}
-        return {'answer': '单日波动不适合作为调整计划的依据。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -286,7 +287,7 @@ def test_mixed_task_keeps_original_scope_across_clarification_and_restart(settin
             return {'items': [{'index': 0, 'uncertainty': '测试不估算营养'}]}
         assert data['task'] == 'personalized_advice'
         assert data['context']['question'] == '今天饮食怎么调整？'
-        return {'answer': '按目前记录，还不能判断全天饮食。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -464,7 +465,7 @@ def test_gateway_rejects_unapproved_calls_and_changed_context(settings, monkeypa
         with parser.boundary.request(False, lambda *args: None):
             with pytest.raises(PolicyError):
                 parser.answer_advice(context)  # No local data builder granted this context.
-            parser.boundary.grant('personalized_advice', {'context': context})
+            parser.boundary.grant('personalized_advice', {'context': context, 'options': advice_plan(context)['options']})
             changed = {**context, 'weights': [{'date': '2026-10-19', 'weight_kg': 66}]}
             with pytest.raises(PolicyError):
                 parser.answer_advice(changed)
@@ -479,7 +480,7 @@ def test_gateway_rejects_added_private_fields_even_with_local_grant(settings, mo
                    'now': '2026-10-20', 'weights': [], 'window': {'start': '2026-10-19', 'end': '2026-10-20'},
                    'private_notes': 'HIDDEN_CYCLE'}
         with parser.boundary.request(False, lambda *args: None):
-            parser.boundary.grant('personalized_advice', {'context': context})
+            parser.boundary.grant('personalized_advice', {'context': context, 'options': advice_plan(context)['options']})
             with pytest.raises(PolicyError):
                 parser.answer_advice(context)
         assert calls == []
@@ -519,7 +520,7 @@ def test_view_windows_exclude_old_and_unrelated_data(settings, monkeypatch):
         if data['task'] == 'processing_plan':
             return {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend'}]}
         assert [w['date'] for w in data['context']['weights']] == ['2026-10-19']
-        return {'answer': '目前记录还不足以判断稳定趋势。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -537,7 +538,7 @@ def test_shorter_requested_window_does_not_expand_to_maximum(settings, monkeypat
         context = data['context']
         assert context['window'] == {'start': '2026-10-18', 'end': '2026-10-20'}
         assert {w['date'] for w in context['weights']} == {'2026-10-19'}
-        return {'answer': '目前记录还不足以判断稳定趋势。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -565,7 +566,7 @@ def test_single_meal_reference_does_not_send_other_meals_or_chat(settings, monke
         assert context['view'] == 'meal_reference'
         assert 'today' not in context and 'recent_days' not in context
         assert context['resolved_records'][0]['items'][0]['name'] == '苹果'
-        return {'answer': '单餐记录不能代表全天饮食。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
@@ -586,7 +587,7 @@ def test_diet_day_uses_user_date_instead_of_unrelated_today(settings, monkeypatc
             return {'actions': [{'intent': 'advice', 'text': data['text']}]}
         assert data['context']['today']['date'] == '2026-10-19'
         assert data['context']['today']['meals'] == []
-        return {'answer': '该日期还没有餐食记录。'}
+        return {'point_ids': [data['options'][0]['point_id']]}
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:

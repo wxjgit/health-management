@@ -51,7 +51,6 @@ SCHEMA = '''
         attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS monthly_summaries (
         month TEXT PRIMARY KEY, data TEXT NOT NULL, created_at TEXT NOT NULL);
-    PRAGMA user_version=1;
 '''
 
 
@@ -101,6 +100,9 @@ def open_database(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path, check_same_thread=False, timeout=30)
     connection.row_factory = sqlite3.Row
+    if connection.execute('PRAGMA user_version').fetchone()[0] > 7:
+        connection.close()
+        raise ValueError('数据库版本高于当前程序，请升级程序')
     connection.execute('PRAGMA journal_mode=WAL')
     connection.execute('PRAGMA foreign_keys=ON')
     connection.execute('PRAGMA secure_delete=ON')
@@ -138,6 +140,6 @@ def open_database(path):
             PRIMARY KEY(event_id, version),
             FOREIGN KEY(event_id, version) REFERENCES revisions(event_id, version) ON DELETE CASCADE);
     ''')
-    connection.execute('PRAGMA user_version=6')
+    connection.execute('PRAGMA user_version=7')
     connection.commit()
     return connection

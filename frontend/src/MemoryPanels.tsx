@@ -9,6 +9,7 @@ const reasons: Record<string, string> = {
   legacy_version_unknown: "历史结果缺少方法版本，请结合原始记录核对。",
   analysis_refreshed: "本轮分析未产生可用的新结论，请继续积累完整记录。",
   plan_window_ended: "这份安排的日期已结束，请刷新安排；已确认目标仍保留。",
+  fact_date_changed: "适用日期已变化，请重新生成安排；已确认目标仍保留。",
 };
 
 export function DerivedNote({ memory }: { memory?: DerivedMemory }) {
@@ -187,6 +188,7 @@ const factTypes: Record<Fact["type"], string> = {
   food_preference: "饮食偏好",
   restriction: "饮食限制",
   allergy: "自述过敏",
+  health_condition: "自述健康状况",
   professional_advice: "转述专业建议",
   legacy_text: "其他明确陈述",
 };
@@ -205,6 +207,17 @@ type FactForm = {
   value: string;
   valid_from: string;
   valid_until: string;
+  subject_kind: NonNullable<Fact["subject_kind"]>;
+  time_scope: NonNullable<Fact["time_scope"]>;
+  assertion: NonNullable<Fact["assertion"]>;
+  restriction_reason: NonNullable<Fact["restriction_reason"]>;
+  reported_severity: NonNullable<Fact["reported_severity"]>;
+  source_details: {
+    professional: string;
+    institution: string;
+    advised_on: string;
+    document: string;
+  };
 };
 const emptyForm: FactForm = {
   content: "",
@@ -213,6 +226,50 @@ const emptyForm: FactForm = {
   value: "",
   valid_from: "",
   valid_until: "",
+  subject_kind: "food",
+  time_scope: "unknown",
+  assertion: "affirmed",
+  restriction_reason: "unknown",
+  reported_severity: "unknown",
+  source_details: {
+    professional: "",
+    institution: "",
+    advised_on: "",
+    document: "",
+  },
+};
+
+const factValues: Partial<Record<Fact["type"], Record<string, string>>> = {
+  food_preference: {
+    dislike: "不喜欢",
+    like: "喜欢",
+    avoid: "不吃",
+    accept: "可以接受",
+  },
+  restriction: { avoid: "避免", limit: "限制", required: "需要遵守" },
+  allergy: {
+    allergic: "自述过敏",
+    denied: "否认（需核对）",
+    uncertain: "不确定",
+  },
+  health_condition: {
+    present: "自述目前存在",
+    past: "自述既往存在",
+    resolved: "自述已解除（需核对）",
+    uncertain: "不确定",
+  },
+  professional_advice: {
+    advice: "转述建议",
+    avoid: "建议避免",
+    limit: "建议限制",
+    required: "建议遵守",
+  },
+};
+const enforcementNames: Record<string, string> = {
+  soft: "普通偏好",
+  avoid: "需避免或遵守",
+  clinical_review: "需专业评估",
+  unknown: "含义待核对",
 };
 
 export function FactManager({
@@ -259,12 +316,25 @@ export function FactManager({
       fact === "new"
         ? emptyForm
         : {
+            ...emptyForm,
             content: fact.content,
             type: fact.type ?? "legacy_text",
             subject: fact.subject ?? "",
             value: fact.value ?? "",
             valid_from: fact.valid_from ?? "",
             valid_until: fact.valid_until ?? "",
+            subject_kind:
+              fact.subject_kind ??
+              (fact.type === "health_condition" ? "condition" : "food"),
+            time_scope: fact.time_scope ?? "unknown",
+            assertion: fact.assertion ?? "affirmed",
+            restriction_reason: fact.restriction_reason ?? "unknown",
+            reported_severity: fact.reported_severity ?? "unknown",
+            source_details: {
+              ...emptyForm.source_details,
+              ...fact.source_details,
+              advised_on: fact.source_details?.advised_on ?? "",
+            },
           },
     );
   };
@@ -291,6 +361,14 @@ export function FactManager({
               ...form,
               valid_from: form.valid_from || null,
               valid_until: form.valid_until || null,
+              time_scope: form.valid_until ? "bounded" : form.time_scope,
+              source_details:
+                form.type === "professional_advice"
+                  ? {
+                      ...form.source_details,
+                      advised_on: form.source_details.advised_on || null,
+                    }
+                  : {},
               ...(editing !== "new"
                 ? { expected_version: editing.version }
                 : {}),
@@ -319,7 +397,16 @@ export function FactManager({
               aria-label="事实类型"
               value={form.type}
               onChange={(e) =>
-                setForm({ ...form, type: e.target.value as Fact["type"] })
+                setForm({
+                  ...form,
+                  type: e.target.value as Fact["type"],
+                  value: "",
+                  subject_kind:
+                    e.target.value === "health_condition"
+                      ? "condition"
+                      : "food",
+                  source_details: emptyForm.source_details,
+                })
               }
             >
               {Object.entries(factTypes).map(([value, label]) => (
@@ -346,7 +433,7 @@ export function FactManager({
               </label>
               <label>
                 具体偏好或限制
-                {form.type === "food_preference" ? (
+                {factValues[form.type] ? (
                   <select
                     aria-label="事实取值"
                     required
@@ -356,10 +443,13 @@ export function FactManager({
                     }
                   >
                     <option value="">请选择</option>
-                    <option value="dislike">不喜欢</option>
-                    <option value="like">喜欢</option>
-                    <option value="avoid">不吃</option>
-                    <option value="accept">可以接受</option>
+                    {Object.entries(factValues[form.type] ?? {}).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
                     {form.value &&
                       !["dislike", "like", "avoid", "accept"].includes(
                         form.value,
@@ -379,6 +469,143 @@ export function FactManager({
                 )}
               </label>
             </>
+          )}
+          <label>
+            对象类别
+            <select
+              aria-label="对象类别"
+              value={form.subject_kind}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  subject_kind: e.target.value as FactForm["subject_kind"],
+                })
+              }
+            >
+              <option value="food">食物</option>
+              <option value="condition">健康状况</option>
+              <option value="nutrient">营养事项</option>
+              <option value="activity">活动</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+          <label>
+            适用期限
+            <select
+              aria-label="适用期限"
+              value={form.time_scope}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  time_scope: e.target.value as FactForm["time_scope"],
+                  valid_until:
+                    e.target.value === "bounded" ? form.valid_until : "",
+                })
+              }
+            >
+              <option value="unknown">尚未说明</option>
+              <option value="persistent">长期</option>
+              <option value="bounded">明确期限</option>
+              <option value="temporary_unknown">临时，截止日期待补充</option>
+            </select>
+          </label>
+          <label>
+            陈述状态
+            <select
+              aria-label="陈述状态"
+              value={form.assertion}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  assertion: e.target.value as FactForm["assertion"],
+                })
+              }
+            >
+              <option value="affirmed">明确自述</option>
+              <option value="denied">否认</option>
+              <option value="uncertain">不确定</option>
+              <option value="hypothetical">假设</option>
+            </select>
+          </label>
+          <label>
+            限制原因
+            <select
+              aria-label="限制原因"
+              value={form.restriction_reason}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  restriction_reason: e.target
+                    .value as FactForm["restriction_reason"],
+                })
+              }
+            >
+              <option value="unknown">未知</option>
+              <option value="preference">普通偏好</option>
+              <option value="allergy">自述过敏</option>
+              <option value="health_condition">健康状况</option>
+              <option value="professional_advice">转述专业建议</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+          {["allergy", "health_condition"].includes(form.type) && (
+            <label>
+              自述严重程度
+              <select
+                aria-label="自述严重程度"
+                value={form.reported_severity}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    reported_severity: e.target
+                      .value as FactForm["reported_severity"],
+                  })
+                }
+              >
+                <option value="unknown">未知</option>
+                <option value="mild">轻度</option>
+                <option value="moderate">中度</option>
+                <option value="severe">严重</option>
+              </select>
+            </label>
+          )}
+          {form.type === "professional_advice" && (
+            <fieldset>
+              <legend>用户转述的建议来源</legend>
+              {(
+                [
+                  ["professional", "专业人员称呼"],
+                  ["institution", "机构"],
+                  ["document", "文档描述"],
+                  ["advised_on", "建议作出日期"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key}>
+                  {label}
+                  <input
+                    aria-label={label}
+                    type={key === "advised_on" ? "date" : "text"}
+                    maxLength={
+                      key === "document"
+                        ? 200
+                        : key === "institution"
+                          ? 150
+                          : 100
+                    }
+                    value={form.source_details[key]}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        source_details: {
+                          ...form.source_details,
+                          [key]: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                </label>
+              ))}
+            </fieldset>
           )}
           <label>
             生效日期
@@ -445,6 +672,63 @@ export function FactManager({
             {fact.valid_from && ` · 自 ${fact.valid_from}`}
             {fact.valid_until && ` · 至 ${fact.valid_until}`}
           </small>
+          {fact.enforcement && (
+            <small>
+              {enforcementNames[fact.enforcement] ?? fact.enforcement} ·{" "}
+              {fact.time_scope === "temporary_unknown"
+                ? "临时，截止日期待补充"
+                : fact.time_scope === "bounded"
+                  ? "在期限内适用"
+                  : fact.time_scope === "persistent"
+                    ? "长期"
+                    : "期限尚未说明"}
+            </small>
+          )}
+          {fact.review_reason && <p role="status">{fact.review_reason}</p>}
+          {fact.temporarily_covered && (
+            <p>当前被临时偏好覆盖，覆盖到期或撤回后恢复。</p>
+          )}
+          {!!fact.overrides?.length && (
+            <p>
+              仅在有效期内采用；到期后恢复：
+              {fact.overrides
+                .map((id) => rows.find((r) => r.id === id)?.content ?? "原偏好")
+                .join("；")}
+            </p>
+          )}
+          {fact.source_details && (
+            <small>
+              {[
+                fact.source_details.professional,
+                fact.source_details.institution,
+                fact.source_details.document,
+                fact.source_details.advised_on &&
+                  `建议作出日期：${fact.source_details.advised_on}`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </small>
+          )}
+          {fact.confirmation === "conflict" && (
+            <p>
+              请核对同一对象的原文与适用期：
+              {rows
+                .filter(
+                  (r) =>
+                    r.id !== fact.id &&
+                    r.type === fact.type &&
+                    r.subject_kind === fact.subject_kind &&
+                    (r.subject_key ?? r.subject) ===
+                      (fact.subject_key ?? fact.subject) &&
+                    r.confirmation === "conflict",
+                )
+                .map(
+                  (r) =>
+                    `${r.content}（${r.valid_from ?? "未说明开始日期"} 至 ${r.valid_until ?? "未说明截止日期"}）`,
+                )
+                .join("；")}
+            </p>
+          )}
           <div className="fact-actions">
             <button type="button" disabled={busy} onClick={() => open(fact)}>
               修改
@@ -452,15 +736,58 @@ export function FactManager({
             {["conflict", "candidate"].includes(fact.confirmation) && (
               <button
                 type="button"
-                disabled={busy}
+                disabled={
+                  busy ||
+                  fact.time_scope === "temporary_unknown" ||
+                  (fact.assertion !== undefined &&
+                    fact.assertion !== "affirmed") ||
+                  (fact.confirmation === "conflict" &&
+                    fact.enforcement !== undefined &&
+                    fact.enforcement !== "soft")
+                }
                 onClick={() =>
                   void mutate(`/facts/${fact.id}`, "PATCH", {
                     action: "confirm",
                     expected_version: fact.version,
+                    ...(fact.schema_version === 2
+                      ? {
+                          resolution: fact.valid_until
+                            ? "temporary"
+                            : "permanent",
+                          peer_versions: Object.fromEntries(
+                            rows
+                              .filter(
+                                (r) =>
+                                  r.id !== fact.id &&
+                                  r.type === fact.type &&
+                                  r.subject_kind === fact.subject_kind &&
+                                  (r.subject_key ?? r.subject) ===
+                                    (fact.subject_key ?? fact.subject) &&
+                                  [
+                                    "active",
+                                    "needs_review",
+                                    "scheduled",
+                                  ].includes(r.lifecycle) &&
+                                  r.confirmation !== "candidate" &&
+                                  (!r.valid_from ||
+                                    !fact.valid_until ||
+                                    r.valid_from <= fact.valid_until) &&
+                                  (!fact.valid_from ||
+                                    !r.valid_until ||
+                                    fact.valid_from <= r.valid_until),
+                              )
+                              .map((r) => [r.id, r.version]),
+                          ),
+                        }
+                      : {}),
                   })
                 }
               >
-                {fact.confirmation === "candidate" ? "确认这条" : "采用这条"}
+                {fact.confirmation === "candidate"
+                  ? "确认这条"
+                  : fact.valid_until
+                    ? "仅在该期限采用"
+                    : "采用这条"}
               </button>
             )}
             {["active", "needs_review", "scheduled"].includes(

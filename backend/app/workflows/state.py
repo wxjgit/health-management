@@ -39,6 +39,7 @@ class State(TypedDict, total=False):
     guidance_shown: bool
     guided_topics: list[str]
     clarification_reply: str
+    clarification_selection: dict
     reply_plan: dict
     record_ids: list[str]
     saved_indexes: list[int]

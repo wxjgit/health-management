@@ -98,8 +98,8 @@ class ModelBoundary:
             'processing_plan': ('text', 'interaction'),
             'correct_selected': ('text', 'record'),
             'patch_draft': ('text', 'draft', 'requested_fields', 'item_index'),
-            'personalized_advice': ('context',),
-            'contextual_reply': ('plan',),
+            'personalized_advice': ('context', 'options'),
+            'contextual_reply': ('plan', 'options'),
             'estimate_nutrition': ('items',),
         }[purpose]
         return {key: data[key] for key in keys}

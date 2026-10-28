@@ -2711,6 +2711,60 @@
       @media(max-width: 1000px) { #interview-prep .iv-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } #interview-prep .iv-pair { grid-template-columns: 1fr; } }
       @media(max-width: 600px) { #interview-prep { padding: 18px; } #interview-prep h2 { font-size: 24px; } #interview-prep .iv-question { padding: 15px; } #interview-prep details { padding: 14px; } #interview-prep summary { font-size: 17px; } #interview-prep pre { padding: 12px; font-size: 12px; } #interview-prep th, #interview-prep td { padding: 8px; font-size: 13px; } }
       @media print { #interview-prep .iv-flow article, #interview-prep pre { break-inside: avoid; } #interview-prep .iv-pair { display: block; } }
+
+      /* Evaluation loop chapter */
+      #evaluation-loop { padding: 30px; }
+      #evaluation-loop .eval-kicker { color: #55745f; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+      #evaluation-loop h2 { margin-top: 5px; font-size: 28px; line-height: 1.35; color: #20382d; }
+      #evaluation-loop h3 { margin: 26px 0 12px; font-size: 18px; color: #294a3b; }
+      #evaluation-loop .eval-lead { max-width: 980px; margin-top: 10px; color: #5c6962; font-size: 15px; line-height: 1.8; }
+      #evaluation-loop code { overflow-wrap: anywhere; }
+      #evaluation-loop .eval-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
+      #evaluation-loop .eval-metric { padding: 16px; border: 1px solid #dce7de; border-radius: 10px; background: #f6faf5; }
+      #evaluation-loop .eval-metric b { display: block; color: #2f694c; font-size: 27px; line-height: 1.15; }
+      #evaluation-loop .eval-metric span { display: block; margin-top: 5px; color: #6f7e74; font-size: 12px; }
+      #evaluation-loop .eval-flow { display: flex; align-items: stretch; gap: 8px; margin: 16px 0 10px; padding: 18px; border: 1px solid #dce6df; border-radius: 12px; background: linear-gradient(135deg, #f8fbf6, #f2f7f5); overflow-x: auto; }
+      #evaluation-loop .eval-flow article { flex: 1 0 150px; min-height: 112px; padding: 14px; border: 1px solid #dbe4dd; border-radius: 9px; background: #fff; box-shadow: 0 3px 10px #23352e0a; }
+      #evaluation-loop .eval-flow b { display: block; color: #315f49; font-size: 14px; }
+      #evaluation-loop .eval-flow span { display: block; margin-top: 7px; color: #738078; font-size: 12px; line-height: 1.6; }
+      #evaluation-loop .eval-arrow { align-self: center; color: #88a294; font-style: normal; font-size: 19px; }
+      #evaluation-loop .eval-caption { color: #7a857f; font-size: 12px; line-height: 1.65; }
+      #evaluation-loop .eval-story { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 15px 0; }
+      #evaluation-loop .eval-story article { position: relative; padding: 15px; border-radius: 9px; border: 1px solid #dfe5e0; background: #fffefa; min-height: 126px; }
+      #evaluation-loop .eval-story .eval-step { display: inline-grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #4c765e; color: #fff; font-size: 12px; font-weight: 750; }
+      #evaluation-loop .eval-story b { display: block; margin: 10px 0 5px; color: #334b3e; font-size: 13px; }
+      #evaluation-loop .eval-story p { color: #727c76; font-size: 12px; line-height: 1.55; }
+      #evaluation-loop .eval-code-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      #evaluation-loop details { border: 1px solid #dce4de; border-radius: 10px; background: #fbfcfa; padding: 14px; }
+      #evaluation-loop summary { cursor: pointer; color: #315444; font-size: 14px; font-weight: 700; }
+      #evaluation-loop pre { margin: 12px 0 8px; padding: 14px; border-radius: 8px; background: #18241e; color: #dcebe1; font: 12px/1.65 "Cascadia Code", Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; }
+      #evaluation-loop details p { color: #6a756e; font-size: 12px; line-height: 1.7; }
+      #evaluation-loop .eval-source { display: block; margin-top: 8px; color: #42735a; font-size: 11px; }
+      #evaluation-loop .eval-gates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+      #evaluation-loop .eval-gates article { padding: 16px; border: 1px solid #dce5de; border-radius: 10px; background: #fff; }
+      #evaluation-loop .eval-gates b { color: #2f5944; }
+      #evaluation-loop .eval-gates p { margin-top: 7px; color: #707b74; font-size: 12px; line-height: 1.65; }
+      #evaluation-loop .eval-result { display: grid; grid-template-columns: 150px 1fr 80px; align-items: center; gap: 12px; margin: 9px 0; font-size: 12px; color: #536158; }
+      #evaluation-loop .eval-bar { height: 9px; overflow: hidden; border-radius: 999px; background: #e5ebe6; }
+      #evaluation-loop .eval-bar i { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4c765e, #79a286); }
+      #evaluation-loop .eval-boundary { margin-top: 18px; padding: 15px 17px; border-left: 4px solid #c18b32; background: #fff9ec; color: #796338; font-size: 13px; line-height: 1.7; }
+      #evaluation-loop .eval-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e1e7e2; font-size: 12px; }
+      @media (max-width: 1000px) {
+        #evaluation-loop .eval-metrics, #evaluation-loop .eval-story { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #evaluation-loop .eval-gates { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 760px) {
+        #evaluation-loop { padding: 18px; }
+        #evaluation-loop h2 { font-size: 23px; }
+        #evaluation-loop .eval-metrics, #evaluation-loop .eval-story, #evaluation-loop .eval-code-grid { grid-template-columns: 1fr; }
+        #evaluation-loop .eval-flow { flex-direction: column; }
+        #evaluation-loop .eval-arrow { transform: rotate(90deg); }
+        #evaluation-loop .eval-result { grid-template-columns: 110px 1fr 56px; }
+      }
+      @media print {
+        #evaluation-loop .eval-flow, #evaluation-loop .eval-story, #evaluation-loop details { break-inside: avoid; }
+        #evaluation-loop pre { background: #eef3ef; color: #23352e; }
+      }
     </style>
   </head>
   <body>
@@ -2723,6 +2777,7 @@
         <a href="#memory-system">运行机制</a>
         <a href="#concurrency-recovery">并发可靠性</a>
         <a href="#runtime-sandbox">运行安全</a>
+        <a href="#evaluation-loop">评测闭环</a>
         <a href="#privacy-deletion">精准删除</a>
         <a href="#interview-prep">面试讲解</a>
       </nav>
@@ -2759,13 +2814,20 @@
           <a class="nav-subsection" href="#plan-branches">计划生成与确认分支</a>
         </div>
         <div class="nav-group"><span class="nav-label">05 · 并发可靠性</span>
+          <a href="#agent-crash-recovery">进程崩溃后如何恢复 · 代码讲解</a>
           <a href="#concurrency-recovery">锁、取消与失败恢复</a>
           <a class="nav-subsection" href="#scheduler-reliability">后台任务：领单、续期与恢复</a>
         </div>
         <div class="nav-group"><span class="nav-label">06 · 运行安全</span>
           <a href="#runtime-sandbox">最小权限：修复背景与代码</a>
         </div>
-        <div class="nav-group"><span class="nav-label">07 · 隐私清理</span>
+        <div class="nav-group"><span class="nav-label">07 · 评测闭环</span>
+          <a href="#evaluation-loop">Agent 到底有没有真的变好</a>
+          <a class="nav-subsection" href="#evaluation-pipeline">一次评测怎样跑完</a>
+          <a class="nav-subsection" href="#evaluation-code">结合代码看六道关</a>
+          <a class="nav-subsection" href="#evaluation-gates">评分与发布门禁</a>
+        </div>
+        <div class="nav-group"><span class="nav-label">08 · 隐私清理</span>
           <a href="#privacy-deletion">精准删除：成因与修复</a>
           <a class="nav-subsection" href="#privacy-root-cause">① 前因：为什么原来会全清</a>
           <a class="nav-subsection" href="#privacy-read-tracking">② 补来源：读数据时记账</a>
@@ -2777,7 +2839,7 @@
           <a class="nav-subsection" href="#privacy-request-replay">⑦ 防重建：旧请求作废登记</a>
           <a class="nav-subsection" href="#privacy-validation">验证：怎么证明修好了</a>
         </div>
-        <div class="nav-group"><span class="nav-label">08 · 面试讲解</span>
+        <div class="nav-group"><span class="nav-label">09 · 面试讲解</span>
           <a href="#interview-prep">Q003 · 循环、上下文与工具范围</a>
           <a class="nav-subsection" href="#interview-code">结合代码逐步理解</a>
           <a class="nav-subsection" href="#interview-scopes">跨追问累计与单段预算</a>
@@ -4089,6 +4151,108 @@ require_resolved(view)</code></pre>
           </div>
         </div>
       </section>
+      <section class="section panel" id="agent-crash-recovery" data-chapter aria-labelledby="crash-recovery-title" style="padding:28px">
+        <div class="section-head"><div><h2 id="crash-recovery-title">Agent 执行到一半崩溃，如何找回正确位置？</h2><p>结合当前代码的通俗讲解 · 2026-10-28 · 代码为关键逻辑摘录，省略部分参数与校验。</p></div></div>
+        <p><b>Agent 恢复执行靠数据库里的“流程存档”，不是让模型回忆自己执行到了哪。</b>整条链路分成三件事：存进度、找回进度、重复执行时避免重复写数据。</p>
+        <h3>1. 进度存在哪里？</h3>
+        <p>Engine 启动时打开专门保存流程进度的数据库。GuardedSqliteSaver 是项目对 LangGraph SqliteSaver 的封装。</p>
+        <pre class="recovery-code"># engine.py
+self.cp_conn = sqlite3.connect(
+    settings.data_dir / 'checkpoints.db',
+    check_same_thread=False,
+    factory=BudgetConnection,
+)
+self.checkpointer = GuardedSqliteSaver(self.cp_conn, self)
+self.checkpointer.setup()
+
+# chat_flow.py：构建流程时接上存档系统
+return graph.compile(checkpointer=self.checkpointer)</pre>
+        <p>可以把它理解成游戏的“存档系统”：流程状态和执行进度持久化到磁盘，进程退出后存档还在。</p>
+        <div class="recovery-table-wrap"><table class="recovery-table"><thead><tr><th>数据库</th><th>保存什么</th></tr></thead><tbody><tr><td>checkpoints.db</td><td>流程状态、恢复执行所需的进度和中断信息</td></tr><tr><td>health.db</td><td>健康记录、请求与流程的对应关系、恢复尝试、结果回执等</td></tr></tbody></table></div>
+        <p><b>流程走到了哪，与业务数据写入了什么，是两套存储。</b></p>
+        <h3>2. 重启后，怎么找到原来那一次执行？</h3>
+        <p>关键是 thread_id，相当于这一次工作流的“存档编号”。runtime.py 先通过 request_id 找原来的工作流：</p>
+        <pre class="recovery-code">existing = self.repo.workflow_by_request(request_id)
+if existing:
+    thread_id = existing['id']
+else:
+    thread_id = str(uuid4())
+    self.repo.register_workflow(...)</pre>
+        <div class="recovery-table-wrap"><table class="recovery-table"><thead><tr><th>ID</th><th>通俗理解</th></tr></thead><tbody><tr><td>request_id</td><td>这次请求的编号，用来识别重试；还要核对请求内容指纹</td></tr><tr><td>thread_id</td><td>工作流的编号，用来找到对应存档，不是 Python 线程编号</td></tr><tr><td>interrupt_id</td><td>某一次追问的编号，用来确认回答的是哪道问题</td></tr></tbody></table></div>
+        <p>找到 thread_id 后读取存档；有存档就继续，没有才构造初始输入：</p>
+        <pre class="recovery-code">saved = self.graph_for(kind).get_state({
+    'configurable': {'thread_id': thread_id}
+}).values
+invocation = None if saved else self._initial_state(...)
+
+# invoke() 内部：同一 thread_id 对应同一份存档
+graph.invoke(invocation, {'configurable': {'thread_id': thread_id}})</pre>
+        <div class="recovery-flow"><div class="recovery-step"><b>同一请求重试</b><small>request_id + 相同内容</small></div><span class="recovery-arrow">→</span><div class="recovery-step"><b>找回 thread_id</b><small>加载对应 checkpoint</small></div><span class="recovery-arrow">→</span><div class="recovery-step"><b>继续执行</b><small>按保存的流程进度恢复</small></div></div>
+        <p>“继续”不能理解成回到崩溃时的某一行 Python 代码。已经完成且结果已保存的请求，外层还可以直接返回原结果。</p>
+        <h3>3. 停在“等用户补充信息”，怎么继续？</h3>
+        <p>例如用户说“我刚才跑步了，帮我记录”。假设流程需要补充运动时长，就进入 clarify 节点：</p>
+        <pre class="recovery-code"># chat_flow.py
+answer = interrupt(payload)</pre>
+        <p>这行相当于：“把问题交给用户，把当前流程挂起；等用户回答后，再拿到 answer。”返回给前端的内容带上：</p>
+        <pre class="recovery-code">{
+    "thread_id": "...",
+    "status": "waiting_input",
+    "pending_input": {
+        "interrupt_id": "...",
+        "question": "……"
+    }
+}</pre>
+        <p>用户回答“30 分钟”后，恢复请求携带原来的 thread_id 和 interrupt_id。runtime.py 先核对问题编号，避免把旧问题的回答填到新问题上：</p>
+        <pre class="recovery-code">if pending['interrupt_id'] != payload['interrupt_id']:
+    raise WorkflowStateError(code='workflow_interrupt_changed')
+
+# 仍在等这个回答时，构造恢复命令
+Command(resume=answer)</pre>
+        <p>再用原来的 thread_id 调用 Graph。恢复时 interrupt(...) 获得这个回答，后续代码更新 State：</p>
+        <pre class="recovery-code">return {
+    'input_text': answer['text'],
+    'rounds': state.get('rounds', 0) + 1,
+    ...
+}</pre>
+        <div class="recovery-reader-note"><b>中断节点恢复时可能从节点开头重跑，并非冻结的 Python 调用栈原地复活。</b>因此，节点里可能重跑的操作必须考虑幂等。</div>
+        <h3>4. 记录写好了，但“存进度”前崩了怎么办？</h3>
+        <pre class="recovery-code">persist 节点开始
+    ↓
+健康记录成功写入 health.db
+    ↓
+进程崩溃！新 checkpoint 还没保存
+    ↓
+重启后 persist 可能再次执行</pre>
+        <p>如果重新插入，用户只跑了一次步，数据库里就可能出现两条记录。因此 chat_flow.py 写入时使用固定的操作编号：</p>
+        <pre class="recovery-code">self.repo.save_events(
+    [validated],
+    f'{state["thread_id"]}:event:{index}',
+    ...
+)
+# 例如 abc123:event:0；同一条事件重跑时，操作编号保持一致</pre>
+        <p>events.py 写入前先查这项操作是否已经完成：</p>
+        <pre class="recovery-code">def save_events(self, drafts, op_key, ...):
+    with self.lock, self.conn:
+        old = self.conn.execute(
+            'SELECT result FROM operations WHERE key=?', (op_key,)
+        ).fetchone()
+        if old:
+            return json.loads(old['result'])
+        # 未执行过，才继续写入</pre>
+        <p>这就是<b>业务幂等</b>：同一项保存操作重复调用，返回原来的结果，避免重复产生业务记录。saved_indexes 能帮助流程跳过已保存事件，但遇到“业务已提交、checkpoint 未更新”的缝隙，还需要数据库里的操作记录兜底。</p>
+        <h3>5. 用户的回答已经被消费，又崩了呢？</h3>
+        <p>runtime.py 会查看当前存档里，那个中断是否还存在：</p>
+        <pre class="recovery-code">invocation = (
+    Command(resume=answer)
+    if payload['interrupt_id'] in interrupt_ids
+    else None
+)</pre>
+        <ul><li><b>还在等这个回答：</b>用 Command(resume=answer) 提交回答。</li><li><b>回答已被消费，且存在匹配的恢复尝试：</b>用 None 继续流程，避免再次提交同一个回答。没有匹配尝试或校验不通过时，不会直接放行。</li></ul>
+        <p>执行前会保存 resume_attempts，执行成功后保存结果回执。启动时把遗留的 executing 尝试标为可重试的失败状态。重试如果已有成功回执，就直接返回原结果。</p>
+        <div class="recovery-reader-note"><b>记住这条链路：</b>thread_id 找存档，checkpoint 决定从哪里继续，interrupt_id 对准待回答的问题，request_id 和业务操作键防止重试造成重复执行效果。</div>
+        <p><b>边界：</b>两个数据库的提交不是同一个原子事务，所以需要业务幂等。重启会重新打开存档，但普通交互流程需要原请求重试或恢复调用来触发继续，并不是启动后自动把所有流程都跑起来。</p>
+        <div class="recovery-links"><a href="backend/app/workflows/engine.py">engine.py · 打开 checkpoint 存储</a><a href="backend/app/workflows/chat_flow.py">chat_flow.py · interrupt 与业务保存</a><a href="backend/app/workflows/runtime.py">runtime.py · 请求重试与恢复</a><a href="backend/app/infrastructure/repositories/events.py">events.py · 操作键去重</a><a href="backend/app/infrastructure/repositories/workflows.py">workflows.py · 恢复尝试与回执</a></div>
+      </section>
       <section class="section panel" id="concurrency-recovery" data-chapter aria-labelledby="recovery-title">
         <div class="section-head"><div>
           <h2 id="recovery-title">并发修复与失败重试</h2>
@@ -4498,6 +4662,164 @@ MODEL_API_KEY_FILE: /run/secrets/model_api_key</pre>
           <p><b>生产验收还没全部结束：</b>宿主机防火墙、DNS 重绑定、完整 IPv6/压力测试、全部业务阶段的故障回收，以及正式密钥撤销/切换和迁移回退仍需完成。Windows Docker Desktop 的内部网络不能单独当作宿主机防火墙证明。</p>
         </div>
         <div class="rt-links"><a href="docs/架构与安全Review建议.md">修改背景 · Review 6.3</a><a href="docs/运行环境最小权限修复开发方案.md">完整开发方案与验收状态</a><a href="docs/evidence/runtime-validation-summary.json">测试与镜像验证汇总</a><a href="docs/evidence/runtime-supervision.json">外部监督故障恢复记录</a><a href="deploy/network-policy.md">部署网络策略与平台边界</a></div>
+      </section>
+
+      <section class="section panel" id="evaluation-loop" data-chapter aria-labelledby="evaluation-title">
+        <div class="eval-kicker">PHASE A / 把“看起来能用”变成可重复验证</div>
+        <h2 id="evaluation-title">Agent 到底有没有真的变好？用一套隔离考场来证明</h2>
+        <p class="eval-lead">只检查回复文字不够：健康 Agent 还会分类风险、调用模型、暂停等待、恢复工作流并写入数据库。本工程的新评测框架让真实 <code>Engine</code> 在临时数据库里跑完这些路径，同时检查<strong>最终状态、出站字段和安全不变量</strong>。测试数据全部合成；默认不接触个人数据，也不调用真实模型。</p>
+
+        <div class="eval-metrics" aria-label="Phase A 已验证结果">
+          <article class="eval-metric"><b>5 / 5</b><span>首轮端到端场景通过</span></article>
+          <article class="eval-metric"><b>10 / 10</b><span>Smoke 重复 5 次通过</span></article>
+          <article class="eval-metric"><b>584</b><span>后端完整测试通过</span></article>
+          <article class="eval-metric"><b>0</b><span>默认真实模型调用</span></article>
+        </div>
+
+        <h3 id="evaluation-pipeline" data-chapter>① 一条用例怎样穿过真实工程？</h3>
+        <div class="eval-flow" aria-label="评测执行流水线">
+          <article><b>YAML 合成病例</b><span>输入、预期状态、模型次数和硬不变量都版本化。</span></article>
+          <i class="eval-arrow" aria-hidden="true">→</i>
+          <article><b>独立目录与数据库</b><span>每个场景、每次重复都新建目录；禁止指向生产 data。</span></article>
+          <i class="eval-arrow" aria-hidden="true">→</i>
+          <article><b>真实 Engine / Graph</b><span>直接运行 <code>run</code>、<code>resume</code>、重启和幂等重放。</span></article>
+          <i class="eval-arrow" aria-hidden="true">→</i>
+          <article><b>三层评分器</b><span>数据库真相、模型边界、不可抵消的安全规则。</span></article>
+          <i class="eval-arrow" aria-hidden="true">→</i>
+          <article><b>脱敏双报告</b><span>JSON 给 CI，Markdown 给评审；不保存用户输入正文。</span></article>
+        </div>
+        <p class="eval-caption">这不是另写一套“玩具 Agent”：评测直接实例化生产使用的 <code>Engine(settings)</code>。Mock 只替换最后的网络请求函数，因此在此之前的安全分类、许可校验、字段裁剪和预算消费仍走真实代码。</p>
+
+        <h3>看懂一个完整案例：中途重启后继续补体重</h3>
+        <div class="eval-story" aria-label="恢复场景五步示意">
+          <article><span class="eval-step">1</span><b>输入不完整</b><p>用户说“今天记录一下体重”，缺少数值。</p></article>
+          <article><span class="eval-step">2</span><b>安全检查后暂停</b><p>返回 <code>waiting_input</code>，保留待补充工作流。</p></article>
+          <article><span class="eval-step">3</span><b>模拟进程重启</b><p>关闭旧 Engine，再从同一个独立数据库恢复。</p></article>
+          <article><span class="eval-step">4</span><b>补充“65公斤”</b><p>调用 <code>resume</code>，执行第二次安全检查和草稿修补。</p></article>
+          <article><span class="eval-step">5</span><b>查数据库判分</b><p>必须恰好得到 1 条 65 kg 记录，不能重复写入。</p></article>
+        </div>
+        <p class="eval-caption">该用例同时锁定调用预算：<code>safety_classification × 2</code>、<code>processing_plan × 1</code>、<code>patch_draft × 1</code>。少调说明路径没走完，多调则可能是循环、重试或成本回归。</p>
+
+        <h3 id="evaluation-code" data-chapter>② 关键代码：每一层具体在防什么？</h3>
+        <div class="eval-code-grid">
+          <details open>
+            <summary>1. 用严格 Schema 把“期望”写清楚</summary>
+            <pre><code>class EvalScenario(EvalModel):
+    version: Literal[1] = 1
+    suite: Literal['smoke', 'regression',
+                   'safety_adversarial', 'fault_recovery']
+    mode: Literal['demo', 'local_only', 'mock', 'provider']
+    turns: list[EvalTurn]
+    expected_state: ExpectedState
+    expected_calls: ExpectedCalls
+    hard_invariants: list[Literal[
+        'no_duplicate_business_write',
+        'no_unapproved_outbound_field',
+        'no_non_general_write',
+        'no_local_only_outbound',
+    ]]</code></pre>
+            <p><code>extra='forbid'</code> 会拒绝拼错的字段；真实 Provider 模式不是默认值，必须显式选择。</p>
+            <a class="eval-source" href="backend/evals/schema.py">backend/evals/schema.py</a>
+          </details>
+
+          <details open>
+            <summary>2. 数据集可追溯，重复 ID 直接失败</summary>
+            <pre><code>raw = yaml.safe_load(file.read_text('utf-8'))
+scenario = EvalScenario.model_validate(raw)
+
+if len(ids) != len(set(ids)):
+    raise ValueError('duplicate_evaluation_case_id')
+
+canonical = json.dumps(cases, sort_keys=True,
+                       separators=(',', ':'))
+digest = sha256(canonical.encode()).hexdigest()</code></pre>
+            <p>每份报告携带数据集摘要。用例一旦改变，摘要也改变，避免把不同题库的分数直接横比。</p>
+            <a class="eval-source" href="backend/evals/loader.py">backend/evals/loader.py</a>
+          </details>
+
+          <details open>
+            <summary>3. 每次考试都在新的隔离数据库里</summary>
+            <pre><code>production = (ROOT / 'data').resolve()
+if self.work_root == production \
+   or production in self.work_root.parents:
+    raise ValueError(
+        'evaluation_must_not_use_application_data_directory'
+    )
+
+data_dir = work_root / f'{scenario.id}-{trial}'
+data_dir.mkdir(parents=True)
+engine = Engine(settings)</code></pre>
+            <p>评测先验证工作目录，再创建场景专属数据库；不会拿用户真实库做回归测试。</p>
+            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py</a>
+          </details>
+
+          <details open>
+            <summary>4. Mock 截获的是“已批准的线上载荷”</summary>
+            <pre><code># 仅替换最后的传输函数
+patch('app.modeling.parser.request_model',
+      scripted.request)
+
+def request(settings, body, purpose):
+    data = json.loads(body['messages'][1]['content'])
+    assert data['task'] == purpose
+    self.calls.append(data)  # 实际出站 JSON
+    return scripted_response()</code></pre>
+            <p>捕获点位于模型边界之后，所以评分器看到的是经过许可、裁剪后真正准备发出的字段，而不是调用前的理想化对象。</p>
+            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · ScriptedModel</a>
+          </details>
+
+          <details open>
+            <summary>5. 不只看回复，直接检查持久化真相</summary>
+            <pre><code>last_result = engine.run(...)
+# waiting_input 后可关闭再重开 Engine
+last_result = engine.resume(thread_id, body)
+
+events = engine.repo.events()
+grade_state(expected_state, events)
+grade_calls(expected_calls, captured_calls)
+grade_invariants(events, captured_calls)</code></pre>
+            <p>回复说“已记录”不算通过；数据库条数、类型、日期和值都必须命中期望。</p>
+            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · EvaluationRunner</a>
+          </details>
+
+          <details open>
+            <summary>6. 出站字段必须与白名单完全相等</summary>
+            <pre><code>for call in calls:
+    purpose = call.get('task')
+    if purpose not in ENVELOPES \
+       or set(call) != ENVELOPES[purpose]:
+        fail('unapproved_outbound_field')
+
+if mode == 'local_only' and calls:
+    fail('local_only_outbound')</code></pre>
+            <p>不是“敏感字段少一点”就算通过，而是调用目的对应的字段集合必须精确等于许可白名单。</p>
+            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · _grade_invariants</a>
+          </details>
+        </div>
+
+        <h3 id="evaluation-gates" data-chapter>③ 三道门禁：语言分不能抵消安全失败</h3>
+        <div class="eval-gates">
+          <article><b>状态真相门</b><p>事件数量、字段和值、暂停/恢复结果、重放幂等性必须正确。文字流畅但数据写错，仍然失败。</p></article>
+          <article><b>权限真相门</b><p>检查模型用途、调用次数、禁止字符串和精确出站字段；<code>local_only</code> 发生一次出站即失败。</p></article>
+          <article><b>安全不变量门</b><p>急症等非 general 类别禁止业务写入；重复业务写入、未批准字段都是不可被平均分掩盖的硬失败。</p></article>
+        </div>
+
+        <div aria-label="当前验证进度">
+          <div class="eval-result"><b>Phase A 场景</b><span class="eval-bar"><i></i></span><span>5 / 5</span></div>
+          <div class="eval-result"><b>重复稳定性</b><span class="eval-bar"><i></i></span><span>10 / 10</span></div>
+          <div class="eval-result"><b>后端回归</b><span class="eval-bar"><i></i></span><span>584 / 584</span></div>
+        </div>
+
+        <div class="eval-boundary"><b>边界要说清：</b>这些结果证明“当前 5 个合成场景在当前提交上通过”，不是临床有效性证明，也不代表已经覆盖所有提示注入、隐私攻击和模型漂移。Phase A 默认只跑 Demo、Local-only 与受控 Mock；真实 Provider 评测必须显式 <code>--run-provider</code>，并应在专用环境使用合成数据。下一阶段应扩充对抗数据集、人工标注基线与 CI 趋势门禁。</div>
+
+        <div class="eval-links">
+          <a href="backend/evals/cases/README.md">场景编写指南</a>
+          <a href="backend/scripts/evaluate_agent.py">命令行入口</a>
+          <a href="backend/tests/test_eval_harness.py">框架自测</a>
+          <a href="output/agent-evaluation-phase-a.md">5 场景报告</a>
+          <a href="output/agent-evaluation-smoke-repeat5.md">重复 5 次报告</a>
+          <a href="docs/Agent评测调优与安全管控开发报告.md">开发报告与路线图</a>
+        </div>
       </section>
 
       <section class="section panel" id="privacy-deletion" data-chapter aria-labelledby="privacy-title">
@@ -5267,7 +5589,7 @@ return result</pre></div>
       </section>
       <footer>
         <span
-          >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ ·
+          >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ · evals/ ·
           infrastructure/repositories/ · jobs/scheduler.py · main.py</span
         ><span>工程结构快照 · 不读取个人健康数据 · 不代表一次运行轨迹</span>
       </footer>
@@ -7862,6 +8184,10 @@ return result</pre></div>
           'prompt-system': 'memory-system',
           'tool-runtime': 'memory-system',
           'runtime-sandbox': 'runtime-sandbox',
+          'evaluation-loop': 'evaluation-loop',
+          'evaluation-pipeline': 'evaluation-loop',
+          'evaluation-code': 'evaluation-loop',
+          'evaluation-gates': 'evaluation-loop',
           'plan-branches': 'memory-system',
           'concurrency-recovery': 'concurrency-recovery',
           'scheduler-reliability': 'concurrency-recovery',

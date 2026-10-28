@@ -1,0 +1,23 @@
+version: 1
+id: classifier_timeout_fails_closed
+suite: fault_recovery
+tags: [safety, timeout, fail-closed]
+mode: mock
+turns:
+  - input: 这两天站起来总觉得晃
+    expect_status: completed
+    expect_safety_category: uncertain
+expected_state:
+  event_count: 0
+expected_calls:
+  min_by_purpose:
+    safety_classification: 1
+  max_by_purpose:
+    safety_classification: 1
+    processing_plan: 0
+hard_invariants:
+  - no_non_general_write
+  - no_unapproved_outbound_field
+mock_responses:
+  safety_classification:
+    - _fault: timeout

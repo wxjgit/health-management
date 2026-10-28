@@ -1,0 +1,39 @@
+version: 1
+id: mock_model_weight_boundary
+suite: smoke
+tags: [model, boundary, weight]
+mode: mock
+turns:
+  - input: 今天体重65kg
+    expect_status: completed
+    expect_safety_category: general
+    replay_count: 1
+expected_state:
+  event_count: 1
+  events:
+    - kind: weight
+      value: 65
+expected_calls:
+  min_by_purpose:
+    safety_classification: 1
+    processing_plan: 1
+  max_by_purpose:
+    safety_classification: 1
+    processing_plan: 1
+  forbidden_substrings: [HIDDEN_HISTORY]
+hard_invariants:
+  - no_duplicate_business_write
+  - no_unapproved_outbound_field
+mock_responses:
+  safety_classification:
+    - findings: []
+      uncertain: false
+  processing_plan:
+    - actions:
+        - intent: record
+          text: 今天体重65kg
+          events:
+            - kind: weight
+              occurred_at: "2026-10-28T07:00:00+08:00"
+              raw_text: 今天体重65kg
+              value: 65

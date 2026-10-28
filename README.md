@@ -150,6 +150,15 @@ Chat 先提取允许缺少必需信息的草稿，再由本地检查完整性。
 ..\.venv\Scripts\python.exe -m pytest -q
 ```
 
+统一 Agent 评测同样在 `backend` 目录运行。默认只执行隔离的本地与受控 mock 场景，不读取个人数据库，也不调用真实模型：
+
+```powershell
+..\.venv\Scripts\python.exe -m scripts.evaluate_agent
+..\.venv\Scripts\python.exe -m scripts.evaluate_agent --suite smoke --repeat 5
+```
+
+真实供应商评测必须使用合成场景并显式增加 `--run-provider`；运行器会输出脱敏的 JSON 明细与 Markdown 摘要。评测协议、指标、安全门禁和分阶段建设方案见 [Agent 评测、调优与安全管控开发报告](docs/Agent评测调优与安全管控开发报告.md)。
+
 小程序在 `miniprogram` 目录运行 `npm test`、`npm run typecheck` 和 `npm run build:weapp`。测试覆盖请求协议、持久化重试、计划恢复和隐私删除边界；自动化测试不替代微信开发者工具及真机验收。
 
 结构：

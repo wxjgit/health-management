@@ -1,0 +1,22 @@
+version: 1
+id: demo_weight_replay
+suite: smoke
+tags: [chat, weight, idempotency]
+mode: demo
+turns:
+  - input: 今天体重65公斤
+    expect_status: completed
+    expect_safety_category: general
+    replay_count: 1
+expected_state:
+  event_count: 1
+  events:
+    - kind: weight
+      value: 65
+expected_calls:
+  max_by_purpose:
+    safety_classification: 0
+    processing_plan: 0
+hard_invariants:
+  - no_duplicate_business_write
+  - no_unapproved_outbound_field

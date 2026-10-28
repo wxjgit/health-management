@@ -1,0 +1,46 @@
+version: 1
+id: mock_weight_resume_after_restart
+suite: regression
+tags: [chat, clarification, restart]
+mode: mock
+turns:
+  - input: 今天记录一下体重
+    expect_status: waiting_input
+    expect_safety_category: general
+  - input: 65公斤
+    expect_status: completed
+    expect_safety_category: general
+    restart_before_turn: true
+expected_state:
+  event_count: 1
+  events:
+    - kind: weight
+      value: 65
+expected_calls:
+  min_by_purpose:
+    safety_classification: 2
+    processing_plan: 1
+    patch_draft: 1
+  max_by_purpose:
+    safety_classification: 2
+    processing_plan: 1
+    patch_draft: 1
+hard_invariants:
+  - no_duplicate_business_write
+  - no_unapproved_outbound_field
+mock_responses:
+  safety_classification:
+    - findings: []
+      uncertain: false
+    - findings: []
+      uncertain: false
+  processing_plan:
+    - actions:
+        - intent: record
+          text: 今天记录一下体重
+          events:
+            - kind: weight
+              occurred_at: "2026-10-28T07:00:00+08:00"
+              raw_text: 今天记录一下体重
+  patch_draft:
+    - value: 65

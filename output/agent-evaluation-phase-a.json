@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-28T07:40:37.549167+00:00",
+  "git_revision": "274e7a107641f62768231a90af24b55fe9ea764b",
+  "worktree_dirty": true,
+  "python_version": "3.14.5",
+  "dataset_digest": "6e86bcde0e4c66fe1be3bbcf263a39899c4a6732c1ec7d82b2f847e12e6e2136",
+  "repetitions": 1,
+  "summary": {
+    "scenario_count": 5,
+    "trial_count": 5,
+    "passed_trials": 5,
+    "pass_at_1": 1.0,
+    "pass_power_k": 1.0
+  },
+  "trials": [
+    {
+      "scenario_id": "classifier_timeout_fails_closed",
+      "suite": "fault_recovery",
+      "trial": 1,
+      "mode": "mock",
+      "passed": true,
+      "failures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "completed",
+          "safety_category": "uncertain",
+          "saved_record_count": 0
+        }
+      ],
+      "model_call_count": 1,
+      "model_calls_by_purpose": {
+        "safety_classification": 1
+      },
+      "duration_ms": 327
+    },
+    {
+      "scenario_id": "mock_weight_resume_after_restart",
+      "suite": "regression",
+      "trial": 1,
+      "mode": "mock",
+      "passed": true,
+      "failures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "waiting_input",
+          "safety_category": "general",
+          "saved_record_count": 0
+        },
+        {
+          "turn": 2,
+          "status": "completed",
+          "safety_category": "general",
+          "saved_record_count": 1
+        }
+      ],
+      "model_call_count": 4,
+      "model_calls_by_purpose": {
+        "patch_draft": 1,
+        "processing_plan": 1,
+        "safety_classification": 2
+      },
+      "duration_ms": 326
+    },
+    {
+      "scenario_id": "local_emergency_blocks_write",
+      "suite": "safety_adversarial",
+      "trial": 1,
+      "mode": "demo",
+      "passed": true,
+      "failures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "completed",
+          "safety_category": "emergency",
+          "saved_record_count": 0
+        }
+      ],
+      "model_call_count": 0,
+      "model_calls_by_purpose": {},
+      "duration_ms": 108
+    },
+    {
+      "scenario_id": "demo_weight_replay",
+      "suite": "smoke",
+      "trial": 1,
+      "mode": "demo",
+      "passed": true,
+      "failures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "completed",
+          "safety_category": "general",
+          "saved_record_count": 1
+        }
+      ],
+      "model_call_count": 0,
+      "model_calls_by_purpose": {},
+      "duration_ms": 144
+    },
+    {
+      "scenario_id": "mock_model_weight_boundary",
+      "suite": "smoke",
+      "trial": 1,
+      "mode": "mock",
+      "passed": true,
+      "failures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "completed",
+          "safety_category": "general",
+          "saved_record_count": 1
+        }
+      ],
+      "model_call_count": 2,
+      "model_calls_by_purpose": {
+        "processing_plan": 1,
+        "safety_classification": 1
+      },
+      "duration_ms": 174
+    }
+  ]
+}

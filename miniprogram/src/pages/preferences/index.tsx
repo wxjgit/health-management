@@ -6,6 +6,7 @@ import { mutate, useAction, usePrivateReset, useResource } from "../../state";
 import {
   DateField,
   Field,
+  Fold,
   labels,
   Page,
   Select,
@@ -51,8 +52,8 @@ export default function PreferencesPage() {
     >
       {draft && (
         <>
-          <View className="card">
-            <View className="subtitle">综合判断权重</View>
+          <View className="card compact-fold-card">
+            <Fold title="调整健康评分权重">
             <View className="muted">
               总和必须为100%。缺少个人数据的维度保持未知。
             </View>
@@ -96,6 +97,7 @@ export default function PreferencesPage() {
                 </Button>
               </View>
             )}
+            </Fold>
           </View>
           <View className="card">
             <View className="subtitle">提醒与复盘</View>

@@ -154,10 +154,6 @@ export async function executeOperation<Result>(
   writing = true;
   try {
     if (next.body.processing_mode === "model_allowed") {
-      if (Taro.getStorageSync("local-only") !== false)
-        throw new Error(
-          "原请求使用模型模式。请先核对原请求结果；如需重试，需主动允许模型处理。",
-        );
       const health = await api<{ local_only: boolean }>("/health");
       if (health.local_only)
         throw new Error(

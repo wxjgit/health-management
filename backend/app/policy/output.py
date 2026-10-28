@@ -1,4 +1,4 @@
-"""Render model selections against local facts; never render model prose.
+"""Render local receipts and independently reviewed consultation prose.
 
 Schemas only validate shape. This boundary also validates membership and keeps
 dates, quantities, receipts, uncertainty and clarification under local control.
@@ -226,6 +226,12 @@ def validate_advice(candidate, context):
         selected = AdviceReply.model_validate(candidate)
     except ValidationError as error:
         raise ModelOutputError() from error
+    if selected.answer:
+        if not selected._reviewed:
+            raise ModelOutputError()
+        return selected.answer
+    if not selected.point_ids:
+        raise ModelOutputError()
     plan = advice_plan(context)
     options = {point['point_id']: point['text'] for point in plan['options']}
     if len(selected.point_ids) != len(set(selected.point_ids)) or any(key not in options for key in selected.point_ids):

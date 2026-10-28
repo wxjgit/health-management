@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
-import Taro, { useDidShow } from "@tarojs/taro";
-import { Button, Switch, Text, Textarea, View } from "@tarojs/components";
+import { useEffect, useRef, useState } from "react";
+import Taro, { useDidHide, useDidShow, useReachBottom } from "@tarojs/taro";
+import { Button, Text, Textarea, View } from "@tarojs/components";
 import type { Daily, Event, Health, Message, Workflow } from "../../types";
-import { api, requestId } from "../../api";
+import { api, errorText, queryString, requestId } from "../../api";
 import {
   executeOperation,
   mutate,
   operation,
+  privacyGeneration,
   useAction,
   useOperation,
   usePrivateReset,
@@ -23,27 +24,61 @@ import {
   Trace,
   Icon,
 } from "../../components/common";
+import FormModal from "../../components/form-modal";
 import { DailyOverview } from "../../components/daily-overview";
 
+const MESSAGE_PAGE_SIZE = 20;
+
 export default function Chat() {
+  const [olderMessages, setOlderMessages] = useState<Message[]>([]);
+  const [olderLoading, setOlderLoading] = useState(false);
+  const [olderError, setOlderError] = useState("");
+  const [hasOlder, setHasOlder] = useState(false);
+  const historyVersion = useRef(0);
+  const historyBusy = useRef(false);
+  const alive = useRef(true);
+  function resetHistory() {
+    historyVersion.current++;
+    historyBusy.current = false;
+    setOlderMessages([]);
+    setOlderLoading(false);
+    setOlderError("");
+    setHasOlder(false);
+  }
+  useEffect(
+    () => () => {
+      alive.current = false;
+      historyVersion.current++;
+    },
+    [],
+  );
+  useDidHide(() => {
+    historyVersion.current++;
+    historyBusy.current = false;
+    setOlderLoading(false);
+  });
   const resource = useResource(async () => {
+    resetHistory();
+    const version = historyVersion.current;
     const [messages, workflows, expired, health, daily] = await Promise.all([
-      api<Message[]>("/messages"),
+      api<Message[]>(`/messages?limit=${MESSAGE_PAGE_SIZE}`),
       api<Workflow[]>("/workflows"),
       api<Workflow[]>("/workflows/expired"),
       api<Health>("/health"),
       api<Daily>("/dashboard"),
     ]);
+    if (alive.current && version === historyVersion.current)
+      setHasOlder(messages.length === MESSAGE_PAGE_SIZE);
     return { messages, workflows, expired, health, daily };
   });
   const action = useAction();
   const pending = useOperation();
   const [text, setText] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  useDidHide(() => setOverviewOpen(false));
   const [selectedId, setSelectedId] = useState("");
   const [correction, setCorrection] = useState<Event | null>(null);
-  const [localOnly, setLocalOnly] = useState(
-    () => Taro.getStorageSync("local-only") !== false,
-  );
   const [elapsed, setElapsed] = useState(0);
   useDidShow(() => {
     const event = Taro.getStorageSync<Event>("correction-event");
@@ -55,9 +90,11 @@ export default function Chat() {
     }
   });
   usePrivateReset(() => {
+    resetHistory();
     setText("");
     setSelectedId("");
     setCorrection(null);
+    setOverviewOpen(false);
   });
   useEffect(() => {
     if (!action.busy) {
@@ -72,15 +109,71 @@ export default function Chat() {
     return () => clearInterval(timer);
   }, [action.busy]);
   const data = resource.data;
+  const messageRounds: Message[][] = [];
+  for (const message of [...olderMessages, ...(data?.messages || [])]) {
+    if (message.role === "user" || !messageRounds.length) {
+      messageRounds.push([]);
+    }
+    messageRounds[messageRounds.length - 1].push(message);
+  }
+  const newestMessages = messageRounds.reverse().flat();
+  async function loadOlder() {
+    if (
+      !data ||
+      resource.loading ||
+      !hasOlder ||
+      historyBusy.current ||
+      pending
+    )
+      return;
+    const first = olderMessages[0] || data.messages[0];
+    if (!first) return;
+    const version = historyVersion.current;
+    const epoch = privacyGeneration();
+    historyBusy.current = true;
+    setOlderLoading(true);
+    setOlderError("");
+    try {
+      const batch = await api<Message[]>(
+        `/messages?${queryString({ limit: String(MESSAGE_PAGE_SIZE), before: first.id })}`,
+      );
+      if (
+        !alive.current ||
+        version !== historyVersion.current ||
+        epoch !== privacyGeneration()
+      )
+        return;
+      setOlderMessages((existing) => {
+        const ids = new Set(
+          [...existing, ...data.messages].map((row) => row.id),
+        );
+        return [...batch.filter((row) => !ids.has(row.id)), ...existing];
+      });
+      setHasOlder(batch.length === MESSAGE_PAGE_SIZE);
+    } catch (error) {
+      if (
+        alive.current &&
+        version === historyVersion.current &&
+        epoch === privacyGeneration()
+      )
+        setOlderError(errorText(error));
+    } finally {
+      if (alive.current && version === historyVersion.current) {
+        historyBusy.current = false;
+        setOlderLoading(false);
+      }
+    }
+  }
+  useReachBottom(() => {
+    if (!olderError) void loadOlder();
+  });
   const selected = data?.workflows.find(
     (row) =>
       row.thread_id === selectedId &&
       row.pending_input?.kind === "clarification",
   );
   const effectiveLocal =
-    localOnly ||
-    data?.health.local_only ||
-    selected?.processing_mode === "local_only";
+    data?.health.local_only || selected?.processing_mode === "local_only";
   async function send(option?: { id: string; label: string }) {
     if (!data || pending || (!option && !text.trim())) return;
     await action.run(async () => {
@@ -105,7 +198,7 @@ export default function Chat() {
       setText("");
       setSelectedId("");
       setCorrection(null);
-      void Taro.pageScrollTo({ scrollTop: 999999, duration: 200 });
+      void Taro.pageScrollTo({ scrollTop: 0, duration: 200 });
     });
   }
   return (
@@ -126,174 +219,6 @@ export default function Chat() {
           站内消息
         </Button>
       </View>
-      {data && (
-        <>
-          <DailyOverview daily={data.daily} />
-          <View className="quick-records">
-            {[
-              { title: "饮食", mark: "食", text: "今天午餐吃了" },
-              { title: "体重", mark: "kg", text: "今天早上体重" },
-              { title: "睡眠", mark: "☾", text: "昨晚睡了" },
-              { title: "运动", mark: "↗", text: "今天运动" },
-            ].map((item) => (
-              <Button
-                className="quick-record"
-                key={item.title}
-                disabled={
-                  action.busy || !!pending || !!selected || !!correction
-                }
-                onClick={() => setText(item.text)}
-              >
-                <View className="quick-mark">{item.mark}</View>
-                <Text>{item.title}</Text>
-                <Text className="quick-plus">＋</Text>
-              </Button>
-            ))}
-          </View>
-          {data.health.mode === "demo" && (
-            <View className="mode-note">
-              演示服务：固定营养示例未经核验；纯本地模式下缺失营养保持未知。
-            </View>
-          )}
-          {!data.messages.length && (
-            <View className="card starter-card">
-              <View className="section-kicker">A LITTLE EVERY DAY</View>
-              <View className="subtitle">从第一条记录开始</View>
-              <View className="muted">不用填表，像聊天一样记下今天。</View>
-              <View className="starter-examples">
-                {[
-                  "今天早上体重65公斤",
-                  "昨晚睡了7小时",
-                  "今天跑步30分钟",
-                  "中午吃了牛肉面",
-                ].map((example) => (
-                  <Button key={example} onClick={() => setText(example)}>
-                    {example}
-                  </Button>
-                ))}
-              </View>
-            </View>
-          )}
-          {data.messages.map((message) => (
-            <View
-              key={message.id}
-              className={`card message ${message.role === "user" ? "user" : ""}`}
-            >
-              <View className="message-meta">
-                <View
-                  className={`message-avatar ${message.role === "user" ? "is-user" : ""}`}
-                >
-                  {message.role === "user" ? "我" : "✦"}
-                </View>
-                <Text>
-                  {message.role === "user" ? "我" : "轻记 · 健康助手"}
-                </Text>
-              </View>
-              <Text userSelect>{message.text}</Text>
-              {message.cards?.map((card, index) => (
-                <MealCard key={index} card={card} />
-              ))}
-              <Trace
-                rows={message.process_trace}
-                duration={message.duration_ms}
-              />
-              <EvidenceList rows={message.evidence_refs} />
-            </View>
-          ))}
-          {data.workflows
-            .filter((row) => row.pending_input?.kind === "clarification")
-            .map((row) => (
-              <View className="card" key={row.thread_id}>
-                <View className="tag">
-                  {row.pending_input?.optional ? "可选补充" : "待补充"} ·{" "}
-                  {row.status === "resuming"
-                    ? "处理中"
-                    : row.status === "resume_failed"
-                      ? "上次补充失败"
-                      : "等待回答"}
-                </View>
-                <View>
-                  {row.pending_input?.prompt || row.pending_input?.question}
-                </View>
-                {row.retry_request ? (
-                  <>
-                    <View className="muted">
-                      上次回答：{row.retry_request.text}
-                      。重试将沿用原内容和处理模式。
-                    </View>
-                    <Button
-                      disabled={
-                        action.busy || !!pending || row.status === "resuming"
-                      }
-                      onClick={() =>
-                        action.run(() =>
-                          executeOperation(
-                            operation(
-                              `/workflows/${row.thread_id}/resume`,
-                              row.retry_request!,
-                              "恢复原回答",
-                            ),
-                          ),
-                        )
-                      }
-                    >
-                      重试原答案
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    disabled={
-                      action.busy || !!pending || row.status === "resuming"
-                    }
-                    onClick={() => {
-                      setSelectedId(row.thread_id);
-                      setCorrection(null);
-                    }}
-                  >
-                    {selectedId === row.thread_id
-                      ? "已选择此追问"
-                      : "回答此追问"}
-                  </Button>
-                )}
-                <Button
-                  disabled={action.busy || !!pending}
-                  onClick={() =>
-                    action.run(async () => {
-                      if (
-                        await confirm(
-                          "取消待补充流程",
-                          "已保存的记录保留，后续输入作为新记录处理。",
-                        )
-                      ) {
-                        await mutate(`/workflows/${row.thread_id}`, "DELETE");
-                        if (selectedId === row.thread_id) setSelectedId("");
-                      }
-                    })
-                  }
-                >
-                  取消此流程
-                </Button>
-              </View>
-            ))}
-          {data.workflows.some(
-            (row) => row.pending_input?.kind === "plan_confirmation",
-          ) && (
-            <Button onClick={() => tab("plans")}>查看并确认待处理计划</Button>
-          )}
-          {!!data.expired.length && (
-            <Fold title={`已过期上下文 · ${data.expired.length}`}>
-              <View className="muted">
-                不能继续旧追问，可以重新描述；已保存记录仍可在历史中查看。
-              </View>
-              {data.expired.map((row) => (
-                <View className="field" key={row.thread_id}>
-                  {row.reply || row.pending_input?.question || "上下文已过期"}
-                </View>
-              ))}
-            </Fold>
-          )}
-        </>
-      )}
       <View className="card composer">
         <View className="composer-heading">
           <View className="subtitle">记下此刻</View>
@@ -319,36 +244,6 @@ export default function Chat() {
             另开一条新记录
           </Button>
         )}
-        <View className="local-mode-row">
-          纯本地处理{" "}
-          <Switch
-            color="#2854ea"
-            checked={!!effectiveLocal}
-            disabled={
-              action.busy ||
-              !!pending ||
-              !!data?.health.local_only ||
-              selected?.processing_mode === "local_only"
-            }
-            onChange={(event) => {
-              setLocalOnly(event.detail.value);
-              Taro.setStorageSync("local-only", event.detail.value);
-            }}
-          />
-        </View>
-        {effectiveLocal ? (
-          <View className="muted">
-            本次不调用外部模型。缺失营养保持未知，复杂表达请明确日期和内容。
-          </View>
-        ) : (
-          <Fold
-            title={`外发说明：${data?.health.model_provider || "演示服务"} · ${data?.health.model_name || "无模型"}`}
-          >
-            <View className="muted">
-              首次发送本次输入、当前时间和操作状态。纠错仅发送所选单条记录，补充仅发送当前草稿；建议按问题发送相关餐食、近7天饮食汇总、近28天体重和已确认偏好限制，分量建议可能使用基础档案。营养估算仅发送食物分量，表达任务仅发送批准的回复要点，历史聊天原文不发送。
-            </View>
-          </Fold>
-        )}
         {selected?.pending_input?.options?.map((option) => (
           <Button
             key={option.id}
@@ -358,11 +253,38 @@ export default function Chat() {
             {option.label}
           </Button>
         ))}
+        {data && (
+          <View className="quick-records">
+            {[
+              { title: "饮食", mark: "食", text: "今天午餐吃了" },
+              { title: "体重", mark: "kg", text: "今天早上体重" },
+              { title: "睡眠", mark: "☾", text: "昨晚睡了" },
+              { title: "运动", mark: "↗", text: "今天运动" },
+            ].map((item) => (
+              <Button
+                className="quick-record"
+                key={item.title}
+                disabled={
+                  action.busy || !!pending || !!selected || !!correction
+                }
+                onClick={() => setText(item.text)}
+              >
+                <View className="quick-mark">{item.mark}</View>
+                <Text>{item.title}</Text>
+                <Text className="quick-plus">＋</Text>
+              </Button>
+            ))}
+          </View>
+        )}
         <Textarea
           value={text}
           disabled={action.busy || !!pending || !!selected?.retry_request}
           maxlength={4000}
-          placeholder={selected ? "补充所选问题…" : "用一句话开始记录…"}
+          placeholder={
+            inputFocused ? "" : selected ? "补充所选问题…" : "用一句话开始记录…"
+          }
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
           onInput={(event) => setText(event.detail.value)}
           adjustPosition
         />
@@ -386,6 +308,192 @@ export default function Chat() {
           发送
         </Button>
       </View>
+      {data && (
+        <>
+          <Button
+            className="daily-overview-trigger"
+            onClick={() => setOverviewOpen(true)}
+          >
+            查看今日状态
+          </Button>
+          {overviewOpen && (
+            <FormModal
+              title="今日状态"
+              className="daily-overview-modal"
+              onClose={() => setOverviewOpen(false)}
+              footer={
+                <Button
+                  className="primary"
+                  onClick={() => {
+                    setOverviewOpen(false);
+                    void go("today");
+                  }}
+                >
+                  今日汇总
+                </Button>
+              }
+            >
+              <DailyOverview daily={data.daily} />
+            </FormModal>
+          )}
+
+          {data.health.mode === "demo" && (
+            <View className="mode-note">
+              演示数据仅供体验，营养信息不完整时保持未知。
+            </View>
+          )}
+          {!data.messages.length && (
+            <View className="card starter-card">
+              <View className="section-kicker">A LITTLE EVERY DAY</View>
+              <View className="subtitle">从第一条记录开始</View>
+              <View className="muted">不用填表，像聊天一样记下今天。</View>
+              <View className="starter-examples">
+                {[
+                  "今天早上体重65公斤",
+                  "昨晚睡了7小时",
+                  "今天跑步30分钟",
+                  "中午吃了牛肉面",
+                ].map((example) => (
+                  <Button key={example} onClick={() => setText(example)}>
+                    {example}
+                  </Button>
+                ))}
+              </View>
+            </View>
+          )}
+          {newestMessages.map((message) => (
+            <View
+              key={message.id}
+              className={`card message ${message.role === "user" ? "user" : ""}`}
+            >
+              {message.role !== "user" && (
+                <View className="message-meta">
+                  <View className="message-avatar">✦</View>
+                  <Text>轻记 · 健康助手</Text>
+                </View>
+              )}
+              <Text userSelect>{message.text}</Text>
+              {message.cards?.map((card, index) => (
+                <MealCard key={index} card={card} />
+              ))}
+              <Trace
+                rows={message.process_trace}
+                duration={message.duration_ms}
+              />
+              <EvidenceList rows={message.evidence_refs} />
+            </View>
+          ))}
+          {olderError && (
+            <View className="muted">较早对话加载失败，请重试。</View>
+          )}
+          {hasOlder && (
+            <Button
+              className="chat-load-more"
+              disabled={olderLoading || resource.loading || !!pending}
+              loading={olderLoading}
+              onClick={() => void loadOlder()}
+            >
+              {olderLoading
+                ? "正在加载…"
+                : olderError
+                  ? "重新加载"
+                  : "查看更早对话"}
+            </Button>
+          )}
+          {data.workflows
+            .filter((row) => row.pending_input?.kind === "clarification")
+            .map((row) => (
+              <View className="card" key={row.thread_id}>
+                <View className="tag">
+                  {row.pending_input?.optional ? "可选补充" : "待补充"} ·{" "}
+                  {row.status === "resuming"
+                    ? "处理中"
+                    : row.status === "resume_failed"
+                      ? "上次补充失败"
+                      : "等待回答"}
+                </View>
+                <View>
+                  {row.pending_input?.prompt || row.pending_input?.question}
+                </View>
+                {row.retry_request ? (
+                  <>
+                    <View className="muted">
+                      上次回答：{row.retry_request.text}
+                      。可以重新提交这份回答。
+                    </View>
+                    <Button
+                      disabled={
+                        action.busy || !!pending || row.status === "resuming"
+                      }
+                      onClick={() =>
+                        action.run(() =>
+                          executeOperation(
+                            operation(
+                              `/workflows/${row.thread_id}/resume`,
+                              row.retry_request!,
+                              "恢复原回答",
+                            ),
+                          ),
+                        )
+                      }
+                    >
+                      重新提交回答
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    disabled={
+                      action.busy || !!pending || row.status === "resuming"
+                    }
+                    onClick={() => {
+                      setSelectedId(row.thread_id);
+                      setCorrection(null);
+                    }}
+                  >
+                    {selectedId === row.thread_id
+                      ? "已选择此追问"
+                      : "回答此追问"}
+                  </Button>
+                )}
+                <Button
+                  disabled={action.busy || !!pending}
+                  onClick={() =>
+                    action.run(async () => {
+                      if (
+                        await confirm(
+                          "取消补充回答",
+                          "已保存的记录保留，后续输入作为新记录处理。",
+                        )
+                      ) {
+                        await mutate(`/workflows/${row.thread_id}`, "DELETE");
+                        if (selectedId === row.thread_id) setSelectedId("");
+                      }
+                    })
+                  }
+                >
+                  取消补充
+                </Button>
+              </View>
+            ))}
+          {data.workflows.some(
+            (row) => row.pending_input?.kind === "plan_confirmation",
+          ) && (
+            <Button onClick={() => tab("settings")}>前往我的，确认计划</Button>
+          )}
+          {!!data.expired.length && (
+            <Fold title={`已结束的问答 · ${data.expired.length}`}>
+              <View className="muted">
+                如需继续，请重新描述；已保存的记录可在历史中查看。
+              </View>
+              {data.expired.map((row) => (
+                <View className="field" key={row.thread_id}>
+                  {row.reply || row.pending_input?.question || "这次问答已结束"}
+                </View>
+              ))}
+            </Fold>
+          )}
+        </>
+      )}
     </Page>
   );
 }

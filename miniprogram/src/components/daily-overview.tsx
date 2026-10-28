@@ -1,6 +1,6 @@
-import { Button, Text, View } from "@tarojs/components";
+import { Text, View } from "@tarojs/components";
 import type { Daily } from "../types";
-import { go, Icon, numberText } from "./common";
+import { Icon, numberText } from "./common";
 
 export function DailyOverview({ daily }: { daily: Daily }) {
   const intake = daily.totals.kcal;
@@ -16,9 +16,6 @@ export function DailyOverview({ daily }: { daily: Daily }) {
           <View className="section-kicker">TODAY · 今日状态</View>
           <View className="overview-date">{daily.date.replace(/-/g, ".")}</View>
         </View>
-        <Button className="overview-link" onClick={() => go("today")}>
-          今日汇总 <Text>↗</Text>
-        </Button>
       </View>
       <View className="overview-scene">
         <View className="scene-orbit orbit-outer" />

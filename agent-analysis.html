@@ -3250,6 +3250,7 @@ if unsafe_generated_text(text):
           <span>05</span>
           <div>
             <h2>处理计划与数据 Harness</h2>
+            <p class="case-note">本节部分规则描述对应改造前版本。2026-10-28 的咨询范围、日期参数、自然回答与修正重试变化，见<a href="#llm-consultation-summary">改造小结</a>。</p>
             <p>按当前源码核对：计划审批与外发授权是两层检查；包括首次 plan 在内，每次模型请求都经过同一个出口。图为节点内部调用关系，不新增 Graph 节点。</p>
           </div>
         </div>
@@ -3346,6 +3347,32 @@ if unsafe_generated_text(text):
             <a href="docs/模型数据访问边界.md"><b>详细设计</b>视图、授权、预算与本地模式</a>
           </div>
           <p class="case-note">核对日期：2026-10-21。以上以当前实现为准；<a href="#harness-case">下一节用纠错案例逐步对照代码</a>，未调用真实模型或读取个人健康数据。</p>
+        </div>
+      </section>
+
+      <section class="section panel harness-panel" id="llm-consultation-summary" data-chapter>
+        <div class="support-head"><span>05+</span><div>
+          <h2>改造小结：让模型理解语言，让后端守住操作边界</h2>
+          <p>2026-10-28 · LLM 咨询链路整体改造。以上 Harness 章节保留了旧实现说明；本节说明本次变更，涉及差异时以本节为准。</p>
+        </div></div>
+        <div class="support-body">
+          <h3>为什么“今天是不是吃的有点油腻了”曾经报错？</h3>
+          <p>旧流程先让模型理解问题，再用关键词规则复核是否属于咨询。“是不是”没有命中疑问词列表时，本地可能判定不允许读取历史，与模型申请的今日饮食视图冲突。日志已证实该请求在模型返回后的本地审批阶段失败；当时未保存模型输出，无法追溯具体触发字段。关键词缺口是代码中确认存在的缺陷，不应把它当成那次失败的唯一已证实原因。</p>
+          <p>改造后的分工是：模型提出结构化计划，后端只在允许的工具、记录绑定、日期上限和写入证据范围内执行。普通咨询不再依赖“吗、怎么、建议”等词才能通过。</p>
+          <div class="table-wrap"><table><thead><tr><th>改了什么</th><th>现在怎样处理</th><th>对应代码</th></tr></thead><tbody>
+            <tr><td>咨询与查询理解</td><td>模型选择 intent、data_view 和 query_kind；模型模式不再用领域词表覆盖查询类型或以疑问词否决咨询视图。明确禁止读历史的要求仍保留。</td><td><a href="backend/app/workflows/policy.py">policy.py · approve_plan</a></td></tr>
+            <tr><td>日期范围</td><td>新增 view_start / view_end，由模型返回明确日期；后端要求成对并检查跨度。单日饮食最多1天、饮食回顾7天、体重趋势28天。没有日期时使用截至今天的默认工具窗口。上周等表达可以通过合法日期参数执行。</td><td><a href="backend/app/contracts/workflows.py">PlannedAction</a>、<a href="backend/app/health/advice.py">build_advice_context</a></td></tr>
+            <tr><td>指代与记录绑定</td><td>支持 target=previous；兼容既有指代提示，在当前对话内定位唯一记录。单餐咨询只发送绑定餐食，无法确定时追问，不能让模型自选数据库ID。</td><td><a href="backend/app/workflows/policy.py">resolve / approve_plan</a></td></tr>
+            <tr><td>校验失败恢复</td><td>计划被本地校验拒绝后，最多重新规划一次，仍使用原输入和相同数据权限。网络、鉴权或无法解析的响应不走这条修正流程。</td><td><a href="backend/app/workflows/policy.py">prepare</a>、<a href="backend/app/modeling/parser.py">plan(repair=True)</a></td></tr>
+            <tr><td>自然语言回答</td><td>咨询支持 answer 正文，不再只能选固定 point_ids。第二次独立模型调用审核事实依据、不完整性、估算和健康风险；通过且原样返回同一草稿后才可展示。内部 _reviewed 标记不能由模型JSON伪造。失败时退回本地建议。</td><td><a href="backend/app/modeling/parser.py">answer_advice</a>、<a href="backend/app/policy/output.py">validate_advice</a></td></tr>
+            <tr><td>反馈分支抢答</td><td>模型已判断为咨询时，“油腻、偏咸”等感受不再优先触发固定话术，咨询继续读取获批上下文并回答。</td><td><a href="backend/app/workflows/chat_response.py">respond</a></td></tr>
+            <tr><td>排错信息</td><td>记录 model_plan_*、model_tool_window_invalid 和 model_plan_repair 等原因，不把健康原文或模型回复写入错误日志。</td><td><a href="backend/app/observability/contracts.py">日志代码白名单</a></td></tr>
+          </tbody></table></div>
+          <h3>现在一次咨询怎样完成？</h3>
+          <p>用户提问 → 安全分类 → 模型给出咨询计划与日期 → 后端审批并筛选记录 → 模型自然回答 → 独立审核 → 展示回答；失败则给出备用回复。原文证据、字段范围、记录写入和保存回执仍由后端控制。离线演示模式保留原规则，不擅自联网。</p>
+          <h3>验证与边界</h3>
+          <p>本轮后端全量测试 <strong>597 项通过</strong>。使用临时空数据库与真实模型验证“今天是不是吃的有点油腻了”和“上周饮食有什么需要注意的”，完整接口均返回成功，回答说明缺少饮食记录，没有编造个人摄入数据。测试未修改用户健康记录；未直接操作小程序界面验证。</p>
+          <p class="case-note">独立模型审核是概率性检查，不保证事实或医疗判断绝对正确；自然回答增加一次模型调用和相应延迟、费用。本次不是移除全部校验：原文证据、数据最小化、日期上限、写入与恢复边界仍然保留。项目仍为单用户版本，多用户身份认证与隔离不包含在本轮改造内。详见 <a href="docs/llm-consultation-refactor.md">咨询链路改造说明</a>。</p>
         </div>
       </section>
 

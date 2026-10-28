@@ -100,18 +100,16 @@ it("切换服务不会把旧请求发送到新服务", async () => {
   await expect(state.executeOperation(original)).rejects.toThrow("另一服务");
   expect(platform.request).not.toHaveBeenCalled();
 });
-it("纯本地偏好不会被恢复的模型请求绕过", async () => {
+it("旧本地缓存不阻止默认模型请求恢复", async () => {
   const state = await import("../src/state");
-  await expect(
-    state.executeOperation(
-      state.operation(
-        "/workflows/thread/resume",
-        { request_id: "same", processing_mode: "model_allowed" },
-        "恢复",
-      ),
-    ),
-  ).rejects.toThrow("模型模式");
-  expect(platform.request).not.toHaveBeenCalled();
+  platform.storage.set("local-only", true);
+  platform.request.mockResolvedValue(success({ local_only: false }));
+  await state.executeOperation(state.operation(
+    "/workflows/thread/resume",
+    { request_id: "same", processing_mode: "model_allowed" },
+    "恢复",
+  ));
+  expect(platform.request).toHaveBeenCalledTimes(2);
 });
 it("服务端强制纯本地也禁止重发模型请求", async () => {
   const state = await import("../src/state");

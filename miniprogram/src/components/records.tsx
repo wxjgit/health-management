@@ -45,21 +45,19 @@ export function RevisionHistory({ event }: { event: Event }) {
     }
   }
   return (
-    <Fold title={`修订历史 · v${event.version}`}>
+    <Fold title="修改记录">
       <Button loading={busy} disabled={busy} onClick={load}>
         读取修订历史
       </Button>
       {error && <View className="error">{error}</View>}
       {rows?.map((row) => (
         <View className="field" key={row.version}>
-          <View>
-            v{row.version} · {row.created_at}
-          </View>
+          <View>{row.created_at}</View>
           <View>{row.raw_text}</View>
           <View className="muted">{row.reason}</View>
           {row.changes?.map((change, index) => (
             <View key={index} className="muted">
-              {labels[change.field] || change.field}：
+              {labels[change.field] || "记录内容"}：
               {JSON.stringify(change.before)} → {JSON.stringify(change.after)}
             </View>
           ))}
@@ -78,43 +76,45 @@ export function EventCard({
   return (
     <View
       id={`event-${event.id}`}
-      className={`card ${highlight ? "highlight" : ""}`}
+      className={`card record-item ${highlight ? "highlight" : ""}`}
     >
       <View className="tag">
-        {labels[event.kind]} · {event.day} · v{event.version}
+        {labels[event.kind]} · {event.day}
       </View>
-      <View className="message">{event.raw_text}</View>
-      {event.kind === "meal" &&
-        event.data.items.map((item, index) => (
-          <View className="muted" key={index}>
-            {item.name} ·{" "}
-            {item.quantity == null
-              ? "分量未知"
-              : `${item.quantity}${item.unit}`}{" "}
-            · {numberText(item.kcal)} kcal · {item.nutrition_source}
-          </View>
-        ))}
-      <RevisionHistory event={event} />
-      <View className="row">
-        <Button
-          size="mini"
-          onClick={() => {
-            Taro.setStorageSync("correction-event", event);
-            void tab("chat");
-          }}
-        >
-          纠正
-        </Button>
-        <Button
-          size="mini"
-          className="danger"
-          onClick={() =>
-            go(`privacy?type=event&id=${encodeURIComponent(event.id)}`)
-          }
-        >
-          删除及影响预览
-        </Button>
-      </View>
+      <View className="record-text">{event.raw_text}</View>
+      <Fold title="查看详情与操作">
+        {event.kind === "meal" &&
+          event.data.items.map((item, index) => (
+            <View className="muted" key={index}>
+              {item.name} ·{" "}
+              {item.quantity == null
+                ? "分量未知"
+                : `${item.quantity}${item.unit}`}{" "}
+              · {numberText(item.kcal)} kcal
+            </View>
+          ))}
+        <RevisionHistory event={event} />
+        <View className="row">
+          <Button
+            size="mini"
+            onClick={() => {
+              Taro.setStorageSync("correction-event", event);
+              void tab("chat");
+            }}
+          >
+            纠正
+          </Button>
+          <Button
+            size="mini"
+            className="danger"
+            onClick={() =>
+              go(`privacy?type=event&id=${encodeURIComponent(event.id)}`)
+            }
+          >
+            删除记录
+          </Button>
+        </View>
+      </Fold>
     </View>
   );
 }
@@ -123,14 +123,18 @@ export function Trend({
   metric,
 }: {
   days: Daily[];
-  metric: "weight_kg" | "sleep_minutes";
+  metric: "weight_kg" | "sleep_minutes" | "exercise_minutes";
 }) {
   const rows = days.filter((day) => day[metric] != null);
   const maximum = Math.max(1, ...rows.map((day) => day[metric]!));
   return (
     <View className="card">
       <View className="subtitle">
-        {metric === "weight_kg" ? "体重趋势 · kg" : "睡眠趋势 · 小时"}
+        {metric === "weight_kg"
+          ? "体重趋势 · kg"
+          : metric === "sleep_minutes"
+            ? "睡眠趋势 · 小时"
+            : "运动趋势 · 分钟"}
       </View>
       <View className="muted">
         最近28天 · 已记录 {rows.length} 天，缺失日期不算零。
@@ -139,7 +143,7 @@ export function Trend({
         <View>记录至少两个日期后显示趋势。</View>
       ) : (
         <View className="trend">
-          {days.map((day) => (
+          {days.map((day, index) => (
             <View key={day.date} className="trend-column">
               <View className="trend-track">
                 {day[metric] != null && (
@@ -151,7 +155,11 @@ export function Trend({
                   />
                 )}
               </View>
-              <View className="trend-date">{day.date.slice(8)}</View>
+              <View className="trend-date">
+                {index % 7 === 0 || index === days.length - 1
+                  ? day.date.slice(5)
+                  : ""}
+              </View>
             </View>
           ))}
         </View>
@@ -163,7 +171,11 @@ export function Trend({
             {numberText(
               metric === "sleep_minutes" ? day[metric]! / 60 : day[metric],
             )}{" "}
-            {metric === "weight_kg" ? "kg" : "小时"}
+            {metric === "weight_kg"
+              ? "kg"
+              : metric === "sleep_minutes"
+                ? "小时"
+                : "分钟"}
           </View>
         ))}
       </Fold>

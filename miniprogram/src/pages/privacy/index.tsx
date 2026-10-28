@@ -33,7 +33,7 @@ const countNames: Record<string, string> = {
 };
 function countLabel(key: string) {
   const [kind, action] = key.split(":");
-  return `${countNames[kind] || kind}${action === "minimize" ? "（清除共享原文）" : action === "keep_targets" ? "（清除安排，保留独立目标）" : "（删除）"}`;
+  return `${countNames[kind] || "其他关联数据"}${action === "minimize" ? "（清除共享原文）" : action === "keep_targets" ? "（清除安排，保留独立目标）" : "（删除）"}`;
 }
 export default function Privacy() {
   const [state, setState] = useState(deletionState);
@@ -110,13 +110,13 @@ export default function Privacy() {
     <Page title="隐私删除" error={action.error}>
       <View className="card">
         <View>
-          删除前先查看实际影响范围，包括共享原文、流程进度和关联推导结果。独立内容按后端验证结果保留。
+          删除前请核对影响范围。相关消息和分析结果可能一起清理，其他独立记录会保留。
         </View>
         <View className="muted">
           应用内导出副本会同步清理；已经分享或保存到其他位置的文件需要自行删除。
         </View>
         <Button disabled={action.busy} onClick={preview}>
-          获取所选对象的最新影响范围
+          查看删除范围
         </Button>
       </View>
       {previewState && (
@@ -129,7 +129,7 @@ export default function Privacy() {
             对象：
             {previewState.target_type === "event"
               ? "健康记录"
-              : "长期信息"} · {previewState.target_id}
+              : "长期信息"}
           </View>
           {Object.entries(previewState.counts).map(([key, count]) => (
             <View className="field" key={key}>
@@ -142,7 +142,7 @@ export default function Privacy() {
             </View>
           ))}
           {previewState.scope === "legacy_context" && (
-            <View className="warning">历史血缘不完整，清理范围可能扩大。</View>
+            <View className="warning">部分旧记录的关联信息不完整，可能需要清理更多相关内容。</View>
           )}
           {state?.result ? (
             <>
@@ -151,16 +151,13 @@ export default function Privacy() {
                   ? "清理已完成"
                   : "清理尚未完成"}
               </View>
-              <View className="muted">
-                作业编号：{state.result.deletion_id}
-              </View>
               {state.result.state === "pending" && (
                 <Button disabled={action.busy} onClick={() => status(true)}>
                   继续清理
                 </Button>
               )}
               <Button disabled={action.busy} onClick={() => status(false)}>
-                查询作业状态
+                查看清理进度
               </Button>
             </>
           ) : (

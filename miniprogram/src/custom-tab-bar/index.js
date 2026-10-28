@@ -1,15 +1,18 @@
 Component({
   data: {
     selected: 0,
+    hidden: false,
     items: [
       { path: "pages/chat/index", label: "记录", icon: "record" },
-      { path: "pages/history/index", label: "历史", icon: "history" },
-      { path: "pages/plans/index", label: "计划", icon: "plans" },
-      { path: "pages/insights/index", label: "发现", icon: "insights" },
+      { path: "pages/history/index", label: "足迹", icon: "history" },
+      { path: "pages/insights/index", label: "复盘", icon: "insights" },
       { path: "pages/settings/index", label: "我的", icon: "mine" },
     ],
   },
   lifetimes: {
+    detached() {
+      clearTimeout(this.switchTimer);
+    },
     attached() {
       this.syncRoute();
     },
@@ -32,7 +35,8 @@ Component({
       const item = this.data.items[selected];
       if (!item || selected === this.data.selected || this.switching) return;
       this.switching = true;
-      wx.switchTab({
+      this.setData({ selected });
+      this.switchTimer = setTimeout(() => wx.switchTab({
         url: `/${item.path}`,
         fail: () =>
           wx.showToast({ title: "暂时无法切换，请重试", icon: "none" }),
@@ -40,7 +44,7 @@ Component({
           this.switching = false;
           this.syncRoute();
         },
-      });
+      }), 220);
     },
   },
 });

@@ -47,7 +47,24 @@ def status_class(status):
 def safe_code(code):
     from ..common.errors import ERRORS
     extra = set(FALLBACKS) | {'not_found', 'invalid_target', 'request_mismatch',
-        'scope_changed', 'preview_required', 'unknown_error', 'safety_policy_blocked'}
+        'scope_changed', 'preview_required', 'unknown_error', 'safety_policy_blocked',
+        'model_tool_window_invalid', 'model_plan_repair'}
+    extra |= {
+        'model_plan_fact_intent',
+        'model_plan_source_text',
+        'model_plan_write_in_read',
+        'model_plan_view_intent',
+        'model_plan_history_refused',
+        'model_plan_window',
+        'model_plan_meal_scope',
+        'model_plan_view_scope',
+        'model_plan_fact_source',
+        'model_plan_query_kind',
+        'model_plan_query_search',
+        'model_plan_query_window',
+        'model_plan_duplicate_actions',
+        'model_plan_correction_kind',
+    }
     if isinstance(code, str) and code in ERRORS and code.startswith('safety_'):
         return 'safety_policy_blocked'
     if isinstance(code, str) and (code in ERRORS or code in extra or code in {f'http_{n}' for n in range(400, 600)}):

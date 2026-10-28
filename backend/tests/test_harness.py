@@ -96,7 +96,7 @@ def test_new_record_sends_no_history_even_with_injected_history(settings, monkey
     ('不用历史，这个问题我该注意什么？', {'intent': 'advice', 'data_view': 'none'}, 'completed'),
     ('我不喜欢燕麦', {'intent': 'fact', 'fact_text': '我不喜欢燕麦'}, 'completed'),
     ('这条是什么意思', {'intent': 'clarify', 'question': '请明确要处理什么。'}, 'waiting_input'),
-    ('改成64kg', {'intent': 'correct', 'target': 'previous'}, 'waiting_input'),
+    ('改成64kg', {'intent': 'correct', 'target': 'unresolved'}, 'waiting_input'),
 ])
 def test_previous_references_are_not_read_without_an_approved_reference_task(
         settings, monkeypatch, text, action, status):
@@ -211,19 +211,21 @@ def test_forged_or_cross_domain_requests_are_rejected_before_retrieval(settings,
         monkeypatch.setattr(repo, 'previous_reference_ids',
                             unexpected_previous_reference_read)
         response = post(client, text)
-        assert response.status_code == 502
-        assert len(calls) == 1  # Only the planner has been called, without history.
-        assert 'HIDDEN_' not in json.dumps(calls)
+        assert response.status_code == (200 if extra.get('data_view') in ('diet_today', 'diet_week') else 502)
+        assert len(calls) == (2 if extra.get('data_view') in ('diet_today', 'diet_week') else 1)
+        if response.status_code != 200:
+            assert 'HIDDEN_' not in json.dumps(calls)
 
 
-def test_wrong_advice_classification_does_not_authorize_history(settings, monkeypatch):
-    calls = install(monkeypatch, lambda data: {'actions': [{
-        'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend'}]})
+def test_typed_view_selection_does_not_require_question_keywords(settings, monkeypatch):
+    calls = install(monkeypatch, lambda data: ({'actions': [{
+        'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend'}]}
+        if data['task'] == 'processing_plan' else {'point_ids': [data['options'][0]['point_id']]}))
     with TestClient(create_app(settings)) as client:
         seed(client.app.state.engine.repo)
         response = post(client, '今天体重65kg')
-        assert response.status_code == 502
-        assert len(calls) == 1
+        assert response.status_code == 200
+        assert len(calls) == 2
 
 
 @pytest.mark.parametrize('requested_view', ['none', 'weight_trend'])
@@ -534,7 +536,7 @@ def test_view_windows_exclude_old_and_unrelated_data(settings, monkeypatch):
 def test_shorter_requested_window_does_not_expand_to_maximum(settings, monkeypatch):
     def model(data):
         if data['task'] == 'processing_plan':
-            return {'actions': [{'intent': 'advice', 'text': data['text']}]}
+            return {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend', 'view_start': '2026-10-18', 'view_end': '2026-10-20'}]}
         context = data['context']
         assert context['window'] == {'start': '2026-10-18', 'end': '2026-10-20'}
         assert {w['date'] for w in context['weights']} == {'2026-10-19'}
@@ -549,12 +551,12 @@ def test_shorter_requested_window_does_not_expand_to_maximum(settings, monkeypat
 
 
 def test_oversized_window_is_rejected_without_historical_request(settings, monkeypatch):
-    calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'advice', 'text': data['text']}]})
+    calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend', 'view_start': '2026-09-21', 'view_end': '2026-10-20'}]})
     with TestClient(create_app(settings)) as client:
         seed(client.app.state.engine.repo)
         response = post(client, '最近30天体重趋势怎么样？')
-        assert response.status_code == 422
-        assert len(calls) == 1
+        assert response.status_code == 502
+        assert len(calls) == 2
         assert 'HIDDEN_' not in json.dumps(calls)
 
 
@@ -584,7 +586,7 @@ def test_single_meal_reference_does_not_send_other_meals_or_chat(settings, monke
 def test_diet_day_uses_user_date_instead_of_unrelated_today(settings, monkeypatch):
     def model(data):
         if data['task'] == 'processing_plan':
-            return {'actions': [{'intent': 'advice', 'text': data['text']}]}
+            return {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': 'diet_today', 'view_start': '2026-10-19', 'view_end': '2026-10-19'}]}
         assert data['context']['today']['date'] == '2026-10-19'
         assert data['context']['today']['meals'] == []
         return {'point_ids': [data['options'][0]['point_id']]}

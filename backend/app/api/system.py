@@ -1,6 +1,6 @@
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from ..common.clock import now
@@ -27,9 +27,10 @@ def router_for(settings):
 
     @router.get('/messages')
     @protected_read
-    def messages(engine=Depends(get_engine)):
+    def messages(limit: int = Query(100, ge=1, le=100), before: str | None = None,
+                 engine=Depends(get_engine)):
         engine.prune_context()
-        return engine.repo.messages()
+        return engine.repo.messages(limit=limit, before=before)
 
     @router.get('/data/export')
     @protected_read

@@ -1,11 +1,12 @@
 """Local authority for plans, references and approved data views."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 
 from ..common import clock
 from ..evidence import ground_correction, ground_event
 from ..common.errors import ConflictError, DomainValidationError, ModelOutputError
+from ..common.request_context import log_failure
 from ..modeling.projections import record_projection
 from ..contracts.workflows import ExtractionResult, PlannedAction, ProcessingPlan
 
@@ -50,7 +51,9 @@ class PlanHarness:
             return selected
         # Read prior-result metadata lazily, only to resolve an actual reference.
         # A model claiming "previous" is not sufficient evidence of a reference.
-        if REFERENCE.search(state['input_text']) or state['input_text'].startswith('不是'):
+        model_reference = action is not None and action.target == 'previous'
+        local_reference = (REFERENCE.search(state['input_text']) or state['input_text'].startswith('不是'))
+        if model_reference or local_reference:
             ids = self.previous_ids(state)
             if len(ids) == 1:
                 return self.repo.event(ids[0])
@@ -121,70 +124,105 @@ class PlanHarness:
             )]
         for action in plan.actions:
             if action.fact_draft is not None and action.intent != 'fact':
+                log_failure('model_plan_fact_intent')
                 raise ModelOutputError()
             if action.text not in state['input_text']:
+                log_failure('model_plan_source_text')
                 raise ModelOutputError()
             if action.intent != 'record' and action.events:
+                log_failure('model_plan_write_in_read')
                 raise ModelOutputError()
             if action.data_view != 'none' and action.intent != 'advice':
+                log_failure('model_plan_view_intent')
                 raise ModelOutputError()
             if action.intent == 'advice':
                 if NO_HISTORY.search(state['input_text']):
                     if action.data_view != 'none':
+                        log_failure('model_plan_history_refused')
                         raise ModelOutputError()
                     actions.append(action)
                     continue
                 bound = self.resolve(state, action)
-                if REFERENCE.search(action.text) and not bound:
+                if (action.target == 'previous' or REFERENCE.search(action.text)) and not bound:
                     return [PlannedAction(
                         intent='clarify',
                         text=action.text,
                         question='你指的是哪条记录或哪一餐？请在历史页选择，或说明日期和内容。',
                     )]
-                view = self.advice_view(action.text, bound)
-                if view == 'none' and CONSULT.search(action.text):
-                    kinds = {
-                        kind
-                        for kind, pattern in KINDS.items()
-                        if re.search(pattern, state['input_text'], re.I)
-                    }
-                    if len(kinds) == 1:
-                        view = self.advice_view(state['input_text'], bound)
-                # A question about one referenced meal does not authorize today's other meals.
-                if (
-                    bound
-                    and bound['kind'] == 'meal'
-                    and REFERENCE.search(action.text)
-                    and not re.search(r'今天|今日|全天|下一餐|最近|本周', action.text)
-                ):
-                    if action.data_view not in (
-                        'none', 'diet_today', 'diet_portion', 'meal_reference'
-                    ):
-                        raise ModelOutputError()
-                    view = 'meal_reference'
+                if self.parser.mode == 'model':
+                    # The model selects a typed tool; local code limits its data.
+                    # Do not reinterpret natural language with a second classifier.
+                    view = action.data_view
+                    if bound and bound['kind'] == 'meal' and (action.target == 'previous' or REFERENCE.search(action.text)):
+                        view = 'meal_reference'
                     action = action.model_copy(update={'data_view': view})
-                if action.data_view not in ('none', view):
-                    raise ModelOutputError()
-                self.view_days(state['input_text'], view)
-                action = action.model_copy(update={'data_view': view})
+                    start, end = action.view_start, action.view_end
+                    limit = {'weight_trend': 28, 'diet_week': 7}.get(view, 1)
+                    if start is None and end is None and view not in ('none', 'meal_reference'):
+                        end = clock.now().date()
+                        start = end - timedelta(days=limit - 1)
+                        action = action.model_copy(update={'view_start': start, 'view_end': end})
+                    if (start is None) != (end is None) or (start and not 0 <= (end - start).days < limit):
+                        log_failure('model_tool_window_invalid')
+                        log_failure('model_plan_window')
+                        raise ModelOutputError()
+                    if view == 'meal_reference' and (not bound or bound['kind'] != 'meal'):
+                        return [PlannedAction(
+                            intent='clarify', text=state['input_text'],
+                            question='你指的是哪一餐？请在历史页选择，或说明日期和内容。',
+                        )]
+                else:
+                    view = self.advice_view(action.text, bound)
+                    if view == 'none' and CONSULT.search(action.text):
+                        kinds = {
+                            kind
+                            for kind, pattern in KINDS.items()
+                            if re.search(pattern, state['input_text'], re.I)
+                        }
+                        if len(kinds) == 1:
+                            view = self.advice_view(state['input_text'], bound)
+                    # A question about one referenced meal does not authorize today's other meals.
+                    if (
+                        bound
+                        and bound['kind'] == 'meal'
+                        and REFERENCE.search(action.text)
+                        and not re.search(r'今天|今日|全天|下一餐|最近|本周', action.text)
+                    ):
+                        if action.data_view not in (
+                            'none', 'diet_today', 'diet_portion', 'meal_reference'
+                        ):
+                            log_failure('model_plan_meal_scope')
+                            raise ModelOutputError()
+                        view = 'meal_reference'
+                        action = action.model_copy(update={'data_view': view})
+                    if action.data_view not in ('none', view):
+                        log_failure('model_plan_view_scope')
+                        raise ModelOutputError()
+                    self.view_days(state['input_text'], view)
+                    action = action.model_copy(update={'data_view': view})
             if action.intent == 'fact' and (
                 not action.fact_text or action.fact_text not in action.text
             ):
+                log_failure('model_plan_fact_source')
                 raise ModelOutputError()
             if action.intent == 'query':
-                kinds = {
-                    kind
-                    for kind, pattern in KINDS.items()
-                    if re.search(pattern, action.text, re.I)
-                }
-                if action.query_kind and kinds and action.query_kind not in kinds:
-                    raise ModelOutputError()
-                if len(kinds) == 1:
-                    action = action.model_copy(update={'query_kind': next(iter(kinds))})
+                if self.parser.mode != 'model':
+                    kinds = {
+                        kind
+                        for kind, pattern in KINDS.items()
+                        if re.search(pattern, action.text, re.I)
+                    }
+                    if action.query_kind and kinds and action.query_kind not in kinds:
+                        log_failure('model_plan_query_kind')
+                        raise ModelOutputError()
+                    if len(kinds) == 1:
+                        action = action.model_copy(update={'query_kind': next(iter(kinds))})
                 if action.query_search and action.query_search not in action.text:
+                    log_failure('model_plan_query_search')
                     raise ModelOutputError()
                 if action.query_start and action.query_end:
                     if not 0 <= (action.query_end - action.query_start).days <= 365:
+                        log_failure('model_plan_query_window')
                         raise ModelOutputError()
             if action.intent == 'record':
                 item_names = [
@@ -223,6 +261,7 @@ class PlanHarness:
             sum(action.intent == intent for action in actions) > 1
             for intent in ('query', 'advice', 'fact')
         ):
+            log_failure('model_plan_duplicate_actions')
             raise ModelOutputError()
         return actions
 
@@ -260,7 +299,19 @@ class PlanHarness:
             plan = ProcessingPlan(actions=[
                 PlannedAction(text=state['input_text'], **data)
             ])
-        actions = self.approve_plan(state, plan)
+        try:
+            actions = self.approve_plan(state, plan)
+        except ModelOutputError:
+            if self.parser.mode != 'model':
+                raise
+            # One bounded replan, with the same input and no additional history.
+            log_failure('model_plan_repair')
+            self.parser.boundary.grant('processing_plan', {
+                'text': state['input_text'],
+                'interaction': {'selected_record': bool(selected)},
+            })
+            plan = self.parser.plan(state['input_text'], bool(selected), repair=True)
+            actions = self.approve_plan(state, plan)
         clarification = next(
             (action for action in actions if action.intent == 'clarify'), None
         )
@@ -287,6 +338,7 @@ class PlanHarness:
             updated = self.parser.correct(correction.text, projection)
             if updated.event:
                 if updated.event.kind != prior['kind']:
+                    log_failure('model_plan_correction_kind')
                     raise ModelOutputError()
                 updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])
                 updated.event = ground_correction(
@@ -333,7 +385,7 @@ class PlanHarness:
         primary = next(
             (action for action in actions if action.intent == 'fact'), actions[0]
         )
-        data = primary.model_dump(exclude={'text', 'target', 'data_view'})
+        data = primary.model_dump(exclude={'text', 'target', 'data_view', 'view_start', 'view_end'})
         return ExtractionResult.model_validate(data), [
             action for action in actions if action is not primary
         ], actions

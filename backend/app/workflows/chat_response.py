@@ -9,7 +9,7 @@ from ..health.nutrition import nutrition_summary
 from ..chat.replies import express_plan, make_plan, medical_question, record_receipt
 from ..contracts.workflows import PlannedAction
 from ..health.facts import fact_receipt
-from ..policy.output import advice_plan, fallback_advice, validate_advice
+from ..policy.output import advice_plan, fallback_advice, validate_advice, render_feedback, default_feedback_selection
 
 
 class ChatResponseMixin:
@@ -64,7 +64,7 @@ class ChatResponseMixin:
         elif state.get('unrecorded_count'):
             reply = '已结束补充；缺少必需信息或已取消的记录没有保存。'
         else:
-            if state.get('conversation_feedback'):
+            if state.get('conversation_feedback') and not (self.parser.mode == 'model' and parsed['intent'] == 'advice'):
                 reply = '没有保存餐食记录。' if state.get('rounds', 0) else ''
             elif medical_question(state['input_text']):
                 reply = make_plan([], 'advice', medical=True)['boundary']
@@ -88,12 +88,18 @@ class ChatResponseMixin:
                              if self.parser.mode == 'model' else fallback_advice(context))
                     advice_traces.append({
                         'title': '生成个性化建议',
-                        'detail': '模型仅选择本次批准的建议要点；正文、日期、数值、完整性和估算说明由本地程序生成。',
+                        'detail': '模型根据受限记录生成回答，正文经过独立审核；失败时使用本地备用建议。',
                         'source': 'model' if self.parser.mode == 'model' else 'local',
                     })
                 except ModelError:
                     log_failure('model_advice_fallback')
                     reply = fallback_advice(context)
+                    if state.get('conversation_feedback'):
+                        fallback_plan = make_plan(state['conversation_feedback'], 'advice')
+                        reply = render_feedback(default_feedback_selection(fallback_plan), fallback_plan)
+                        if state.get('rounds', 0):
+                            reply = '没有保存餐食记录。\n' + reply
+
                     advice_traces.append({
                         'title': '生成个性化建议',
                         'detail': '模型不可用或回复未通过边界检查，使用同一上下文的本地兜底。',
@@ -147,7 +153,8 @@ class ChatResponseMixin:
             trace = list(state.get('process_trace', []))
         trace.extend(advice_traces)
         plan = None
-        if parsed['intent'] not in ('query', 'fact') and state.get('conversation_feedback'):
+        if (parsed['intent'] not in ('query', 'fact') and state.get('conversation_feedback')
+                and not (self.parser.mode == 'model' and parsed['intent'] == 'advice')):
             plan = make_plan(
                 state['conversation_feedback'],
                 'recorded' if state.get('record_ids') else 'advice',
@@ -207,6 +214,8 @@ class ChatResponseMixin:
             view=approved[0].data_view,
             bound=bound,
             scope_text=source,
+            window_start=approved[0].view_start,
+            window_end=approved[0].view_end,
         )
         if self.parser.mode == 'model':
             self.parser.boundary.grant('personalized_advice', {

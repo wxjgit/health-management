@@ -1,5 +1,6 @@
-<view class="tab-shell">
+<view wx:if="{{!hidden}}" class="tab-shell">
   <view class="tab-glass">
+    <view class="tab-indicator" style="transform: translateX({{selected * 100}}%);" />
     <view wx:for="{{items}}" wx:key="path" data-index="{{index}}" bindtap="switchPage" class="tab-item {{selected === index ? 'is-selected' : ''}}" role="button" aria-label="{{item.label}}" aria-current="{{selected === index ? 'page' : 'false'}}">
       <image class="tab-icon" src="/assets/icons/{{item.icon}}{{selected === index ? '-active' : ''}}.svg" mode="aspectFit" />
       <text class="tab-label">{{item.label}}</text>

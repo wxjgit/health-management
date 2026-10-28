@@ -194,7 +194,7 @@ export default function Facts() {
           />
           {values[form.type] ? (
             <Select
-              label="内容或状态"
+              label="具体内容"
               value={form.value}
               options={values[form.type]}
               onChange={(value) => setForm({ ...form, value })}
@@ -241,7 +241,7 @@ export default function Facts() {
             onChange={(valid_until) => setForm({ ...form, valid_until })}
           />
           <Select
-            label="陈述状态"
+            label="这条信息是否确定"
             value={form.assertion}
             options={{
               affirmed: "肯定自述",
@@ -328,18 +328,18 @@ export default function Facts() {
               ? "存在冲突，待选择"
               : fact.confirmation === "candidate"
                 ? "待确认"
-                : life[fact.lifecycle] || fact.lifecycle}{" "}
-            · v{fact.version}
+                : life[fact.lifecycle] || "待核对"}{" "}
+
           </View>
           <View className="muted">
             来源：
             {fact.source_kind === "user_reported_professional"
-              ? "用户转述专业建议"
+              ? "你记录的专业建议"
               : fact.source_kind === "unconfirmed_extraction"
-                ? "待核对原文提取"
+                ? "根据记录整理，待你确认"
                 : fact.source_kind === "legacy"
                   ? "历史记录"
-                  : "用户明确陈述"}
+                  : "你提供的信息"}
           </View>
           <View className="muted">
             {fact.valid_from || "未说明开始"} —{" "}
@@ -509,7 +509,7 @@ export default function Facts() {
                 <View className="field" key={index}>
                   v{row.version} · {row.content}
                   <View className="muted">
-                    {row.change_reason} · {life[row.lifecycle] || row.lifecycle}
+                    {row.change_reason} · {life[row.lifecycle] || "待核对"}
                   </View>
                 </View>
               ))}

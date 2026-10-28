@@ -78,7 +78,7 @@ export function Fold({
 }: PropsWithChildren<{ title: string }>) {
   const [open, setOpen] = useState(false);
   return (
-    <View className="fold">
+    <View className={`fold ${open ? "fold-open" : "fold-closed"}`}>
       <View className="fold-title" onClick={() => setOpen(!open)}>
         <Text>{title}</Text>
         <Text className={`fold-chevron ${open ? "is-open" : ""}`}>⌄</Text>
@@ -197,8 +197,6 @@ export function Page({
           </View>
           <View className="brand-spark">✦</View>
         </View>
-        <View className="eyebrow">把每一天，慢慢照顾好</View>
-        <View className="title">{title}</View>
       </View>
       <OperationBanner />
       {error && <View className="error">{error}</View>}
@@ -206,7 +204,7 @@ export function Page({
       {children}
       {refresh && (
         <Button className="refresh-button" onClick={refresh}>
-          刷新状态
+          刷新
         </Button>
       )}
     </View>
@@ -220,7 +218,7 @@ function OperationBanner() {
     <View className="card warning">
       <View>待核对：{pending.label}</View>
       <View className="muted">
-        上次请求可能已经保存。重试沿用原参数和请求编号；先刷新核对结果。
+        上次操作可能已完成，请先刷新查看，避免重复提交。
       </View>
       {action.error && <View className="error">{action.error}</View>}
       <Button
@@ -228,7 +226,7 @@ function OperationBanner() {
         loading={action.busy}
         onClick={() => action.run(() => executeOperation(pending))}
       >
-        重试原请求
+        重新尝试
       </Button>
       <Button
         disabled={action.busy}
@@ -240,7 +238,7 @@ function OperationBanner() {
             }
             if (
               await confirm(
-                "结束本地重试",
+                "确认操作结果",
                 "这不会取消服务器操作，也不会撤销已保存数据。请先核对历史或流程结果；继续后再次提交可能创建新记录。",
               )
             )
@@ -248,9 +246,7 @@ function OperationBanner() {
           })
         }
       >
-        {pending.path === "/deletions"
-          ? "查看隐私清理"
-          : "已核对结果，结束本地重试"}
+        {pending.path === "/deletions" ? "查看隐私清理" : "已确认结果"}
       </Button>
     </View>
   );
@@ -258,8 +254,8 @@ function OperationBanner() {
 const reasons: Record<string, string> = {
   source_changed: "依据的数据已变化，请重新生成。",
   algorithm_changed: "计算方法已更新，需要重新核对。",
-  window_changed: "观察窗口已变化。",
-  legacy_version_unknown: "历史结果缺少方法版本。",
+  window_changed: "参考日期已变化，请更新。",
+  legacy_version_unknown: "这份结果较早，请重新生成。",
   analysis_refreshed: "本轮未形成可用新结论。",
   plan_window_ended: "安排日期已结束，已确认目标仍保留。",
   fact_date_changed: "适用日期已变化，请重新生成安排。",
@@ -274,14 +270,6 @@ export function DerivedNote({ memory }: { memory?: DerivedMemory }) {
           {reasons[memory.invalid_reason || ""] || "请重新核对依据。"}
         </View>
       )}
-      <Fold title="生成依据与版本">
-        <View>窗口：{memory.window?.join(" — ") || "未记录"}</View>
-        <View>方法：{memory.algorithm_version || "历史版本未知"}</View>
-        <View>生成时间：{memory.generated_at || "未记录"}</View>
-        {memory.recomputable === false && (
-          <View>原始明细已归档，无法重新计算。</View>
-        )}
-      </Fold>
     </View>
   );
 }
@@ -308,27 +296,8 @@ export function EvidenceList({ rows = [] }: { rows?: Evidence[] }) {
     </Fold>
   );
 }
-export function Trace({
-  rows = [],
-  duration = 0,
-}: {
-  rows?: ProcessStep[];
-  duration?: number;
-}) {
-  if (!rows.length) return null;
-  return (
-    <Fold title={`处理摘要 · ${Math.round(duration / 1000)} 秒`}>
-      <View className="muted">可验证的执行摘要，不包含模型私有思维链。</View>
-      {rows.map((row, index) => (
-        <View className="field" key={`${row.title}-${index}`}>
-          <View>
-            {row.title} · {row.source === "model" ? "模型" : "本地"}
-          </View>
-          <View className="muted">{row.detail}</View>
-        </View>
-      ))}
-    </Fold>
-  );
+export function Trace(_props: { rows?: ProcessStep[]; duration?: number }) {
+  return null;
 }
 export function MealCard({ card }: { card: Card }) {
   if (card.type !== "meal") return null;

@@ -84,7 +84,7 @@ def test_required_model_errors_are_classified(tmp_path, monkeypatch, caplog, fai
         assert SECRET not in caplog.text
         assert SECRET not in json.dumps(client.get('/api/workflows').json())
         assert client.get('/api/events').json() == []
-        assert len(dispatches) == 2  # classifier + required plan; no redirect/retry
+        assert len(dispatches) == (3 if failure == 'output_rejected' else 2)  # One bounded repair.
 
 
 @pytest.mark.parametrize('kind', [ModelUnavailableError, TypeError])

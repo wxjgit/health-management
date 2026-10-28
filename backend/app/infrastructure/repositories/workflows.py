@@ -59,13 +59,26 @@ class WorkflowRepositoryMixin:
             )
             self.touch_workflow(thread_id)
 
-    def messages(self, conversation_id='main', limit=100):
+    def messages(self, conversation_id='main', limit=100, before=None):
         with self.lock:
+            cursor_clause = ''
+            params = [conversation_id, stamp()]
+            if before:
+                cursor = self.conn.execute(
+                    'SELECT created_at, rowid FROM messages WHERE id=? AND conversation_id=?',
+                    (before, conversation_id),
+                ).fetchone()
+                if not cursor:
+                    return []
+                cursor_clause = ' AND (created_at, rowid) < (?, ?)'
+                params.extend([cursor['created_at'], cursor['rowid']])
+            params.append(limit)
             rows = self.conn.execute(
                 'SELECT * FROM messages WHERE conversation_id=? AND NOT EXISTS '
                 '(SELECT 1 FROM workflow_activity a WHERE a.thread_id=messages.thread_id '
-                'AND julianday(a.expires_at)<=julianday(?)) ORDER BY created_at DESC LIMIT ?',
-                (conversation_id, stamp(), limit),
+                'AND julianday(a.expires_at)<=julianday(?))' + cursor_clause +
+                ' ORDER BY created_at DESC, rowid DESC LIMIT ?',
+                params,
             ).fetchall()
             return [
                 {

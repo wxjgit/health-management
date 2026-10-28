@@ -1,5 +1,8 @@
 export type Nutrient = "kcal" | "protein_g" | "carbs_g" | "fat_g";
-export type Targets = Record<Nutrient, number> & { exercise_minutes: number };
+export type Targets = Record<Nutrient, number> & {
+  exercise_minutes: number;
+  fiber_g?: number;
+};
 export type Totals = Record<Nutrient, number | null> & {
   unknown_items: number;
   complete_nutrition: boolean;

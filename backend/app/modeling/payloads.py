@@ -127,7 +127,9 @@ def validate_advice_payload(context):
         if not isinstance(value, dict) or set(value) - set(allowed):
             raise PolicyError('建议上下文包含未批准字段。')
 
-    basic = {'question', 'scene', 'view', 'now'}
+    basic = {'question', 'scene', 'view', 'now', 'draft_answer'}
+    if 'draft_answer' in context and (not isinstance(context['draft_answer'], str) or not 1 <= len(context['draft_answer']) <= 1800):
+        raise PolicyError('回答审核内容超出限制。')
     view = context.get('view')
     if view == 'none':
         fields(context, basic)

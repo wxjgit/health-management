@@ -2,7 +2,6 @@ export default defineAppConfig({
   pages: [
     "pages/chat/index",
     "pages/history/index",
-    "pages/plans/index",
     "pages/insights/index",
     "pages/settings/index",
     "pages/today/index",
@@ -25,9 +24,8 @@ export default defineAppConfig({
     backgroundColor: "#eef5f5",
     list: [
       { pagePath: "pages/chat/index", text: "记录" },
-      { pagePath: "pages/history/index", text: "历史" },
-      { pagePath: "pages/plans/index", text: "计划" },
-      { pagePath: "pages/insights/index", text: "发现" },
+      { pagePath: "pages/history/index", text: "足迹" },
+      { pagePath: "pages/insights/index", text: "复盘" },
       { pagePath: "pages/settings/index", text: "我的" },
     ],
   },

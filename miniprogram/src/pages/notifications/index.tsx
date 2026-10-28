@@ -16,7 +16,7 @@ export default function Notifications() {
       refresh={resource.refresh}
     >
       <View className="muted">
-        后台服务运行时生成；微信订阅消息需另行接入授权。
+        在这里查看提醒和计划更新。
       </View>
       {resource.data?.map((notice) => (
         <View className="card" key={notice.id}>

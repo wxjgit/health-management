@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { mutate, useAction, useResource } from "../../state";
 import {
   labels,
+  Fold,
   numberText,
   Page,
   TargetValues,
@@ -41,11 +42,12 @@ export default function Today() {
             <View className="field">运动：{daily.exercise_minutes} 分钟</View>
           </View>
           {daily.targets && (
-            <View className="card">
-              <View className="subtitle">当前目标</View>
+            <View className="card compact-fold-card">
+              <Fold title="查看目标与剩余额度">
               <TargetValues targets={daily.targets} />
               <View className="subtitle">距离目标（仅依据已知摄入）</View>
               <TargetValues targets={daily.remaining} />
+              </Fold>
             </View>
           )}
           <View className="card">
@@ -53,7 +55,7 @@ export default function Today() {
               当天饮食记录：{daily.diet_complete ? "已标记完整" : "未标记完整"}
             </View>
             <View className="muted">
-              只有确实记录全天饮食后才标记完整；营养未知与记录完整是两回事。
+              确认全天饮食都已记下后，再标记完整。
             </View>
             <Button
               disabled={action.busy}

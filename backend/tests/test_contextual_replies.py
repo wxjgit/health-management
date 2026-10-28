@@ -148,7 +148,7 @@ def test_direct_advice_is_not_a_logging_form(settings, monkeypatch):
         assert '热量目标' not in result['reply']
         assert '主要吃了什么' not in result['reply']
         assert client.get('/api/events').json() == []
-        assert len(calls['phrase']) == 1
+        assert len(calls['phrase']) == 0  # Consultation fallback renders locally without another model call.
 
 
 def test_explicit_record_request_keeps_required_completeness(settings, monkeypatch):

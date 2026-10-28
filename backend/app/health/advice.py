@@ -78,7 +78,7 @@ def _day_summary(day):
             'diet_complete': day['diet_complete'], 'totals': day['totals']}
 
 
-def build_advice_context(repo, question, conversation_id='main', thread_id=None, *, view=None, bound=None, scope_text=None):
+def build_advice_context(repo, question, conversation_id='main', thread_id=None, *, view=None, bound=None, scope_text=None, window_start=None, window_end=None):
     """Return bounded model context and the exact local records supporting it."""
     from ..workflows.policy import PlanHarness
     view = view or PlanHarness.advice_view(question, bound)
@@ -87,9 +87,14 @@ def build_advice_context(repo, question, conversation_id='main', thread_id=None,
     context = {'question': question, 'scene': scene, 'view': view, 'now': now().isoformat()}
     if view == 'none':
         return context, []
+    if window_start is not None and window_end is not None:
+        limit = {'weight_trend': 28, 'diet_week': 7}.get(view, 1)
+        if not 0 <= (window_end - window_start).days < limit:
+            from ..common.errors import DomainValidationError
+            raise DomainValidationError(code='policy_scope_denied')
+    end = window_end or date_from_text(question).date()
     if view == 'weight_trend':
-        days = PlanHarness.view_days(scope_text or question, view)
-        end = date_from_text(question).date()
+        days = (end - window_start).days + 1 if window_start else PlanHarness.view_days(scope_text or question, view)
         window = history_window(repo, days, end)
         context['window'] = {'start': (end - timedelta(days=days - 1)).isoformat(), 'end': end.isoformat()}
         context['weights'] = [{'date': day['date'], 'weight_kg': day['weight_kg']}
@@ -110,7 +115,7 @@ def build_advice_context(repo, question, conversation_id='main', thread_id=None,
     })
     evidence = []
     if view in ('diet_today', 'diet_portion'):
-        current = dashboard(repo, date_from_text(question).date().isoformat())
+        current = dashboard(repo, end.isoformat())
         meals = [event for event in current['events'] if event['kind'] == 'meal'][:10]
         context['today'] = {
             'date': current['date'], 'meals': [_meal(event) for event in meals],
@@ -122,11 +127,10 @@ def build_advice_context(repo, question, conversation_id='main', thread_id=None,
             'nutrition_origins': _origins([item for event in current['events'] if event['kind'] == 'meal'
                                            for item in event['data'].get('items', [])]),
         }
-        context['recent_feedback'] = _feedback(repo, end=date_from_text(question).date())
+        context['recent_feedback'] = _feedback(repo, end=end)
         evidence = [_safe_evidence(event) for event in meals]
     elif view == 'diet_week':
-        days = PlanHarness.view_days(scope_text or question, view)
-        end = date_from_text(question).date()
+        days = (end - window_start).days + 1 if window_start else PlanHarness.view_days(scope_text or question, view)
         context['window'] = {'start': (end - timedelta(days=days - 1)).isoformat(), 'end': end.isoformat()}
         context['recent_days'] = [_day_summary(day) for day in history_window(repo, days, end)
                                   if day['meal_count']]

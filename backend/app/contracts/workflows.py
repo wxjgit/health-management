@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, PrivateAttr, model_validator
 
 from .base import StrictModel
 from .facts import FactDraft
@@ -82,7 +82,10 @@ class ContextualReply(StrictModel):
 
 
 class AdviceReply(StrictModel):
-    point_ids: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(min_length=1, max_length=2)
+    point_ids: list[Annotated[str, Field(min_length=1, max_length=80)]] = Field(default_factory=list, max_length=2)
+    answer: str | None = Field(default=None, min_length=1, max_length=1800)
+    approved: bool = False
+    _reviewed: bool = PrivateAttr(default=False)
 
 
 DataView = Literal[
@@ -98,6 +101,9 @@ class PlannedAction(StrictModel):
     text: str = Field(min_length=1, max_length=4000)
     target: Literal['selected', 'previous', 'unresolved'] = 'unresolved'
     data_view: DataView = 'none'
+    # Explicit tool window; the server enforces bounded spans.
+    view_start: date | None = None
+    view_end: date | None = None
     events: list[ExtractionEvent] = Field(default_factory=list, max_length=20)
     feedback: list[MealFeedback] = Field(default_factory=list, max_length=8)
     question: str | None = Field(default=None, max_length=300)

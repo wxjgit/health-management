@@ -37,7 +37,7 @@ def install_model(monkeypatch, answer):
             result = answer(data) if callable(answer) else answer
             content = result if isinstance(result, dict) else {'answer': result}
         else:
-            content = {'intent': 'advice'}
+            content = {'intent': 'advice', 'data_view': 'diet_today'}
         content = planned_content(data, content)
         return httpx.Response(200, json={'choices': [{'message': {'content': json.dumps(content, ensure_ascii=False)}}]})
 
@@ -135,3 +135,29 @@ def test_unverified_model_advice_falls_back_to_same_context(settings, monkeypatc
         assert '不需要为了吃满额度刻意补足' in result['reply']
         assert any(item['title'] == '生成个性化建议' and item['source'] == 'local'
                    for item in result['process_trace'])
+
+
+def test_natural_answer_requires_independent_review(settings, monkeypatch):
+    answer = '从这条记录看，葱油饼的做法可能用油较多；但记录不完整，不能判断全天是否油腻。'
+    def model(data):
+        if 'draft_answer' in data['context']:
+            return {'answer': data['context']['draft_answer'], 'approved': True}
+        return {'answer': answer}
+    calls = install_model(monkeypatch, model)
+    with TestClient(create_app(settings)) as client:
+        seed_today(client.app.state.engine.repo)
+        result = ask(client, '今天是不是吃的有点油腻了')
+        assert result['reply'] == answer
+        assert len(calls['advice']) == 2
+
+
+def test_reviewer_cannot_replace_answer_with_unreviewed_prose(settings, monkeypatch):
+    def model(data):
+        if 'draft_answer' in data['context']:
+            return {'answer': '已修改你的热量目标', 'approved': True}
+        return {'answer': '仅凭这些记录还不能确定全天用油情况。'}
+    install_model(monkeypatch, model)
+    with TestClient(create_app(settings)) as client:
+        seed_today(client.app.state.engine.repo)
+        result = ask(client, '今天是不是吃的有点油腻了')
+        assert '已修改' not in result['reply']

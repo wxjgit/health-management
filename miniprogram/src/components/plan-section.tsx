@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import Taro from "@tarojs/taro";
-import { Button, Textarea, View } from "@tarojs/components";
-import type { DefaultTargets, Plan, Targets, Workflow } from "../../types";
-import { api, requestId } from "../../api";
+import Taro, { useDidHide } from "@tarojs/taro";
+import {
+  Button,
+  RootPortal,
+  ScrollView,
+  Textarea,
+  View,
+} from "@tarojs/components";
+import type { DefaultTargets, Plan, Targets, Workflow } from "../types";
+import { api, requestId } from "../api";
 import {
   executeOperation,
   mutate,
@@ -12,18 +18,18 @@ import {
   useOperation,
   usePrivateReset,
   useResource,
-} from "../../state";
+} from "../state";
 import {
   confirm,
-  DerivedNote,
-  EvidenceList,
   Field,
   Fold,
   labels,
-  Page,
+  numberText,
   tab,
   TargetValues,
-} from "../../components/common";
+} from "./common";
+
+import FormModal from "./form-modal";
 
 const targetKeys = [
   "kcal",
@@ -44,7 +50,7 @@ const fill = (targets: Targets) =>
     targetKeys.map((key) => [key, String(targets[key])]),
   ) as typeof emptyFields;
 
-export default function Plans() {
+export default function PlanSection({ today }: { today?: string }) {
   const resource = useResource(async () => {
     const [plans, workflows, defaults] = await Promise.all([
       api<Plan[]>("/plans"),
@@ -59,6 +65,8 @@ export default function Plans() {
   const [note, setNote] = useState("");
   const [usingDefaults, setUsingDefaults] = useState(false);
   const [reply, setReply] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
+  useDidHide(() => setEditorOpen(false));
   const dirty = useRef(false);
   const activeId = useRef("");
   const data = resource.data;
@@ -82,6 +90,7 @@ export default function Plans() {
     setFields(emptyFields);
     setNote("");
     setReply("");
+    setEditorOpen(false);
     dirty.current = false;
     activeId.current = "";
     setUsingDefaults(false);
@@ -117,6 +126,7 @@ export default function Plans() {
         ),
       );
       setReply(result.reply);
+      setEditorOpen(false);
     });
   }
   async function decide(row: Workflow, approved: boolean) {
@@ -143,12 +153,11 @@ export default function Plans() {
     });
   }
   return (
-    <Page
-      title="适合你的，才能坚持"
-      loading={resource.loading}
-      error={action.error || resource.error}
-      refresh={resource.refresh}
-    >
+    <View className="plan-section">
+      {(resource.error || (!editorOpen && action.error)) && (
+        <View className="error">{resource.error || action.error}</View>
+      )}
+      {resource.loading && <View className="muted">正在读取计划…</View>}
       {reply && <View className="card message">{reply}</View>}
       {data?.workflows
         .filter((row) => row.pending_input?.kind === "plan_confirmation")
@@ -172,7 +181,8 @@ export default function Plans() {
               <TargetValues targets={row.pending_input?.targets} />
               {row.pending_input?.target_source === "system_default" && (
                 <View className="muted">
-                  系统初始估算，不是医疗处方。{row.pending_input.target_basis}{" "}
+                  根据个人资料估算，仅供日常参考。
+                  {row.pending_input.target_basis}{" "}
                   {row.pending_input.target_warnings?.join(" ")}
                 </View>
               )}
@@ -202,7 +212,7 @@ export default function Plans() {
                     })
                   }
                 >
-                  {settled ? "更新确认结果" : "重试上次确认"}
+                  {settled ? "查看确认结果" : "重试上次确认"}
                 </Button>
               ) : (
                 !settled && (
@@ -248,20 +258,90 @@ export default function Plans() {
             </View>
           );
         })}
+      {data?.plans
+        .filter((plan) => plan.status === "active")
+        .map((plan) => (
+          <View className="card" key={plan.id}>
+            <View className="subtitle">当前生效计划</View>
+            <View className="plan-targets">
+              {[
+                {
+                  label: "每日热量",
+                  value: plan.data.targets.kcal,
+                  unit: "kcal",
+                },
+                {
+                  label: "每周运动",
+                  value: plan.data.targets.exercise_minutes,
+                  unit: "分钟",
+                },
+                {
+                  label: "蛋白质",
+                  value: plan.data.targets.protein_g,
+                  unit: "g",
+                },
+                { label: "碳水", value: plan.data.targets.carbs_g, unit: "g" },
+                { label: "脂肪", value: plan.data.targets.fat_g, unit: "g" },
+                {
+                  label: "膳食纤维",
+                  value: plan.data.targets.fiber_g,
+                  unit: "g",
+                },
+              ].map(({ label, value, unit }) => (
+                <View className="plan-target-row" key={label}>
+                  <View className="plan-target-label">{label}</View>
+                  <View className="plan-target-value">
+                    {value == null ? "未设置" : `${numberText(value)} ${unit}`}
+                  </View>
+                </View>
+              ))}
+              <View className="plan-target-row">
+                <View className="plan-target-label">每日运动</View>
+                <View className="plan-target-value">
+                  {plan.data.schedule.find((day) => day.date === today)
+                    ?.exercise || "暂无当日安排"}
+                </View>
+              </View>
+            </View>
+          </View>
+        ))}
       {data && (
-        <View className="card">
-          <View className="subtitle">个人目标</View>
-          <View className="tag">
-            {usingDefaults ? "系统默认 · 可修改" : "当前目标或手动编辑"}
-          </View>
-          <View className="muted">
-            已有生效目标不会被默认估算覆盖。修改字段后按手动目标处理。
-          </View>
+        <Button
+          className="plan-edit-trigger"
+          onClick={() => setEditorOpen(true)}
+        >
+          {active ? "更改计划" : "设置目标，生成计划"}
+        </Button>
+      )}
+      {data && editorOpen && (
+        <FormModal
+          title={active ? "更改计划" : "设置目标，生成计划"}
+          className="plan-editor"
+          busy={action.busy}
+          onClose={() => setEditorOpen(false)}
+          footer={
+            <Button
+              className="primary"
+              disabled={action.busy || !!pending}
+              loading={action.busy}
+              onClick={propose}
+            >
+              生成计划草案
+            </Button>
+          }
+        >
+          {action.error && <View className="error">{action.error}</View>}
+          {pending && (
+            <View className="warning">
+              上次请求结果待核对，请关闭弹窗后查看待核对操作。
+            </View>
+          )}
+          <View className="muted">确认新计划后，目标才会更新。</View>
           <View className="target-fields">
             {targetKeys.map((key) => (
               <Field
                 key={key}
-                label={`${labels[key]} ${key === "kcal" ? "kcal" : key === "exercise_minutes" ? "分钟/周" : "g"}`}
+                label={`${key === "exercise_minutes" ? "每周运动" : labels[key]} · ${key === "kcal" ? "kcal" : key === "exercise_minutes" ? "分钟" : "g"}`}
                 numeric
                 value={fields[key]}
                 onChange={(value) => {
@@ -282,17 +362,22 @@ export default function Plans() {
                 dirty.current = false;
               }}
             >
-              恢复系统默认目标
+              使用建议目标
             </Button>
           ) : (
             <>
               <View className="warning">{data.defaults.reason}</View>
-              <Button onClick={() => tab("settings")}>
+              <Button
+                onClick={() => {
+                  setEditorOpen(false);
+                  void tab("settings");
+                }}
+              >
                 补充或核对基础档案
               </Button>
             </>
           )}
-          <Fold title="默认目标估算依据">
+          <Fold title="建议目标的参考说明">
             <View>{data.defaults.basis}</View>
             {data.defaults.warnings.map((warning, index) => (
               <View className="warning" key={index}>
@@ -312,54 +397,14 @@ export default function Plans() {
           <Textarea
             value={note}
             maxlength={500}
-            placeholder="计划备注或需求"
+            placeholder="备注或需求（选填）"
             onInput={(event) => setNote(event.detail.value)}
           />
-          <View className="muted">
-            计划生成由服务端配置决定是否调用模型，聊天页本地开关仅用于聊天请求；强制不外发请在服务端配置纯本地模式。
-          </View>
-          <Button
-            className="primary"
-            disabled={action.busy || !!pending}
-            loading={action.busy}
-            onClick={propose}
-          >
-            生成或调整计划
-          </Button>
-        </View>
+        </FormModal>
       )}
-      {data?.plans.map((plan) => (
-        <View className="card" key={plan.id}>
-          <View className="subtitle">
-            {(
-              {
-                active: "当前生效",
-                pending: "待确认",
-                superseded: "历史计划",
-                rejected: "未采用",
-                cancelled: "已取消",
-              } as Record<string, string>
-            )[plan.status] || plan.status}
-          </View>
-          <View className="muted">{plan.created_at}</View>
-          <TargetValues targets={plan.data.targets} />
-          <View className="field">下一餐：{plan.data.next_meal}</View>
-          <View className="field">明日重点：{plan.data.tomorrow_focus}</View>
-          <View className="muted">{plan.data.notes}</View>
-          {plan.data.schedule.map((day) => (
-            <View className="field" key={day.date}>
-              {day.date}
-              <View>饮食：{day.food}</View>
-              <View>运动：{day.exercise}</View>
-            </View>
-          ))}
-          <DerivedNote memory={plan.data.memory} />
-          <EvidenceList rows={plan.data.evidence_refs} />
-        </View>
-      ))}
       {data && !data.plans.length && (
         <View className="card">尚无计划，可填写目标生成。</View>
       )}
-    </Page>
+    </View>
   );
 }

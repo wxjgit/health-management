@@ -2678,6 +2678,39 @@
       @media (max-width: 1100px) { #scheduler-reliability .sched-flow { grid-template-columns: 1fr 1fr; } }
       @media (max-width: 760px) { #scheduler-reliability { padding: 18px; } #scheduler-reliability h2 { font-size: 21px; } #scheduler-reliability .sched-compare, #scheduler-reliability .sched-code, #scheduler-reliability .sched-flow { grid-template-columns: 1fr; } }
       @media print { #scheduler-reliability .sched-card, #scheduler-reliability .sched-step { break-inside: avoid; } }
+      /* Interview notes: code walkthroughs remain readable without JavaScript. */
+      #interview-prep { padding: 30px; }
+      #interview-prep h2 { font-size: 27px; color: #152b40; }
+      #interview-prep h3 { margin: 28px 0 12px; font-size: 21px; color: #172c40; }
+      #interview-prep p, #interview-prep li { font-size: 16px; line-height: 1.9; color: #334155; }
+      #interview-prep p + p { margin-top: 12px; }
+      #interview-prep code { overflow-wrap: anywhere; }
+      #interview-prep .iv-kicker { margin-bottom: 8px; color: #245fa2; font-size: 12px; font-weight: 750; letter-spacing: 1px; }
+      #interview-prep .iv-question { margin: 20px 0; padding: 20px; border: 1px solid #bdd1e7; border-radius: 10px; background: #f0f6fc; }
+      #interview-prep .iv-question h3 { margin: 0 0 12px; font-size: 22px; }
+      #interview-prep .iv-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+      #interview-prep .iv-flow article { min-width: 0; padding: 16px; border: 1px solid #d4dfec; border-radius: 9px; background: #f8fafc; }
+      #interview-prep .iv-flow b, #interview-prep .iv-flow span { display: block; }
+      #interview-prep .iv-flow b { color: #245fa2; font-size: 16px; }
+      #interview-prep .iv-flow span { margin-top: 8px; color: #475569; font-size: 14px; line-height: 1.8; }
+      #interview-prep details { min-width: 0; margin: 15px 0; padding: 19px; border: 1px solid #d8e1ec; border-radius: 10px; background: #fff; }
+      #interview-prep summary { cursor: pointer; color: #203e5b; font-size: 19px; font-weight: 700; line-height: 1.6; }
+      #interview-prep details[open] > summary { margin-bottom: 16px; }
+      #interview-prep .iv-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+      #interview-prep .iv-pair > div { min-width: 0; }
+      #interview-prep pre { margin: 12px 0; padding: 16px; border: 1px solid #dbe4ee; border-radius: 8px; background: #f3f6fa; color: #243c53; font: 14px/1.85 Consolas, "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+      #interview-prep .iv-source { display: block; margin-top: 10px; color: #245fa2; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+      #interview-prep .iv-note { margin-top: 16px; padding: 15px 18px; border-left: 4px solid #b88a41; border-radius: 0 8px 8px 0; background: #fff8ec; }
+      #interview-prep .iv-answer { margin-top: 18px; padding: 22px; border: 1px solid #bfd7c7; border-radius: 10px; background: #eff7f1; }
+      #interview-prep .iv-answer h3 { margin: 0 0 12px; }
+      #interview-prep .iv-table-wrap { overflow-x: auto; margin: 16px 0; }
+      #interview-prep table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.8; }
+      #interview-prep th, #interview-prep td { padding: 12px; border: 1px solid #dce4ed; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+      #interview-prep th { background: #eef3f9; color: #263e58; }
+      #interview-prep .iv-links { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e0e7ef; font-size: 14px; }
+      @media(max-width: 1000px) { #interview-prep .iv-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } #interview-prep .iv-pair { grid-template-columns: 1fr; } }
+      @media(max-width: 600px) { #interview-prep { padding: 18px; } #interview-prep h2 { font-size: 24px; } #interview-prep .iv-question { padding: 15px; } #interview-prep details { padding: 14px; } #interview-prep summary { font-size: 17px; } #interview-prep pre { padding: 12px; font-size: 12px; } #interview-prep th, #interview-prep td { padding: 8px; font-size: 13px; } }
+      @media print { #interview-prep .iv-flow article, #interview-prep pre { break-inside: avoid; } #interview-prep .iv-pair { display: block; } }
     </style>
   </head>
   <body>
@@ -2691,8 +2724,9 @@
         <a href="#concurrency-recovery">并发可靠性</a>
         <a href="#runtime-sandbox">运行安全</a>
         <a href="#privacy-deletion">精准删除</a>
+        <a href="#interview-prep">面试讲解</a>
       </nav>
-      <span class="site-meta">离线自包含 · 更新 2026-10-27</span>
+      <span class="site-meta">离线自包含 · 更新 2026-10-28</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
@@ -2743,6 +2777,14 @@
           <a class="nav-subsection" href="#privacy-request-replay">⑦ 防重建：旧请求作废登记</a>
           <a class="nav-subsection" href="#privacy-validation">验证：怎么证明修好了</a>
         </div>
+        <div class="nav-group"><span class="nav-label">08 · 面试讲解</span>
+          <a href="#interview-prep">Q003 · 循环、上下文与工具范围</a>
+          <a class="nav-subsection" href="#interview-code">结合代码逐步理解</a>
+          <a class="nav-subsection" href="#interview-scopes">跨追问累计与单段预算</a>
+          <a class="nav-subsection" href="#interview-full-flow">全流程：小程序 → Graph → 回复</a>
+          <a class="nav-subsection" href="#interview-flow-nodes">经过哪些节点，怎样中转</a>
+          <a class="nav-subsection" href="#interview-answer">面试时怎样回答</a>
+        </div>
       </aside>
     <main class="doc-main">
       <header>
@@ -2750,19 +2792,19 @@
           <div class="eyebrow">CODE MAP / LANGGRAPH</div>
           <h1>health-management · 工程 Graph</h1>
           <p class="intro">
-            处理计划 → 本地授权 → 最小取数。点击 Graph 节点查看职责、输入输出与代码位置。
+            安全入口 → 处理计划 → 本地授权 → 最小取数与写入。点击节点查看当前职责、输入输出与代码位置。
           </p>
         </div>
         <div class="stats">
           <div><b>3</b><span>独立工作流</span></div>
-          <div><b>16</b><span>业务节点</span></div>
-          <div><b>5</b><span>条件 LLM 节点</span></div>
+          <div><b>20</b><span>不同图节点</span></div>
+          <div><b>6</b><span>条件 LLM 节点</span></div>
           <div><b>2</b><span>暂停位置</span></div>
         </div>
       </header>
       <div class="status-row">
-        <span class="snapshot">实现快照 · 2026-10-22</span
-        ><span>已同步 ProcessingPlan / Grounding Harness</span><span>四层记忆已更新 · 2026-10-26</span><span>2 个 SQLite · 离线可打开</span
+        <span class="snapshot">系统流程快照 · 2026-10-28</span
+        ><span>已同步安全入口 / 操作权限 / 追问恢复</span><span>四层记忆已更新 · 2026-10-26</span><span>2 个 SQLite · 离线可打开</span
         ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
         ><button class="print-button" onclick="window.print()">
           打印 / 另存 PDF
@@ -2772,7 +2814,7 @@
       <div class="section-head" id="graph-overview" data-chapter>
         <div>
           <h2>工作流总览 · 三个 Graph 独立运行</h2>
-          <p>业务节点计数不包含 START / END；图中的箭头对应真实控制流。</p>
+          <p>聊天 15 个、计划 6 个、分析 2 个节点；三个安全节点在前两图复用，共 20 个不同节点。计数不含 START / END，箭头展示路由函数实际可达的去向。</p>
         </div>
         <div class="tabs" role="tablist" aria-label="选择 Graph">
           <button
@@ -2813,14 +2855,14 @@
             <div class="graph-head">
               <div>
                 <h3>chat_graph</h3>
-                <p>计划与授权 → 草稿校验 → 营养准备 → 路由 → 保存 / 查询 → 回答</p>
+                <p>安全检查 → 规划 / 补丁 → 草稿与权限复核 → 营养准备 → 保存 / 追问 / 回答</p>
               </div>
-              <code>build_chat() · 11 节点 / 17 边</code>
+              <code>build_chat() · 15 节点 / 25 条可达边</code>
             </div>
             <div class="canvas" id="canvas-chat"></div>
             <div class="diagram-note">
               蓝色节点带 <code>LLM</code> 徽标，表示模型模式下可能调用模型；
-              clarify 在 <code>interrupt()</code> 等待补充；恢复后按状态进入首次解析或草稿补丁。
+              clarify 在 <code>interrupt()</code> 等待补充；恢复先回到 safety_gate，安全允许后再选择首次解析或草稿补丁。橙色回线表示这一恢复路径。
             </div>
             <div class="legend">
               <span><i></i>代码 / 数据操作</span
@@ -2839,14 +2881,13 @@
             <div class="graph-head">
               <div>
                 <h3>plan_graph</h3>
-                <p>草案生成 → 规则判断 / 确认 → 事务决策</p>
+                <p>备注安全与本地资格 → 草案生成 → 条件确认 → 版本检查与事务决策</p>
               </div>
-              <code>build_plan() · 3 节点 / 4 边</code>
+              <code>build_plan() · 6 节点 / 10 条可达边</code>
             </div>
             <div class="canvas" id="canvas-plan"></div>
             <div class="diagram-note">
-              这是线性 Graph。自动批准 / 等待确认在 approve 内；生效 / 拒绝 /
-              过期在 activate 内，均不是额外图节点。
+              先经过共享安全分支；无文字备注时可跳过语义分类，但仍检查本地计划资格。approve 内处理确认及接受时的文字附言检查；activate 内决定生效 / 拒绝 / 过期，不额外画成图节点。
             </div>
             <div class="legend">
               <span><i></i>代码 / 数据操作</span
@@ -2900,8 +2941,7 @@
           <div>
             <h2>入口与恢复</h2>
             <p>
-              图选择发生在 Engine.graph_for(kind)，定时周任务复用 analysis /
-              plan。
+              图选择发生在 Engine.graph_for(kind)。微信小程序调用独立 JSON API；后台持久任务由同一个 Engine 复用 analysis / plan。
             </p>
           </div>
         </div>
@@ -2909,14 +2949,14 @@
           <div class="panel entry">
             <small>记录、纠错、查询、偏好</small><code>POST /api/chat</code>
             <div class="entry-flow">
-              <span>Engine.run("chat")</span><b>→</b><span>chat_graph</span>
+              <span>Engine.run("chat")</span><b>→</b><span>chat_graph → safety_gate</span>
             </div>
           </div>
           <div class="panel entry">
             <small>用户生成计划 / 周任务刷新</small
             ><code>POST /api/plans/propose</code>
             <div class="entry-flow">
-              <span>Engine.run("plan")</span><b>→</b><span>plan_graph</span>
+              <span>Engine.run("plan")</span><b>→</b><span>plan_graph → safety_gate</span>
             </div>
           </div>
           <div class="panel entry">
@@ -2928,19 +2968,21 @@
           </div>
         </div>
         <div class="mini-code">
-          POST /api/workflows/{thread_id}/resume → 校验 interrupt_id →
-          graph_for(workflow.kind) → Command(resume=answer) · 同一个 thread_id
+          POST /api/workflows/{thread_id}/resume → 核对请求指纹、回执与 interrupt_id → 同一 thread_id 恢复。仍在等待：Command(resume=answer)；已接收答案但失败：invocation=None 继续。纯本地模式随存档保留。
         </div>
       </section>
+
+      <div class="mini-code">后台 weekly 任务 → Engine.run("analysis") → 报告 + outbox → auto_plan 任务 → Engine.run("plan")。daily 任务直接调用本地 review，不执行整张分析图；后台仍只有一个 Engine 所有者。<a href="backend/app/jobs/handlers.py">查看 jobs/handlers.py</a></div>
 
       <section class="section panel routes-section" id="routing" data-chapter>
         <div class="section-head">
           <div>
             <h2>意图识别与路由</h2>
-            <p>通过<a href="#safety-routing">前置安全路由</a>后，完成校验和营养准备，再按固定优先级选择下一个业务节点。</p>
+            <p>先经<a href="#safety-routing">安全路由</a>，再选解析路径；处理计划由本地审核，草稿通过 authorize_operation 后才进入营养准备和最终业务路由。</p>
           </div>
         </div>
-        <h3>route_chat：完成校验与营养准备后，依次匹配</h3>
+        <div class="decision"><div><b>① 安全路由</b><p>明确风险 / 不确定 → 固定回复；无本地信号 → 独立语义分类。</p><code>safety_gate / classify_safety</code></div><div><b>② 解析路径</b><p>incremental_answer 且有 extraction → patch_pending；其余 → parse_initial。</p><code>route_parse</code></div><div><b>③ 写入前权限</b><p>核对安全指纹、能力与原文；本地拒绝转安全边界，冲突按异常停止。</p><code>authorize_operation</code></div></div>
+        <h3>route_chat：通过权限与营养准备，save_ready 后依次匹配</h3>
         <div class="decision">
           <div>
             <b>① question 存在</b>
@@ -3042,7 +3084,7 @@ medical_question("我头晕，晚饭吃多少？")
             <g class="sf-node"><rect x="25" y="350" width="180" height="70" rx="12" /><text x="115" y="378">展示允许的结果<tspan class="sf-small" x="115" dy="22">计划仍保留原有确认流程</tspan></text></g>
           </svg>
         </div>
-        <p class="safety-caption">图示模型可用时的主路径；权限和输出检查也会重复调用在各业务步骤前后。小屏可横向查看。无文字附言的计划不需要语义分类，但仍要检查已知限制与目标数值。</p>
+        <p class="safety-caption">图示模型可用时的主路径。安全入口已实际注册在 chat / plan 两图中，聊天还包含 authorize_operation。guarded_node 在敏感业务前复核权限，部分输出后再次复核；无备注计划跳过语义分类但仍检查资格。离线只放行完整白名单记录 / 查询 / 明确食物偏好等限定能力，其余自由输入走 uncertain。小屏可横向查看。</p>
 
         <h3>换一句话，看它会走哪条路</h3>
         <div class="safety-switch" role="group" aria-label="选择安全路由示例">
@@ -3114,14 +3156,14 @@ if unsafe_generated_text(text):
 
       <section class="section panel dev-guide" id="developer-guide" data-chapter>
         <div class="support-head"><span>DEV</span><div>
-          <h2>节点实现手册 · 16 个业务节点与底层执行机制</h2>
+          <h2>节点实现手册 · 20 个不同图节点与底层执行机制</h2>
           <p>每项包含用途、输入输出、处理顺序、分支、数据库与外部调用、异常和开发示例。</p>
         </div></div>
         <div class="support-body">
           <p class="dev-intro">从图中点击节点后，可通过右侧入口定位完整说明。下方“图内节点”与“内部函数 / 执行器”分开标记：后者是节点调用的实现细节，不增加 Graph 的节点数。示例均为虚构开发样例；文档描述当前代码行为，规则校验不代表模型理解或建议内容一定正确。</p>
           <div class="dev-toolbar">
             <label>搜索节点、状态字段或规则<input id="guide-search" type="search" placeholder="例如：纠错、幂等、100g、prepared_events" /></label>
-            <label>阅读范围<select id="guide-filter"><option value="all">全部说明</option><option value="chat">记录与对话 Graph</option><option value="plan">计划确认 Graph</option><option value="analysis">规律与复盘 Graph</option><option value="core">内部函数 / 执行器</option><option value="lifecycle">START / END</option></select></label>
+            <label>阅读范围<select id="guide-filter"><option value="all">全部说明</option><option value="chat">记录与对话 Graph</option><option value="plan">计划确认 Graph</option><option value="analysis">规律与复盘 Graph</option><option value="safety">共享安全节点</option><option value="core">内部函数 / 执行器</option><option value="lifecycle">START / END</option></select></label>
             <button id="guide-expand" type="button">展开当前全部</button><button id="guide-collapse" type="button">收起当前全部</button>
           </div>
           <p id="guide-count" class="dev-count" aria-live="polite"></p>
@@ -4821,6 +4863,408 @@ deletion_job = {
           <a href="backend/tests/test_privacy_deletion.py">后端隐私回归测试</a>
         </div>
       </section>
+      <section class="section panel" id="interview-prep" data-chapter aria-labelledby="interview-title">
+        <div class="iv-kicker">08 / INTERVIEW · 结合当前工程讲清原理 · 2026-10-28</div>
+        <h2 id="interview-title">面试讲解：Agent 怎样做到不乱跑、不超量、不越权？</h2>
+        <div class="iv-question">
+          <h3>Q003 · 如何限制循环次数、上下文规模和工具调用范围？</h3>
+          <p><b>参考答案：</b>轻记采用受控工作流而非开放式 ReAct。可选追问受轮次限制，必需字段不全不会强行保存。当前每个工作流最多预留 32 次模型调用、累计 400000 字节，其中规划最多 4 次、安全分类最多 8 次；发送前持久化计数，失败也占预算。单次外发限制 90000 字节。运行段默认 120 秒、并发槽 2，普通模型超时 45 秒，安全分类 8 秒。字节和次数预算不等于精确 Token 计费，也不代表已实现自动摘要压缩。</p>
+        </div>
+        <p>把这段答案理解成四道控制：<b>流程规定怎么走，额度限制能调用多少次，权限规定能拿什么数据，期限限制能占多久资源。</b>下面用“中午吃了牛肉面”这次请求串起来讲。代码均为当前实现的关键节选；“…”和中文说明省略了无关逻辑，不是完整可运行函数。</p>
+        <div class="iv-flow" aria-label="请求执行中的四层限制">
+          <article><b>① 流程</b><span>固定图与字段校验<br>可选追问检查 rounds</span></article>
+          <article><b>② 额度</b><span>按 thread_id 记账<br>次数、累计字节持久化</span></article>
+          <article><b>③ 范围</b><span>按用途构造数据<br>白名单与一次性授权</span></article>
+          <article><b>④ 资源</b><span>执行名额 + 总期限<br>单次模型服从剩余时间</span></article>
+        </div>
+
+        <h3 id="interview-code" data-chapter>结合代码：沿一次饮食记录请求往下看</h3>
+        <details open><summary>1 · 限制循环：程序决定路径，缺字段才追问</summary>
+          <pre>安全检查 → 解析输入 → 检查字段 → 准备营养 → 保存或追问
+                                                   ↓
+                                           用户补充后继续</pre>
+          <div class="iv-pair">
+            <div><pre># chat/drafts.py · check_drafts 节选
+missing = event.missing_fields()
+if missing:
+    pending = ...  # 记录必需的待补字段
+    continue
+
+if not skip_optional and rounds &lt; 2:
+    ...  # 考虑可选的分量、强度等追问</pre>
+              <a class="iv-source" href="backend/app/chat/drafts.py">drafts.py:40 · 必需字段检查与 rounds &lt; 2</a>
+              <a class="iv-source" href="backend/app/workflows/chat_flow.py">chat_flow.py:237 · 固定连线；clarify 使用 interrupt 暂停</a>
+            </div>
+            <div><p>“帮我记录午饭”还不知道吃了什么，缺必需信息，要先补充；“中午吃了牛肉面”已知道食物，但分量不清楚，符合条件时可以追问。</p>
+              <p>用户每次补充后，<code>rounds</code> 加一。达到 2 后不再增加可选追问。模型负责理解，不能自行新增图节点、跳过校验或选择任意工具。</p>
+              <div class="iv-note"><p><b>两轮限制的是可选追问。</b>它不表示整个工作流只能走两步，也不表示问两次后就强行保存不完整数据。</p></div>
+            </div>
+          </div>
+        </details>
+
+        <details open><summary>2 · 限制调用：同一件事情有一份数据库额度</summary>
+          <div class="iv-pair">
+            <div><pre># repositories/common.py · account_model_call 节选
+count, size = self.conn.execute(
+    'SELECT COUNT(*), COALESCE(SUM(payload_bytes),0) '
+    'FROM model_calls WHERE thread_id=?',
+    (thread_id,),
+).fetchone()
+
+if count &gt;= 32 or size + payload_bytes &gt; 400000:
+    raise WorkflowStateError(code='model_budget_exceeded')
+
+# safety_classification：已有 8 次则拒绝
+# processing_plan：已有 4 次则拒绝
+# 检查通过后，把本次调用写入 model_calls</pre>
+              <a class="iv-source" href="backend/app/infrastructure/repositories/common.py">common.py:32 · 总次数、累计字节及分用途上限</a>
+              <a class="iv-source" href="backend/app/workflows/runtime.py">runtime.py:44 · 通过回调把本次调用绑定到 thread_id</a>
+            </div>
+            <div><p><code>thread_id</code> 就是“这件事情的编号”。首次记录、后续追问和恢复执行，围绕同一个工作流累计额度。</p>
+              <p><b>总共 32 次</b>里面，规划最多 4 次、安全分类最多 8 次；后两项是子额度，不是额外再送 12 次。这里计的是模型调用，普通本地图节点不按一次模型调用计。</p>
+              <p>关键是<b>先记账，再发送</b>：<code>boundary.consume()</code> 先调用 <code>scope.account(...)</code>，随后才进入实际模型请求。因此请求即使超时或失败也占预算，不能靠失败重试无限调用。</p>
+              <p>额度保存在数据库里，服务重启后沿用已有计数；内存重建不会自动得到一份新额度。</p>
+              <a class="iv-source" href="backend/app/modeling/boundary.py">boundary.py:107 · 消费授权并在发送前记账</a>
+              <a class="iv-source" href="backend/app/modeling/parser.py">parser.py:125 · consume 之后才执行模型请求</a>
+            </div>
+          </div>
+        </details>
+
+        <details open><summary>3 · 限制上下文：先决定发什么，再检查发多少</summary>
+          <div class="iv-pair">
+            <div><pre># modeling/payloads.py · 按用途固定字段
+ENVELOPES = {
+    'processing_plan': {
+        'task', 'now', 'text', 'interaction', 'schema'
+    },
+    'estimate_nutrition': {'task', 'items', 'schema'},
+    ...
+}
+
+# modeling/boundary.py · 单次大小检查
+payload = json.dumps(data, ensure_ascii=False, allow_nan=False)
+if len(payload.encode('utf-8')) &gt; 90000:
+    raise PolicyError('本次模型请求超过发送大小限制，请缩小范围。')</pre>
+              <a class="iv-source" href="backend/app/modeling/payloads.py">payloads.py:18 · 用途与允许字段；拒绝历史正文等额外数据</a>
+              <a class="iv-source" href="backend/app/modeling/boundary.py">boundary.py:74 · 序列化后检查 UTF-8 字节数</a>
+            </div>
+            <div><p>上下文就是“这次给模型看的信息”。理解牛肉面这句话时，规划只接收本次输入、时间和操作状态；估算营养只接收相关食物与分量；纠错只绑定要修改的单条记录。</p>
+              <p>它不会默认把所有历史聊天都塞进去。先按用途减少信息，再限制单次最多 <b>90000 字节</b>，同一工作流累计最多 <b>400000 字节</b>。</p>
+              <div class="iv-note"><p>计量对象是<b>获批 JSON payload 的 UTF-8 字节</b>，含其中的 Schema；不是完整 HTTP 请求大小，也不是精确 Token 数。超限会拒绝请求，当前没有“自动总结历史再继续”的压缩器。</p></div>
+            </div>
+          </div>
+        </details>
+
+        <details open><summary>4 · 限制工具范围：每次用途和数据都要拿通行证</summary>
+          <div class="iv-pair">
+            <div><pre># modeling/boundary.py · approve 节选
+if (purpose not in ENVELOPES
+    or set(data) != ENVELOPES[purpose]
+    or data.get('task') != purpose):
+    raise PolicyError(...)
+
+grant = self._grant_key(purpose, self._resource(purpose, data))
+if grant not in scope.grants:
+    raise PolicyError(...)
+scope.grants.remove(grant)</pre>
+              <a class="iv-source" href="backend/app/modeling/boundary.py">boundary.py:57 · 用途、字段与资源授权校验</a>
+              <a class="iv-source" href="backend/app/workflows/policy.py">policy.py:38 · 本地绑定记录、审核操作与查询范围</a>
+            </div>
+            <div><p>这里没有把任意 SQL、Python 或系统命令入口交给模型。模型提出业务计划，本地代码再审核、选数据并执行固定动作。</p>
+              <p>授权可以理解成一张<b>一次性通行证</b>：“这次只允许为了修改记录 A，发送记录 A 的必要字段。”换成记录 B 或另一用途，资源摘要就不匹配。批准后还要在执行时消费获批调用，不能重复复用。</p>
+              <p><b>模型提出想法，不等于程序允许读写。</b>字段白名单检查“形状是否正确”，资源授权继续检查“本次是否真的允许发送这份数据”。纯本地模式在这个边界直接禁止外发。</p>
+            </div>
+          </div>
+        </details>
+
+        <details open><summary>5 · 限制时间和并发：不能一直占着执行资源</summary>
+          <div class="iv-pair">
+            <div><pre># common/config.py · 可配置的默认值
+model_timeout_seconds = 45
+safety_timeout_seconds = 8
+runtime_max_executions = 2
+execution_seconds = 120
+
+# common/execution_budget.py · 执行准入
+if not semaphore.acquire(False):
+    raise RuntimeLimitError()
+budget = ExecutionBudget(
+    time.monotonic() + self.settings.execution_seconds
+)
+
+# 实际模型调用的等待时间
+min(单次模型上限, 当前运行段剩余时间)</pre>
+              <a class="iv-source" href="backend/app/common/config.py">config.py:58 · 模型超时、并发和运行段预算默认值</a>
+              <a class="iv-source" href="backend/app/common/execution_budget.py">execution_budget.py:99 · 名额与截止时间；嵌套执行共享预算</a>
+              <a class="iv-source" href="backend/app/modeling/transport.py">transport.py:50 · remaining_seconds 与异步请求超时</a>
+            </div>
+            <div><p>普通模型最多等 45 秒，安全分类最多等 8 秒，而且都不能超过运行段剩余时间。<b>如果本段只剩 6 秒，普通模型也只能再等约 6 秒。</b>等待锁和本地执行同样消耗这段时间。</p>
+              <p>普通工作默认同时允许 2 个运行段；名额满时，新执行被拒绝进入，不放进无限等待队列。执行真正结束才归还名额，管理与读操作有独立通道。</p>
+              <p>120 秒是截止预算，代码在锁、网络和数据库等边界检查；不是任意同步代码到点必然被立即杀掉。加固模式另有 watchdog，超过默认 15 秒宽限仍不退出时回收进程。</p>
+              <div class="iv-note"><p><b>120 秒不包含等待用户回答的几个小时。</b>工作流暂停后本次运行段结束；用户补充时开启新的恢复运行段。模型次数和累计字节仍按原工作流接着算。</p></div>
+            </div>
+          </div>
+        </details>
+
+        <h3 id="interview-scopes" data-chapter>最容易混淆：什么会累计，什么会重新开始？</h3>
+        <div class="iv-table-wrap"><table><thead><tr><th>限制</th><th>作用范围</th><th>用户补充、恢复后</th></tr></thead><tbody>
+          <tr><td>可选追问 <code>rounds &lt; 2</code></td><td>工作流 State 中的追问轮次</td><td>沿用并递增；不能因此跳过必需字段。</td></tr>
+          <tr><td>32 次 / 400000 字节<br>规划 4 次 / 安全分类 8 次</td><td>数据库中同一 <code>thread_id</code></td><td>继续累计；失败调用也占预算。</td></tr>
+          <tr><td>90000 字节</td><td>每份获批外发 JSON payload</td><td>每次发送分别检查。</td></tr>
+          <tr><td>120 秒 / 普通并发 2</td><td>当前真实运行段与普通执行名额</td><td>恢复段重新准入并创建期限；嵌套调用不重置。</td></tr>
+          <tr><td>普通 45 秒 / 安全分类 8 秒</td><td>单次模型请求</td><td>每次与当前运行段剩余时间取较小值。</td></tr>
+        </tbody></table></div>
+        <p>例如首次运行用了 3 次模型后暂停，用户一小时后补充：恢复时有新的运行段期限，但工作流模型计数仍从 3 接着累计，不会归零。</p>
+
+        <h3 id="interview-full-flow" data-chapter>全流程案例：从小程序输入，到看到最终回复</h3>
+        <div class="iv-question">
+          <h3>用户输入：“最近 7 天饮食怎么样？”</h3>
+          <p>假设用户已允许模型处理，后端模型配置齐全，这是一次新咨询，没有选择正在补充的旧任务。<b>前端只提交一次咨询请求；安全检查、规划、取数和建议生成，都在后端接着完成。</b></p>
+          <p>可以把系统想成：前端递交问题，Engine 登记工单，Graph 按顺序处理，State 是节点共用的流程笔记；模型在指定位置理解需求或选择建议，程序负责取数、计算和校验。</p>
+        </div>
+        <div class="iv-flow" aria-label="从前端到回复的四段路径">
+          <article><b>① 小程序提交</b><span>send → executeOperation<br>POST /api/chat<br>文字 + 请求编号 + 处理模式</span></article>
+          <article><b>② 后端登记</b><span>ChatRequest → Engine<br>去重、创建 thread_id<br>构造初始 State</span></article>
+          <article><b>③ Graph 执行</b><span>安全 → 规划 → 校验<br>respond 内部查库<br>模型选建议，程序拼回复</span></article>
+          <article><b>④ 保存与展示</b><span>保存工作流和助手消息<br>HTTP 返回，通知页面刷新<br>GET /messages 后渲染</span></article>
+        </div>
+
+        <details open><summary>① 前端 send：把文字组装成一次 HTTP 请求</summary>
+          <div class="iv-pair">
+            <div><pre>// pages/chat/index.tsx · send() 关键节选
+const body = {
+  request_id: requestId(),
+  text: text.trim(),
+  processing_mode: effectiveLocal
+    ? "local_only" : "model_allowed",
+  conversation_id: "main",
+  event_id: correction?.id || null,
+};
+await executeOperation(operation("/chat", body, "健康记录"));
+
+// api.ts · 实际网络入口
+await Taro.request({
+  url: `${baseUrl()}/api${path}`,
+  method, data, timeout: 125000,
+});</pre>
+              <a class="iv-source" href="miniprogram/src/pages/chat/index.tsx">聊天页面 · send()，新请求与恢复请求分流</a>
+              <a class="iv-source" href="miniprogram/src/state.ts">state.ts · executeOperation，待处理请求持久化</a>
+              <a class="iv-source" href="miniprogram/src/api.ts">api.ts · Taro.request 与 /api 前缀</a>
+            </div>
+            <div><p><code>request_id</code> 是“这次提交的编号”；<code>conversation_id</code> 是聊天会话；<code>event_id</code> 表示是否已选中某条历史记录，本例为 <code>null</code>。<code>processing_mode</code> 决定是否允许外发模型。</p>
+              <p><code>executeOperation()</code> 在发送前把原请求保存在小程序本地。网络超时、结果不明时，可核对或使用原编号重试；成功后移除待处理标记。</p>
+              <p>最终发出 <code>POST 后端地址/api/chat</code>。前端此时没有调用 LLM，也没有决定查询哪几条健康记录。这里的代码省略了恢复分支；如果选中了待补任务，会改发 <code>/workflows/{thread_id}/resume</code>。</p>
+            </div>
+          </div>
+        </details>
+
+        <details><summary>② FastAPI 接口：校验请求，再交给 Engine</summary>
+          <pre># api/workflows.py · chat() 关键节选
+@router.post('/chat')
+def chat(body: ChatRequest, engine=Depends(get_engine)):
+    initial = {
+        'input_text': body.text,
+        'selected_id': body.event_id,
+        'processing_mode': body.processing_mode,
+    }
+    return engine.run(
+        'chat', body.request_id, body.model_dump(),
+        initial, body.conversation_id
+    )</pre>
+          <p><code>ChatRequest</code> 负责请求结构校验。接口把前端的 <code>text</code> 转成工作流使用的 <code>input_text</code>；<code>'chat'</code> 表示选择聊天 Graph。接口本身不生成回答，也不直接查询七天饮食。</p>
+          <a class="iv-source" href="backend/app/api/workflows.py">workflows.py · POST /api/chat 与恢复端点</a>
+        </details>
+
+        <details><summary>③ Engine：登记工单，准备节点共用的 State</summary>
+          <div class="iv-pair">
+            <div><pre># workflows/runtime.py · 初始 State 示意
+{
+    'input_text': '最近 7 天饮食怎么样？',
+    'processing_mode': 'model_allowed',
+    'thread_id': '工作流编号',
+    'conversation_id': 'main',
+    'record_ids': [],
+    'rounds': 0,
+    ...
+}
+
+# invoke() 将同一 thread_id 交给 Graph
+state = self.graph_for(kind).invoke(
+    invocation,
+    {'configurable': {'thread_id': thread_id}}
+)</pre></div>
+            <div><p>Engine 先检查 <code>request_id</code> 是否处理过、请求内容是否一致。新任务生成 <code>thread_id</code>；重试则复用已有结果或进度，避免把同一提交当成新任务。</p>
+              <p><b>State 是一本流程笔记。</b>安全节点写安全结果，解析节点写意图和处理计划，校验节点写 <code>parsed</code>，回复节点写 <code>reply</code>。节点返回的字段会更新到 State，下一节点再读取。</p>
+              <p>业务事实保存在 <code>health.db</code>，Graph 进度由 checkpoint 保存到 <code>checkpoints.db</code>。<b>State 不会整本自动发送给模型</b>，每次模型调用都重新构造获准的最小输入。</p>
+              <a class="iv-source" href="backend/app/workflows/runtime.py">runtime.py · run、_run、invoke、_initial_state</a>
+              <a class="iv-source" href="backend/app/workflows/state.py">state.py · 各节点共用的字段定义</a>
+            </div>
+          </div>
+        </details>
+
+        <div id="interview-flow-nodes" data-chapter>
+          <h3>节点中转图：这条咨询实际怎么走？</h3>
+          <pre>START
+  ↓
+safety_gate                 本地安全检查
+  ↓ 需要语义判断，且没有命中阻断风险
+classify_safety             必要时调用安全分类模型，本地校验
+  ↓ 普通咨询可继续
+parse_initial               调用规划模型，审核处理计划
+  ↓
+normalize_extraction        整理成统一的 extraction
+  ↓
+validate_drafts             结构检查，写入 parsed / 待补信息
+  ↓
+authorize_operation         复核安全状态与操作条件
+  ↓ 允许继续
+prepare_nutrition           本例是 advice，返回 {}，不估算营养
+  ↓
+save_ready                  本例无新增记录，返回 {}
+  ↓ route_chat 判断没有追问、记录或长期信息要保存
+respond                     内部查库 → 模型选建议 → 本地拼回复
+  ↓
+END → 回到 Engine</pre>
+          <p>这张图展示本例在模型模式下正常通过安全检查的主路径。命中风险或分类失败会转入 <code>safety_response → END</code>；无需再次分类时可以跳过 <code>classify_safety</code>。<b>经过节点，不表示一定调用模型或写入数据。</b></p>
+          <div class="iv-table-wrap"><table><thead><tr><th>节点</th><th>本例职责</th><th>主要中转字段</th></tr></thead><tbody>
+            <tr><td><code>safety_gate</code></td><td>本地检查输入，准备必要安全上下文。</td><td><code>safety</code>、<code>safety_context</code></td></tr>
+            <tr><td><code>classify_safety</code></td><td>必要时由模型分类，本地校验标签与证据。</td><td>更新 <code>safety</code>，保存分类结果</td></tr>
+            <tr><td><code>parse_initial</code></td><td>理解为饮食咨询，审核 <code>diet_week</code> 申请。</td><td><code>processing_plan</code>、<code>extraction</code></td></tr>
+            <tr><td><code>normalize_extraction</code></td><td>整理解析结果与本次反馈。</td><td>统一的 <code>extraction</code>、过程轨迹</td></tr>
+            <tr><td><code>validate_drafts</code></td><td>检查结构与待补字段。</td><td><code>parsed</code>、<code>pending_fields</code> 等</td></tr>
+            <tr><td><code>authorize_operation</code></td><td>复核当前操作是否允许继续。</td><td>通过；不通过则更新安全状态并改道</td></tr>
+            <tr><td><code>prepare_nutrition</code></td><td>只有新增或纠错才准备营养，本例不执行。</td><td><code>{}</code>，不改 State</td></tr>
+            <tr><td><code>save_ready</code></td><td>用于可独立保存的新记录，本例没有。</td><td><code>{}</code>，不写餐食</td></tr>
+            <tr><td><code>respond</code></td><td>构造咨询上下文、选择建议、生成最终回复。</td><td><code>reply</code>、<code>cards</code>、<code>evidence_refs</code>、<code>process_trace</code></td></tr>
+          </tbody></table></div>
+          <p>这条咨询不会进入 <code>persist</code> 保存餐食，也不会进入 <code>fact</code> 保存长期信息。正常情况下没有追问，因此也不进入 <code>clarify</code>；若需要补充，该节点会用 <code>interrupt</code> 暂停，用户经恢复接口补充后重新过安全入口。</p>
+          <a class="iv-source" href="backend/app/workflows/chat_flow.py">chat_flow.py · build_chat 真实连线、route_chat 分支</a>
+          <a class="iv-source" href="backend/app/workflows/safety.py">safety.py · 安全入口、分类、操作授权与风险分支</a>
+          <a class="iv-source" href="backend/app/workflows/chat_parsing.py">chat_parsing.py · 解析、归一化、草稿校验与营养节点</a>
+        </div>
+
+        <details><summary>⑤ parse_initial 内部：模型填申请单，程序审核后放进 State</summary>
+          <pre>parse_initial(state)
+  → harness.prepare(state)
+    → parser.plan(本次输入、是否选中记录)
+    → LLM 返回 ProcessingPlan
+    → approve_plan(state, plan) 本地审核
+  → 把审核后的计划与解析结果更新到 State</pre>
+          <div class="iv-pair">
+            <div><pre>// 模型可能提出的申请 · 只展示关键字段
+{
+  "actions": [{
+    "intent": "advice",
+    "text": "最近 7 天饮食怎么样？",
+    "data_view": "diet_week"
+  }]
+}</pre></div>
+            <div><p>规划模型此时只看到本次输入、时间、操作状态和固定 Schema。<code>diet_week</code> 是预定义视图，相当于菜单上的选项，不能自行新增“读取全部数据库”。</p>
+              <p>程序根据用户原话再次判断视图与天数，检查是否禁止读历史、申请范围是否匹配。问饮食却申请体重视图，或超出允许时间，都会被拒绝。</p>
+              <p>通过后，<code>processing_plan</code> 保留审核后的动作；<code>extraction</code> 存放统一业务提取结果。此时确定了“要做什么、允许读哪类数据”，还没有把七天汇总交给建议模型。</p>
+            </div>
+          </div>
+          <a class="iv-source" href="backend/app/workflows/chat_parsing.py">parse_initial · harness.prepare 的返回值进入 State</a>
+          <a class="iv-source" href="backend/app/workflows/policy.py">PlanHarness.prepare / approve_plan / view_days · 本地审核</a>
+          <a class="iv-source" href="backend/app/modeling/parser.py">Parser.plan · 第一次业务模型调用与固定输入</a>
+        </details>
+
+        <details><summary>⑥ respond 内部取数：程序查七天记录，计算每日摘要</summary>
+          <pre>respond(state) 发现 parsed.intent == 'advice'
+  → 从 processing_plan 取出咨询 action
+  → advice_context(state, action)
+    → approve_plan(...) 重新审核，旧计划不是永久授权
+    → build_advice_context(..., view='diet_week')
+      → history_window(repo, 7, end)
+        → 逐天 dashboard(repo, day)
+          → repo.events(start=day, end=day)
+          → SQLite 记录 → 本地计算汇总
+      → _day_summary(day) 只保留必要字段</pre>
+          <div class="iv-pair">
+            <div><pre># health/advice.py · diet_week 分支节选
+context['recent_days'] = [
+    _day_summary(day)
+    for day in history_window(repo, days, end)
+    if day['meal_count']
+]
+
+def _day_summary(day):
+    return {
+        'date': day['date'],
+        'meal_count': day['meal_count'],
+        'diet_complete': day['diet_complete'],
+        'totals': day['totals']
+    }</pre></div>
+            <div><p>假设 2026-10-27 记录了三餐，而且用户确认当天已记完整，摘要会保留日期、<code>meal_count=3</code>、<code>diet_complete=True</code> 和程序算出的营养汇总。七天中没有餐食的日期不会伪造为“零摄入”。</p>
+              <p>最终 <code>context</code> 包含问题、场景 <code>recent_review</code>、视图、日期窗口、每日摘要，以及获准的必要限制、偏好和生效目标等。不会默认附上全部聊天原文。</p>
+              <p><b>查询、求和和字段筛选由程序完成。</b>这里的 <code>context</code> 是函数内部准备给模型的资料包；<code>refs</code> 是返回给界面使用的依据，不等于把所有内部引用直接发给模型。</p>
+            </div>
+          </div>
+          <a class="iv-source" href="backend/app/workflows/chat_response.py">advice_context · 重新审核、构建上下文与精确授权</a>
+          <a class="iv-source" href="backend/app/health/advice.py">build_advice_context / _day_summary · 饮食视图投影</a>
+          <a class="iv-source" href="backend/app/health/dashboard.py">history_window / dashboard · 逐天读取与本地统计</a>
+        </details>
+
+        <details><summary>⑦ 仍在 respond 内部：模型选建议编号，程序拼出正文</summary>
+          <pre># workflows/chat_response.py · respond 节选
+context, refs = self.advice_context(state, action)
+reply = validate_advice(
+    self.parser.answer_advice(context),
+    context
+)
+
+# 内部调用顺序
+advice_context() → 查库、整理获准资料
+answer_advice()  → LLM 看 context 和 options
+LLM             → 返回 {"point_ids": ["complete_records"]}
+validate_advice() → 校验编号，拼出本地事实与建议</pre>
+          <p>近七天复盘的可选项由本地策略确定，例如 <code>complete_records</code> 与 <code>regular_meals</code>。模型只能选择本次允许的一到两项，不能自由增加正文、日期、热量或保存状态。失败时使用同一上下文的本地建议兜底。</p>
+          <p>假设七天内五天留下记录、三天确认完整，程序可以生成“有 5 天留下餐食记录，其中 3 天确认完整；缺失记录不能按零摄入计算”，再接上所选编号对应的固定建议。<b>5 和 3 来自程序统计，建议文字来自本地目录，模型负责选择编号。</b></p>
+          <div class="iv-note"><p><b>不是每个函数都是 Graph 节点。</b><code>respond</code> 是节点；<code>advice_context()</code>、<code>answer_advice()</code> 和 <code>validate_advice()</code> 是它内部调用的函数。规划在 <code>parse_initial</code> 中调用模型，建议在 <code>respond</code> 中调用模型，安全分类可能更早调用；这些是不同用途的模型请求，不是三个独立 Agent。</p></div>
+          <a class="iv-source" href="backend/app/workflows/chat_response.py">respond · 咨询分支、模型选择与本地降级</a>
+          <a class="iv-source" href="backend/app/modeling/parser.py">answer_advice · 请求 context + options，接收 point_ids</a>
+          <a class="iv-source" href="backend/app/policy/output.py">advice_plan / validate_advice · 本地事实、建议目录与编号校验</a>
+        </details>
+
+        <details><summary>⑧ END 以后：保存结果，HTTP 返回，小程序刷新消息</summary>
+          <div class="iv-pair">
+            <div><pre># respond 返回 State 更新
+return {
+    'reply': reply,
+    'cards': cards,
+    'evidence_refs': refs,
+    'process_trace': trace,
+    ...
+}
+
+# Engine · Graph 返回后
+state, disclosures = self.invoke(...)
+result = self.format_result(thread_id, state)
+self.repo.workflow_result(thread_id, result)
+self.repo.message(..., 'assistant', result['reply'], ...)
+return result</pre></div>
+            <div><p>Graph 到达 <code>END</code> 后回到 Engine，后者整理 API 结果，保存工作流结果与助手消息，再通过 HTTP 返回。<code>reply</code> 是正文，<code>process_trace</code> 是可展示的处理过程；中间的计划 JSON 和建议编号不会原样当正文显示。</p>
+              <p>前端 <code>executeOperation()</code> 结束时调用 <code>changed()</code>，通知当前页面的 <code>useResource()</code> 刷新。页面重新请求 <code>GET /api/messages</code>、<code>/api/workflows</code> 等资源，然后遍历 <code>data.messages</code> 展示消息正文、卡片和过程轨迹。</p>
+              <p><b>界面最终显示的是后端保存的助手消息。</b>本次没有新增餐食，并不意味着什么都不落库：用户消息、助手回复和工作流状态仍会持久化，便于刷新与恢复。</p>
+              <a class="iv-source" href="backend/app/workflows/runtime.py">Engine · format_result、workflow_result 与 message</a>
+              <a class="iv-source" href="miniprogram/src/state.ts">executeOperation / changed / useResource · 结束后刷新</a>
+              <a class="iv-source" href="miniprogram/src/pages/chat/index.tsx">Chat · 读取 /messages，渲染 data.messages 与 Trace</a>
+            </div>
+          </div>
+        </details>
+        <div class="iv-answer"><p><b>用一句话串起来：</b>前端负责提交与展示；API 负责接收；Engine 负责任务、去重与恢复；Graph 负责节点顺序；State 负责节点间中转；普通函数负责查库与计算；LLM 只在指定位置参与理解或选择。</p></div>
+
+        <div class="iv-answer" id="interview-answer" data-chapter>
+          <h3>面试时可以这样回答</h3>
+          <p>我们从流程、模型额度、数据权限和运行资源四层限制执行。流程由固定状态图控制，可选追问受轮次限制；模型调用按工作流持久化记账，发送前扣额度，失败也计入。上下文按用途白名单构造，并限制单次与累计字节；执行端校验一次性数据授权。运行段再统一控制截止时间和并发，单次模型超时不能超过剩余总时间。目前实现的是次数和字节预算，尚未做精确 Token 计费与自动摘要压缩。</p>
+        </div>
+        <div class="iv-links">
+          <a href="output/pdf/Agent开发面经-轻记工程更新版-2026-10-28.pdf">完整面试题与答案 · PDF</a>
+          <a href="output/pdf/Agent开发面经-轻记工程更新版-2026-10-28.md">完整面试题与答案 · Markdown</a>
+          <a href="#runtime-sandbox">延伸阅读：运行环境最小权限</a>
+          <a href="#data-harness">延伸阅读：数据授权边界</a>
+        </div>
+      </section>
       <footer>
         <span
           >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ ·
@@ -4838,30 +5282,432 @@ deletion_job = {
     <script type="application/json" id="implementation-data">
     {
       "entries": [
+{
+  "id": "safety_gate",
+  "group": "safety",
+  "title": "共享入口：本地风险、模式与能力检查",
+  "purpose": "首次输入与追问补充先核对原文、年龄和已知限制。明确风险直接进入固定边界；模型模式无本地信号时交给独立分类。离线仅完整白名单记录、查询、偏好或无备注计划可继续。",
+  "input": [
+    [
+      "本次原文 / original",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "年龄 / 营养适用状态",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "相关长期限制 / 处理模式",
+      "由当前工作流与本地服务提供。"
+    ]
+  ],
+  "output": [
+    [
+      "safety / capability",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "safety_context",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "safety_fingerprint",
+      "保存到当前工作流状态并供后续路由使用。"
+    ]
+  ],
+  "steps": [
+    "构造最小 SafetyContext，读取本次原文、必要原始输入、年龄和营养适用状态。",
+    "resolve_facts(purpose=safety) 参与本地保护和指纹；不把完整档案发模型。",
+    "local_safety 命中风险直接返回；模型模式无本地信号才进入独立分类。",
+    "离线完整白名单可获 record_only / preference_only；无文字计划可获 plan，其他自由输入 uncertain。"
+  ],
+  "branches": [
+    [
+      "风险或不确定",
+      "safety_response → END。"
+    ],
+    [
+      "无本地信号、需要语义判断",
+      "classify_safety。"
+    ],
+    [
+      "本地允许",
+      "chat 继续 route_parse；plan 进入 prepare。"
+    ]
+  ],
+  "sideEffects": [
+    "通过 guarded_node 检查执行代次、采集运行元数据并登记读取血缘。",
+    "不调用模型；仅输出状态或本地固定回复。"
+  ],
+  "errors": [
+    "冲突、截止时间和过时权限按异常终止，不伪装成保存成功。"
+  ],
+  "example": "新输入“今天体重65公斤” → safety_gate\n允许后才进入首次解析；补充答案也会再次经过本节点。",
+  "related": [
+    "classify_safety",
+    "safety_response",
+    "authorize_operation"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/safety.py",
+      "safety_gate"
+    ],
+    [
+      "backend/app/health/safety.py",
+      "local_safety / merge_classification / decision"
+    ]
+  ]
+},
+{
+  "id": "classify_safety",
+  "group": "safety",
+  "title": "独立分类：模型给标签，本地决定路径",
+  "purpose": "按最小 SafetyContext 授权外发，只接收结构化风险标签与连续原文证据。本地 merge_classification 决定最终路由；匹配指纹时复用分类，模型失败或非法输出走 uncertain 固定边界。",
+  "input": [
+    [
+      "safety_context / fingerprint",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "已有分类缓存（可选）",
+      "由当前工作流与本地服务提供。"
+    ]
+  ],
+  "output": [
+    [
+      "safety / capability",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "已校验分类与缓存",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "process_trace",
+      "保存到当前工作流状态并供后续路由使用。"
+    ]
+  ],
+  "steps": [
+    "指纹匹配时复用已校验分类，否则申请 safety_classification 的精确数据授权。",
+    "模型只返回风险标签、主体/时间/否认信息与连续原文证据。",
+    "merge_classification 本地核验 Schema 和证据，合并风险优先级。",
+    "模型或校验失败转 uncertain；工作流冲突和执行超期继续抛出。"
+  ],
+  "branches": [
+    [
+      "general",
+      "chat 经 route_parse；plan 进入 prepare。"
+    ],
+    [
+      "风险、uncertain、模型失败",
+      "safety_response。"
+    ]
+  ],
+  "sideEffects": [
+    "通过 guarded_node 检查执行代次、采集运行元数据并登记读取血缘。",
+    "模型仅在授权、预算和处理模式允许时调用；指纹匹配时可复用分类。"
+  ],
+  "errors": [
+    "冲突、截止时间和过时权限按异常终止，不伪装成保存成功。"
+  ],
+  "example": "输入没有显式风险词但表达补偿行为\n本地未命中 → 独立分类 → 本地校验 → 固定安全回复。",
+  "related": [
+    "safety_gate",
+    "safety_response",
+    "boundary"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/safety.py",
+      "classify_safety"
+    ],
+    [
+      "backend/app/health/safety.py",
+      "local_safety / merge_classification / decision"
+    ]
+  ]
+},
+{
+  "id": "safety_response",
+  "group": "safety",
+  "title": "固定安全回复：提前终止普通处理",
+  "purpose": "按紧急、进食障碍、医疗、特殊人群或 uncertain 类别选择本地固定回复，清空卡片、证据和附加动作，直接结束。不撤销本流程此前已提交的独立记录。",
+  "input": [
+    [
+      "safety.category",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "此前 record_ids",
+      "由当前工作流与本地服务提供。"
+    ]
+  ],
+  "output": [
+    [
+      "reply（固定目录）",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "cards / evidence_refs / extra_actions = []",
+      "保存到当前工作流状态并供后续路由使用。"
+    ]
+  ],
+  "steps": [
+    "按 safety.category 从本地 REPLIES 选择固定正文。",
+    "此前有 record_ids 时说明独立记录已保存，本次补充没有保存。",
+    "清空 cards、evidence_refs、extra_actions 和 reply_plan。",
+    "直接连到 END，不再进入普通营养估算、建议或计划生成。"
+  ],
+  "branches": [
+    [
+      "首次输入被挡住",
+      "没有本次新增健康记录。"
+    ],
+    [
+      "补充时被挡住",
+      "此前已提交的独立记录保留。"
+    ]
+  ],
+  "sideEffects": [
+    "通过 guarded_node 检查执行代次、采集运行元数据并登记读取血缘。",
+    "不调用模型；仅输出状态或本地固定回复。"
+  ],
+  "errors": [
+    "冲突、截止时间和过时权限按异常终止，不伪装成保存成功。"
+  ],
+  "example": "先存下一条独立体重，后续补充出现风险\n返回固定边界，明确此前记录仍保留。",
+  "related": [
+    "safety_gate",
+    "classify_safety",
+    "__end__"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/safety.py",
+      "safety_response"
+    ],
+    [
+      "backend/app/health/safety.py",
+      "local_safety / merge_classification / decision"
+    ]
+  ]
+},
+{
+  "id": "authorize_operation",
+  "group": "chat",
+  "title": "操作前复核：当前能力是否允许这次业务",
+  "purpose": "草稿校验后，再按实际操作复核安全指纹、策略版本、能力与原文，检查追问内容。可处理的本地拒绝转为 uncertain 并进入固定安全回复；运行冲突与过时权限按异常终止。",
+  "input": [
+    [
+      "parsed / safety",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "原文 / safety_fingerprint",
+      "由当前工作流与本地服务提供。"
+    ],
+    [
+      "当前档案与限制",
+      "由当前工作流与本地服务提供。"
+    ]
+  ],
+  "output": [
+    [
+      "保留有效 safety",
+      "保存到当前工作流状态并供后续路由使用。"
+    ],
+    [
+      "或 uncertain / operation_not_authorized",
+      "保存到当前工作流状态并供后续路由使用。"
+    ]
+  ],
+  "steps": [
+    "validate_drafts 后先 require_safety，再核对追问与原始文本。",
+    "检查安全指纹、策略版本和 capability；record_only / preference_only 不能扩成任意咨询。",
+    "可处理的本地拒绝转 uncertain；成功时不修改 safety。",
+    "guarded_node 在后续敏感节点前继续复核，respond / prepare_clarification 后也检查。"
+  ],
+  "branches": [
+    [
+      "仍为 general",
+      "prepare_nutrition → save_ready。"
+    ],
+    [
+      "本地拒绝变 uncertain",
+      "safety_response → END。"
+    ],
+    [
+      "过时代次、指纹或执行冲突",
+      "异常结束，不执行后续写入。"
+    ]
+  ],
+  "sideEffects": [
+    "通过 guarded_node 检查执行代次、采集运行元数据并登记读取血缘。",
+    "不调用模型；仅输出状态或本地固定回复。"
+  ],
+  "errors": [
+    "冲突、截止时间和过时权限按异常终止，不伪装成保存成功。"
+  ],
+  "example": "用户补充看似普通，但期间限制或数据发生变化\n旧安全权限不能直接用于新的业务执行。",
+  "related": [
+    "validate_drafts",
+    "prepare_nutrition",
+    "safety_response"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/safety.py",
+      "authorize_operation"
+    ],
+    [
+      "backend/app/health/safety.py",
+      "local_safety / merge_classification / decision"
+    ]
+  ]
+},
         {
-          "id":"__start__","group":"lifecycle","title":"进入被选择的 Graph",
-          "purpose":"START 是 LangGraph 的入口标记，不是一个会调用模型的业务函数。一次新工作流由 Engine.run 按 kind 选择 chat、plan 或 analysis；恢复已有 checkpoint 时从保存的位置继续，而不是重新跑完整入口。",
-          "input":[["kind / initial","聊天带 input_text、selected_id、processing_mode；计划带 plan；复盘带 period。"],["request_id / conversation_id","前者识别一次业务请求，后者隔离同会话的展示与上轮引用。"]],
-          "output":[["thread_id / 初始 State","新工作流生成 UUID，初始化 record_ids、saved_indexes、rounds 等字段。"]],
-          "steps":["Engine.run 在进程内 RLock 中计算请求指纹，先检查是否已有工作流。","新请求登记 workflows，聊天请求同时写入 user 消息；已完成或等待输入的同一请求直接返回已有结果。","Engine.invoke 创建本次模型调用作用域，随后调用对应 Graph。","chat 由 route_parse 选择 parse_initial 或 patch_pending；plan 从 prepare 开始，analysis 从 analyze 开始。"],
-          "branches":[["新工作流","START → 对应 Graph 的首节点。"],["同 ID 同内容，已有 completed / waiting_input 结果","直接返回结果，不重新执行 START。"],["已有失败流程与 checkpoint","使用原 thread_id 与保存的进度继续。"]],
-          "sideEffects":["登记 workflows；新聊天写 messages。START 标记本身不读健康历史，也不调用模型。"],
-          "errors":["同一个 request_id 的指纹不同会报错，防止把其他请求当作重试。"],
-          "example":"请求：POST /api/chat，text=今天体重65kg\n初始：record_ids=[]，saved_indexes=[]，rounds=0\n去向：START → route_parse → parse_initial",
-          "related":["executor","parse_initial","patch_pending","prepare","analyze"],"sources":[["backend/app/workflows/runtime.py","Engine.run / invoke / graph_for"]]
-        },
+  "id": "__start__",
+  "group": "lifecycle",
+  "title": "进入被选择的 Graph",
+  "purpose": "START 是 LangGraph 的入口标记，不是一个会调用模型的业务函数。一次新工作流由 Engine.run 按 kind 选择 chat、plan 或 analysis；恢复已有 checkpoint 时从保存的位置继续，而不是重新跑完整入口。",
+  "input": [
+    [
+      "kind / initial",
+      "聊天带 input_text、selected_id、processing_mode；计划带 plan；复盘带 period。"
+    ],
+    [
+      "request_id / conversation_id",
+      "前者识别一次业务请求，后者隔离同会话的展示与上轮引用。"
+    ]
+  ],
+  "output": [
+    [
+      "thread_id / 初始 State",
+      "新工作流生成 UUID，初始化 record_ids、saved_indexes、rounds 等字段。"
+    ]
+  ],
+  "steps": [
+    "Engine.run 先检查请求指纹与已有结果；需要真实工作时才申请运行名额并串行化相同请求/工作流。",
+    "新流程登记 thread_id；恢复沿用原 ID，重放用事务幂等与回执保护。",
+    "Engine.invoke 创建模型授权作用域并绑定预算计数，调用被选中的 Graph。",
+    "chat / plan 的 START 都先到 safety_gate；analysis 从 analyze 开始。"
+  ],
+  "branches": [
+    [
+      "新工作流",
+      "START → 对应 Graph 的首节点。"
+    ],
+    [
+      "同 ID 同内容，已有 completed / waiting_input 结果",
+      "直接返回结果，不重新执行 START。"
+    ],
+    [
+      "已有失败流程与 checkpoint",
+      "使用原 thread_id 与保存的进度继续。"
+    ]
+  ],
+  "sideEffects": [
+    "登记 workflows；新聊天写 messages。START 标记本身不读健康历史，也不调用模型。"
+  ],
+  "errors": [
+    "同一个 request_id 的指纹不同会报错，防止把其他请求当作重试。"
+  ],
+  "example": "POST /api/chat → Engine.run(chat)\nSTART → safety_gate → 必要时 classify_safety\n安全允许后才 route_parse → parse_initial 或 patch_pending。",
+  "related": [
+    "executor",
+    "parse_initial",
+    "patch_pending",
+    "prepare",
+    "analyze"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/runtime.py",
+      "Engine.run / invoke / graph_for"
+    ]
+  ]
+},
         {
-          "id":"parse_initial","group":"chat","title":"首次输入：规划、审核并形成草稿",
-          "purpose":"只处理新的用户输入或需要重新理解的澄清文本。它把模型计划、本地审批和必要的单条纠错提取收敛为 extraction，不处理已有草稿的增量补丁。",
-          "input":[["input_text / original","本次待理解文本与追问前原始描述。"],["selected_id / correction_version","本地已选纠错目标及绑定版本。"],["conversation_feedback / 模式","本流程已核验反馈，以及模型或纯本地执行模式。"]],
-          "output":[["extraction / processing_plan / extra_actions","主要业务草稿、批准后的任务列表与后续附加任务。"],["plan_input_text / selected_id / correction_version","保留授权依据和程序绑定目标。"],["parse_context","只含归一化所需的反馈候选、日期锚点、标志和来源；不含可复用模型授权。"]],
-          "steps":["调用 PlanHarness.prepare；规划模型只看当前输入、时间和操作状态。","本地审核任务范围；纠错时绑定唯一记录，授权与 correct 调用在同一节点完成。","把主任务转换为 extraction，其余已批准任务保存为 extra_actions。","提取本轮反馈候选，清除事件中的未核验反馈。","生成 parse_context，进入纯本地 normalize_extraction。"],
-          "branches":[["START 或一般澄清","进入本节点重新规划。"],["纠错对象不明确","返回带问题的 extraction，后续进入 clarify。"],["任务已形成","固定进入 normalize_extraction。"]],
-          "sideEffects":["可条件调用 plan 与 correct；每次授权和消费在本节点内完成。","不写 events / facts；审批后的计划和草稿可进入 checkpoint。"],
-          "errors":["越界计划、结构化输出失败或纠错类型变化会被拒绝。","不会把模型返回的记录 ID 当作绑定依据。"],
-          "example":"输入：今天吃了炸鸡，今天饮食怎么调整？\n本节点：plan → 本地审批 → extraction(record) + extra_actions(advice)\n下一步：normalize_extraction。",
-          "related":["harness","normalize_extraction","validate_drafts","executor"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.parse_initial / route_parse"],["backend/app/workflows/policy.py","PlanHarness.prepare"]]
-        },
+  "id": "parse_initial",
+  "group": "chat",
+  "title": "首次输入：规划、审核并形成草稿",
+  "purpose": "只处理新的用户输入或需要重新理解的澄清文本。它把模型计划、本地审批和必要的单条纠错提取收敛为 extraction，不处理已有草稿的增量补丁。",
+  "input": [
+    [
+      "input_text / original",
+      "本次待理解文本与追问前原始描述。"
+    ],
+    [
+      "selected_id / correction_version",
+      "本地已选纠错目标及绑定版本。"
+    ],
+    [
+      "conversation_feedback / 模式",
+      "本流程已核验反馈，以及模型或纯本地执行模式。"
+    ]
+  ],
+  "output": [
+    [
+      "extraction / processing_plan / extra_actions",
+      "主要业务草稿、批准后的任务列表与后续附加任务。"
+    ],
+    [
+      "plan_input_text / selected_id / correction_version",
+      "保留授权依据和程序绑定目标。"
+    ],
+    [
+      "parse_context",
+      "只含归一化所需的反馈候选、日期锚点、标志和来源；不含可复用模型授权。"
+    ]
+  ],
+  "steps": [
+    "调用 PlanHarness.prepare；规划模型只看当前输入、时间和操作状态。",
+    "本地审核任务范围；纠错时绑定唯一记录，授权与 correct 调用在同一节点完成。",
+    "把主任务转换为 extraction，其余已批准任务保存为 extra_actions。",
+    "提取本轮反馈候选，清除事件中的未核验反馈。",
+    "生成 parse_context，进入纯本地 normalize_extraction。"
+  ],
+  "branches": [
+    [
+      "安全允许后的新输入或一般澄清",
+      "进入本节点重新规划。"
+    ],
+    [
+      "纠错对象不明确",
+      "返回问题，后续准备追问。"
+    ],
+    [
+      "任务已形成",
+      "固定进入 normalize_extraction。"
+    ]
+  ],
+  "sideEffects": [
+    "可条件调用 plan 与 correct；每次授权和消费在本节点内完成。",
+    "不写 events / facts；审批后的计划和草稿可进入 checkpoint。"
+  ],
+  "errors": [
+    "越界计划、结构化输出失败或纠错类型变化会被拒绝。",
+    "不会把模型返回的记录 ID 当作绑定依据。"
+  ],
+  "example": "输入：今天吃了炸鸡，今天饮食怎么调整？\n本节点：plan → 本地审批 → extraction(record) + extra_actions(advice)\n下一步：normalize_extraction。",
+  "related": [
+    "harness",
+    "normalize_extraction",
+    "validate_drafts",
+    "executor"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/chat_parsing.py",
+      "Engine.parse_initial / route_parse"
+    ],
+    [
+      "backend/app/workflows/policy.py",
+      "PlanHarness.prepare"
+    ]
+  ]
+},
         {
           "id":"patch_pending","group":"chat","title":"追问恢复：只补当前草稿",
           "purpose":"只处理 incremental_answer=True 且已有 extraction 的恢复输入。权限范围被 pending_event_index、pending_fields 和可选 item_index 锁定，不重新生成其他事件。",
@@ -4887,17 +5733,94 @@ deletion_job = {
           "related":["parse_initial","patch_pending","feedback_rules","validate_drafts"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.normalize_extraction"],["backend/app/chat/feedback.py","reconcile_feedback / attach_feedback"]]
         },
         {
-          "id":"validate_drafts","group":"chat","title":"将宽松草稿变成可保存事件",
-          "purpose":"允许用户先说不完整的信息，同时保证不完整事件不能越过保存边界。extraction 保留所有草稿，parsed.events 只保留已满足必需字段的事件；索引映射让后续追问和幂等写入仍能指向同一草稿。",
-          "input":[["extraction / rounds","模型或本地解析结果；rounds 是整个工作流累计的追问轮次。"],["skip_optional / abandoned_indexes","用户选择跳过可选问题，或放弃某个必需信息不全的事件。"],["feedback_only","只有主观体验时，将补食物视为可选复盘。"]],
-          "output":[["parsed / event_indexes","严格校验后的事件与其在 extraction.events 中的原索引。"],["waiting_indexes / pending_event_index / pending_fields","暂不应保存的完整草稿，以及下一次要追问的一个事件和字段。"],["pending_required / pending_item_index / unrecorded_count","必需或可选追问、具体食物位置、已放弃数量。"]],
-          "steps":["重新按 ExtractionResult 验证结构；遍历 record / correct 的草稿并跳过已放弃索引。","先检查必需字段：所有事件要有日期；餐食要有名称；体重、睡眠、运动要有 value；周期要有 action。","完整事件再按 EventDraft 严格验证后加入 parsed.events；保留原索引到 event_indexes。","选择最先缺失的必需字段作为下一问；没有必需缺失时，再考虑特定食物分量、运动强度或模型提出且确实缺失的可选字段。","可选追问只在未跳过且 rounds 小于 2 时进行；需要等待答案的完整草稿进入 waiting_indexes。","没有纠错目标时优先追问目标；feedback_only 特例使用可选的食物复盘问题。"],
-          "branches":[["有必需缺失","优先追问；不会因为轮次多而把缺失值编造成完整记录。"],["只有可选缺失","最多按当前 rounds 策略追问；用户可回答不知道。"],["correct 无 correction_id","先解决修改哪条记录，不先保存任何纠错草稿。"],["校验结束","进入 prepare_nutrition，后面再由 route_chat 选去向。"]],
-          "sideEffects":["只更新 State 与执行摘要；不调用模型，不写业务数据库。"],
-          "errors":["已知值越界、时间无时区、追问的食物索引越界会报错；不会把错误值当作普通缺失吞掉。"],
-          "example":"草稿 0：体重65kg，完整\n草稿 1：炸鸡，分量未知且可选追问\n结果：event_indexes=[0,1]，waiting_indexes=[1]\n下一步只有索引 0 可先准备并保存。",
-          "related":["draft_rules","prepare_nutrition","save_ready","route_chat"],"sources":[["backend/app/workflows/chat_parsing.py","Engine.validate_drafts"],["backend/app/chat/drafts.py","check_drafts"],["backend/app/contracts/events.py","ExtractionEvent / EventDraft"]]
-        },
+  "id": "validate_drafts",
+  "group": "chat",
+  "title": "将宽松草稿变成可保存事件",
+  "purpose": "允许用户先说不完整的信息，同时保证不完整事件不能越过保存边界。extraction 保留所有草稿，parsed.events 只保留已满足必需字段的事件；索引映射让后续追问和幂等写入仍能指向同一草稿。",
+  "input": [
+    [
+      "extraction / rounds",
+      "模型或本地解析结果；rounds 是整个工作流累计的追问轮次。"
+    ],
+    [
+      "skip_optional / abandoned_indexes",
+      "用户选择跳过可选问题，或放弃某个必需信息不全的事件。"
+    ],
+    [
+      "feedback_only",
+      "只有主观体验时，将补食物视为可选复盘。"
+    ]
+  ],
+  "output": [
+    [
+      "parsed / event_indexes",
+      "严格校验后的事件与其在 extraction.events 中的原索引。"
+    ],
+    [
+      "waiting_indexes / pending_event_index / pending_fields",
+      "暂不应保存的完整草稿，以及下一次要追问的一个事件和字段。"
+    ],
+    [
+      "pending_required / pending_item_index / unrecorded_count",
+      "必需或可选追问、具体食物位置、已放弃数量。"
+    ]
+  ],
+  "steps": [
+    "重新按 ExtractionResult 验证结构；遍历 record / correct 的草稿并跳过已放弃索引。",
+    "先检查必需字段：所有事件要有日期；餐食要有名称；体重、睡眠、运动要有 value；周期要有 action。",
+    "完整事件再按 EventDraft 严格验证后加入 parsed.events；保留原索引到 event_indexes。",
+    "选择最先缺失的必需字段作为下一问；没有必需缺失时，再考虑特定食物分量、运动强度或模型提出且确实缺失的可选字段。",
+    "可选追问只在未跳过且 rounds 小于 2 时进行；需要等待答案的完整草稿进入 waiting_indexes。",
+    "没有纠错目标时优先追问目标；feedback_only 特例使用可选的食物复盘问题。",
+    "固定进入 authorize_operation，安全与操作权限复核通过后才准备营养。"
+  ],
+  "branches": [
+    [
+      "有必需缺失",
+      "优先追问；不会因为轮次多而把缺失值编造成完整记录。"
+    ],
+    [
+      "只有可选缺失",
+      "最多按当前 rounds 策略追问；用户可回答不知道。"
+    ],
+    [
+      "correct 无 correction_id",
+      "先解决修改哪条记录，不先保存任何纠错草稿。"
+    ],
+    [
+      "校验结束",
+      "固定进入 authorize_operation；允许后 prepare_nutrition，再由 route_chat 选业务去向。"
+    ]
+  ],
+  "sideEffects": [
+    "只更新 State 与执行摘要；不调用模型，不写业务数据库。"
+  ],
+  "errors": [
+    "已知值越界、时间无时区、追问的食物索引越界会报错；不会把错误值当作普通缺失吞掉。"
+  ],
+  "example": "草稿 0：体重65kg，完整\n草稿 1：炸鸡，分量未知且可选追问\n结果：event_indexes=[0,1]，waiting_indexes=[1]\n下一步只有索引 0 可先准备并保存。",
+  "related": [
+    "authorize_operation",
+    "draft_rules",
+    "prepare_nutrition",
+    "save_ready",
+    "route_chat"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/chat_parsing.py",
+      "Engine.validate_drafts"
+    ],
+    [
+      "backend/app/chat/drafts.py",
+      "check_drafts"
+    ],
+    [
+      "backend/app/contracts/events.py",
+      "ExtractionEvent / EventDraft"
+    ]
+  ]
+},
         {
           "id":"prepare_nutrition","group":"chat","title":"在写入前准备营养与来源",
           "purpose":"把已完整且本轮可保存的事件准备成 prepared_events。体重等非餐食不需要估算；餐食只估算缺失营养，用户提供的数据、来源与分量依据由本地规则控制。",
@@ -4938,20 +5861,79 @@ deletion_job = {
           "sources":[["backend/app/workflows/chat_flow.py","Engine.prepare_clarification"],["backend/app/chat/replies.py","make_plan / express_plan"]]
         },
         {
-          "id":"clarify",
-          "group":"chat",
-          "title":"暂停工作流并把用户答案送回解析",
-          "purpose":"这是 chat_graph 唯一的人类输入暂停节点。它只发出问题、接收答案和更新恢复字段；不会在这里调用模型或直接保存健康事件。",
-          "input":[["reply_plan / clarification_selection / pending_*","本地批准的表达要点、待复核的选择标识，以及待补字段与位置；不信任旧追问正文。"],["record_ids / correction_candidates","展示已经保存的独立记录数量，以及本次已固定的候选。"],["恢复答案 text / event_id","由 Engine.resume 校验 interrupt_id 后提供。"]],
-          "output":[["input_text / original / selected_id / incremental_answer / rounds","根据补字段、选择纠错目标或一般澄清，构造供 route_parse 判断的恢复状态。"]],
-          "steps":["question_from_state 重新生成本地问题，render_feedback 校验选择并从目录取正文；旧 clarification_reply 不直接展示。","构造 clarification payload：question、prompt、saved_records、requested_fields、optional，以及必要的候选 options。","调用 interrupt(payload)，LangGraph 暂停并把待输入信息返回给 Engine。","恢复后要求答案是字典且包含字符串 text；event_id 若有，必须属于本次 options。","有 pending_event_index 时保留最初 original，将本次答案作为 input_text，并设置 incremental_answer=True。","纠错目标澄清则保留原修改要求，绑定选择项；普通澄清用新文本进入下一轮解析。","rounds 加一；route_parse 按状态进入 patch_pending 或 parse_initial。"],
-          "branches":[["补充某个草稿字段","进入 patch_pending，只更新当前草稿。"],["选择纠错候选","进入 parse_initial，重新审核计划和单条纠错内容。"],["一般意图澄清","进入 parse_initial 重新理解；保存 original 便于追踪。"]],
-          "sideEffects":["interrupt 保存执行位置；本节点不直接写业务表。Engine 在节点外登记补充消息与恢复回执。"],
-          "errors":["非法候选 ID 被拒绝。没有 text 或中断 ID 不匹配由节点 / Engine 拒绝。","interrupt 是控制流暂停，不等同于 HTTP 模型超时。"],
-          "example":"pending：quantity，event_index=1，optional=true\n用户补充：100g\n返回：input_text=100g，incremental_answer=true，rounds+1\n控制流：clarify → patch_pending → normalize_extraction → validate_drafts。",
-          "related":["prepare_clarification","parse_initial","patch_pending","executor"],
-          "sources":[["backend/app/workflows/chat_flow.py","Engine.clarify / route_parse"],["backend/app/workflows/runtime.py","Engine.resume"]]
-        },
+  "id": "clarify",
+  "group": "chat",
+  "title": "暂停工作流并把用户答案送回解析",
+  "purpose": "这是 chat_graph 唯一的人类输入暂停节点。它只发出问题、接收答案和更新恢复字段；不会在这里调用模型或直接保存健康事件。",
+  "input": [
+    [
+      "reply_plan / clarification_selection / pending_*",
+      "本地批准的表达要点、待复核的选择标识，以及待补字段与位置；不信任旧追问正文。"
+    ],
+    [
+      "record_ids / correction_candidates",
+      "展示已经保存的独立记录数量，以及本次已固定的候选。"
+    ],
+    [
+      "恢复答案 text / event_id",
+      "由 Engine.resume 校验 interrupt_id 后提供。"
+    ]
+  ],
+  "output": [
+    [
+      "input_text / original / selected_id / incremental_answer / rounds",
+      "根据补字段、选择纠错目标或一般澄清，构造供 route_parse 判断的恢复状态。"
+    ]
+  ],
+  "steps": [
+    "question_from_state 重新生成本地问题，render_feedback 校验选择并从目录取正文；旧 clarification_reply 不直接展示。",
+    "构造 clarification payload：question、prompt、saved_records、requested_fields、optional，以及必要的候选 options。",
+    "调用 interrupt(payload)，LangGraph 暂停并把待输入信息返回给 Engine。",
+    "恢复后要求答案是字典且包含字符串 text；event_id 若有，必须属于本次 options。",
+    "有 pending_event_index 时保留最初 original，将本次答案作为 input_text，并设置 incremental_answer=True。",
+    "纠错目标澄清则保留原修改要求，绑定选择项；普通澄清用新文本进入下一轮解析。",
+    "rounds 加一，回到 safety_gate；安全允许后 route_parse 才选择 patch_pending 或 parse_initial。"
+  ],
+  "branches": [
+    [
+      "补充某个草稿字段",
+      "先回 safety_gate；安全允许后进入 patch_pending，只更新当前草稿。"
+    ],
+    [
+      "选择纠错候选",
+      "先回 safety_gate；安全允许后进入 parse_initial，重新审核计划和单条纠错内容。"
+    ],
+    [
+      "一般意图澄清",
+      "先回 safety_gate；安全允许后进入 parse_initial 重新理解；保存 original 便于追踪。"
+    ]
+  ],
+  "sideEffects": [
+    "interrupt 保存执行位置；本节点不直接写业务表。Engine 在节点外登记补充消息与恢复回执。"
+  ],
+  "errors": [
+    "非法候选 ID 被拒绝。没有 text 或中断 ID 不匹配由节点 / Engine 拒绝。",
+    "interrupt 是控制流暂停，不等同于 HTTP 模型超时。"
+  ],
+  "example": "pending：quantity，event_index=1，optional=true\n用户补充：100g\n返回：input_text=100g，incremental_answer=true，rounds+1\n控制流：clarify → patch_pending → normalize_extraction → validate_drafts。",
+  "related": [
+    "safety_gate",
+    "prepare_clarification",
+    "parse_initial",
+    "patch_pending",
+    "executor"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/chat_flow.py",
+      "Engine.clarify / route_parse"
+    ],
+    [
+      "backend/app/workflows/runtime.py",
+      "Engine.resume"
+    ]
+  ]
+},
         {
           "id":"persist","group":"chat","title":"最终保存或修正准备完成的事件",
           "purpose":"这是正常记录与纠错的最终健康事件写入节点。它不相信模型返回的保存状态，只接受经过草稿校验与营养准备的内容，并由 Repository 负责事务、版本和去重。",
@@ -5004,17 +5986,70 @@ deletion_job = {
           "related":["targets_rules","approve","activate","repository_rules"],"sources":[["backend/app/workflows/planning.py","Engine.prepare_plan"],["backend/app/health/planning.py","plan_draft"]]
         },
         {
-          "id":"approve","group":"plan","title":"按规则自动批准或等待明确确认",
-          "purpose":"只决定 approved 布尔值，是否真正生效由下一个 activate 决定。自动批准与等待用户输入发生在同一节点内部，Graph 没有新增两个分支节点。",
-          "input":[["plan.needs_confirmation / plan_id","草案中的确认规则结果及身份。"],["用户 approved","需要确认时由恢复接口提供的严格布尔值。"]],
-          "output":[["approved","True 或 False；固定继续到 activate。"]],
-          "steps":["needs_confirmation 为假时直接返回 approved=True。","需要确认时 interrupt，展示目标、changes、来源、依据和警告；当前生效计划暂时保持原样。","Engine.resume 验证中断身份，并要求 approved 的类型就是 bool。","节点恢复后再校验答案字典及布尔值，返回用户的决定。"],
-          "branches":[["needs_confirmation=false","不暂停，自动批准。"],["需要确认，用户接受","approved=True，但仍须通过 activate 的版本检查。"],["需要确认，用户拒绝","approved=False，由 activate 标记 rejected。"]],
-          "sideEffects":["可写 checkpoint 暂停位置；本节点不变更 active plan，不调用模型。"],
-          "errors":["字符串 true、缺少决定或错误的 interrupt_id 不能作为有效确认。"],
-          "example":"首份计划：approve 暂停等待\n用户点击采用 → approved=True\n即使用户接受，若期间健康记录已变，activate 仍可能给出 stale。",
-          "related":["prepare","activate","executor"],"sources":[["backend/app/workflows/planning.py","Engine.approve_plan"],["backend/app/workflows/runtime.py","Engine.resume"]]
-        },
+  "id": "approve",
+  "group": "plan",
+  "title": "按规则自动批准或等待明确确认",
+  "purpose": "只决定 approved 布尔值，是否真正生效由下一个 activate 决定。自动批准与等待用户输入发生在同一节点内部，Graph 没有新增两个分支节点。",
+  "input": [
+    [
+      "plan.needs_confirmation / plan_id",
+      "草案中的确认规则结果及身份。"
+    ],
+    [
+      "用户 approved",
+      "需要确认时由恢复接口提供的严格布尔值。"
+    ]
+  ],
+  "output": [
+    [
+      "approved",
+      "True 或 False；固定继续到 activate。"
+    ]
+  ],
+  "steps": [
+    "needs_confirmation 为假时直接返回 approved=True。",
+    "需要确认时 interrupt，展示目标、changes、来源、依据和警告；当前生效计划暂时保持原样。",
+    "Engine.resume 验证中断身份，并要求 approved 的类型就是 bool。",
+    "节点恢复后再校验答案字典及布尔值，返回用户的决定。",
+    "用户接受且带文字附言时，节点内部重跑 safety_gate 和必要的 classify_safety；非 general 抛出 SafetyPolicyError。激活前 guarded_node 再查资格。"
+  ],
+  "branches": [
+    [
+      "needs_confirmation=false",
+      "不暂停，自动批准。"
+    ],
+    [
+      "需要确认，用户接受",
+      "approved=True，但仍须通过 activate 的版本检查。"
+    ],
+    [
+      "需要确认，用户拒绝",
+      "approved=False，由 activate 标记 rejected。"
+    ]
+  ],
+  "sideEffects": [
+    "可写 checkpoint 暂停位置；本节点不变更 active plan，不调用模型。"
+  ],
+  "errors": [
+    "字符串 true、缺少决定或错误的 interrupt_id 不能作为有效确认。"
+  ],
+  "example": "首份计划：approve 暂停等待\n用户点击采用 → approved=True\n即使用户接受，若期间健康记录已变，activate 仍可能给出 stale。",
+  "related": [
+    "prepare",
+    "activate",
+    "executor"
+  ],
+  "sources": [
+    [
+      "backend/app/workflows/planning.py",
+      "Engine.approve_plan"
+    ],
+    [
+      "backend/app/workflows/runtime.py",
+      "Engine.resume"
+    ]
+  ]
+},
         {
           "id":"activate",
           "group":"plan",
@@ -5093,12 +6128,12 @@ deletion_job = {
         {
           "id":"transport",
           "group":"core",
-          "title":"Parser 模型适配：六种固定契约与一次 HTTP 调用",
-          "purpose":"六类任务各有固定提示词与 Pydantic 输出类型，最后汇入同一个 model_request。这里没有让模型自由选工具、自动递归调用工具或 HTTP 自动重试的机制。",
+          "title":"Parser 模型适配：七种固定契约与统一传输",
+          "purpose":"七类任务各有固定提示词与输出类型：安全分类、处理计划、单条纠错、草稿补丁、营养估算、反馈表达和建议选择。它们汇入同一个授权与传输出口，不给模型自由递归调用工具的权限。",
           "input":[["plan / correct / patch / estimate_nutrition / phrase_reply / answer_advice","各自限定的任务数据；来源范围详见页面中的“LLM 调用契约”六类说明。"],["ApprovedCall / output_type","只有通过 ModelBoundary 的请求才能进入传输层。"]],
           "output":[["Pydantic 对象（含 AdviceReply.point_ids）","模型内容先去除外层 JSON Markdown fence，再通过 model_validate_json；建议和反馈继续经过本地选择范围校验。"]],
-          "steps":["Parser.request 调用 boundary.approve，再调用 model_request。","model_request 先 consume 授权与预算，之后才创建 HTTP 客户端。","组装 system 固定提示词与 user JSON；temperature=0，当前 qwen3.8-max 前缀会额外发送 enable_thinking=false。","以45秒超时、follow_redirects=False，向配置的 /chat/completions 发送非流式请求。","取 choices[0].message.content，去除代码围栏并按任务 Schema 验证。","网络错误、缺少字段或 JSON / Schema 错误转换为统一 ValueError，不把上游响应或密钥直接拼到用户错误中。"],
-          "branches":[["plan","ProcessingPlan；只规划当前输入。"],["correct / patch","CorrectionResult 或 EventPatch；目标与可合并字段由程序限定。"],["估算 / 表达 / 建议","NutritionEstimates、ContextualReply、AdviceReply，各自还有业务复核。"]],
+          "steps":["Parser.request 调用 boundary.approve，再调用 model_request。","model_request 先 consume 授权与持久调用预算，再构造 HTTP 请求。","组装 system 固定提示词与 user JSON；模型名来自配置，特定适配参数按能力处理。","传输层使用 AsyncClient 并由同步入口驱动；安全分类默认8秒、其他默认45秒，都受运行段剩余时间和响应大小限制。","从兼容响应中提取 content，解析 JSON 并按对应 Pydantic 类型验证。","错误区分传输、限流、Schema与策略；执行截止、取消和冲突继续抛出，不被普通模型降级吞掉。"],
+          "branches":[["safety_classification","SafetyClassification；仅风险标签与原文证据，本地合并路由。"],["processing_plan","ProcessingPlan；只规划当前输入。"],["correct_selected / patch_draft","CorrectionResult / EventPatch；目标与字段由程序限定。"],["估算 / 表达 / 建议","NutritionEstimates / ContextualReply / AdviceReply，均接受业务复核。"]],
           "sideEffects":["每次调用只有一次 HTTP 请求；供应商由服务端配置，密钥不进入浏览器与数据导出。"],
           "errors":["没有自动切换到演示估算，也没有传输层自动重试。","Schema 放在 user JSON 中提示模型，未使用服务端 response_format；最终靠本地验证接收输出。"],
           "example":"模型返回合法 JSON，但把体重写成9999\n输出 Schema 的范围验证失败\n调用方收到统一 ValueError；这个事件不会直接写库。",
@@ -5296,61 +6331,225 @@ deletion_job = {
     </script>
 
     <script type="application/json" id="graph-topology">
-      {
-        "chat": {
-          "nodes": [
-            "__start__",
-            "parse_initial",
-            "patch_pending",
-            "normalize_extraction",
-            "validate_drafts",
-            "prepare_nutrition",
-            "save_ready",
-            "prepare_clarification",
-            "clarify",
-            "persist",
-            "fact",
-            "respond",
-            "__end__"
-          ],
-          "edges": [
-            ["__start__", "parse_initial", true],
-            ["__start__", "patch_pending", true],
-            ["parse_initial", "normalize_extraction"],
-            ["patch_pending", "normalize_extraction"],
-            ["normalize_extraction", "validate_drafts"],
-            ["validate_drafts", "prepare_nutrition"],
-            ["prepare_nutrition", "save_ready"],
-            ["save_ready", "prepare_clarification", true],
-            ["save_ready", "persist", true],
-            ["save_ready", "fact", true],
-            ["save_ready", "respond", true],
-            ["prepare_clarification", "clarify"],
-            ["clarify", "parse_initial", true],
-            ["clarify", "patch_pending", true],
-            ["persist", "respond"],
-            ["fact", "respond"],
-            ["respond", "__end__"]
-          ]
-        },
-        "plan": {
-          "nodes": ["__start__", "prepare", "approve", "activate", "__end__"],
-          "edges": [
-            ["__start__", "prepare"],
-            ["prepare", "approve"],
-            ["approve", "activate"],
-            ["activate", "__end__"]
-          ]
-        },
-        "analysis": {
-          "nodes": ["__start__", "analyze", "review", "__end__"],
-          "edges": [
-            ["__start__", "analyze"],
-            ["analyze", "review"],
-            ["review", "__end__"]
-          ]
-        }
-      }
+{
+  "chat": {
+    "nodes": [
+      "__start__",
+      "safety_gate",
+      "classify_safety",
+      "safety_response",
+      "parse_initial",
+      "patch_pending",
+      "normalize_extraction",
+      "validate_drafts",
+      "authorize_operation",
+      "prepare_nutrition",
+      "save_ready",
+      "prepare_clarification",
+      "clarify",
+      "persist",
+      "fact",
+      "respond",
+      "__end__"
+    ],
+    "edges": [
+      [
+        "__start__",
+        "safety_gate"
+      ],
+      [
+        "safety_gate",
+        "classify_safety",
+        true
+      ],
+      [
+        "safety_gate",
+        "safety_response",
+        true
+      ],
+      [
+        "safety_gate",
+        "parse_initial",
+        true
+      ],
+      [
+        "safety_gate",
+        "patch_pending",
+        true
+      ],
+      [
+        "classify_safety",
+        "safety_response",
+        true
+      ],
+      [
+        "classify_safety",
+        "parse_initial",
+        true
+      ],
+      [
+        "classify_safety",
+        "patch_pending",
+        true
+      ],
+      [
+        "safety_response",
+        "__end__"
+      ],
+      [
+        "parse_initial",
+        "normalize_extraction"
+      ],
+      [
+        "patch_pending",
+        "normalize_extraction"
+      ],
+      [
+        "normalize_extraction",
+        "validate_drafts"
+      ],
+      [
+        "validate_drafts",
+        "authorize_operation"
+      ],
+      [
+        "authorize_operation",
+        "prepare_nutrition",
+        true
+      ],
+      [
+        "authorize_operation",
+        "safety_response",
+        true
+      ],
+      [
+        "prepare_nutrition",
+        "save_ready"
+      ],
+      [
+        "save_ready",
+        "prepare_clarification",
+        true
+      ],
+      [
+        "save_ready",
+        "persist",
+        true
+      ],
+      [
+        "save_ready",
+        "fact",
+        true
+      ],
+      [
+        "save_ready",
+        "respond",
+        true
+      ],
+      [
+        "prepare_clarification",
+        "clarify"
+      ],
+      [
+        "clarify",
+        "safety_gate"
+      ],
+      [
+        "persist",
+        "respond"
+      ],
+      [
+        "fact",
+        "respond"
+      ],
+      [
+        "respond",
+        "__end__"
+      ]
+    ]
+  },
+  "plan": {
+    "nodes": [
+      "__start__",
+      "safety_gate",
+      "classify_safety",
+      "safety_response",
+      "prepare",
+      "approve",
+      "activate",
+      "__end__"
+    ],
+    "edges": [
+      [
+        "__start__",
+        "safety_gate"
+      ],
+      [
+        "safety_gate",
+        "classify_safety",
+        true
+      ],
+      [
+        "safety_gate",
+        "safety_response",
+        true
+      ],
+      [
+        "safety_gate",
+        "prepare",
+        true
+      ],
+      [
+        "classify_safety",
+        "prepare",
+        true
+      ],
+      [
+        "classify_safety",
+        "safety_response",
+        true
+      ],
+      [
+        "safety_response",
+        "__end__"
+      ],
+      [
+        "prepare",
+        "approve"
+      ],
+      [
+        "approve",
+        "activate"
+      ],
+      [
+        "activate",
+        "__end__"
+      ]
+    ]
+  },
+  "analysis": {
+    "nodes": [
+      "__start__",
+      "analyze",
+      "review",
+      "__end__"
+    ],
+    "edges": [
+      [
+        "__start__",
+        "analyze"
+      ],
+      [
+        "analyze",
+        "review"
+      ],
+      [
+        "review",
+        "__end__"
+      ]
+    ]
+  }
+}
     </script>
     <script>
       (() => {
@@ -5366,6 +6565,7 @@ deletion_job = {
           chat: "chat · 对话节点",
           plan: "plan · 计划节点",
           analysis: "analysis · 分析节点",
+          safety: "safety · 聊天 / 计划共用",
           core: "内部函数 / 执行机制",
           lifecycle: "START / END · 生命周期",
         };
@@ -5492,7 +6692,7 @@ deletion_job = {
           }
           document.getElementById("guide-count").textContent =
             "显示 " + count + " / " + implementation.entries.length +
-            " 项说明 · 16 个业务节点 + 13 项底层机制 + START / END";
+            " 项说明 · 20 个不同图节点 + 13 项底层机制 + START / END";
           document.getElementById("guide-empty").hidden = count !== 0;
         }
         guideSearch.addEventListener("input", filterGuide);
@@ -5547,6 +6747,72 @@ deletion_job = {
             input: ["reply", "cards", "evidence_refs"],
             output: ["workflow result", "messages"],
             source: "workflows/runtime.py · format_result() / run()",
+          },
+          "safety_gate": {
+            "name": "本地安全入口",
+            "kind": "本地规则 / 模式限制",
+            "description": "首次输入与追问补充先核对原文、年龄和已知限制。明确风险直接进入固定边界；模型模式无本地信号时交给独立分类。离线仅完整白名单记录、查询、偏好或无备注计划可继续。",
+            "input": [
+              "本次原文 / original",
+              "年龄 / 营养适用状态",
+              "相关长期限制 / 处理模式"
+            ],
+            "output": [
+              "safety / capability",
+              "safety_context",
+              "safety_fingerprint"
+            ],
+            "source": "workflows/safety.py · safety_gate / route_safety_gate",
+            "sub": "本地风险 · 离线白名单"
+          },
+          "classify_safety": {
+            "name": "独立语义安全分类",
+            "kind": "条件调用 LLM / 本地校验",
+            "description": "按最小 SafetyContext 授权外发，只接收结构化风险标签与连续原文证据。本地 merge_classification 决定最终路由；匹配指纹时复用分类，模型失败或非法输出走 uncertain 固定边界。",
+            "input": [
+              "safety_context / fingerprint",
+              "已有分类缓存（可选）"
+            ],
+            "output": [
+              "safety / capability",
+              "已校验分类与缓存",
+              "process_trace"
+            ],
+            "source": "workflows/safety.py · classify_safety / health/safety.py",
+            "tone": "model",
+            "llm": "safety_classification",
+            "sub": "标签 + 证据 · 失败走保守边界"
+          },
+          "safety_response": {
+            "name": "返回固定安全边界",
+            "kind": "本地固定回复 / 提前结束",
+            "description": "按紧急、进食障碍、医疗、特殊人群或 uncertain 类别选择本地固定回复，清空卡片、证据和附加动作，直接结束。不撤销本流程此前已提交的独立记录。",
+            "input": [
+              "safety.category",
+              "此前 record_ids"
+            ],
+            "output": [
+              "reply（固定目录）",
+              "cards / evidence_refs / extra_actions = []"
+            ],
+            "source": "workflows/safety.py · safety_response",
+            "sub": "停止本次普通处理 · END"
+          },
+          "authorize_operation": {
+            "name": "复核具体业务权限",
+            "kind": "本地权限 / 重放检查",
+            "description": "草稿校验后，再按实际操作复核安全指纹、策略版本、能力与原文，检查追问内容。可处理的本地拒绝转为 uncertain 并进入固定安全回复；运行冲突与过时权限按异常终止。",
+            "input": [
+              "parsed / safety",
+              "原文 / safety_fingerprint",
+              "当前档案与限制"
+            ],
+            "output": [
+              "保留有效 safety",
+              "或 uncertain / operation_not_authorized"
+            ],
+            "source": "workflows/safety.py · authorize_operation / require_safety",
+            "sub": "权限有效 → 营养准备"
           },
           parse_initial: {
             name: "首次输入规划",
@@ -5635,7 +6901,7 @@ deletion_job = {
             name: "追问 / 等待补充",
             kind: "interrupt 暂停",
             description:
-              "暂停并输出问题，纠错歧义时可提供记录选项。Engine.resume() 校验中断 ID，用同线程 Command 恢复；route_parse 决定进入首次解析或草稿补丁。",
+              "interrupt 暂停；恢复先校验中断和回执，同一 thread_id 继续。答案回到 safety_gate 重新检查，通过后 route_parse 决定首次解析或草稿补丁；失败恢复可能用 invocation=None 继续已绑定步骤。",
             input: ["pending_fields / pending_*", "reply_plan / clarification_selection", "用户 text / event_id"],
             output: ["input_text / original", "selected_id", "rounds + 1"],
             source: "workflows/chat_flow.py · Engine.clarify() / workflows/runtime.py · resume()",
@@ -5646,7 +6912,7 @@ deletion_job = {
             name: "保存或修正事件",
             kind: "业务代码 / 事务写入",
             description:
-              "读取已经过营养准备的事件并按操作键去重保存；纠错前重新核验绑定 ID 与版本，保持类型和原日期。来源变化使受影响规律与复盘过时，计划提示复核。",
+              "guarded_node 在执行前重核安全权限；读取已准备事件并按操作键去重保存，纠错重核绑定 ID 与版本。来源变化使相关派生结果过时；提交前检查运行期限与执行代次。",
             input: ["prepared_events", "correction_id", "saved_indexes"],
             output: ["record_ids", "events / revisions", "data_version"],
             source: "workflows/chat_flow.py · Engine.persist() / repositories/events.py",
@@ -5688,7 +6954,7 @@ deletion_job = {
             name: "自动批准或确认",
             kind: "条件 interrupt 暂停",
             description:
-              "needs_confirmation 为假时直接批准；为真时 interrupt 等待明确的布尔决定。分支位于节点函数内部，Graph 的下一节点始终是 activate。",
+              "无需确认时自动批准，否则 interrupt 等待布尔决定。接受并带文字附言时，在节点内重新执行安全检查与必要的语义分类；不允许则抛出策略错误，不进入激活。下一图节点仍是 activate。",
             input: ["plan.needs_confirmation", "用户 approved"],
             output: ["approved: bool"],
             source: "workflows/planning.py · Engine.approve_plan()",
@@ -5729,132 +6995,400 @@ deletion_job = {
           },
         };
         const layouts = {
-          chat: {
-            width: 1100,
-            height: 1140,
-            positions: {
-              __start__: [485, 20, 130, 38],
-              parse_initial: [270, 95, 240, 78],
-              patch_pending: [590, 95, 240, 78],
-              normalize_extraction: [430, 225, 240, 78],
-              validate_drafts: [430, 340, 240, 78],
-              prepare_nutrition: [430, 455, 240, 78],
-              save_ready: [430, 570, 240, 78],
-              prepare_clarification: [35, 710, 245, 78],
-              clarify: [35, 840, 245, 78],
-              persist: [430, 710, 240, 78],
-              fact: [805, 710, 240, 78],
-              respond: [430, 955, 240, 78],
-              __end__: [485, 1080, 130, 38],
-            },
-            paths: {
-              "__start__>parse_initial": ["M535 58V76H390V95", "新输入 / 重新规划", 322, 80],
-              "__start__>patch_pending": ["M565 58V76H710V95", "增量补充", 718, 80],
-              "parse_initial>normalize_extraction": ["M390 173V199H550V225"],
-              "patch_pending>normalize_extraction": ["M710 173V199H550V225"],
-              "normalize_extraction>validate_drafts": ["M550 303V340"],
-              "validate_drafts>prepare_nutrition": ["M550 418V455"],
-              "prepare_nutrition>save_ready": ["M550 533V570"],
-              "save_ready>prepare_clarification": [
-                "M490 648V675H158V710",
-                "有关键问题",
-                158,
-                695,
-              ],
-              "save_ready>persist": [
-                "M550 648V710",
-                "record / correct + events",
-                660,
-                685,
-              ],
-              "save_ready>fact": [
-                "M610 648V675H925V710",
-                "fact + fact_text",
-                925,
-                695,
-              ],
-              "save_ready>respond": [
-                "M670 609H1070V994H670",
-                "query / advice / 其余",
-                930,
-                935,
-              ],
-              "prepare_clarification>clarify": ["M158 788V840"],
-              "clarify>parse_initial": [
-                "M35 879H12V134H270",
-                "选择目标 / 一般澄清",
-                122,
-                119,
-              ],
-              "clarify>patch_pending": [
-                "M280 879H1045V134H830",
-                "补当前草稿",
-                924,
-                119,
-              ],
-              "persist>respond": ["M550 788V955", "record_ids", 595, 880],
-              "fact>respond": ["M925 788V915H670V994"],
-              "respond>__end__": ["M550 1033V1080"],
-            },
-          },
-          plan: {
-            width: 1000,
-            height: 640,
-            positions: {
-              __start__: [415, 20, 170, 38],
-              prepare: [345, 101, 310, 85],
-              approve: [345, 249, 310, 85],
-              activate: [345, 410, 310, 85],
-              __end__: [415, 566, 170, 38],
-            },
-            paths: {
-              "__start__>prepare": ["M500 58V101"],
-              "prepare>approve": [
-                "M500 186V249",
-                "plan + needs_confirmation",
-                680,
-                219,
-              ],
-              "approve>activate": [
-                "M500 334V410",
-                "approved = True / False",
-                677,
-                377,
-              ],
-              "activate>__end__": [
-                "M500 495V566",
-                "reply + evidence_refs",
-                658,
-                535,
-              ],
-            },
-          },
-          analysis: {
-            width: 1000,
-            height: 555,
-            positions: {
-              __start__: [415, 22, 170, 38],
-              analyze: [335, 105, 330, 85],
-              review: [335, 290, 330, 85],
-              __end__: [415, 468, 170, 38],
-            },
-            paths: {
-              "__start__>analyze": ["M500 60V105"],
-              "analyze>review": [
-                "M500 190V290",
-                "统计规律写入 insights",
-                683,
-                243,
-              ],
-              "review>__end__": [
-                "M500 375V468",
-                "复盘保存 + cards / reply",
-                705,
-                425,
-              ],
-            },
-          },
-        };
+  "chat": {
+    "width": 1380,
+    "height": 1770,
+    "positions": {
+      "__start__": [
+        615,
+        20,
+        130,
+        38
+      ],
+      "safety_gate": [
+        540,
+        100,
+        280,
+        78
+      ],
+      "classify_safety": [
+        140,
+        250,
+        280,
+        78
+      ],
+      "safety_response": [
+        980,
+        400,
+        280,
+        78
+      ],
+      "parse_initial": [
+        380,
+        400,
+        260,
+        78
+      ],
+      "patch_pending": [
+        700,
+        400,
+        260,
+        78
+      ],
+      "normalize_extraction": [
+        540,
+        550,
+        280,
+        78
+      ],
+      "validate_drafts": [
+        540,
+        680,
+        280,
+        78
+      ],
+      "authorize_operation": [
+        540,
+        810,
+        280,
+        78
+      ],
+      "prepare_nutrition": [
+        540,
+        940,
+        280,
+        78
+      ],
+      "save_ready": [
+        540,
+        1070,
+        280,
+        78
+      ],
+      "prepare_clarification": [
+        80,
+        1220,
+        280,
+        78
+      ],
+      "clarify": [
+        80,
+        1370,
+        280,
+        78
+      ],
+      "persist": [
+        540,
+        1220,
+        280,
+        78
+      ],
+      "fact": [
+        1000,
+        1220,
+        280,
+        78
+      ],
+      "respond": [
+        540,
+        1530,
+        280,
+        78
+      ],
+      "__end__": [
+        615,
+        1680,
+        130,
+        38
+      ]
+    },
+    "paths": {
+      "__start__>safety_gate": [
+        "M680 58V100"
+      ],
+      "safety_gate>classify_safety": [
+        "M540 139H280V250",
+        "无本地信号",
+        280,
+        215
+      ],
+      "safety_gate>safety_response": [
+        "M820 139H1120V400",
+        "明确风险 / 不确定",
+        1120,
+        230
+      ],
+      "safety_gate>parse_initial": [
+        "M630 178V220H510V400",
+        "本地允许 · 新输入",
+        510,
+        290
+      ],
+      "safety_gate>patch_pending": [
+        "M730 178V220H830V400",
+        "本地允许 · 补草稿",
+        830,
+        290
+      ],
+      "classify_safety>safety_response": [
+        "M420 275H1070V400",
+        "风险 / 失败",
+        1000,
+        275
+      ],
+      "classify_safety>parse_initial": [
+        "M280 328V365H510V400",
+        "普通 · 新输入",
+        430,
+        365
+      ],
+      "classify_safety>patch_pending": [
+        "M340 328V345H830V400",
+        "普通 · 补草稿",
+        720,
+        345
+      ],
+      "safety_response>__end__": [
+        "M1120 478H1350V1730H680V1718",
+        "固定回复直接结束",
+        1225,
+        1640
+      ],
+      "parse_initial>normalize_extraction": [
+        "M510 478V515H680V550"
+      ],
+      "patch_pending>normalize_extraction": [
+        "M830 478V515H680V550"
+      ],
+      "normalize_extraction>validate_drafts": [
+        "M680 628V680"
+      ],
+      "validate_drafts>authorize_operation": [
+        "M680 758V810"
+      ],
+      "authorize_operation>prepare_nutrition": [
+        "M680 888V940",
+        "权限有效",
+        730,
+        917
+      ],
+      "authorize_operation>safety_response": [
+        "M820 849H1315V439H1260",
+        "本地拒绝 → uncertain",
+        1185,
+        849
+      ],
+      "prepare_nutrition>save_ready": [
+        "M680 1018V1070"
+      ],
+      "save_ready>prepare_clarification": [
+        "M600 1148V1180H220V1220",
+        "question 存在",
+        220,
+        1201
+      ],
+      "save_ready>persist": [
+        "M680 1148V1220",
+        "record / correct + events",
+        830,
+        1190
+      ],
+      "save_ready>fact": [
+        "M760 1148V1180H1140V1220",
+        "fact + fact_text",
+        1140,
+        1201
+      ],
+      "save_ready>respond": [
+        "M820 1109H940V1569H820",
+        "query / advice / 其余",
+        1090,
+        1460
+      ],
+      "prepare_clarification>clarify": [
+        "M220 1298V1370"
+      ],
+      "clarify>safety_gate": [
+        "M80 1409H40V139H540",
+        "补充后重新检查",
+        160,
+        1030
+      ],
+      "persist>respond": [
+        "M680 1298V1530",
+        "record_ids",
+        740,
+        1410
+      ],
+      "fact>respond": [
+        "M1140 1298V1490H800V1530"
+      ],
+      "respond>__end__": [
+        "M680 1608V1680"
+      ]
+    }
+  },
+  "plan": {
+    "width": 1160,
+    "height": 1040,
+    "positions": {
+      "__start__": [
+        485,
+        20,
+        130,
+        38
+      ],
+      "safety_gate": [
+        400,
+        100,
+        300,
+        78
+      ],
+      "classify_safety": [
+        60,
+        245,
+        280,
+        78
+      ],
+      "safety_response": [
+        800,
+        400,
+        280,
+        78
+      ],
+      "prepare": [
+        400,
+        400,
+        300,
+        85
+      ],
+      "approve": [
+        400,
+        565,
+        300,
+        85
+      ],
+      "activate": [
+        400,
+        750,
+        300,
+        85
+      ],
+      "__end__": [
+        485,
+        920,
+        130,
+        38
+      ]
+    },
+    "paths": {
+      "__start__>safety_gate": [
+        "M550 58V100"
+      ],
+      "safety_gate>classify_safety": [
+        "M400 139H200V245",
+        "备注待分类",
+        200,
+        210
+      ],
+      "safety_gate>safety_response": [
+        "M700 139H940V400",
+        "本地风险 / 不确定",
+        940,
+        250
+      ],
+      "safety_gate>prepare": [
+        "M550 178V400",
+        "本地允许 / 无文字备注",
+        650,
+        350
+      ],
+      "classify_safety>prepare": [
+        "M200 323V365H470V400",
+        "普通候选",
+        300,
+        365
+      ],
+      "classify_safety>safety_response": [
+        "M340 284H850V400",
+        "风险 / 分类失败",
+        750,
+        284
+      ],
+      "safety_response>__end__": [
+        "M940 478H1120V995H550V958",
+        "固定回复",
+        1010,
+        900
+      ],
+      "prepare>approve": [
+        "M550 485V565",
+        "草案 + needs_confirmation",
+        730,
+        530
+      ],
+      "approve>activate": [
+        "M550 650V750",
+        "布尔决定；附言在节点内复核",
+        755,
+        706
+      ],
+      "activate>__end__": [
+        "M550 835V920",
+        "active / rejected / stale",
+        730,
+        880
+      ]
+    }
+  },
+  "analysis": {
+    "width": 1000,
+    "height": 555,
+    "positions": {
+      "__start__": [
+        415,
+        22,
+        170,
+        38
+      ],
+      "analyze": [
+        335,
+        105,
+        330,
+        85
+      ],
+      "review": [
+        335,
+        290,
+        330,
+        85
+      ],
+      "__end__": [
+        415,
+        468,
+        170,
+        38
+      ]
+    },
+    "paths": {
+      "__start__>analyze": [
+        "M500 60V105"
+      ],
+      "analyze>review": [
+        "M500 190V290",
+        "统计规律写入 insights",
+        683,
+        243
+      ],
+      "review>__end__": [
+        "M500 375V468",
+        "复盘保存 + cards / reply",
+        705,
+        425
+      ]
+    }
+  }
+};
         const ns = "http://www.w3.org/2000/svg";
         const make = (tag, attrs = {}, text) => {
           const el = document.createElementNS(ns, tag);
@@ -5902,6 +7436,10 @@ deletion_job = {
           const sourcePaths = {
             __start__: "workflows/runtime.py",
             __end__: "workflows/runtime.py",
+            safety_gate: "workflows/safety.py",
+            classify_safety: "workflows/safety.py",
+            safety_response: "workflows/safety.py",
+            authorize_operation: "workflows/safety.py",
             parse_initial: "workflows/chat_parsing.py",
             patch_pending: "workflows/chat_parsing.py",
             normalize_extraction: "workflows/chat_parsing.py",
@@ -5925,10 +7463,13 @@ deletion_job = {
           const rows =
             graph === "chat"
               ? [
+                  ["本地安全 / 语义分类", "safety_gate / classify_safety"],
+                  ["风险与不确定提前结束", "safety_response → END"],
                   ["首次规划 · 条件 LLM", "parse_initial"],
                   ["补当前草稿 · 条件 LLM", "patch_pending"],
                   ["反馈与意图归一化", "normalize_extraction"],
                   ["草稿结构校验", "validate_drafts"],
+                  ["实际操作前再核权限", "authorize_operation"],
                   ["营养准备 · 条件 LLM", "prepare_nutrition"],
                   ["关键问题先准备表达", "prepare_clarification"],
                   ["记录 / 事实写入", "persist / fact"],
@@ -5936,6 +7477,8 @@ deletion_job = {
                 ]
               : graph === "plan"
                 ? [
+                    ["备注安全 / 本地资格", "safety_gate / classify_safety"],
+                    ["风险与不确定提前结束", "safety_response → END"],
                     ["生成草案", "prepare"],
                     ["条件暂停确认", "approve"],
                     ["事务与版本检查", "activate"],
@@ -6125,9 +7668,19 @@ deletion_job = {
             });
             svg.append(g);
           }
-          document.getElementById("canvas-" + graph).append(svg);
+          const canvas = document.getElementById("canvas-" + graph);
+          canvas.append(svg);
+          canvas.setAttribute("tabindex", "0");
+          canvas.setAttribute("role", "region");
+          canvas.setAttribute("aria-label", graph + " 工作流图，小屏可左右滚动查看");
         }
         for (const graph of Object.keys(topology)) render(graph);
+        function centerActiveDiagram() {
+          const canvas = document.getElementById("canvas-" + selectedGraph);
+          if (canvas.clientWidth > 0) canvas.scrollLeft = (canvas.scrollWidth - canvas.clientWidth) / 2;
+        }
+        requestAnimationFrame(centerActiveDiagram);
+        window.addEventListener("resize", () => requestAnimationFrame(centerActiveDiagram));
         // Scope the switcher to the page. This file makes no network requests.
         document.querySelectorAll('[role="tab"]').forEach((button) =>
           button.addEventListener("click", () => {
@@ -6143,15 +7696,16 @@ deletion_job = {
             for (const graph of Object.keys(topology))
               document.getElementById("panel-" + graph).hidden =
                 graph !== selectedGraph;
+            requestAnimationFrame(centerActiveDiagram);
             select(
               selectedGraph,
-              { chat: "parse_initial", plan: "approve", analysis: "analyze" }[
+              { chat: "safety_gate", plan: "safety_gate", analysis: "analyze" }[
                 selectedGraph
               ],
             );
           }),
         );
-        select("chat", "parse_initial");
+        select("chat", "safety_gate");
       })();
     </script>
     <script>
@@ -6311,7 +7865,13 @@ deletion_job = {
           'plan-branches': 'memory-system',
           'concurrency-recovery': 'concurrency-recovery',
           'scheduler-reliability': 'concurrency-recovery',
-          'privacy-deletion': 'privacy-deletion'
+          'privacy-deletion': 'privacy-deletion',
+          'interview-prep': 'interview-prep',
+          'interview-code': 'interview-prep',
+          'interview-scopes': 'interview-prep',
+          'interview-full-flow': 'interview-prep',
+          'interview-flow-nodes': 'interview-prep',
+          'interview-answer': 'interview-prep'
         };
 
         function chapterForHash(hash) {

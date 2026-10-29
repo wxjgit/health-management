@@ -42,12 +42,12 @@ def conflict_on_patch(runtime, controlled):
 
 @pytest.mark.parametrize('restart', [False, True])
 def test_changed_answer_is_rejected_then_original_answer_can_retry(settings, model, restart):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         pending, payload = conflict_on_patch(runtime, model)
         if restart:
             runtime.close()
-            runtime = Engine(settings)
+            runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
         workflow = runtime.repo.workflow(pending['thread_id'])
         assert workflow['status'] == 'resume_failed'
         assert workflow['result']['retry_request'] == payload
@@ -72,7 +72,7 @@ def test_changed_answer_is_rejected_then_original_answer_can_retry(settings, mod
 
 
 def test_api_recovery_payload_round_trip_and_changed_answer_conflict(settings, model):
-    from fastapi.testclient import TestClient
+    from authenticated_client import AuthenticatedClient as TestClient
     from app.main import create_app
     with TestClient(create_app(settings)) as client:
         response = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '今天记录体重'})
@@ -80,7 +80,7 @@ def test_api_recovery_payload_round_trip_and_changed_answer_conflict(settings, m
         path = f"/api/workflows/{pending['thread_id']}/resume"
         payload = resume_payload(pending, text='65公斤')
         model.arm('patch_draft')
-        runtime = client.app.state.engine
+        runtime = client.app.state.test_engine
         original_patch = runtime.parser.patch
 
         def related_patch(*args, **kwargs):
@@ -125,7 +125,7 @@ def test_original_chat_request_cannot_bypass_failed_resume(engine, model):
 
 @pytest.mark.parametrize('restart', [False, True])
 def test_failure_before_graph_consumes_interrupt_retries_original_command(settings, model, restart):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         pending = chat(runtime, '今天记录体重')
         payload = resume_payload(pending, text='65公斤')
@@ -136,7 +136,7 @@ def test_failure_before_graph_consumes_interrupt_retries_original_command(settin
         runtime.invoke = original
         if restart:
             runtime.close()
-            runtime = Engine(settings)
+            runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
         result = runtime.resume(pending['thread_id'], payload)
         assert result['status'] == 'completed'
         assert len(runtime.repo.events()) == 1
@@ -146,7 +146,7 @@ def test_failure_before_graph_consumes_interrupt_retries_original_command(settin
 
 
 def test_startup_recovers_persisted_executing_attempt(settings, model):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         pending = chat(runtime, '今天记录体重')
         payload = resume_payload(pending, text='65公斤')
@@ -154,7 +154,7 @@ def test_startup_recovers_persisted_executing_attempt(settings, model):
         runtime.repo.begin_resume(pending['thread_id'], payload, fingerprint(payload), '65公斤', 'main')
     finally:
         runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert runtime.repo.workflow(pending['thread_id'])['status'] == 'resume_failed'
         assert runtime.resume(pending['thread_id'], payload)['status'] == 'completed'
@@ -248,7 +248,7 @@ def test_cancel_before_confirmation_prevents_activation(engine):
 
 
 def test_active_plan_after_failed_finalization_cannot_be_cancelled(settings, model, monkeypatch):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         pending = plan(runtime)
         payload = resume_payload(pending, approved=True)
@@ -258,7 +258,7 @@ def test_active_plan_after_failed_finalization_cannot_be_cancelled(settings, mod
                 runtime.resume(pending['thread_id'], payload)
     finally:
         runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         with pytest.raises(WorkflowStateError):
             runtime.cancel(pending['thread_id'])
@@ -362,7 +362,7 @@ def test_deletion_and_retention_remove_bound_answers(engine, model):
 
 
 def test_existing_database_migrates_without_losing_health_records(settings, model):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         chat(runtime, local=True)
     finally:
@@ -370,7 +370,7 @@ def test_existing_database_migrates_without_losing_health_records(settings, mode
     with sqlite3.connect(settings.data_dir / 'health.db') as connection:
         connection.execute('DROP TABLE resume_attempts')
         connection.execute('PRAGMA user_version=3')
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert len(runtime.repo.events()) == 1
         assert runtime.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 9

@@ -3,7 +3,7 @@ from uuid import uuid4
 import json
 
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.main import create_app
@@ -172,7 +172,7 @@ def test_deletion_clears_copies_and_checkpoints(client):
     assert client.get('/api/workflows').json() == []
     export = client.get('/api/data/export').json()
     assert '牛肉面' not in json.dumps(export, ensure_ascii=False)
-    engine = client.app.state.engine
+    engine = client.app.state.test_engine
     assert list(engine.checkpointer.list(None)) == []
     assert engine.repo.conn.execute('SELECT COUNT(*) FROM revisions').fetchone()[0] == 0
 
@@ -186,7 +186,7 @@ def seed(repo, day, sleep, kcal, index):
 
 
 def test_insights_exclude_incomplete_days_and_rejected_conclusions(settings):
-    engine = Engine(settings)
+    engine = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         repo = engine.repo
         end = now().date()
@@ -207,7 +207,7 @@ def test_insights_exclude_incomplete_days_and_rejected_conclusions(settings):
 
 
 def test_archive_summarizes_only_fully_expired_months(settings):
-    engine = Engine(settings)
+    engine = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         seed(engine.repo, date(2024, 9, 20), 420, 1800, 1)
         seed(engine.repo, date(2024, 10, 1), 420, 1800, 2)
@@ -238,7 +238,7 @@ def test_cancel_keeps_already_saved_independent_records(client):
 
 
 def test_notifications_are_deduplicated(settings):
-    engine = Engine(settings)
+    engine = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         engine.repo.update_profile({'age': 30})
         moment = datetime(2026, 10, 8, 14, 0, tzinfo=SHANGHAI)
@@ -287,7 +287,7 @@ def test_resume_after_commit_but_before_response_is_replay_safe(settings, monkey
         payload = {'request_id': uid(), 'interrupt_id': paused['pending_input']['interrupt_id'], 'text': '一小份'}
         def fail_after_commit(*args):
             raise ValueError('模拟响应前崩溃')
-        monkeypatch.setattr(client.app.state.engine, 'format_result', fail_after_commit)
+        monkeypatch.setattr(client.app.state.test_engine, 'format_result', fail_after_commit)
         path = f'/api/workflows/{paused["thread_id"]}/resume'
         assert client.post(path, json=payload).status_code == 500
         assert len(client.get('/api/events').json()) == 1
@@ -301,7 +301,7 @@ def test_resume_after_commit_but_before_response_is_replay_safe(settings, monkey
 def test_weight_suggestion_requires_complete_personal_history(client):
     assert client.get('/api/preferences/suggestion').json() is None
     resume(client, propose(client, TARGETS), approved=True)
-    repo = client.app.state.engine.repo
+    repo = client.app.state.test_engine.repo
     for i in range(8):
         day = now().date() - timedelta(days=i)
         seed(repo, day, 420, 2400, i)
@@ -323,7 +323,7 @@ def test_deleting_a_fact_purges_its_context(client):
 
 def test_completed_chat_context_is_pruned_but_facts_remain(client):
     chat(client, '中午吃了一碗米饭')
-    engine = client.app.state.engine
+    engine = client.app.state.test_engine
     future = now() + timedelta(days=31)
     assert engine.prune_context(future) == 1
     assert len(engine.repo.events()) == 1

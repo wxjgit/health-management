@@ -203,6 +203,6 @@ class PlanningRepositoryMixin:
 
     def read_notification(self, notification_id):
         with self.lock, self.conn:
-            self.conn.execute(
+            return self.conn.execute(
                 'UPDATE notifications SET read=1 WHERE id=?', (notification_id,)
-            )
+            ).rowcount > 0

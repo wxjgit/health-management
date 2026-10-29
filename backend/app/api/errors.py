@@ -70,7 +70,9 @@ def error_response(request, status, code, detail, **extra):
     response = JSONResponse(status_code=status, content={
         'detail': detail, 'code': code, 'request_id': correlation, **extra,
     }, headers={'X-Request-ID': correlation})
-    if code == 'runtime_busy':
+    if code == 'request_rate_limited':
+        response.headers['Retry-After'] = '60'
+    if code in ('runtime_busy', 'model_concurrency_limited'):
         response.headers['Retry-After'] = '1'
     if status == 500:
         request.state.safe_error_response = True

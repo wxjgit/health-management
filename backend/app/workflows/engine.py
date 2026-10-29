@@ -29,14 +29,22 @@ class Engine(
 ):
     """Compose focused workflow capabilities behind one runtime object."""
 
-    def __init__(self, settings):
+    def __init__(self, settings, services=None, *, user_id):
+        from uuid import UUID
+        if str(UUID(user_id)) != user_id:
+            raise ValueError("invalid_internal_user_id")
+        self.user_id = user_id
         self.owner = DataOwner(settings.data_dir)
         self._closed = False
         self.settings = settings
+        self._owns_services = services is None
+        self.accounts = getattr(services, 'accounts', None) if services else None
         try:
             from ..observability.service import Observability
-            self.observability = Observability(settings)
-            self.runtime = RuntimeLimiter(settings)
+            self.observability = services.observability if services else Observability(settings)
+            self.runtime = services.runtime if services else RuntimeLimiter(settings)
+            from ..common.usage import UsageController
+            self.usage = services.usage if services else UsageController(settings)
             self.repo = Repository(settings.data_dir / 'health.db')
             self.repo.quality_default_mode = 'local_only' if settings.local_only else 'model_allowed' if settings.mode == 'model' else 'demo'
             with self.repo.conn:
@@ -84,14 +92,14 @@ class Engine(
             self.jobs.close()
         self._closed = True
         try:
-            if hasattr(self, 'runtime'):
+            if self._owns_services and hasattr(self, 'runtime'):
                 self.runtime.close()
             if hasattr(self, 'cp_conn'):
                 self.cp_conn.close()
             if hasattr(self, 'repo'):
                 self.repo.close()
         finally:
-            if hasattr(self, 'observability'):
+            if self._owns_services and hasattr(self, 'observability'):
                 self.observability.close()
             self.owner.close()
 

@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 from pydantic import BaseModel
 
 from app.common.config import Settings
@@ -168,7 +168,7 @@ def test_business_request_id_is_preserved_during_retry(client):
     assert first.status_code == second.status_code == 200
     assert first.json() == second.json()
     assert first.headers['x-request-id'] != second.headers['x-request-id']
-    assert client.app.state.engine.repo.workflow_by_request(business_id) is not None
+    assert client.app.state.test_engine.repo.workflow_by_request(business_id) is not None
     assert len(client.get('/api/events').json()) == 1
 
 

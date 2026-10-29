@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.api.workflows import cancel
 from app.common.clock import now
@@ -90,7 +90,7 @@ def settings(tmp_path):
 
 @pytest.fixture
 def engine(settings, model):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         yield runtime
     finally:
@@ -226,7 +226,7 @@ def test_api_preserves_independent_model_input_after_deletion(settings, model):
             finally:
                 model.release.set()
             assert slow.result(timeout=3).status_code == 200
-        assert client.app.state.engine.repo.event(event_id) is None
+        assert client.app.state.test_engine.repo.event(event_id) is None
         assert len(client.get('/api/events').json()) == 1
         assert len(client.get('/api/messages').json()) == 2
 

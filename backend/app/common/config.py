@@ -34,6 +34,16 @@ def host_name(value):
 @dataclass
 class Settings:
     data_dir: Path = ROOT / 'data'
+    privacy_operator: str = ''
+    privacy_contact: str = ''
+    public_api_origin: str = ''
+    backup_retention_days: int = 7
+    login_global_per_minute: int = 300
+    login_client_per_minute: int = 20
+    wechat_app_id: str = ''
+    wechat_app_secret: str = field(default='', repr=False)
+    tenant_cache_size: int = 8
+    auth_session_seconds: int = 604800
     model_base_url: str = ''
     model_api_key: str = field(default='', repr=False)
     model_name: str = ''
@@ -57,6 +67,12 @@ class Settings:
     model_response_max_bytes: int = 1048576
     model_timeout_seconds: float = 45
     safety_timeout_seconds: float = 8
+    user_requests_per_minute: int = 60
+    global_requests_per_minute: int = 600
+    model_max_concurrent: int = 2
+    user_model_calls_per_day: int = 200
+    global_model_calls_per_day: int = 5000
+    model_max_output_tokens: int = 4096
     runtime_max_executions: int = 2
     execution_seconds: float = 120
     execution_grace_seconds: float = 15
@@ -71,6 +87,8 @@ class Settings:
 
     def __post_init__(self):
         self.data_dir = Path(self.data_dir)
+        if type(self.auth_session_seconds) is not int or not 60 <= self.auth_session_seconds <= 2592000:
+            invalid('AUTH_SESSION_SECONDS')
         for name in ('obs_enabled', 'obs_metrics_enabled', 'obs_quality_export_enabled', 'obs_thread_link_enabled'):
             if type(getattr(self, name)) is not bool:
                 invalid(name.upper())
@@ -93,6 +111,9 @@ class Settings:
         if self.runtime_profile not in ('development', 'hardened'):
             invalid('RUNTIME_PROFILE')
         for name in ('request_max_bytes', 'model_response_max_bytes', 'runtime_max_executions',
+                     'backup_retention_days', 'login_global_per_minute', 'login_client_per_minute',
+                     'tenant_cache_size', 'user_requests_per_minute', 'global_requests_per_minute', 'model_max_concurrent',
+                     'user_model_calls_per_day', 'global_model_calls_per_day', 'model_max_output_tokens',
                      'context_pending_days', 'context_plan_days', 'context_completed_days', 'job_max_attempts', 'job_catchup_days'):
             value = getattr(self, name)
             if type(value) is not int or not 1 <= value <= 100000000:
@@ -114,6 +135,18 @@ class Settings:
                 if not all((self.model_base_url, self.model_name, self.model_api_key)):
                     invalid('MODEL_CONFIGURATION')
                 self.validate_model_target()
+
+    def validate_wechat(self):
+        # Validate at service startup, before opening any data files. Domain tests
+        # and offline evaluations may construct model-only Settings independently.
+        if not (self.wechat_app_id.strip() and self.wechat_app_secret.strip()):
+            invalid('WECHAT_CONFIGURATION')
+        if self.runtime_profile == 'hardened':
+            if not self.privacy_operator.strip() or '@' not in self.privacy_contact:
+                invalid('PRIVACY_OPERATOR_OR_CONTACT')
+            url = urlsplit(self.public_api_origin)
+            if url.scheme != 'https' or not url.hostname or '.' not in url.hostname or url.hostname == 'localhost' or url.port not in (None, 443) or url.path not in ('', '/') or url.query or url.fragment or url.username or url.password:
+                invalid('PUBLIC_API_ORIGIN')
 
     def validate_model_target(self):
         try:
@@ -164,6 +197,23 @@ class Settings:
                       runtime_profile=profile, local_only=mode == 'local_only',
                       model_egress_proxy=os.getenv('MODEL_EGRESS_PROXY', ''),
                       model_allowed_hosts=tuple(os.getenv('MODEL_ALLOWED_HOSTS', 'dashscope.aliyuncs.com').split(',')))
+        secret_file = os.getenv('WECHAT_APP_SECRET_FILE', '')
+        secret = ''
+        if secret_file:
+            try:
+                with open(secret_file, 'rb') as handle:
+                    raw_secret = handle.read(4097)
+                if len(raw_secret) > 4096:
+                    invalid('WECHAT_APP_SECRET_FILE')
+                secret = raw_secret.decode('utf-8').strip()
+                if not secret or len(secret) > 4096 or '\n' in secret or '\r' in secret:
+                    invalid('WECHAT_APP_SECRET_FILE')
+            except (OSError, UnicodeError):
+                invalid('WECHAT_APP_SECRET_FILE')
+        for name in ('privacy_operator', 'privacy_contact', 'public_api_origin'):
+            values[name] = os.getenv(name.upper(), '')
+        values.update(wechat_app_id=os.getenv('WECHAT_APP_ID', ''),
+                      wechat_app_secret=secret)
         scheduler = os.getenv('SCHEDULER_ENABLED', 'true').lower()
         if scheduler not in ('true', 'false'):
             invalid('SCHEDULER_ENABLED')
@@ -180,7 +230,10 @@ class Settings:
         for name in ('obs_log_level', 'obs_thread_link_key_file', 'obs_thread_link_key_version'):
             if name.upper() in os.environ:
                 values[name] = os.environ[name.upper()]
-        for name, typ in (('context_pending_days', int), ('context_plan_days', int), ('context_completed_days', int),
+        for name, typ in (('backup_retention_days', int), ('login_global_per_minute', int), ('login_client_per_minute', int), ('tenant_cache_size', int), ('auth_session_seconds', int), ('context_pending_days', int), ('context_plan_days', int), ('context_completed_days', int),
+                          ('user_requests_per_minute', int), ('global_requests_per_minute', int),
+                          ('model_max_concurrent', int), ('user_model_calls_per_day', int),
+                          ('global_model_calls_per_day', int), ('model_max_output_tokens', int),
                           ('request_max_bytes', int), ('request_body_seconds', float),
                           ('model_response_max_bytes', int), ('model_timeout_seconds', float),
                           ('safety_timeout_seconds', float), ('runtime_max_executions', int),

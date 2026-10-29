@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.main import create_app

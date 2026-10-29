@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.clock import SHANGHAI
 from app.common.config import Settings
@@ -202,7 +202,7 @@ def test_chat_persists_locally_grounded_value_and_provenance(tmp_path, monkeypat
             'request_id': str(uuid4()), 'text': '今天体重65kg',
         })
         assert response.status_code == 200, response.text
-        record = client.app.state.engine.repo.events()[0]['data']
+        record = client.app.state.test_engine.repo.events()[0]['data']
         assert record['value'] == 65
         evidence = next(e for e in record['evidence'] if e['field'] == 'value')
         assert evidence['quote'] == '体重65kg'

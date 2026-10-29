@@ -6,7 +6,7 @@ from datetime import timedelta, date
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.clock import now
 from app.common.config import Settings
@@ -29,7 +29,7 @@ def settings(tmp_path):
 
 @pytest.fixture
 def engine(settings):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     yield runtime
     runtime.close()
 
@@ -107,14 +107,14 @@ def test_unknown_shared_record_requires_explicit_group_preview(engine):
 
 
 def test_deleted_original_and_resume_requests_cannot_recreate_content_after_restart(settings):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     request_id = str(uuid4())
     pending = chat(runtime, '今天记录体重', request_id)
     payload = {'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'], 'text': '65公斤'}
     runtime.resume(pending['thread_id'], payload)
     erase(runtime, 'event', runtime.repo.events()[0]['id'])
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         with pytest.raises(RequestErased):
             chat(runtime, '今天记录体重', request_id)
@@ -200,7 +200,7 @@ def test_transitive_old_insight_generation_reaches_review_and_notification(engin
 
 
 def test_checkpoint_failure_is_pending_and_startup_recovers(settings, monkeypatch):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     chat(runtime, '今天体重65公斤')
     target = runtime.repo.events()[0]['id']
     original = runtime.checkpointer.delete_thread
@@ -212,7 +212,7 @@ def test_checkpoint_failure_is_pending_and_startup_recovers(settings, monkeypatc
     assert runtime.repo.messages() == []
     monkeypatch.setattr(runtime.checkpointer, 'delete_thread', original)
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert runtime.deletions.status(result['deletion_id'])['state'] == 'completed'
         assert checkpoint_threads(runtime) == set()
@@ -221,7 +221,7 @@ def test_checkpoint_failure_is_pending_and_startup_recovers(settings, monkeypatc
 
 
 def test_business_failure_keeps_durable_fence_and_restart_finishes(settings, monkeypatch):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     chat(runtime, '今天体重65公斤')
     target = runtime.repo.events()[0]['id']
     monkeypatch.setattr(runtime.deletions, '_erase_business', lambda *_: (_ for _ in ()).throw(OSError('busy')))
@@ -229,7 +229,7 @@ def test_business_failure_keeps_durable_fence_and_restart_finishes(settings, mon
     assert result['state'] == 'pending'
     assert runtime.repo.conn.execute('SELECT state FROM deletion_jobs').fetchone()[0] == 'business_pending'
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert runtime.repo.events() == []
         assert runtime.repo.messages() == []
@@ -250,13 +250,13 @@ def test_compaction_failure_does_not_report_completion(engine, monkeypatch):
 
 
 def test_legacy_context_is_unknown_and_requires_preview(settings):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     chat(runtime, '今天体重65公斤')
     target = runtime.repo.events()[0]['id']
     with runtime.repo.conn:
         runtime.repo.conn.execute("INSERT INTO notifications VALUES ('legacy','legacy','旧通知','可能的原文副本',0,'2020')")
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         preview = runtime.deletions.preview('event', target)
         assert preview['scope'] == 'legacy_context'
@@ -328,7 +328,7 @@ def test_business_pending_api_reads_are_fenced_and_retry_endpoint_finishes(setti
         body = {'request_id': str(uuid4()), 'text': '今天体重65公斤', 'processing_mode': 'local_only'}
         client.post('/api/chat', json=body)
         target = client.get('/api/events').json()[0]['id']
-        service = client.app.state.engine.deletions
+        service = client.app.state.test_engine.deletions
         original = service._erase_business
         monkeypatch.setattr(service, '_erase_business', lambda *_: (_ for _ in ()).throw(OSError('busy')))
         preview = client.post('/api/deletions/preview', json={'target_type': 'event', 'target_id': target}).json()
@@ -343,7 +343,7 @@ def test_business_pending_api_reads_are_fenced_and_retry_endpoint_finishes(setti
 
 
 def test_unmanaged_checkpoint_is_unknown_and_its_request_cannot_be_replayed(settings):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     chat(runtime, '今天体重65公斤')
     target = runtime.repo.events()[0]['id']
     orphan_request = str(uuid4())
@@ -352,7 +352,7 @@ def test_unmanaged_checkpoint_is_unknown_and_its_request_cannot_be_replayed(sett
         runtime.repo.conn.execute('DELETE FROM messages WHERE thread_id=?', (orphan['thread_id'],))
         runtime.repo.conn.execute('DELETE FROM workflows WHERE id=?', (orphan['thread_id'],))
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         preview = runtime.deletions.preview('event', target)
         assert preview['scope'] == 'legacy_context'
@@ -366,7 +366,7 @@ def test_unmanaged_checkpoint_is_unknown_and_its_request_cannot_be_replayed(sett
 
 
 def test_archive_failure_rolls_back_both_aggregate_and_original_erasure(settings, monkeypatch):
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     runtime.repo.save_events([{'kind': 'weight', 'value': 65, 'occurred_at': '2020-01-02T12:00:00+08:00',
                               'raw_text': '旧体重65公斤'}], 'archive-fault')
     original = runtime.repo.persist_provenance
@@ -382,7 +382,7 @@ def test_archive_failure_rolls_back_both_aggregate_and_original_erasure(settings
     assert len(runtime.repo.events()) == 1
     assert runtime.repo.summaries() == []
     runtime.close()
-    runtime = Engine(settings)
+    runtime = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert runtime.repo.events() == []
         assert runtime.repo.summaries()[0]['data']['avg_weight_kg'] == 65

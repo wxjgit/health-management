@@ -1,16 +1,23 @@
 import Taro from "@tarojs/taro";
+import { accountKey } from "./api";
 import type { DeletionPreview, DeletionResult } from "./types";
 
 export type DeletionState = {
+  owner?: string;
   base: string;
   preview: DeletionPreview;
   requestId: string;
   result?: DeletionResult;
 };
-export const deletionState = () =>
-  Taro.getStorageSync<DeletionState>("deletion-state") || null;
-export const saveDeletionState = (value: DeletionState) =>
-  Taro.setStorageSync("deletion-state", value);
+export const deletionState = () => {
+  const state = Taro.getStorageSync<DeletionState>("deletion-state");
+  return accountKey() && state?.owner === accountKey() ? state : null;
+};
+export const saveDeletionState = (value: DeletionState) => {
+  const owner = accountKey();
+  if (!owner) throw new Error("请先微信登录。");
+  Taro.setStorageSync("deletion-state", { ...value, owner });
+};
 export const exportPaths = () =>
   Taro.getStorageSync<string[]>("export-files") || [];
 export async function removeExports() {

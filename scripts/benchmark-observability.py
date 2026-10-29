@@ -23,7 +23,7 @@ def percentile(values, quantile):
 
 def measure(enabled, samples, directory):
     engine = Engine(Settings(data_dir=directory, local_only=True,
-        scheduler_enabled=False, job_runner_enabled=False, obs_enabled=enabled))
+        scheduler_enabled=False, job_runner_enabled=False, obs_enabled=enabled), user_id=str(uuid4()))
     times = []
     try:
         for index in range(samples+5):

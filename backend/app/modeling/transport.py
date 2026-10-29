@@ -6,6 +6,7 @@ import time
 import httpx
 
 from ..common.execution_budget import check_budget, remaining_seconds
+from ..common.usage import model_admission
 from ..common.errors import ModelUnavailableError, UpstreamModelError
 
 
@@ -15,7 +16,9 @@ async def fetch_model(settings, body, purpose):
     started = time.monotonic()
     observation = {'status_class': 'none', 'outcome': 'ok', 'stage': 'none'}
     try:
-        return await _fetch_model(settings, body, purpose, observation)
+        with model_admission():
+            body = {**body, 'max_tokens': settings.model_max_output_tokens}
+            return await _fetch_model(settings, body, purpose, observation)
     except BaseException as error:
         cause = error.__cause__
         if isinstance(error, asyncio.CancelledError):

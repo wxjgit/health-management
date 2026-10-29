@@ -1,0 +1,10 @@
+[Unit]
+Description=Qingji minute health checks
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=qingji-monitor.service
+
+[Install]
+WantedBy=timers.target

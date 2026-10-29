@@ -14,6 +14,6 @@ python scripts/supervise-runtime.py --project qingji-hardened
 
 10分钟内超过3次监督重启时停止应用并退出，避免无限自动恢复。宿主机服务管理器不能无条件无限重启已因该保护退出的监督器。用 systemd（Linux）或受管后台计划任务（Windows）托管，记录监督器退出并请求运维处理；应用容器不挂载 Docker socket。`start-hardened.ps1` 前台运行监督器，适合检查部署，持续使用需宿主机托管。
 
-回收会中断同进程其他请求和 scheduler。这是当前单用户单进程方案的边界，不是单任务强制终止。重启后保留原 request_id/调用预算，按已有 checkpoint、resume_attempt、receipt 与删除 fence 恢复。不可自动新建幂等键或假定整轮回滚。
+回收会中断同进程其他请求和 scheduler。这是当前多用户共享单进程方案的边界，不是单任务强制终止。重启后保留原 request_id/调用预算，按已有 checkpoint、resume_attempt、receipt 与删除 fence 恢复。不可自动新建幂等键或假定整轮回滚。
 
 必须以测试卷执行故障注入，验证已提交/未提交记录、两库、删除与 resume 恢复。禁止在真实个人数据卷上执行故障注入。

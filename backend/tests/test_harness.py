@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.clock import SHANGHAI
 from app.common.config import Settings
@@ -72,7 +72,7 @@ def test_new_record_sends_no_history_even_with_injected_history(settings, monkey
     calls = install(monkeypatch, lambda data: {'actions': [
         {'intent': 'record', 'text': text, 'events': [weight()]}]})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed(repo)
         result = post(client, text)
         assert result.status_code == 200, result.text
@@ -109,7 +109,7 @@ def test_previous_references_are_not_read_without_an_approved_reference_task(
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.message('old-result', 'old-thread', 'assistant', 'PRIVATE_CHAT',
                      evidence=[{'id': ids[0], 'text': 'PRIVATE_REFERENCE'}])
@@ -147,7 +147,7 @@ def test_previous_reference_is_read_only_after_planning(settings, monkeypatch, i
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.message('old-result', 'old-thread', 'assistant', 'PRIVATE_CHAT',
                      evidence=[{'id': ids[target_index]}])
@@ -178,7 +178,7 @@ def test_missing_or_multiple_previous_references_still_require_selection(
     calls = install(monkeypatch, lambda data: {'actions': [
         {'intent': 'correct', 'text': data['text'], 'target': 'previous'}]})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.message('old-result', 'old-thread', 'assistant', 'PRIVATE_CHAT',
                      evidence=[{'id': ids[i]} for i in reference_indexes])
@@ -206,7 +206,7 @@ def test_forged_or_cross_domain_requests_are_rejected_before_retrieval(settings,
     calls = install(monkeypatch, lambda data: {'actions': [
         {'intent': 'advice', 'text': text, **extra}]})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed(repo)
         monkeypatch.setattr(repo, 'previous_reference_ids',
                             unexpected_previous_reference_read)
@@ -222,7 +222,7 @@ def test_typed_view_selection_does_not_require_question_keywords(settings, monke
         'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend'}]}
         if data['task'] == 'processing_plan' else {'point_ids': [data['options'][0]['point_id']]}))
     with TestClient(create_app(settings)) as client:
-        seed(client.app.state.engine.repo)
+        seed(client.app.state.test_engine.repo)
         response = post(client, '今天体重65kg')
         assert response.status_code == 200
         assert len(calls) == 2
@@ -239,7 +239,7 @@ def test_user_refusal_of_history_cannot_be_overridden_by_plan(settings, monkeypa
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        seed(client.app.state.engine.repo)
+        seed(client.app.state.test_engine.repo)
         response = post(client, '最近体重趋势怎么样？不要读取历史记录')
         assert response.status_code == (200 if requested_view == 'none' else 502)
         assert 'HIDDEN_' not in json.dumps(calls)
@@ -262,7 +262,7 @@ def test_mixed_record_and_advice_only_sends_weight_view(settings, monkeypatch):
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed(repo)
         response = post(client, text)
         assert response.status_code == 200, response.text
@@ -319,12 +319,12 @@ def test_selected_correction_projects_one_record_and_binds_identity(settings, mo
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        ids = seed(client.app.state.engine.repo)
-        monkeypatch.setattr(client.app.state.engine.repo, 'previous_reference_ids',
+        ids = seed(client.app.state.test_engine.repo)
+        monkeypatch.setattr(client.app.state.test_engine.repo, 'previous_reference_ids',
                             unexpected_previous_reference_read)
         response = post(client, text, event_id=ids[2])
         assert response.status_code == 200, response.text
-        record = client.app.state.engine.repo.event(ids[2])
+        record = client.app.state.test_engine.repo.event(ids[2])
         assert record['data']['value'] == 64
         assert record['day'] == '2026-10-19'
         assert 'HIDDEN_MEAL' not in json.dumps(calls)
@@ -336,7 +336,7 @@ def test_unresolved_correction_asks_user_and_never_sends_candidates(settings, mo
     text = '把它改成64kg'
     calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'correct', 'text': text}]})
     with TestClient(create_app(settings)) as client:
-        ids = seed(client.app.state.engine.repo)
+        ids = seed(client.app.state.test_engine.repo)
         result = post(client, text).json()
         assert result['status'] == 'waiting_input'
         assert result['pending_input']['options']
@@ -347,7 +347,7 @@ def test_unresolved_correction_asks_user_and_never_sends_candidates(settings, mo
             'text': '任意记录', 'event_id': 'forged-id'})
         assert response.status_code == 422
         assert len(calls) == 1
-        assert all(client.app.state.engine.repo.event(i)['version'] == 1 for i in ids)
+        assert all(client.app.state.test_engine.repo.event(i)['version'] == 1 for i in ids)
 
 
 def test_candidate_selection_can_resume_after_restart(settings, monkeypatch):
@@ -358,21 +358,21 @@ def test_candidate_selection_can_resume_after_restart(settings, monkeypatch):
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        ids = seed(client.app.state.engine.repo)
+        ids = seed(client.app.state.test_engine.repo)
         pending = post(client, '把它改成64kg').json()
     with TestClient(create_app(settings)) as client:
         response = client.post(f'/api/workflows/{pending["thread_id"]}/resume', json={
             'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'],
             'text': '选择体重记录', 'event_id': ids[2]})
         assert response.status_code == 200, response.text
-        assert client.app.state.engine.repo.event(ids[2])['data']['value'] == 64
+        assert client.app.state.test_engine.repo.event(ids[2])['data']['value'] == 64
         assert [c['task'] for c in calls] == ['processing_plan', 'processing_plan', 'correct_selected']
 
 
 def test_reference_cannot_resolve_from_another_conversation(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'correct', 'text': data['text']}]})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.message('previous', 'other-thread', 'assistant', '记录已保存',
                      evidence=[{'id': ids[2]}], conversation='other')
@@ -384,7 +384,7 @@ def test_reference_cannot_resolve_from_another_conversation(settings, monkeypatc
 def test_ambiguous_advice_reference_asks_without_sending_history(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'advice', 'text': data['text']}]})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.message('many', 'old', 'assistant', '查询结果', evidence=[{'id': i} for i in ids])
         response = post(client, '这顿适合我吗？')
@@ -397,7 +397,7 @@ def test_query_results_remain_local(settings, monkeypatch):
         'intent': 'query', 'text': data['text'], 'query_start': '2026-10-19',
         'query_end': '2026-10-19', 'query_kind': 'weight'}]})
     with TestClient(create_app(settings)) as client:
-        seed(client.app.state.engine.repo)
+        seed(client.app.state.test_engine.repo)
         response = post(client, '查昨天的体重')
         assert response.status_code == 200, response.text
         assert len(response.json()['evidence_refs']) == 1
@@ -411,7 +411,7 @@ def test_local_only_blocks_all_models_and_does_not_use_demo_nutrition(settings, 
         response = post(client, '今天吃了100g炸鸡，有点咸', processing_mode='local_only')
         assert response.status_code == 200, response.text
         assert response.json()['model_disclosures'] == []
-        event = client.app.state.engine.repo.events()[0]
+        event = client.app.state.test_engine.repo.events()[0]
         assert event['data']['items'][0]['kcal'] is None
         response = post(client, '今天饮食怎么调整？', processing_mode='local_only')
         assert response.status_code == 200, response.text
@@ -429,7 +429,7 @@ def test_local_only_remains_in_force_after_restart_and_resume(settings, monkeypa
             'text': '100g', 'processing_mode': 'model_allowed'})
         assert response.status_code == 200, response.text
         assert response.json()['processing_mode'] == 'local_only'
-        assert client.app.state.engine.repo.events()[0]['data']['items'][0]['kcal'] is None
+        assert client.app.state.test_engine.repo.events()[0]['data']['items'][0]['kcal'] is None
         assert calls == []
 
 
@@ -451,7 +451,7 @@ def test_failed_retries_share_persistent_planning_budget(settings, monkeypatch):
         assert client.post('/api/chat', json=payload).status_code == 503
         assert client.post('/api/chat', json=payload).status_code == 409
         assert len(calls) == 4
-        rows = client.app.state.engine.repo.conn.execute('SELECT purpose,payload_bytes FROM model_calls').fetchall()
+        rows = client.app.state.test_engine.repo.conn.execute('SELECT purpose,payload_bytes FROM model_calls').fetchall()
         assert len(rows) == 5
         assert sum(row['purpose'] == 'safety_classification' for row in rows) == 1
 
@@ -459,7 +459,7 @@ def test_failed_retries_share_persistent_planning_budget(settings, monkeypatch):
 def test_gateway_rejects_unapproved_calls_and_changed_context(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: pytest.fail('越权请求不应触达模型'))
     with TestClient(create_app(settings)) as client:
-        parser = client.app.state.engine.parser
+        parser = client.app.state.test_engine.parser
         with pytest.raises(PolicyError):
             parser.model_request('prompt', {'task': 'processing_plan'}, ProcessingPlan)
         context = {'question': '体重趋势', 'scene': 'weight_trend', 'view': 'weight_trend',
@@ -477,7 +477,7 @@ def test_gateway_rejects_unapproved_calls_and_changed_context(settings, monkeypa
 def test_gateway_rejects_added_private_fields_even_with_local_grant(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: pytest.fail('私有字段不应发送'))
     with TestClient(create_app(settings)) as client:
-        parser = client.app.state.engine.parser
+        parser = client.app.state.test_engine.parser
         context = {'question': '体重趋势', 'scene': 'weight_trend', 'view': 'weight_trend',
                    'now': '2026-10-20', 'weights': [], 'window': {'start': '2026-10-19', 'end': '2026-10-20'},
                    'private_notes': 'HIDDEN_CYCLE'}
@@ -491,7 +491,7 @@ def test_gateway_rejects_added_private_fields_even_with_local_grant(settings, mo
 def test_output_schema_cannot_be_used_to_smuggle_private_data(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: pytest.fail('篡改Schema不能发出请求'))
     with TestClient(create_app(settings)) as client:
-        parser = client.app.state.engine.parser
+        parser = client.app.state.test_engine.parser
         resource = {'text': '今天体重65kg', 'interaction': {'selected_record': False}}
         with parser.boundary.request(False, lambda *args: None):
             parser.boundary.grant('processing_plan', resource)
@@ -505,7 +505,7 @@ def test_output_schema_cannot_be_used_to_smuggle_private_data(settings, monkeypa
 def test_planner_cannot_send_previous_result_count_even_with_local_grant(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: pytest.fail('规划请求不应发送上轮引用数量'))
     with TestClient(create_app(settings)) as client:
-        parser = client.app.state.engine.parser
+        parser = client.app.state.test_engine.parser
         resource = {'text': '今天体重65kg',
                     'interaction': {'selected_record': False, 'previous_result_count': 1}}
         with parser.boundary.request(False, lambda *args: None):
@@ -526,7 +526,7 @@ def test_view_windows_exclude_old_and_unrelated_data(settings, monkeypatch):
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed(repo)
         repo.save_events([weight(80, 'HIDDEN_OLD', '2026-09-01')], 'old')
         assert post(client, '最近体重趋势怎么样？').status_code == 200
@@ -544,7 +544,7 @@ def test_shorter_requested_window_does_not_expand_to_maximum(settings, monkeypat
 
     install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed(repo)
         repo.save_events([weight(68, 'EARLIER_WEIGHT', '2026-10-16')], 'earlier')
         assert post(client, '最近三天体重趋势怎么样？').status_code == 200
@@ -553,7 +553,7 @@ def test_shorter_requested_window_does_not_expand_to_maximum(settings, monkeypat
 def test_oversized_window_is_rejected_without_historical_request(settings, monkeypatch):
     calls = install(monkeypatch, lambda data: {'actions': [{'intent': 'advice', 'text': data['text'], 'data_view': 'weight_trend', 'view_start': '2026-09-21', 'view_end': '2026-10-20'}]})
     with TestClient(create_app(settings)) as client:
-        seed(client.app.state.engine.repo)
+        seed(client.app.state.test_engine.repo)
         response = post(client, '最近30天体重趋势怎么样？')
         assert response.status_code == 502
         assert len(calls) == 2
@@ -572,7 +572,7 @@ def test_single_meal_reference_does_not_send_other_meals_or_chat(settings, monke
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         ids = seed(repo)
         repo.save_events([{'kind': 'meal', 'occurred_at': '2026-10-20T09:00:00+08:00',
                           'raw_text': 'OTHER_MEAL', 'items': [{'name': 'PRIVATE_FOOD', 'quantity': 1}]}], 'another-meal')
@@ -593,7 +593,7 @@ def test_diet_day_uses_user_date_instead_of_unrelated_today(settings, monkeypatc
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        seed(client.app.state.engine.repo)
+        seed(client.app.state.test_engine.repo)
         response = post(client, '昨天饮食有什么需要注意的吗？')
         assert response.status_code == 200, response.text
         assert '苹果' not in json.dumps(calls, ensure_ascii=False)
@@ -616,7 +616,7 @@ def test_model_workflow_can_be_restricted_to_local_when_resuming(settings, monke
         assert response.status_code == 200, response.text
         assert response.json()['status'] == 'completed'
         assert len(calls) == 1
-        assert client.app.state.engine.repo.events()[0]['data']['items'][0]['kcal'] is None
+        assert client.app.state.test_engine.repo.events()[0]['data']['items'][0]['kcal'] is None
 
 
 def test_correction_model_cannot_select_a_different_id(settings, monkeypatch):
@@ -627,10 +627,10 @@ def test_correction_model_cannot_select_a_different_id(settings, monkeypatch):
 
     calls = install(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        ids = seed(client.app.state.engine.repo)
+        ids = seed(client.app.state.test_engine.repo)
         response = post(client, '改成64kg', event_id=ids[2])
         assert response.status_code == 502
-        assert all(client.app.state.engine.repo.event(i)['version'] == 1 for i in ids)
+        assert all(client.app.state.test_engine.repo.event(i)['version'] == 1 for i in ids)
         assert len(calls) == 2
 
 
@@ -642,5 +642,5 @@ def test_multiple_ambiguous_write_actions_never_write(settings, monkeypatch):
     with TestClient(create_app(settings)) as client:
         response = post(client, '今天体重65kg，上一条改成64kg')
         assert response.json()['status'] == 'waiting_input'
-        assert client.app.state.engine.repo.events() == []
+        assert client.app.state.test_engine.repo.events() == []
         assert len(calls) == 1

@@ -1,7 +1,7 @@
 """Chat history cursors stay stable across new messages and timestamp ties."""
 
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 from app.common.config import Settings
 from app.main import create_app
 from app.workflows.engine import Engine
@@ -9,7 +9,7 @@ from app.workflows.engine import Engine
 
 @pytest.fixture
 def engine(tmp_path):
-    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False))
+    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     yield runtime
     runtime.close()
 

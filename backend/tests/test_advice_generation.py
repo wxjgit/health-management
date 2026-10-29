@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.clock import SHANGHAI
 from app.common.config import Settings
@@ -75,7 +75,7 @@ def ask(client, text, conversation_id='food-chat'):
 def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkeypatch):
     calls = install_model(monkeypatch, {'point_ids': ['regular_meals']})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         seed_today(repo)
         repo.message('old-user', 'old-thread', 'user', '我刚吃了100g葱油饼', conversation='food-chat')
         repo.message('old-assistant', 'old-thread', 'assistant', '这是不应回传给模型的旧建议999 kcal',
@@ -110,7 +110,7 @@ def test_advice_uses_structured_today_data_without_raw_dialogue(settings, monkey
 def test_non_referential_question_does_not_send_raw_dialogue(settings, monkeypatch):
     calls = install_model(monkeypatch, {'point_ids': ['record_details']})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         repo.message('old-user', 'old-thread', 'user', '昨天聊了完全不同的话题', conversation='food-chat')
         ask(client, '今天吃饭需要注意什么吗')
         assert 'recent_dialogue' not in calls['advice'][0]['context']
@@ -127,7 +127,7 @@ def test_non_referential_question_does_not_send_raw_dialogue(settings, monkeypat
 def test_unverified_model_advice_falls_back_to_same_context(settings, monkeypatch, invalid):
     install_model(monkeypatch, invalid)
     with TestClient(create_app(settings)) as client:
-        seed_today(client.app.state.engine.repo)
+        seed_today(client.app.state.test_engine.repo)
         result = ask(client, '那我今天吃饭需要注意什么吗')
         assert invalid not in result['reply']
         assert '葱油饼' in result['reply']
@@ -145,7 +145,7 @@ def test_natural_answer_requires_independent_review(settings, monkeypatch):
         return {'answer': answer}
     calls = install_model(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        seed_today(client.app.state.engine.repo)
+        seed_today(client.app.state.test_engine.repo)
         result = ask(client, '今天是不是吃的有点油腻了')
         assert result['reply'] == answer
         assert len(calls['advice']) == 2
@@ -158,6 +158,6 @@ def test_reviewer_cannot_replace_answer_with_unreviewed_prose(settings, monkeypa
         return {'answer': '仅凭这些记录还不能确定全天用油情况。'}
     install_model(monkeypatch, model)
     with TestClient(create_app(settings)) as client:
-        seed_today(client.app.state.engine.repo)
+        seed_today(client.app.state.test_engine.repo)
         result = ask(client, '今天是不是吃的有点油腻了')
         assert '已修改' not in result['reply']

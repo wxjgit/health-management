@@ -4,13 +4,15 @@ import json
 from pathlib import Path
 
 from ..common.config import Settings
-from ..infrastructure.data_owner import DataDirectoryInUse
+from ..infrastructure.data_owner import DataDirectoryInUse, DataOwner
+from ..infrastructure.tenants import tenant_path
 from ..workflows.engine import Engine
 
 
 def main():
     parser = argparse.ArgumentParser(description='Offline task administration; stop the service first.')
     parser.add_argument('--data-dir', type=Path, required=True)
+    parser.add_argument('--user-id', required=True, help='Internal account UUID')
     commands = parser.add_subparsers(dest='action', required=True)
     commands.add_parser('status')
     commands.add_parser('pause')
@@ -20,11 +22,23 @@ def main():
     retry.add_argument('--reason', required=True,
                        choices=('operator_retry','configuration_fixed','upstream_recovered'))
     args = parser.parse_args()
+    root_owner = None
     try:
-        engine = Engine(Settings(data_dir=args.data_dir.resolve(), local_only=True,
-                                 scheduler_enabled=False, job_runner_enabled=False))
+        data_dir = args.data_dir.resolve()
+        root_owner = DataOwner(data_dir)
+        data_dir = tenant_path(data_dir, args.user_id)
+        if not (data_dir / 'health.db').is_file():
+            raise ValueError('user_database_not_found')
+        engine = Engine(Settings(data_dir=data_dir, local_only=True,
+                                 scheduler_enabled=False, job_runner_enabled=False), user_id=args.user_id)
     except DataDirectoryInUse:
+        if root_owner:
+            root_owner.close()
         parser.exit(2, 'data_directory_in_use: stop the service before offline administration.\n')
+    except (ValueError, OSError):
+        if root_owner:
+            root_owner.close()
+        parser.exit(2, 'invalid_user_database: specify an existing internal account UUID.\n')
     try:
         if args.action == 'retry':
             engine.repo.retry_failed_job(args.job_id, args.reason)
@@ -35,6 +49,8 @@ def main():
         parser.exit(2, 'job_retry_not_allowed: inspect job state, expiry and source lifecycle.\n')
     finally:
         engine.close()
+        if root_owner:
+            root_owner.close()
 
 
 if __name__ == '__main__':

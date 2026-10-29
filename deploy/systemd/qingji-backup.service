@@ -1,0 +1,10 @@
+[Unit]
+Description=Qingji consistent encrypted offsite backup
+After=docker.service
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30min
+EnvironmentFile=/etc/qingji/production.env
+ExecStart=/bin/bash /opt/qingji/deploy/backup.sh
+UMask=0077

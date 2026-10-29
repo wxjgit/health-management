@@ -1,0 +1,11 @@
+[Unit]
+Description=Qingji local health and aggregate queue checks
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/qingji
+EnvironmentFile=/etc/qingji/production.env
+Environment=PYTHONPATH=backend
+ExecStart=/opt/qingji/.venv/bin/python -m app.operations.monitor --data-dir ${HEALTH_DATA_SOURCE} --container qingji-hardened-app-1 --backup-status-dir /var/lib/qingji --notify --webhook-file /etc/qingji/alert-webhook --state-file /var/lib/qingji/monitor-state.json
+UMask=0077

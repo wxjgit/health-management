@@ -12,6 +12,8 @@ from .contracts import validate_payload
 def execute_job(engine, lease, reference=None):
     repo = engine.repo
     job = repo.scheduled_job(lease.id)
+    if engine.accounts is not None and not engine.accounts.consent(engine.user_id)['model_allowed']:
+        job['processing_mode'] = 'local_only'
     payload = job['payload']
     if job['payload_version'] != 1:
         raise ValueError('job_payload_unsupported')

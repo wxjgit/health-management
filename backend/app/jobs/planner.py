@@ -16,7 +16,8 @@ def plan_jobs(engine, reference=None):
     with engine.lock, atomic(repo):
         repo.quality_prune()
         prefs = repo.get_meta('preferences')
-        mode = 'local_only' if engine.settings.local_only else 'model_allowed'
+        model_allowed = not engine.settings.local_only and (engine.accounts is None or engine.accounts.consent(engine.user_id)['model_allowed'])
+        mode = 'model_allowed' if model_allowed else 'local_only'
         day = current.date()
         start = datetime.combine(day, time(), SHANGHAI)
         midnight = start + timedelta(days=1)

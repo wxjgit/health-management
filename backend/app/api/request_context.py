@@ -8,6 +8,7 @@ from starlette.datastructures import MutableHeaders
 
 from ..common.request_context import request_id
 from .request_limits import RequestLimitsMiddleware
+from .usage import UsageMiddleware
 
 
 class RequestContextMiddleware:
@@ -76,5 +77,5 @@ class RequestContextFastAPI(FastAPI):
     def build_middleware_stack(self):
         # Keep the FastAPI object (state, dependency overrides and lifespan) public.
         return RequestContextMiddleware(
-            RequestLimitsMiddleware(super().build_middleware_stack(), self.state.settings),
+            RequestLimitsMiddleware(UsageMiddleware(super().build_middleware_stack(), self), self.state.settings),
             owner=self)

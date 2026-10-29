@@ -20,25 +20,66 @@ vi.mock("@tarojs/taro", () => ({
 }));
 beforeEach(() => {
   platform.storage.clear();
+  platform.storage.set("auth-session", {
+    user: { id: "test-account" },
+    token: "synthetic-token",
+    base: "http://127.0.0.1:8000",
+  });
   platform.request.mockReset();
   platform.unlink.mockReset();
   vi.resetModules();
 });
 const success = (data: unknown = {}) => ({ statusCode: 200, data, header: {} });
 
-it("首期版本待发请求迁移后保留原编号与参数", async () => {
+it("切换账号后不能显示或重试原账号待处理请求", async () => {
   const state = await import("../src/state");
-  const previous = {
+  platform.storage.set("auth-session", {
+    base: "http://127.0.0.1:8000",
+    user: { id: "account-a" },
+  });
+  const original = state.operation("/chat", { request_id: "same" }, "A 的记录");
+  platform.storage.set("pending-operation", original);
+  platform.storage.set("auth-session", {
+    base: "http://127.0.0.1:8000",
+    user: { id: "account-b" },
+  });
+  expect(state.pendingOperation()).toBeNull();
+  await expect(state.executeOperation(original)).rejects.toThrow("另一账号");
+  expect(platform.request).not.toHaveBeenCalled();
+});
+
+it("隐私清理预览不会继承到其他账号", async () => {
+  const privacy = await import("../src/privacy");
+  platform.storage.set("auth-session", {
+    base: "http://127.0.0.1:8000",
+    user: { id: "account-a" },
+  });
+  privacy.saveDeletionState({
+    base: "http://127.0.0.1:8000",
+    preview: {} as never,
+    requestId: "delete-a",
+  });
+  platform.storage.set("auth-session", {
+    base: "http://127.0.0.1:8000",
+    user: { id: "account-b" },
+  });
+  expect(privacy.deletionState()).toBeNull();
+});
+
+it("没有账号归属的旧请求不再恢复或迁移", async () => {
+  const state = await import("../src/state");
+  platform.storage.set("pending-submission", {
     path: "/chat",
-    body: {
-      request_id: "p0-original",
-      text: "今天体重65公斤",
-      processing_mode: "local_only",
-    },
-  };
-  platform.storage.set("pending-submission", previous);
-  expect(state.pendingOperation()).toMatchObject(previous);
-  expect(platform.storage.has("pending-submission")).toBe(false);
+    body: { request_id: "old" },
+  });
+  expect(state.pendingOperation()).toBeNull();
+  platform.storage.set("pending-operation", {
+    path: "/chat",
+    body: { request_id: "old" },
+  });
+  expect(state.pendingOperation()).toBeNull();
+  platform.storage.delete("auth-session");
+  expect(() => state.operation("/chat", {}, "记录")).toThrow("登录");
 });
 
 it("超时后持久化原参数，重启后重试仍使用同一业务编号", async () => {
@@ -104,11 +145,13 @@ it("旧本地缓存不阻止默认模型请求恢复", async () => {
   const state = await import("../src/state");
   platform.storage.set("local-only", true);
   platform.request.mockResolvedValue(success({ local_only: false }));
-  await state.executeOperation(state.operation(
-    "/workflows/thread/resume",
-    { request_id: "same", processing_mode: "model_allowed" },
-    "恢复",
-  ));
+  await state.executeOperation(
+    state.operation(
+      "/workflows/thread/resume",
+      { request_id: "same", processing_mode: "model_allowed" },
+      "恢复",
+    ),
+  );
   expect(platform.request).toHaveBeenCalledTimes(2);
 });
 it("服务端强制纯本地也禁止重发模型请求", async () => {
@@ -168,6 +211,7 @@ it("删除前后失效私有缓存，并持久化未完成作业以便重启恢�
     reasons: [],
   };
   platform.storage.set("deletion-state", {
+    owner: "test-account",
     base: "http://127.0.0.1:8000",
     preview,
     requestId: "erase",
@@ -205,6 +249,7 @@ it("范围改变后保存新预览，旧删除请求不再自动重试", async (
     reasons: [],
   };
   platform.storage.set("deletion-state", {
+    owner: "test-account",
     base: "http://127.0.0.1:8000",
     preview: { ...preview, preview_id: "old" },
     requestId: "erase",

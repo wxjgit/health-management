@@ -6,7 +6,7 @@ from uuid import uuid4
 from threading import Event, Thread
 
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common import clock
 from app.common.config import Settings
@@ -25,7 +25,7 @@ TARGETS = {'kcal': 1800, 'protein_g': 100, 'carbs_g': 215, 'fat_g': 60, 'exercis
 
 @pytest.fixture
 def engine(tmp_path):
-    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False))
+    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     yield runtime
     runtime.close()
 
@@ -222,7 +222,7 @@ def test_expiry_failure_is_recovered_at_restart(engine, monkeypatch):
     assert engine.repo.workflow(pending['thread_id'])['status'] == 'expired'
     monkeypatch.setattr(engine.checkpointer, 'delete_thread', original)
     engine.close()
-    second = Engine(engine.settings)
+    second = Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert second.repo.workflow(pending['thread_id']) is None
         assert list(second.checkpointer.list(None)) == []
@@ -252,7 +252,7 @@ def test_existing_schema_upgrades_without_altering_legacy_fact(engine):
                                 ('old', '我不吃花生', 'user', None, 'confirmed', clock.stamp()))
         engine.repo.conn.execute('PRAGMA user_version=5')
     engine.close()
-    second = Engine(engine.settings)
+    second = Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert second.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 9
         assert second.repo.fact('old')['content'] == '我不吃花生'
@@ -311,7 +311,7 @@ def test_expired_receipt_remains_rejected_after_restart(engine):
     engine.resume(pending['thread_id'], answer)
     engine.prune_context(clock.now() + timedelta(days=31))
     engine.close()
-    second = Engine(engine.settings)
+    second = Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         with pytest.raises(WorkflowConflict, match='过期'):
             second.resume(pending['thread_id'], answer)
@@ -357,7 +357,7 @@ def test_completed_resume_receipt_cannot_expose_expired_context_before_maintenan
 
 def test_message_read_expires_context_before_parallel_refresh_can_restore_it(tmp_path):
     with TestClient(create_app(Settings(data_dir=tmp_path, scheduler_enabled=False))) as client:
-        runtime = client.app.state.engine
+        runtime = client.app.state.test_engine
         pending = chat(runtime, '今天体重65公斤，中午吃了炸鸡')
         with runtime.repo.conn:
             runtime.repo.conn.execute('UPDATE workflow_activity SET expires_at=? WHERE thread_id=?',

@@ -6,7 +6,7 @@ from datetime import timedelta
 
 import pytest
 import httpx
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common import clock
 from app.common.config import Settings
@@ -25,7 +25,7 @@ TARGETS = {'kcal': 1800, 'protein_g': 100, 'carbs_g': 215, 'fat_g': 60, 'exercis
 
 @pytest.fixture
 def engine(tmp_path):
-    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False))
+    runtime = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     yield runtime
     runtime.close()
 
@@ -261,7 +261,7 @@ def test_v6_migration_keeps_legacy_details_and_snapshots(engine):
         engine.repo.conn.execute('PRAGMA user_version=6')
     engine.close()
     for _ in range(2):
-        restarted = Engine(engine.settings)
+        restarted = Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
         try:
             assert restarted.repo.conn.execute('PRAGMA user_version').fetchone()[0] == 9
             record = restarted.repo.fact('v6')

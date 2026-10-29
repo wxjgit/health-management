@@ -28,7 +28,7 @@ TARGETS = {'kcal': 1800, 'protein_g': 100, 'carbs_g': 215, 'fat_g': 60, 'exercis
 
 @pytest.fixture
 def engine(tmp_path):
-    e = Engine(Settings(data_dir=tmp_path, local_only=True, scheduler_enabled=False, job_runner_enabled=False))
+    e = Engine(Settings(data_dir=tmp_path, local_only=True, scheduler_enabled=False, job_runner_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     yield e
     e.close()
 
@@ -228,7 +228,7 @@ def test_backpressure_does_not_consume_attempt(engine):
 
 def test_heartbeat_uses_separate_connection_during_slow_work(tmp_path, monkeypatch):
     e = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False, job_runner_enabled=False,
-        job_lease_seconds=.4, job_heartbeat_seconds=.05))
+        job_lease_seconds=.4, job_heartbeat_seconds=.05), user_id='00000000-0000-4000-8000-000000000001')
     started, release = Event(), Event()
     job = enqueue(e.repo)
     def slow(engine, lease, reference):
@@ -297,7 +297,7 @@ def test_local_only_survives_event_handoff_and_restart(engine):
     engine.jobs.run_one()
     settings = engine.settings
     engine.close()
-    e = Engine(settings)
+    e = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         e.jobs.drain()
         row = e.repo.conn.execute("SELECT processing_mode FROM scheduled_jobs WHERE kind='auto_plan'").fetchone()
@@ -356,7 +356,7 @@ def test_shutdown_fences_running_task_before_closing_databases(engine, monkeypat
         release.set()
         run.result(timeout=3)
         close.result(timeout=3)
-    reopened = Engine(engine.settings)
+    reopened = Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert reopened.repo.get_meta('late-write') is None
     finally:
@@ -379,7 +379,7 @@ def test_second_engine_rejected_before_repository_open(engine, monkeypatch):
         pytest.fail('ownership must precede database initialization')
     monkeypatch.setattr('app.workflows.engine.Repository', forbidden)
     with pytest.raises(DataDirectoryInUse):
-        Engine(engine.settings)
+        Engine(engine.settings, user_id='00000000-0000-4000-8000-000000000001')
 
 
 def test_directory_lock_released_by_forced_exit(tmp_path):
@@ -391,7 +391,7 @@ owner=DataOwner(Path(sys.argv[1]))
 os._exit(70)
 """, tmp_path)
     assert result.returncode == 70, result.stderr
-    e = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False, job_runner_enabled=False))
+    e = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False, job_runner_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     e.close()
 
 
@@ -439,7 +439,7 @@ from app.common.clock import now
 from app.workflows.engine import Engine
 from pathlib import Path
 import os,sys
-e=Engine(Settings(data_dir=Path(sys.argv[1]),scheduler_enabled=False,job_runner_enabled=False,local_only=True))
+e=Engine(Settings(data_dir=Path(sys.argv[1]),scheduler_enabled=False,job_runner_enabled=False,local_only=True), user_id='00000000-0000-4000-8000-000000000001')
 e.repo.update_profile({'age':30})
 e.repo.enqueue_job('weekly:'+str(now().date()),'weekly',{'period_end':str(now().date())},0)
 original=e.repo.workflow_result
@@ -452,7 +452,7 @@ e.jobs.run_one()
     assert result.returncode == 70, result.stderr
     with sqlite3.connect(tmp_path/'health.db') as conn:
         conn.execute('UPDATE scheduled_jobs SET lease_until=0')
-    e = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False, job_runner_enabled=False, local_only=True))
+    e = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False, job_runner_enabled=False, local_only=True), user_id='00000000-0000-4000-8000-000000000001')
     try:
         e.jobs.drain()
         assert e.repo.conn.execute('SELECT status FROM scheduled_jobs').fetchone()[0] == 'done'

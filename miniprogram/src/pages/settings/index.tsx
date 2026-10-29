@@ -19,6 +19,8 @@ import {
   Icon,
 } from "../../components/common";
 
+import { AccountPanel } from "../../account";
+
 import FormModal from "../../components/form-modal";
 import PlanSection from "../../components/plan-section";
 
@@ -98,6 +100,7 @@ export default function Settings() {
       loading={resource.loading}
       refresh={changed}
     >
+      <AccountPanel />
       <View className="profile-hero">
         <View className="profile-avatar">
           <Icon name="mine" active />

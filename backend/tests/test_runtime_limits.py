@@ -70,7 +70,7 @@ def test_delete_route_reserves_management_before_looking_up_preview(tmp_path):
     from app.api.deletions import DeleteRequest, execute
     from app.workflows.engine import Engine
 
-    engine = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False))
+    engine = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     entered, release = Event(), Event()
 
     def occupied():

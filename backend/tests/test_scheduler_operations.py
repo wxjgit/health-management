@@ -48,7 +48,7 @@ def test_manual_retry_is_audited_and_pause_persists(engine):
     assert not engine.jobs.run_one()
     settings = engine.settings
     engine.close()
-    restarted = Engine(settings)
+    restarted = Engine(settings, user_id='00000000-0000-4000-8000-000000000001')
     try:
         assert restarted.repo.get_meta('jobs_paused')
         restarted.repo.set_meta('jobs_paused', False)
@@ -59,19 +59,25 @@ def test_manual_retry_is_audited_and_pause_persists(engine):
         restarted.close()
 
 
-def test_offline_management_refuses_live_owner(engine):
+def test_offline_management_refuses_live_owner(tmp_path):
+    from app.common.config import Settings
+    from app.infrastructure.tenants import TenantHost
+    host = TenantHost(Settings(data_dir=tmp_path))
+    with host.lease('00000000-0000-4000-8000-000000000001'):
+        pass
     source = """
 from app.jobs.manage import main
 import sys
-sys.argv=['manage','--data-dir',sys.argv[1],'status']
+sys.argv=['manage','--data-dir',sys.argv[1],'--user-id','00000000-0000-4000-8000-000000000001','status']
 main()
 """
-    result = child(source, engine.settings.data_dir)
-    assert result.returncode == 2
-    assert 'data_directory_in_use' in result.stderr
-    directory = engine.settings.data_dir
-    engine.close()
-    result = child(source, directory)
+    try:
+        result = child(source, tmp_path)
+        assert result.returncode == 2
+        assert 'data_directory_in_use' in result.stderr
+    finally:
+        host.close()
+    result = child(source, tmp_path)
     assert result.returncode == 0, result.stderr
     assert 'failed_jobs' in json.loads(result.stdout)
     assert 'lease_token' not in result.stdout

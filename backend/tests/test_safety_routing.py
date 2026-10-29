@@ -7,7 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.contracts.safety import SafetyClassification
@@ -75,7 +75,7 @@ def test_explicit_risks_do_not_call_any_model_even_if_it_would_misclassify(setti
             assert result['reply'] == REPLIES[category]
             assert result['cards'] == result['evidence_refs'] == result['model_disclosures'] == []
         assert client.get('/api/events').json() == []
-        assert client.app.state.engine.repo.facts() == []
+        assert client.app.state.test_engine.repo.facts() == []
     assert calls == []
 
 
@@ -144,7 +144,7 @@ def test_raw_correction_answer_and_resume_restart(settings, monkeypatch):
     # Use a strict offline correction to reach selection, then append risk to an ID choice.
     settings.model_base_url = ''
     with TestClient(create_app(settings)) as client:
-        engine = client.app.state.engine
+        engine = client.app.state.test_engine
         ids = engine.repo.save_events([{'kind': 'weight', 'occurred_at': '2026-10-20T08:00:00+08:00',
                                        'raw_text': '体重65公斤', 'value': 65}], 'seed')
         pending = post(client, '修改体重64公斤').json()
@@ -155,14 +155,14 @@ def test_raw_correction_answer_and_resume_restart(settings, monkeypatch):
         url = f'/api/workflows/{pending["thread_id"]}/resume'
         result = client.post(url, json=payload).json()
         assert result['safety']['category'] == 'emergency'
-        assert client.app.state.engine.repo.event(ids[0])['version'] == 1
+        assert client.app.state.test_engine.repo.event(ids[0])['version'] == 1
         assert client.post(url, json=payload).json() == result
 
 
 def test_continuation_uses_one_user_source_without_assistant_or_other_conversations(settings, monkeypatch):
     calls = install(monkeypatch, {'findings': [], 'uncertain': True})
     with TestClient(create_app(settings)) as client:
-        repo = client.app.state.engine.repo
+        repo = client.app.state.test_engine.repo
         repo.message('u', 'prior', 'user', '饭后把东西弄出来', conversation='c')
         repo.message('a', 'prior', 'assistant', 'ASSISTANT_SECRET', conversation='c')
         repo.message('x', 'other', 'user', 'OTHER_CONVERSATION', conversation='elsewhere')
@@ -216,7 +216,7 @@ def test_profile_change_during_classifier_stops_before_planning(settings, monkey
 def test_new_restriction_after_ordinary_classification_still_blocks(settings, monkeypatch):
     client = None
     def classify(data):
-        client.app.state.engine.repo.save_fact('new-restriction', '医生要求限制蛋白质')
+        client.app.state.test_engine.repo.save_fact('new-restriction', '医生要求限制蛋白质')
         return GENERAL
     calls = install(monkeypatch, classify)
     with TestClient(create_app(settings)) as client:
@@ -239,7 +239,7 @@ def test_plan_note_confirmation_and_numeric_bounds(settings, monkeypatch):
             'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'],
             'approved': True, 'text': '刚才低血糖了'})
         assert response.status_code == 422
-        assert client.app.state.engine.repo.active_plan() is None
+        assert client.app.state.test_engine.repo.active_plan() is None
         extreme = {'kcal': 500, 'protein_g': 25, 'carbs_g': 66, 'fat_g': 15, 'exercise_minutes': 600}
         assert client.post('/api/plans/propose', json={
             'request_id': str(uuid4()), 'targets': extreme}).status_code == 422
@@ -253,7 +253,7 @@ def test_plan_activation_rechecks_known_limits_and_still_allows_rejection(settin
         response = client.post(f'/api/workflows/{pending["thread_id"]}/resume', json={
             'request_id': str(uuid4()), 'interrupt_id': pending['pending_input']['interrupt_id'], 'approved': True})
         assert response.status_code == 409
-        assert client.app.state.engine.repo.active_plan() is None
+        assert client.app.state.test_engine.repo.active_plan() is None
 
 
 @pytest.mark.parametrize('text', [
@@ -319,5 +319,5 @@ def test_confirmation_indirect_risk_is_classified_even_when_original_note_is_emp
             'approved': True, 'text': text})
         assert response.status_code == 422
         assert REPLIES['eating_disorder'] in response.json()['detail']
-        assert client.app.state.engine.repo.active_plan() is None
+        assert client.app.state.test_engine.repo.active_plan() is None
     assert len(calls) == 1

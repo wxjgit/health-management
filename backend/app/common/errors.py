@@ -68,6 +68,11 @@ class ErrorSpec:
 
 
 ERRORS = {
+    'model_consent_required': ErrorSpec(RuntimeLimitError, 403, '尚未同意当前模型的数据处理说明，请使用本地规则或在隐私授权中另行同意。'),
+    'usage_identity_required': ErrorSpec(RuntimeLimitError, 503, '请求缺少有效用户身份，模型调用已停止。'),
+    'request_rate_limited': ErrorSpec(RuntimeLimitError, 429, '操作过于频繁，请稍后使用原请求重试。'),
+    'model_concurrency_limited': ErrorSpec(RuntimeLimitError, 429, '模型正在处理其他请求，请稍后使用原请求重试。'),
+    'daily_model_quota_exceeded': ErrorSpec(RuntimeLimitError, 429, '今日模型调用额度已用完，请明天再试；已保存的记录保留。'),
     'job_lease_lost': ErrorSpec(ConflictError, 409, '后台任务执行权已失效，请刷新状态。'),
     'runtime_busy': ErrorSpec(RuntimeLimitError, 503, '服务正在处理其他请求，请稍后使用原请求重试。'),
     'execution_deadline_exceeded': ErrorSpec(ExecutionDeadlineExceeded, 504, '本次处理已超时；此前已保存的记录保留，请刷新或使用原请求重试。'),

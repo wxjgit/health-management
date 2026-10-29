@@ -2,7 +2,7 @@
 
 前端已统一为微信小程序，Web 前端已废弃。工程与导入方式见 [miniprogram](miniprogram/README.md)，功能映射与验收见 [微信小程序开发方案](docs/微信小程序开发方案.md)。
 
-一个单用户微信小程序，连接可本地运行的 Python API 服务。用自然语言记录饮食、体重、睡眠、运动和生理周期，数据保存在 SQLite 中；LangGraph 负责解析、关键追问、纠错、历史检索、计划确认和复盘流程。
+一个支持微信登录与账号独立数据存储的小程序，连接可本地运行的 Python API 服务，必须登录后使用。用自然语言记录饮食、体重、睡眠、运动和生理周期，数据保存在 SQLite 中；LangGraph 负责解析、关键追问、纠错、历史检索、计划确认和复盘流程。
 
 ## 现在可以使用的功能
 
@@ -15,13 +15,17 @@
 - 日报、周报、后台站内提醒、数据导出、删除、超过一年后的月度归档。
 - 服务重启后恢复记录与待追问事项；请求重试去重。
 
+## 多用户改造进度
+
+微信登录、按账号独立 SQLite 数据库、后台任务归属和并发额度控制已实现。服务只支持已登录用户；缺少微信 AppID 或 AppSecret 时启动失败。旧单用户数据已清空，不保留免登录模式和迁移入口。已增加应用内隐私授权、可撤回模型授权、账号注销和数据导出；部署与备份监控工具见 [阿里云上线操作手册](docs/阿里云上线操作手册.md)。尚未完成真实微信联调、异机备份及生产容量验收。
+
 ## 启动
 
 环境要求：Python 3.11+、Node.js 22.12+。本次迁移在 Python 3.12.14、Node.js 24.15.0 验证。
 
 首次在 Windows 运行 `.\setup.ps1` 安装后端和小程序依赖并构建，再运行 `.\start.ps1` 启动 API。后端健康检查为 <http://127.0.0.1:8000/api/health>，根路径不再提供页面。
 
-macOS / Linux 可使用：
+先按 `.env.example` 配置 `WECHAT_APP_ID` 和仓库外的 `WECHAT_APP_SECRET_FILE`。macOS / Linux 可使用：
 
 ```sh
 python3 -m venv .venv
@@ -29,9 +33,9 @@ python3 -m venv .venv
 .venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
-在 `miniprogram/` 执行 `npm ci`、`npm run build:weapp`，微信开发者工具导入此目录并填入自己的 AppID。在「我的 → 开发服务配置」设置后端地址，不附带 `/api`。开发工具可使用本机地址；真机需要可达的可信开发网络地址，手机的 127.0.0.1 不指向电脑。
+在 `miniprogram/` 执行 `npm ci`，正式构建前设置 `MINIPROGRAM_API_ORIGIN` 为真实 HTTPS 域名，再执行 `npm run build:weapp`；本机联调使用 `npm run build:weapp:dev`。微信开发者工具导入此目录并填入自己的 AppID。正式包不会读取设备中的开发地址覆盖配置，真机联调也需要手机可访问的后端地址。
 
-正式使用需要 HTTPS 合法域名和服务端鉴权，当前仍是单用户开发版。Python 依赖锁定在 `backend/requirements.lock.txt`，小程序依赖锁定在 `miniprogram/package-lock.json`。
+正式使用需要 HTTPS 合法域名、开启微信登录并完成真实联调与部署验收。Python 依赖锁定在 `backend/requirements.lock.txt`，小程序依赖锁定在 `miniprogram/package-lock.json`。
 
 ## 模型配置与演示模式
 
@@ -53,7 +57,7 @@ python3 -m venv .venv
 
 后端调用兼容 Chat Completions 的 `/chat/completions` 接口，用 Pydantic 验证结构化输出。首轮模型只收到本次输入、当前时间和操作状态，输出可包含多个任务的处理计划，不再默认发送最近 12 条记录。程序审核计划后，按固定视图取最少必要数据；模型不能选择任意记录 ID、SQL 或字段。密钥不会传到小程序客户端或数据导出。模型失败会明确报错，不悄悄切换到演示估算。
 
-聊天输入框提供“纯本地模式”，请求会携带 `processing_mode=local_only`，服务器统一禁止规划、纠错、营养估算、建议生成和润色等外部调用；缺失营养保持未知，不使用演示固定值。该限制随待补充流程保存，重启或恢复后不能通过 `model_allowed` 自动放宽。也可在 `.env` 中设置 `PROCESSING_MODE=local_only`，从服务端强制禁止外发。界面发送前显示供应商、模型及各任务允许发送的数据类别。模型模式下，调用结果还附带 `model_disclosures`，记录实际调用用途和数据类别，不含健康原文。详细规则见 [模型数据访问边界](docs/模型数据访问边界.md)。
+未另行同意模型授权时，请求携带 `processing_mode=local_only`，服务器统一禁止规划、纠错、营养估算、建议生成和润色等外部调用；缺失营养保持未知，不使用演示固定值。可在“我的 → 隐私政策与模型授权”同意或撤回模型处理；该限制随待补充流程保存，重启或恢复后不能通过 `model_allowed` 自动放宽。也可在 `.env` 中设置 `PROCESSING_MODE=local_only`，从服务端强制禁止外发。授权页显示供应商、模型、用途和数据类别，聊天页显示当前处理方式。模型模式下，调用结果还附带 `model_disclosures`，记录实际调用用途和数据类别，不含健康原文。详细规则见 [模型数据访问边界](docs/模型数据访问边界.md)。
 
 模型负责输入理解、缺失营养粗估，以及选择本地批准的建议要点与反馈表达版本；统计、营养求和、权重建议、计划差异校验与写入边界由代码执行。自动化测试使用模拟响应，不会产生模型费用。
 
@@ -228,10 +232,10 @@ Windows 检查入口：`powershell -File scripts/start-hardened.ps1 -SecretFile 
 离线管理前先停止服务，在 `backend` 目录执行以下命令（数据目录必须指向需要管理的目录）：
 
 ```powershell
-..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data status
-..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data pause
-..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data resume
-..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data retry TASK_UUID --reason upstream_recovered
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data --user-id 内部账号ID status
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data --user-id 内部账号ID pause
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data --user-id 内部账号ID resume
+..\.venv\Scripts\python.exe -m app.jobs.manage --data-dir ..\data --user-id 内部账号ID retry TASK_UUID --reason upstream_recovered
 ```
 
 `pause` 持久化停止领取，重启服务后仍保持暂停，`resume` 解除。重试仅接受未过期且来源有效的 failed 任务，并记录操作原因。管理命令不发送模型请求；运行中的数据目录会拒绝离线管理。升级至 schema 8 后，旧二进制不能直接打开新数据库；回滚需要停服恢复成对备份。

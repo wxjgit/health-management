@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import ConfigurationError, Settings
 from app.common.execution_budget import BudgetLock
@@ -313,14 +313,15 @@ def test_real_workflow_privacy_replay_and_metrics_access(tmp_path, caplog):
         first = client.post('/api/chat', json=payload)
         assert first.status_code == 200
         assert client.post('/api/chat', json=payload).json() == first.json()
-        raw = client.get('/internal/metrics').text
+        assert client.get('/internal/metrics').status_code == 404
+        raw = app.state.test_engine.observability.metrics.render().decode()
         assert 'health_workflow_attempts_total{kind="chat",operation="run",outcome="ok"} 1.0' in raw
         assert 'health_quality_numerator' not in raw
         assert payload['request_id'] not in raw and '体重' not in raw
         assert client.get('/api/events', params={'search': SECRET}).status_code == 200
         assert client.get('/api/workflows/'+SECRET).status_code == 404
-        assert metric(app.state.engine.observability, 'workflow_attempts_total', kind='chat', operation='run', outcome='replayed') == 1
-        assert metric(app.state.engine.observability, 'db_transaction_duration_seconds_count', database='checkpoint', outcome='ok') > 0
+        assert metric(app.state.test_engine.observability, 'workflow_attempts_total', kind='chat', operation='run', outcome='replayed') == 1
+        assert metric(app.state.test_engine.observability, 'db_transaction_duration_seconds_count', database='checkpoint', outcome='ok') > 0
     output = json.dumps(events(tmp_path)) + caplog.text
     assert SECRET not in output and '65公斤' not in output
     assert 'model_fallback' not in output
@@ -336,7 +337,7 @@ def test_metrics_disabled_and_nonlocal_client_denied(tmp_path):
 
 
 def test_required_clarification_resume_and_quality_deletion(tmp_path):
-    engine = Engine(settings(tmp_path))
+    engine = Engine(settings(tmp_path), user_id='00000000-0000-4000-8000-000000000001')
     try:
         first = engine.run('chat', str(uuid4()), {}, {'input_text': '记录体重'})
         assert first['status'] == 'waiting_input'
@@ -410,20 +411,21 @@ def test_plan_decisions_cancel_expiry_and_supersede_have_distinct_cohorts(tmp_pa
 def test_quality_export_is_explicit_and_deleted_series_disappears(tmp_path):
     app = create_app(settings(tmp_path, obs_metrics_enabled=True, obs_quality_export_enabled=True))
     with TestClient(app, client=('127.0.0.1', 50000)) as client:
-        repo = app.state.engine.repo
-        with app.state.engine.lock:
+        repo = app.state.test_engine.repo
+        with app.state.test_engine.lock:
             event_id = repo.save_events([draft()], 'synthetic')[0]
-        raw = client.get('/internal/metrics').text
+        assert client.get('/internal/metrics').status_code == 404
+        raw = app.state.test_engine.observability.metrics.render(repo.quality_snapshot()).decode()
         assert 'metric="record_corrected"' in raw
         assert event_id not in raw and SECRET not in raw
-        with app.state.engine.lock, repo.conn:
+        with app.state.test_engine.lock, repo.conn:
             repo.conn.execute('DELETE FROM events WHERE id=?', (event_id,))
-        assert 'metric="record_corrected"' not in client.get('/internal/metrics').text
+        assert 'metric="record_corrected"' not in app.state.test_engine.observability.metrics.render(repo.quality_snapshot()).decode()
 
 
 def test_background_attempt_is_independent_and_payload_not_exported(tmp_path, monkeypatch):
     from app.common.clock import now
-    engine = Engine(settings(tmp_path))
+    engine = Engine(settings(tmp_path), user_id='00000000-0000-4000-8000-000000000001')
     outer = request_id.set(str(uuid4()))
     try:
         repo = engine.repo
@@ -447,7 +449,7 @@ def test_background_attempt_is_independent_and_payload_not_exported(tmp_path, mo
 
 def test_library_tracing_disabled_for_real_graph(tmp_path, monkeypatch):
     import langsmith.run_helpers
-    engine = Engine(settings(tmp_path))
+    engine = Engine(settings(tmp_path), user_id='00000000-0000-4000-8000-000000000001')
     try:
         captured = []
         original = engine.graph_for('chat').invoke
@@ -462,7 +464,7 @@ def test_library_tracing_disabled_for_real_graph(tmp_path, monkeypatch):
 
 
 def test_disabled_observability_keeps_business_quality_and_no_output(tmp_path):
-    engine = Engine(settings(tmp_path, obs_enabled=False))
+    engine = Engine(settings(tmp_path, obs_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     try:
         result = engine.run('chat', str(uuid4()), {}, {'input_text': '体重65公斤'})
         assert result['status'] == 'completed'
@@ -483,7 +485,7 @@ def test_gateway_blocks_internal_metrics_and_startup_disables_access_logs():
 def test_broken_runtime_export_does_not_break_business_request(tmp_path, monkeypatch):
     app = create_app(settings(tmp_path))
     with TestClient(app) as client:
-        observer = app.state.engine.observability
+        observer = app.state.test_engine.observability
         def fail(*args, **kwargs):
             raise OSError(SECRET)
         monkeypatch.setattr(observer.sink, 'submit', fail)

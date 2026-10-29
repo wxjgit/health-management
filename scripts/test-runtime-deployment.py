@@ -3,6 +3,7 @@ import argparse
 from datetime import datetime, timezone
 import http.client
 import json
+import os
 from pathlib import Path
 import select
 import socket
@@ -41,7 +42,15 @@ def main():
             conn.close()
 
     checks['health'] = request('GET', '/api/health')[0] == 200
-    headers = {'Content-Type': 'application/json'}
+    token = os.environ.get('QINGJI_TEST_TOKEN', '')
+    if not token:
+        # Docker ownership was verified above; mint only a synthetic account in
+        # the dedicated test project, without a production login bypass route.
+        seed = "from app.common.config import Settings; from app.api.auth import AuthStore; from app.api.policies import policy; s=Settings.from_env(); a=AuthStore(s); r=a.issue('qingji-runtime-synthetic-probe'); a.save_consent(r['user']['id'],policy(s)['version'],False); print(r['access_token'])"
+        token = docker('exec', '-w', '/app/backend', project + '-app-1', 'python', '-c', seed).strip()
+        if not token:
+            raise RuntimeError('authenticated_synthetic_test_token_required')
+    headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token}
     checks['body_65536_allowed_to_validation'] = request('POST', '/api/chat', b'x' * 65536, headers)[0] == 422
     status, body = request('POST', '/api/chat', b'x' * 65537, headers)
     checks['body_65537_rejected'] = status == 413 and body['code'] == 'request_body_too_large'
@@ -51,7 +60,7 @@ def main():
     second = request('POST', '/api/chat', payload, headers)
     checks['local_only_and_idempotent_replay'] = first == second and first[0] == 200
     for event_id in first[1].get('saved_record_ids', []):
-        checks['synthetic_record_cleanup'] = request('DELETE', '/api/events/' + event_id)[0] == 200
+        checks['synthetic_record_cleanup'] = request('DELETE', '/api/events/' + event_id, headers=headers)[0] == 200
 
     sock = socket.create_connection(('127.0.0.1', args.port), timeout=15)
     started, response = time.monotonic(), b''
@@ -84,6 +93,7 @@ s.sendall(b'CONNECT dashscope.aliyuncs.com:443 HTTP/1.1\\r\\nHost: dashscope.ali
 print(int(b'200' in s.recv(4096).split(b'\\r\\n',1)[0]));s.close()
 '''
     checks['proxy_approved_provider_connect'] = docker('exec', project + '-app-1', 'python', '-c', approved_probe).strip() == '1'
+    checks['synthetic_account_cleanup'] = request('DELETE', '/api/auth/account', json.dumps({'confirmation': '注销账号'}).encode(), headers)[0] == 200
     report = {'date': datetime.now(timezone.utc).isoformat(), 'project': project, 'checks': checks,
               'passed': all(checks.values()), 'real_model_called': False}
     args.output.parent.mkdir(parents=True, exist_ok=True)

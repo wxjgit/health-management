@@ -4,6 +4,10 @@ import { api, ApiError } from "../src/api";
 const platform = vi.hoisted(() => ({
   request: vi.fn(),
   getStorageSync: vi.fn(),
+  removeStorageSync: vi.fn(),
+  eventCenter: { trigger: vi.fn() },
+  getCurrentPages: vi.fn().mockReturnValue([]),
+  reLaunch: vi.fn().mockResolvedValue({}),
 }));
 vi.mock("@tarojs/taro", () => ({ default: platform }));
 beforeEach(() => {
@@ -70,6 +74,73 @@ describe("小程序请求协议", () => {
       header: {},
     });
     await expect(api("/chat", "POST", {})).rejects.toThrow("请求失败");
+    expect(platform.request).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("登录凭证", () => {
+  it("切换账号后丢弃旧账号的延迟响应", async () => {
+    let token = "account-a-token";
+    platform.getStorageSync.mockImplementation((key: string) =>
+      key === "api-base"
+        ? "https://api.example.test"
+        : { base: "https://api.example.test", token },
+    );
+    let finish!: (value: unknown) => void;
+    platform.request.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const pending = api("/messages");
+    token = "account-b-token";
+    finish({ statusCode: 200, data: [{ text: "A 的记录" }], header: {} });
+    await expect(pending).rejects.toMatchObject({ code: "account_changed" });
+  });
+  it("只向绑定的服务发送登录凭证", async () => {
+    platform.getStorageSync.mockImplementation((key: string) =>
+      key === "api-base"
+        ? "https://api.example.test"
+        : { base: "https://api.example.test", token: "secret" },
+    );
+    platform.request.mockResolvedValue({
+      statusCode: 200,
+      data: {},
+      header: {},
+    });
+    await api("/profile");
+    expect(platform.request.mock.calls[0][0].header.Authorization).toBe(
+      "Bearer secret",
+    );
+    platform.getStorageSync.mockImplementation((key: string) =>
+      key === "api-base"
+        ? "https://other.test"
+        : { base: "https://api.example.test", token: "secret" },
+    );
+    await api("/profile");
+    expect(
+      platform.request.mock.calls[1][0].header.Authorization,
+    ).toBeUndefined();
+  });
+  it("登录过期清除凭证并进入登录页面，不重放业务请求", async () => {
+    platform.getStorageSync.mockImplementation((key: string) =>
+      key === "api-base"
+        ? "https://api.example.test"
+        : { base: "https://api.example.test", token: "expired" },
+    );
+    platform.request.mockResolvedValue({
+      statusCode: 401,
+      data: { detail: "请登录" },
+      header: {},
+    });
+    await expect(api("/chat", "POST", {})).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(platform.removeStorageSync).toHaveBeenCalledWith("auth-session");
+    expect(platform.eventCenter.trigger).toHaveBeenCalledWith("auth-cleared");
+    expect(platform.reLaunch).toHaveBeenCalledWith({
+      url: "/pages/login/index",
+    });
     expect(platform.request).toHaveBeenCalledTimes(1);
   });
 });

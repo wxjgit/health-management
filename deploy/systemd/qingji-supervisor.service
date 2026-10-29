@@ -1,0 +1,14 @@
+[Unit]
+Description=Qingji bounded container supervisor
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qingji
+ExecStart=/usr/bin/python3 /opt/qingji/scripts/supervise-runtime.py --project qingji-hardened
+# Do not restart endlessly after the supervisor trips its safety limit.
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

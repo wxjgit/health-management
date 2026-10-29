@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.main import create_app
@@ -47,7 +47,7 @@ def test_missing_profile_is_not_fabricated_and_default_read_is_non_mutating(clie
 
 def test_formula_macro_conversion_and_provenance(client):
     save_profile(client)
-    version = client.app.state.engine.repo.version()
+    version = client.app.state.test_engine.repo.version()
     result = client.get('/api/targets/default').json()
     assert result['status'] == 'ready'
     assert result['targets'] == {'kcal': 2100, 'protein_g': 105, 'carbs_g': 262,
@@ -59,7 +59,7 @@ def test_formula_macro_conversion_and_provenance(client):
     assert '产品规则' in result['basis']
     assert len(result['fingerprint']) == 64
     assert len(result['sources']) == 4
-    assert client.app.state.engine.repo.version() == version
+    assert client.app.state.test_engine.repo.version() == version
     assert client.get('/api/plans').json() == []
 
 
@@ -180,7 +180,7 @@ def test_unsupported_profiles_do_not_receive_automatic_targets(client, values):
 
 def test_known_medical_constraint_blocks_default_and_manual_plan_generation(client):
     save_profile(client)
-    client.app.state.engine.repo.save_fact('restriction', '医生要求限制蛋白质')
+    client.app.state.test_engine.repo.save_fact('restriction', '医生要求限制蛋白质')
     assert client.get('/api/targets/default').json()['targets'] is None
     manual = {'kcal': 1800, 'protein_g': 70, 'carbs_g': 245, 'fat_g': 60, 'exercise_minutes': 0}
     result = propose(client, targets=manual).json()
@@ -210,7 +210,7 @@ def test_unspecified_suitability_is_not_claimed_to_be_known(client):
 
 
 def test_incomplete_legacy_profile_returns_actionable_reason(client):
-    client.app.state.engine.repo.update_profile({'age': 30})
+    client.app.state.test_engine.repo.update_profile({'age': 30})
     result = client.get('/api/targets/default').json()
     assert result['status'] == 'needs_profile'
     assert result['targets'] is None

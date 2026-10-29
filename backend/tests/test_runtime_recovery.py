@@ -41,7 +41,7 @@ from pathlib import Path
 import os,sys
 from app.common.config import Settings
 from app.workflows.engine import Engine
-engine=Engine(Settings(data_dir=Path(sys.argv[1]),scheduler_enabled=False))
+engine=Engine(Settings(data_dir=Path(sys.argv[1]),scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
 for conn in (engine.repo.conn,engine.cp_conn):
     conn.execute('CREATE TABLE recovery_probe(value INTEGER)')
     conn.execute('INSERT INTO recovery_probe VALUES (1)')
@@ -50,7 +50,7 @@ for conn in (engine.repo.conn,engine.cp_conn):
 os._exit(70)
 ''', tmp_path)
     assert result.returncode == 70
-    engine = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False))
+    engine = Engine(Settings(data_dir=tmp_path, scheduler_enabled=False), user_id='00000000-0000-4000-8000-000000000001')
     try:
         for conn in (engine.repo.conn, engine.cp_conn):
             assert [row[0] for row in conn.execute('SELECT value FROM recovery_probe')] == [1]
@@ -60,7 +60,7 @@ os._exit(70)
 
 
 def test_completed_workflow_replay_does_not_need_capacity(tmp_path):
-    engine = Engine(Settings(data_dir=tmp_path, local_only=True, scheduler_enabled=False, runtime_max_executions=1))
+    engine = Engine(Settings(data_dir=tmp_path, local_only=True, scheduler_enabled=False, runtime_max_executions=1), user_id='00000000-0000-4000-8000-000000000001')
     entered, release = Event(), Event()
     payload = {'text': '今天体重65公斤', 'processing_mode': 'local_only'}
     initial = {'input_text': payload['text'], 'processing_mode': 'local_only'}

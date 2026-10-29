@@ -195,7 +195,7 @@ class EvaluationRunner:
         engine = None
 
         def open_engine():
-            return Engine(settings)
+            return Engine(settings, user_id=str(uuid5(NAMESPACE_URL, 'evaluation-user:' + scenario.id)))
 
         def close_engine(value):
             if value is not None:

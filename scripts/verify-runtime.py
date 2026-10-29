@@ -23,7 +23,7 @@ def verify(project):
     info = json.loads(docker('inspect', app))[0]
     host, config = info['HostConfig'], info['Config']
     mounts = info['Mounts']
-    allowed = {'/data', '/run/secrets/model_api_key'}
+    allowed = {'/data', '/run/secrets/model_api_key', '/run/secrets/wechat_app_secret'}
     checks = {
         'non_root': config.get('User') == '10001:10001',
         'read_only': host.get('ReadonlyRootfs') is True,
@@ -31,6 +31,7 @@ def verify(project):
         'no_new_privileges': 'no-new-privileges:true' in host.get('SecurityOpt', []),
         'no_privileged_or_host_namespaces': not host.get('Privileged') and host.get('NetworkMode') != 'host' and host.get('PidMode') != 'host',
         'mount_allowlist': all(m['Destination'] in allowed for m in mounts),
+        'wechat_secret_readonly': any(m['Destination'] == '/run/secrets/wechat_app_secret' and not m['RW'] for m in mounts),
         'secret_readonly': any(m['Destination'] == '/run/secrets/model_api_key' and not m['RW'] for m in mounts),
         'memory': host.get('Memory') == 512 * 1024 * 1024,
         'cpu': host.get('NanoCpus') == 1000000000,

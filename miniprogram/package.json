@@ -5,9 +5,10 @@
   "scripts": {
     "test": "vitest run",
     "format": "prettier --write src tests config *.json *.js",
-    "dev:weapp": "taro build --type weapp --watch",
-    "build:weapp": "taro build --type weapp",
-    "typecheck": "tsc --noEmit"
+    "dev:weapp": "node scripts/build.mjs --development --watch",
+    "build:weapp": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "build:weapp:dev": "node scripts/build.mjs --development"
   },
   "dependencies": {
     "@tarojs/components": "4.1.5",

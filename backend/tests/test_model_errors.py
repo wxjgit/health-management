@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.main import create_app
@@ -134,7 +134,7 @@ def test_advice_fallback_does_not_hide_program_errors(tmp_path, monkeypatch, kin
         def fail(*args, **kwargs):
             raise kind()
 
-        monkeypatch.setattr(client.app.state.engine.parser, 'answer_advice', fail)
+        monkeypatch.setattr(client.app.state.test_engine.parser, 'answer_advice', fail)
         response = client.post('/api/chat', json={'request_id': str(uuid4()), 'text': '今天吃饭注意什么'})
         assert response.status_code == status
         if status == 500:

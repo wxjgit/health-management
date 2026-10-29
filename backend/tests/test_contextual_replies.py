@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.chat.feedback import reconcile_feedback, attach_feedback
@@ -119,7 +119,7 @@ def test_salty_feedback_is_optional_and_survives_restart_until_recorded(settings
         assert record['data']['feedback'] == [{
             'topic': 'salty', 'quote': '昨天吃得有点咸', 'day': '2026-10-08',
             'stance': 'experience', 'source': 'user_report'}]
-        assert client.app.state.engine.repo.facts() == []
+        assert client.app.state.test_engine.repo.facts() == []
         assert calls['phrase'][-1]['plan']['context']['foods'] == ['炸鸡']
         assert resume(client, pending, '吃了100g', request_id) == done
         assert len(calls['phrase']) == 3
@@ -228,7 +228,7 @@ def test_hypothetical_concern_is_not_saved_as_an_experience(settings, monkeypatc
         assert '你在关注' in result['reply']
         assert '你提到这次' not in result['reply']
         assert client.get('/api/events').json() == []
-        assert client.app.state.engine.repo.facts() == []
+        assert client.app.state.test_engine.repo.facts() == []
 
 
 def test_medical_context_does_not_receive_generic_diet_coaching(settings, monkeypatch):

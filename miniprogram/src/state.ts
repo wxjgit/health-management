@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Taro, { useDidHide, useDidShow } from "@tarojs/taro";
-import { api, ApiError, baseUrl, errorText, type Method } from "./api";
+import {
+  api,
+  ApiError,
+  baseUrl,
+  accountKey,
+  errorText,
+  type Method,
+} from "./api";
 import { deletionState, removeExports, saveDeletionState } from "./privacy";
 import type { DeletionResult } from "./types";
 
@@ -112,6 +119,7 @@ export function useResource<Result>(load: () => Promise<Result>) {
 }
 
 export type Operation = {
+  owner?: string;
   base: string;
   path: string;
   body: Record<string, unknown>;
@@ -120,37 +128,31 @@ export type Operation = {
 const operationKey = "pending-operation";
 export const pendingOperation = (): Operation | null => {
   const pending = Taro.getStorageSync<Operation>(operationKey);
-  if (pending) return pending;
-  const previous = Taro.getStorageSync<{
-    path: string;
-    body: Record<string, unknown>;
-  }>("pending-submission");
-  if (!previous) return null;
-  const migrated = {
-    base: baseUrl(),
-    ...previous,
-    label: "首期版本待核对记录",
-  };
-  Taro.setStorageSync(operationKey, migrated);
-  Taro.removeStorageSync("pending-submission");
-  return migrated;
+  const owner = accountKey();
+  return owner && pending?.owner === owner ? pending : null;
 };
 export const operation = (
   path: string,
   body: Record<string, unknown>,
   label: string,
-): Operation => ({ base: baseUrl(), path, body, label });
+): Operation => {
+  const owner = accountKey();
+  if (!owner) throw new Error("请先微信登录。");
+  return { base: baseUrl(), owner, path, body, label };
+};
 export async function executeOperation<Result>(
   next: Operation,
 ): Promise<Result> {
+  if (next.base !== baseUrl())
+    throw new Error("待重试请求属于另一服务，请切回原地址。");
+  if (!accountKey() || next.owner !== accountKey())
+    throw new Error("待处理请求属于另一账号，不能在当前账号下重试。");
   if (writing) throw new Error("已有操作正在执行，请稍候。");
   if (privacyBlocked() && next.path !== "/deletions")
     throw new Error("请先完成隐私清理。");
   const previous = pendingOperation();
   if (previous && JSON.stringify(previous) !== JSON.stringify(next))
     throw new Error("请先处理待核对的原请求。");
-  if (next.base !== baseUrl())
-    throw new Error("待重试请求属于另一服务，请切回原地址。");
   writing = true;
   try {
     if (next.body.processing_mode === "model_allowed") {

@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Qingji backup
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Shanghai
+Persistent=true
+Unit=qingji-backup.service
+
+[Install]
+WantedBy=timers.target

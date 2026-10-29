@@ -197,14 +197,19 @@ class WorkflowConcurrencyMixin:
         if _node_engine.get() is not self:
             raise RuntimeError('model I/O outside guarded node')
         self.check_execution()
+        if self.accounts is not None:
+            self.accounts.require_model(self.user_id)
         # Processing plans contain only current input, not mutable health history.
         reads = current_reads(self.repo)
         if reads:
             reads = ReadSet(self.repo, sources=set(reads.sources), scopes=dict(reads.scopes))
         version = self.repo.read_stamp(reads) if reads else self._model_context_version()
+        if self.repo.conn.in_transaction or self.cp_conn.in_transaction:
+            raise RuntimeError('model I/O inside database transaction')
         self.lock.release()
         try:
-            yield
+            with self.usage.scope('user:' + self.user_id):
+                yield
         finally:
             self.lock.acquire()
             self.check_execution()

@@ -41,6 +41,14 @@ services:
     environment:
       RUNTIME_PROFILE: hardened
       DATA_DIR: /data
+      PRIVACY_OPERATOR: ${PRIVACY_OPERATOR:?Set the operator name}
+      PRIVACY_CONTACT: ${PRIVACY_CONTACT:?Set the public contact email}
+      PUBLIC_API_ORIGIN: ${PUBLIC_API_ORIGIN:?Set the HTTPS API origin}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      LOGIN_GLOBAL_PER_MINUTE: ${LOGIN_GLOBAL_PER_MINUTE:-300}
+      LOGIN_CLIENT_PER_MINUTE: ${LOGIN_CLIENT_PER_MINUTE:-20}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:?Set the WeChat mini program AppID}
+      WECHAT_APP_SECRET_FILE: /run/secrets/wechat_app_secret
       PROCESSING_MODE: ${PROCESSING_MODE:-model_allowed}
       MODEL_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
       MODEL_NAME: ${MODEL_NAME:-qwen3.8-max}
@@ -51,8 +59,15 @@ services:
       JOB_RUNNER_ENABLED: "true"
       JOB_LEASE_SECONDS: "90"
       JOB_HEARTBEAT_SECONDS: "20"
-    secrets: [model_api_key]
-    volumes: ["health-data:/data"]
+      TENANT_CACHE_SIZE: ${TENANT_CACHE_SIZE:-8}
+      USER_REQUESTS_PER_MINUTE: ${USER_REQUESTS_PER_MINUTE:-60}
+      GLOBAL_REQUESTS_PER_MINUTE: ${GLOBAL_REQUESTS_PER_MINUTE:-600}
+      MODEL_MAX_CONCURRENT: ${MODEL_MAX_CONCURRENT:-2}
+      USER_MODEL_CALLS_PER_DAY: ${USER_MODEL_CALLS_PER_DAY:-200}
+      GLOBAL_MODEL_CALLS_PER_DAY: ${GLOBAL_MODEL_CALLS_PER_DAY:-5000}
+      MODEL_MAX_OUTPUT_TOKENS: ${MODEL_MAX_OUTPUT_TOKENS:-4096}
+    secrets: [model_api_key, wechat_app_secret]
+    volumes: ["${HEALTH_DATA_SOURCE:-health-data}:/data"]
     tmpfs: ["/tmp:size=64m,uid=10001,gid=10001,mode=700,noexec,nosuid,nodev"]
     networks:
       ingress: {ipv4_address: 172.30.80.3}
@@ -98,3 +113,5 @@ volumes:
 secrets:
   model_api_key:
     file: ${MODEL_API_KEY_SOURCE_FILE:?Set an absolute secret path outside the build context}
+  wechat_app_secret:
+    file: ${WECHAT_APP_SECRET_SOURCE_FILE:?Set an absolute WeChat secret path outside the build context}

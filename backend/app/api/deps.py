@@ -1,11 +1,18 @@
 from fastapi import Request
+from .auth import require_user
 from functools import wraps
 from inspect import signature
 from ..common.errors import PrivacyCleanupPending, RuntimeLimitError
 
 
 def get_engine(request: Request):
-    engine = request.app.state.engine
+    host = request.app.state.engine
+    with host.lease(require_user(request)['id']) as engine:
+        check_engine(request, engine)
+        yield engine
+
+
+def check_engine(request, engine):
     if not engine.lock.acquire(timeout=1):
         raise RuntimeLimitError()
     try:
@@ -14,7 +21,6 @@ def get_engine(request: Request):
             raise PrivacyCleanupPending()
     finally:
         engine.lock.release()
-    return engine
 
 
 def protected_read(operation):

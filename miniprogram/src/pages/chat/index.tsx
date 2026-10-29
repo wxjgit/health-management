@@ -60,16 +60,18 @@ export default function Chat() {
   const resource = useResource(async () => {
     resetHistory();
     const version = historyVersion.current;
-    const [messages, workflows, expired, health, daily] = await Promise.all([
-      api<Message[]>(`/messages?limit=${MESSAGE_PAGE_SIZE}`),
-      api<Workflow[]>("/workflows"),
-      api<Workflow[]>("/workflows/expired"),
-      api<Health>("/health"),
-      api<Daily>("/dashboard"),
-    ]);
+    const [messages, workflows, expired, health, daily, consent] =
+      await Promise.all([
+        api<Message[]>(`/messages?limit=${MESSAGE_PAGE_SIZE}`),
+        api<Workflow[]>("/workflows"),
+        api<Workflow[]>("/workflows/expired"),
+        api<Health>("/health"),
+        api<Daily>("/dashboard"),
+        api<{ model_allowed: boolean }>("/auth/consent"),
+      ]);
     if (alive.current && version === historyVersion.current)
       setHasOlder(messages.length === MESSAGE_PAGE_SIZE);
-    return { messages, workflows, expired, health, daily };
+    return { messages, workflows, expired, health, daily, consent };
   });
   const action = useAction();
   const pending = useOperation();
@@ -173,7 +175,9 @@ export default function Chat() {
       row.pending_input?.kind === "clarification",
   );
   const effectiveLocal =
-    data?.health.local_only || selected?.processing_mode === "local_only";
+    !data?.consent?.model_allowed ||
+    data?.health.local_only ||
+    selected?.processing_mode === "local_only";
   async function send(option?: { id: string; label: string }) {
     if (!data || pending || (!option && !text.trim())) return;
     await action.run(async () => {
@@ -208,6 +212,14 @@ export default function Chat() {
       loading={resource.loading}
       refresh={resource.refresh}
     >
+      <View className="card">
+        <View>
+          {effectiveLocal
+            ? "当前使用服务器本地规则，不向外部模型发送健康内容。"
+            : `当前允许必要数据发送给 ${data?.health.model_provider || "已授权的模型供应商"}。`}
+        </View>
+        <Button onClick={() => go("consent")}>查看说明或修改模型授权</Button>
+      </View>
       <View className="page-intro">
         <Text>饮食、睡眠、运动，每一点都值得记下。</Text>
         <Button

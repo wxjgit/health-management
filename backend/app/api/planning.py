@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..contracts.profile import PlanRequest
 from .deps import get_engine, protected_read, bounded_api
@@ -63,7 +63,8 @@ def notifications(engine=Depends(get_engine)):
 @router.patch('/notifications/{notification_id}')
 @bounded_api
 def read_notice(notification_id: str, engine=Depends(get_engine)):
-    engine.repo.read_notification(notification_id)
+    if not engine.repo.read_notification(notification_id):
+        raise HTTPException(404)
     return {'read': True}
 
 

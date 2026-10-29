@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
+from authenticated_client import AuthenticatedClient as TestClient
 
 from app.common.config import Settings
 from app.common.clock import SHANGHAI
@@ -359,7 +359,7 @@ def test_checkpoint_replay_after_commit_does_not_repeat_nutrition_call(settings,
     with TestClient(create_app(settings), raise_server_exceptions=False) as client:
         def fail_format(*args):
             raise ValueError('模拟提交后响应失败')
-        monkeypatch.setattr(client.app.state.engine, 'format_result', fail_format)
+        monkeypatch.setattr(client.app.state.test_engine, 'format_result', fail_format)
         assert client.post('/api/chat', json=payload).status_code == 500
         assert len(client.get('/api/events').json()) == 1
     with TestClient(create_app(settings), raise_server_exceptions=False) as client:

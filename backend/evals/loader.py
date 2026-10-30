@@ -13,6 +13,8 @@ from .schema import EvalScenario
 @dataclass(frozen=True)
 class ScenarioSet:
     scenarios: tuple[EvalScenario, ...]
+    runnable: tuple[EvalScenario, ...]
+    ignored: tuple[EvalScenario, ...]
     digest: str
     files: tuple[str, ...]
 
@@ -27,6 +29,8 @@ def load_scenarios(path: Path, suites: set[str] | None = None) -> ScenarioSet:
         raw = yaml.safe_load(file.read_text(encoding='utf-8'))
         values = raw if isinstance(raw, list) else [raw]
         for value in values:
+            if not isinstance(value, dict) or value.get('version') != 2:
+                raise ValueError('evaluation_case_version_unsupported')
             scenario = EvalScenario.model_validate(value)
             if suites is None or scenario.suite in suites:
                 scenarios.append(scenario)
@@ -42,6 +46,8 @@ def load_scenarios(path: Path, suites: set[str] | None = None) -> ScenarioSet:
     )
     return ScenarioSet(
         scenarios=tuple(scenarios),
+        runnable=tuple(scenario for scenario in scenarios if not scenario.ignore),
+        ignored=tuple(scenario for scenario in scenarios if scenario.ignore),
         digest=hashlib.sha256(canonical.encode('utf-8')).hexdigest(),
         files=tuple(sources),
     )

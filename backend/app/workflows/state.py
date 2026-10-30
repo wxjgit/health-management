@@ -45,6 +45,7 @@ class State(TypedDict, total=False):
     saved_indexes: list[int]
     rounds: int
     reply: str
+    answer_disposition: str | None
     cards: list[dict]
     evidence_refs: list[dict]
     plan_id: str

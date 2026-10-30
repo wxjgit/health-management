@@ -17,6 +17,7 @@ class ChatResponseMixin:
 
     def respond(self, state):
         parsed = state['parsed']
+        answer_disposition = None
         if state.get('safety', {}).get('capability') == 'record_only' and parsed['intent'] != 'query':
             records = [self.repo.event(event_id) for event_id in state.get('record_ids', [])]
             records = [record for record in records if record]
@@ -24,6 +25,7 @@ class ChatResponseMixin:
                 'reply': (record_receipt(records, corrected=parsed['intent'] == 'correct') if records
                           else '本次没有保存记录。') + '\n离线模式仅处理明确的记录和查询，本次未生成评分或建议。',
                 'cards': [], 'evidence_refs': [evidence(record) for record in records],
+                'answer_disposition': None,
                 'reply_plan': {},
             }
         cards = []
@@ -43,6 +45,7 @@ class ChatResponseMixin:
                 if records
                 else '这个范围没有原始记录。超过一年后的信息请查看月度摘要，无法还原某一餐。'
             )
+            answer_disposition = 'answered' if records else 'abstained'
             trace = self.traced(state, '查询本地数据', f'按模型提取的条件检索到 {len(records)} 条记录。')
         elif parsed['intent'] == 'fact':
             reply = fact_receipt(self.repo.fact(state.get('fact_id', state['thread_id'])), parsed['fact_text'])
@@ -105,8 +108,10 @@ class ChatResponseMixin:
                         'detail': '模型不可用或回复未通过边界检查，使用同一上下文的本地兜底。',
                         'source': 'local',
                     })
+                answer_disposition = 'answered'
             else:
                 reply, refs = recommendation(self.repo)
+                answer_disposition = 'answered'
             if self.parser.mode == 'demo':
                 reply += '\n演示解析支持常见食物、体重、睡眠、运动和周期表达；自由复杂输入请接入模型。'
 
@@ -183,6 +188,7 @@ class ChatResponseMixin:
         })
         return {
             'reply': reply,
+            'answer_disposition': answer_disposition,
             'cards': cards,
             'evidence_refs': refs,
             'process_trace': trace,

@@ -1,0 +1,9 @@
+
+version: 1
+id: intentional_gate_failure
+suite: smoke
+mode: demo
+turns:
+  - input: 今天体重65公斤
+expected_state: {event_count: 0}
+hard_invariants: [no_duplicate_business_write]

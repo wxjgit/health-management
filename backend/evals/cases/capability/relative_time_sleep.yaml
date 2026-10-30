@@ -1,0 +1,23 @@
+version: 2
+id: relative_time_day_before_sleep
+suite: capability
+dataset: temporal
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: not_applicable
+  abstention_calibration: not_applicable
+  temporal_correctness: scored
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [time, relative-date, sleep]
+mode: demo
+turns:
+  - input: 前天睡了7小时
+    expect_status: completed
+expected_state:
+  event_count: 1
+  events:
+    - kind: sleep
+      day: "2026-10-28"
+      value: 420

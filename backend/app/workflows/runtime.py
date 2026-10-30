@@ -75,6 +75,7 @@ class WorkflowRuntimeMixin:
                 else state.get('processing_mode', 'model_allowed')
             ),
             'reply': state.get('reply', ''),
+            'answer_disposition': state.get('answer_disposition'),
             'cards': state.get('cards', []),
             'evidence_refs': state.get('evidence_refs', []),
             'process_trace': state.get('process_trace', []),

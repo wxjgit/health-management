@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-30T07:38:49.720460+00:00",
+  "git_revision": "fc3c549b783adb4e8ff9b3e01f55c066df0fe984",
+  "worktree_dirty": true,
+  "python_version": "3.14.5",
+  "dataset_digest": "f9730a732aaec26baaf97c295f4f092d35d44d6db4cef91858e635ba695b42e1",
+  "repetitions": 1,
+  "summary": {
+    "scenario_count": 1,
+    "trial_count": 1,
+    "passed_trials": 0,
+    "pass_at_1": 0.0,
+    "pass_power_k": 0.0
+  },
+  "trials": [
+    {
+      "scenario_id": "intentional_gate_failure",
+      "suite": "smoke",
+      "trial": 1,
+      "mode": "demo",
+      "passed": false,
+      "failures": [
+        {
+          "code": "event_count",
+          "detail": "expected 0, got 1"
+        }
+      ],
+      "turns": [
+        {
+          "turn": 1,
+          "status": "completed",
+          "safety_category": "general",
+          "saved_record_count": 1
+        }
+      ],
+      "model_call_count": 0,
+      "model_calls_by_purpose": {},
+      "duration_ms": 208
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+version: 2
+id: fact_delete_no_stale_output
+suite: regression
+dataset: fact_freshness
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: scored
+  abstention_calibration: not_applicable
+  temporal_correctness: not_applicable
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [fact, delete, privacy, stale-output]
+mode: demo
+turns:
+  - input: 我不喜欢燕麦
+    expect_status: completed
+  - input: 我喜欢米饭
+    expect_status: completed
+    expect_reply_contains: [我喜欢米饭]
+    expect_reply_excludes: [我不喜欢燕麦]
+mutations:
+  - after_turn: 1
+    operation: delete_fact
+    selector:
+      type: food_preference
+      subject: 燕麦
+      value: dislike
+expected_state:
+  event_count: 0
+  effective_facts:
+    - type: food_preference
+      subject: 米饭
+      value: like
+  forbidden_effective_facts:
+    - type: food_preference
+      subject: 燕麦
+      value: dislike
+hard_invariants:
+  - no_stale_fact_output
+

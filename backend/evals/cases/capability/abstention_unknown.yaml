@@ -1,0 +1,31 @@
+version: 2
+id: query_unknown_abstains
+suite: capability
+dataset: abstention
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: scored
+  abstention_calibration: scored
+  temporal_correctness: not_applicable
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [query, abstention, no-evidence]
+mode: mock
+turns:
+  - input: 查体重历史
+    expect_status: completed
+    expect_abstain: true
+    expect_reply_contains: [没有原始记录]
+expected_state:
+  event_count: 0
+mock_responses:
+  safety_classification:
+    - findings: []
+      uncertain: false
+  processing_plan:
+    - actions:
+        - intent: query
+          text: 查体重历史
+          query_kind: weight
+

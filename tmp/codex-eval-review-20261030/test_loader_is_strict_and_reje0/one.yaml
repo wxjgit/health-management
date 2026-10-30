@@ -1,0 +1,9 @@
+
+version: 1
+id: duplicate_case
+suite: smoke
+mode: demo
+turns:
+  - input: 今天体重65公斤
+expected_state: {event_count: 1}
+unknown_field: true

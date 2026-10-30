@@ -1,0 +1,46 @@
+version: 2
+id: temporal_fact_scheduled_change_not_early
+suite: capability
+dataset: temporal
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: not_applicable
+  abstention_calibration: not_applicable
+  temporal_correctness: scored
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [time, fact, scheduled-change, conflict-resolution]
+mode: demo
+initial_state:
+  facts:
+    - id: oat-baseline
+      content: 我不喜欢燕麦
+      type: food_preference
+      subject: 燕麦
+      value: dislike
+      valid_from: "2026-10-01"
+      time_scope: persistent
+    - id: oat-scheduled-change
+      content: 我可以接受燕麦
+      type: food_preference
+      subject: 燕麦
+      value: accept
+      valid_from: "2026-10-31"
+      time_scope: persistent
+turns:
+  - input: 今天体重65公斤
+    expect_status: completed
+expected_state:
+  event_count: 1
+  effective_facts:
+    - type: food_preference
+      subject: 燕麦
+      value: dislike
+      valid_from: "2026-10-01"
+  forbidden_effective_facts:
+    - type: food_preference
+      subject: 燕麦
+      value: accept
+      valid_from: "2026-10-31"
+

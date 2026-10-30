@@ -1,0 +1,24 @@
+version: 2
+id: relative_time_yesterday_weight
+suite: capability
+dataset: temporal
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: not_applicable
+  abstention_calibration: not_applicable
+  temporal_correctness: scored
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [time, relative-date, weight]
+mode: demo
+turns:
+  - input: 昨天体重65公斤
+    expect_status: completed
+expected_state:
+  event_count: 1
+  events:
+    - kind: weight
+      day: "2026-10-29"
+      value: 65
+

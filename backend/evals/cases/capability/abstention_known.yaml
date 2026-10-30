@@ -1,0 +1,41 @@
+version: 2
+id: query_known_answers
+suite: capability
+dataset: abstention
+reference_time: "2026-10-30T09:00:00+08:00"
+metric_annotations:
+  state_correctness: scored
+  response_grounding: scored
+  abstention_calibration: scored
+  temporal_correctness: not_applicable
+  safety_policy_correctness: not_applicable
+  execution_reliability: not_applicable
+tags: [query, abstention, evidence]
+mode: mock
+initial_state:
+  events:
+    - kind: weight
+      occurred_at: "2026-10-27T07:00:00+08:00"
+      raw_text: 体重64公斤
+      value: 64
+turns:
+  - input: 查体重历史
+    expect_status: completed
+    expect_abstain: false
+    expect_reply_contains: [体重64公斤]
+expected_state:
+  event_count: 1
+  events:
+    - kind: weight
+      day: "2026-10-27"
+      value: 64
+mock_responses:
+  safety_classification:
+    - findings: []
+      uncertain: false
+  processing_plan:
+    - actions:
+        - intent: query
+          text: 查体重历史
+          query_kind: weight
+

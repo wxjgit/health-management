@@ -1,13 +1,29 @@
 """Timezone-aware application clock helpers."""
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 SHANGHAI = ZoneInfo('Asia/Shanghai')
+_NOW_OVERRIDE = ContextVar('qingji_now_override', default=None)
 
 
 def now():
-    return datetime.now(SHANGHAI)
+    value = _NOW_OVERRIDE.get()
+    return value if value is not None else datetime.now(SHANGHAI)
+
+
+@contextmanager
+def override_now(value):
+    """Temporarily fix business time for one isolated execution context."""
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError('clock_override_requires_timezone')
+    token = _NOW_OVERRIDE.set(value.astimezone(SHANGHAI))
+    try:
+        yield
+    finally:
+        _NOW_OVERRIDE.reset(token)
 
 
 def stamp():

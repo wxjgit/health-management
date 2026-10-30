@@ -1,8 +1,9 @@
 ARG PYTHON_IMAGE=public.ecr.aws/docker/library/python:3.14-slim-bookworm@sha256:9974e24551f9e7ca172cf284d85b8ab3e031d22d945f7026ede7a8279118c9f1
 FROM ${PYTHON_IMAGE} AS python-deps
+ARG PIP_INDEX_URL=https://pypi.org/simple
 WORKDIR /build
 COPY backend/requirements.lock.txt ./
-RUN python -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir -r requirements.lock.txt
+RUN python -m venv /opt/venv && /opt/venv/bin/pip install --index-url "$PIP_INDEX_URL" --no-cache-dir -r requirements.lock.txt
 
 FROM ${PYTHON_IMAGE} AS runtime
 ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TMPDIR=/tmp

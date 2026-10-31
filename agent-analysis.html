@@ -2437,6 +2437,22 @@
       .chapter-nav .nav-group { margin-bottom: 26px; }
       .chapter-nav .nav-label { display: flex; align-items: center; gap: 8px; }
       .chapter-nav .nav-label::after { content: ""; flex: 1; height: 1px; background: #e5e7eb; }
+      .chapter-nav .nav-section { margin-bottom: 9px; }
+      .chapter-nav .nav-section[open] { margin-bottom: 20px; }
+      .chapter-nav .nav-section > summary.nav-label { margin: 0; padding: 8px 9px; border-radius: 7px; cursor: pointer; list-style: none; user-select: none; }
+      .chapter-nav .nav-section > summary.nav-label::-webkit-details-marker { display: none; }
+      .chapter-nav .nav-section > summary.nav-label::before { content: "›"; width: 11px; color: #8a94a3; font-size: 17px; line-height: 1; transition: transform .16s ease; }
+      .chapter-nav .nav-section[open] > summary.nav-label { margin-bottom: 6px; color: #334155; background: #f6f8fb; }
+      .chapter-nav .nav-section[open] > summary.nav-label::before { transform: rotate(90deg); }
+      .chapter-nav .nav-cluster { margin: 5px 0 8px 9px; padding-left: 8px; border-left: 1px solid #e2e7ee; }
+      .chapter-nav .nav-cluster > summary { display: flex; align-items: center; gap: 6px; margin: 0 0 3px; padding: 7px 8px; border-radius: 6px; color: #697386; font-size: 12px; font-weight: 700; line-height: 1.35; cursor: pointer; list-style: none; user-select: none; }
+      .chapter-nav .nav-cluster > summary::-webkit-details-marker { display: none; }
+      .chapter-nav .nav-cluster > summary::before { content: "›"; width: 11px; color: #8a94a3; font-size: 16px; line-height: 1; transition: transform .16s ease; }
+      .chapter-nav .nav-cluster[open] > summary { color: #334155; background: #f6f8fb; }
+      .chapter-nav .nav-cluster[open] > summary::before { transform: rotate(90deg); }
+      .chapter-nav .nav-cluster > a.nav-subsection { margin-left: 4px; padding: 6px 8px 6px 18px; font-size: 12px; line-height: 1.45; }
+      .chapter-nav .nav-cluster > a.nav-cluster-lead { color: #46546a; font-weight: 700; }
+      .chapter-nav .nav-cluster > a.current { color: #1d4ed8; }
       .reading-nav, .page-toc { display: none !important; }
       .doc-shell {
         width: min(100%, 1520px);
@@ -2712,8 +2728,8 @@
       @media(max-width: 600px) { #interview-prep { padding: 18px; } #interview-prep h2 { font-size: 24px; } #interview-prep .iv-question { padding: 15px; } #interview-prep details { padding: 14px; } #interview-prep summary { font-size: 17px; } #interview-prep pre { padding: 12px; font-size: 12px; } #interview-prep th, #interview-prep td { padding: 8px; font-size: 13px; } }
       @media print { #interview-prep .iv-flow article, #interview-prep pre { break-inside: avoid; } #interview-prep .iv-pair { display: block; } }
 
-      /* Evaluation loop chapter */
-      #evaluation-loop { padding: 30px; }
+      /* Memory-system evaluation inside the four-layer memory chapter */
+      #memory-system #evaluation-loop { padding: 30px 0 0; }
       #evaluation-loop .eval-kicker { color: #55745f; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
       #evaluation-loop h2 { margin-top: 5px; font-size: 28px; line-height: 1.35; color: #20382d; }
       #evaluation-loop h3 { margin: 26px 0 12px; font-size: 18px; color: #294a3b; }
@@ -2744,6 +2760,35 @@
       #evaluation-loop .eval-gates article { padding: 16px; border: 1px solid #dce5de; border-radius: 10px; background: #fff; }
       #evaluation-loop .eval-gates b { color: #2f5944; }
       #evaluation-loop .eval-gates p { margin-top: 7px; color: #707b74; font-size: 12px; line-height: 1.65; }
+      #evaluation-loop .eval-principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 15px 0 22px; }
+      #evaluation-loop .eval-principles article { position: relative; min-height: 142px; padding: 17px 17px 15px; border: 1px solid #d8e4dc; border-radius: 11px; background: #fbfdfb; }
+      #evaluation-loop .eval-principles em { display: inline-grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: #416d55; color: #fff; font-size: 12px; font-style: normal; font-weight: 750; }
+      #evaluation-loop .eval-principles b { display: block; margin: 10px 0 6px; color: #294d3b; font-size: 15px; }
+      #evaluation-loop .eval-principles p { color: #66746b; font-size: 12px; line-height: 1.65; }
+      #evaluation-loop .eval-vector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin: 15px 0; }
+      #evaluation-loop .eval-vector article { min-width: 0; padding: 15px; border: 1px solid #dce5df; border-radius: 10px; background: #fff; }
+      #evaluation-loop .eval-vector code { display: block; color: #2c6248; font-size: 12px; font-weight: 750; }
+      #evaluation-loop .eval-vector b { display: block; margin: 8px 0 5px; color: #33483c; font-size: 14px; }
+      #evaluation-loop .eval-vector p { color: #6e7972; font-size: 12px; line-height: 1.6; }
+      #evaluation-loop .eval-vector small { display: block; margin-top: 9px; padding-top: 8px; border-top: 1px solid #edf0ee; color: #557863; font-size: 11px; line-height: 1.5; }
+      #evaluation-loop .eval-redline { display: grid; grid-template-columns: minmax(220px, .78fr) minmax(0, 1.7fr); gap: 14px; margin: 16px 0; padding: 18px; border: 1px solid #e5c9b8; border-left: 5px solid #b95e3f; border-radius: 11px; background: linear-gradient(135deg, #fffaf6, #fff7f1); }
+      #evaluation-loop .eval-redline strong { display: block; color: #9a452f; font-size: 20px; line-height: 1.35; }
+      #evaluation-loop .eval-redline span { display: block; margin-top: 8px; color: #7b6258; font-size: 12px; line-height: 1.65; }
+      #evaluation-loop .eval-redline-flow { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+      #evaluation-loop .eval-redline-flow i { flex: 1 0 116px; padding: 12px 10px; border: 1px solid #ead8cd; border-radius: 8px; background: #fff; color: #72594f; font-size: 11px; font-style: normal; line-height: 1.55; text-align: center; }
+      #evaluation-loop .eval-redline-flow b { color: #a34d35; font-size: 13px; }
+      #evaluation-loop .eval-redline-flow .eval-arrow { flex: 0 0 auto; }
+      #evaluation-loop .eval-matrix-wrap { overflow-x: auto; margin: 15px 0; border: 1px solid #dfe6e1; border-radius: 10px; }
+      #evaluation-loop .eval-matrix { width: 100%; min-width: 820px; border-collapse: collapse; background: #fff; font-size: 12px; line-height: 1.55; }
+      #evaluation-loop .eval-matrix th, #evaluation-loop .eval-matrix td { padding: 10px 12px; border-bottom: 1px solid #e7ece8; text-align: left; vertical-align: top; }
+      #evaluation-loop .eval-matrix th { color: #355646; background: #f3f8f4; font-weight: 750; }
+      #evaluation-loop .eval-matrix tr:last-child td { border-bottom: 0; }
+      #evaluation-loop .eval-matrix td:first-child code { color: #2e674a; font-weight: 750; }
+      #evaluation-loop .eval-archive { display: grid; grid-template-columns: .86fr 1.14fr; gap: 14px; margin: 16px 0; }
+      #evaluation-loop .eval-archive article { padding: 17px; border: 1px solid #dce5df; border-radius: 10px; background: #fbfcfa; }
+      #evaluation-loop .eval-archive b { display: block; margin-bottom: 8px; color: #315441; }
+      #evaluation-loop .eval-archive pre { margin: 0; }
+      #evaluation-loop .eval-archive ul { margin: 7px 0 0 18px; color: #69766e; font-size: 12px; line-height: 1.75; }
       #evaluation-loop .eval-result { display: grid; grid-template-columns: 150px 1fr 80px; align-items: center; gap: 12px; margin: 9px 0; font-size: 12px; color: #536158; }
       #evaluation-loop .eval-bar { height: 9px; overflow: hidden; border-radius: 999px; background: #e5ebe6; }
       #evaluation-loop .eval-bar i { display: block; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4c765e, #79a286); }
@@ -2751,20 +2796,52 @@
       #evaluation-loop .eval-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e1e7e2; font-size: 12px; }
       @media (max-width: 1000px) {
         #evaluation-loop .eval-metrics, #evaluation-loop .eval-story { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        #evaluation-loop .eval-gates { grid-template-columns: 1fr; }
+        #evaluation-loop .eval-gates, #evaluation-loop .eval-principles { grid-template-columns: 1fr; }
+        #evaluation-loop .eval-vector { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
       @media (max-width: 760px) {
-        #evaluation-loop { padding: 18px; }
+        #memory-system #evaluation-loop { padding: 22px 0 0; }
         #evaluation-loop h2 { font-size: 23px; }
-        #evaluation-loop .eval-metrics, #evaluation-loop .eval-story, #evaluation-loop .eval-code-grid { grid-template-columns: 1fr; }
+        #evaluation-loop .eval-metrics, #evaluation-loop .eval-story, #evaluation-loop .eval-code-grid, #evaluation-loop .eval-vector, #evaluation-loop .eval-redline, #evaluation-loop .eval-archive { grid-template-columns: 1fr; }
         #evaluation-loop .eval-flow { flex-direction: column; }
         #evaluation-loop .eval-arrow { transform: rotate(90deg); }
+        #evaluation-loop .eval-redline-flow .eval-arrow { transform: none; }
         #evaluation-loop .eval-result { grid-template-columns: 110px 1fr 56px; }
       }
       @media print {
         #evaluation-loop .eval-flow, #evaluation-loop .eval-story, #evaluation-loop details { break-inside: avoid; }
         #evaluation-loop pre { background: #eef3ef; color: #23352e; }
       }
+      #maintenance-boundary { padding: 28px; }
+      #maintenance-boundary .mb-kicker { color: #9a5a35; font-size: 12px; font-weight: 800; letter-spacing: .11em; }
+      #maintenance-boundary h2 { margin: 8px 0 10px; color: #283e33; font-size: 27px; }
+      #maintenance-boundary .mb-lead { max-width: 860px; color: #65736b; font-size: 13px; line-height: 1.75; }
+      #maintenance-boundary .mb-map { display: grid; grid-template-columns: repeat(5, minmax(128px, 1fr)); gap: 9px; align-items: stretch; margin: 20px 0; }
+      #maintenance-boundary .mb-layer { position: relative; min-height: 124px; padding: 15px 13px; border: 1px solid #dce5df; border-radius: 11px; background: #fff; }
+      #maintenance-boundary .mb-layer::after { content: "→"; position: absolute; right: -10px; top: 48px; z-index: 2; color: #8aa091; font-weight: 800; }
+      #maintenance-boundary .mb-layer:last-child::after { display: none; }
+      #maintenance-boundary .mb-layer b { display: block; color: #315441; font-size: 14px; }
+      #maintenance-boundary .mb-layer code { display: block; margin: 8px 0; color: #8e5537; font-size: 11px; }
+      #maintenance-boundary .mb-layer span { color: #738078; font-size: 11px; line-height: 1.55; }
+      #maintenance-boundary .mb-crossings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0; }
+      #maintenance-boundary .mb-crossings article { padding: 15px; border: 1px solid #ead8cc; border-top: 4px solid #bd744e; border-radius: 10px; background: #fffaf6; }
+      #maintenance-boundary .mb-crossings b { display: block; color: #854b31; font-size: 13px; }
+      #maintenance-boundary .mb-crossings code { display: block; margin: 8px 0; color: #5c675f; font-size: 11px; overflow-wrap: anywhere; }
+      #maintenance-boundary .mb-crossings span { color: #796b63; font-size: 11px; line-height: 1.6; }
+      #maintenance-boundary .mb-target { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 9px; align-items: center; margin-top: 17px; padding: 17px; border: 1px solid #d8e5db; border-radius: 11px; background: #f7fbf8; }
+      #maintenance-boundary .mb-target div { min-height: 74px; padding: 12px; border: 1px solid #dce6df; border-radius: 8px; background: #fff; text-align: center; }
+      #maintenance-boundary .mb-target b { display: block; color: #315441; font-size: 13px; }
+      #maintenance-boundary .mb-target span { display: block; margin-top: 7px; color: #708078; font-size: 10px; line-height: 1.5; }
+      #maintenance-boundary .mb-arrow { color: #6f907c; font-weight: 800; }
+      #maintenance-boundary .mb-note { margin-top: 14px; color: #6f7a73; font-size: 11px; line-height: 1.65; }
+      @media (max-width: 980px) {
+        #maintenance-boundary .mb-map { grid-template-columns: 1fr; }
+        #maintenance-boundary .mb-layer::after { content: "↓"; right: 50%; top: auto; bottom: -14px; }
+        #maintenance-boundary .mb-crossings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        #maintenance-boundary .mb-target { grid-template-columns: 1fr; }
+        #maintenance-boundary .mb-arrow { text-align: center; transform: rotate(90deg); }
+      }
+      @media (max-width: 620px) { #maintenance-boundary .mb-crossings { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
@@ -2774,85 +2851,121 @@
         <a class="active" href="#graph-overview">系统流程</a>
         <a href="#developer-guide">代码实现</a>
         <a href="#data-harness">数据边界</a>
-        <a href="#memory-system">运行机制</a>
-        <a href="#concurrency-recovery">并发可靠性</a>
-        <a href="#runtime-sandbox">运行安全</a>
-        <a href="#evaluation-loop">评测闭环</a>
+        <a href="#memory-system">记忆与执行</a>
+        <a href="#evaluation-loop">记忆评测</a>
+        <a href="#concurrency-recovery">并发与恢复</a>
+        <a href="#runtime-sandbox">运行限制</a>
         <a href="#privacy-deletion">精准删除</a>
         <a href="#interview-prep">面试讲解</a>
+        <a href="#maintenance-boundary">维护边界</a>
       </nav>
-      <span class="site-meta">离线自包含 · 更新 2026-10-28</span>
+      <span class="site-meta">离线自包含 · 更新 2026-10-31</span>
     </div>
     <div class="doc-shell">
       <aside class="chapter-nav" aria-label="章节导航">
-        <div class="nav-group"><span class="nav-label">01 · 系统流程</span>
+        <details class="nav-group nav-section" open>
+          <summary class="nav-label">01 · 系统流程</summary>
           <a class="current" href="#graph-overview">三个工作流总览</a>
           <a class="nav-subsection" href="#entry-points">入口、请求与恢复</a>
           <a class="nav-subsection" href="#routing">意图识别与路由</a>
-          <a class="nav-subsection" href="#safety-routing">安全路由：LLM 判断后还要检查什么</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">02 · 代码实现</span>
+          <a class="nav-subsection" href="#safety-routing">安全路由：模型判断与程序复核</a>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">02 · 代码实现</summary>
           <a href="#developer-guide">节点实现索引</a>
-          <a class="nav-subsection" href="#state-dictionary">State 字段字典</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">03 · 数据边界</span>
-          <a href="#data-harness">处理计划与数据权限</a>
+          <a class="nav-subsection" href="#state-dictionary">状态字段说明</a>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">03 · 数据边界</summary>
+          <a href="#data-harness">处理计划与数据边界</a>
           <a class="nav-subsection" href="#harness-case">纠错案例：65kg → 66kg</a>
-          <a class="nav-subsection" href="#grounding-harness">提取结果的证据约束</a>
-          <a class="nav-subsection" href="#output-harness">输出约束：模型选，程序说</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">04 · 运行机制</span>
+          <a class="nav-subsection" href="#grounding-harness">提取结果与原文证据</a>
+          <a class="nav-subsection" href="#output-harness">输出结果由程序确认</a>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">04 · 记忆与执行</summary>
           <a href="#memory-system">四层记忆系统</a>
-          <a class="nav-subsection" href="#memory-working">① 工作记忆：过期与恢复</a>
-          <a class="nav-subsection" href="#memory-ledger">② 事件账本：修订与冲突</a>
-          <a class="nav-subsection" href="#memory-facts">③ 长期事实：确认与有效期</a>
-          <a class="nav-subsection" href="#memory-facts-v2">本次升级：偏好变化与临时例外</a>
-          <a class="nav-subsection" href="#memory-derived">④ 派生记忆：依据与失效</a>
-          <a class="nav-subsection" href="#memory-guards">共同保障与验证</a>
-          <a class="nav-subsection" href="#prompt-system">LLM 调用契约</a>
-          <a class="nav-subsection" href="#tool-runtime">执行、校验与重试</a>
-          <a class="nav-subsection" href="#plan-branches">计划生成与确认分支</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">05 · 并发可靠性</span>
-          <a href="#agent-crash-recovery">进程崩溃后如何恢复 · 代码讲解</a>
-          <a href="#concurrency-recovery">锁、取消与失败恢复</a>
+          <details class="nav-cluster" open>
+            <summary>记忆结构</summary>
+            <a class="nav-subsection" href="#memory-working">① 工作记忆：过期与恢复</a>
+            <a class="nav-subsection" href="#memory-ledger">② 事件账本：修订与冲突</a>
+            <a class="nav-subsection" href="#memory-facts">③ 长期事实：确认与有效期</a>
+            <a class="nav-subsection" href="#memory-facts-v2">偏好变化与临时例外</a>
+            <a class="nav-subsection" href="#memory-derived">④ 派生记忆：依据与失效</a>
+            <a class="nav-subsection" href="#memory-guards">共同保障与验证</a>
+          </details>
+          <details class="nav-cluster">
+            <summary>记忆评测</summary>
+            <a class="nav-subsection nav-cluster-lead" href="#evaluation-loop">评测总览</a>
+            <a class="nav-subsection" href="#evaluation-pipeline">一题怎样跑完</a>
+            <a class="nav-subsection" href="#evaluation-principles">三个评测原则</a>
+            <a class="nav-subsection" href="#evaluation-metrics">六个记忆指标</a>
+            <a class="nav-subsection" href="#evaluation-stale">过期事实红线</a>
+            <a class="nav-subsection" href="#evaluation-code">代码实现</a>
+            <a class="nav-subsection" href="#evaluation-gates">评分与发布门禁</a>
+            <a class="nav-subsection" href="#evaluation-archive">逐题归档</a>
+          </details>
+          <details class="nav-cluster">
+            <summary>模型与执行</summary>
+            <a class="nav-subsection" href="#prompt-system">模型调用契约</a>
+            <a class="nav-subsection" href="#tool-runtime">执行、校验与重试</a>
+            <a class="nav-subsection" href="#plan-branches">计划生成与确认分支</a>
+          </details>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">05 · 并发与恢复</summary>
+          <a href="#agent-crash-recovery">进程崩溃恢复</a>
+          <a href="#concurrency-recovery">并发控制与失败重试</a>
           <a class="nav-subsection" href="#scheduler-reliability">后台任务：领单、续期与恢复</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">06 · 运行安全</span>
-          <a href="#runtime-sandbox">最小权限：修复背景与代码</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">07 · 评测闭环</span>
-          <a href="#evaluation-loop">Agent 到底有没有真的变好</a>
-          <a class="nav-subsection" href="#evaluation-pipeline">一次评测怎样跑完</a>
-          <a class="nav-subsection" href="#evaluation-code">结合代码看六道关</a>
-          <a class="nav-subsection" href="#evaluation-gates">评分与发布门禁</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">08 · 隐私清理</span>
-          <a href="#privacy-deletion">精准删除：成因与修复</a>
-          <a class="nav-subsection" href="#privacy-root-cause">① 前因：为什么原来会全清</a>
-          <a class="nav-subsection" href="#privacy-read-tracking">② 补来源：读数据时记账</a>
-          <a class="nav-subsection" href="#privacy-copy-minimization">③ 管副本：跑步里藏着体重</a>
-          <a class="nav-subsection" href="#privacy-manifest">④ 算范围：依赖与删除预览</a>
-          <a class="nav-subsection" href="#privacy-checkpoint-basics">基础：checkpoint 是什么</a>
-          <a class="nav-subsection" href="#privacy-concurrency">⑤ 防写回：相关流程代次失效</a>
-          <a class="nav-subsection" href="#privacy-recovery">⑥ 防删一半：删除工单与恢复</a>
-          <a class="nav-subsection" href="#privacy-request-replay">⑦ 防重建：旧请求作废登记</a>
-          <a class="nav-subsection" href="#privacy-validation">验证：怎么证明修好了</a>
-        </div>
-        <div class="nav-group"><span class="nav-label">09 · 面试讲解</span>
-          <a href="#interview-prep">Q003 · 循环、上下文与工具范围</a>
-          <a class="nav-subsection" href="#interview-code">结合代码逐步理解</a>
-          <a class="nav-subsection" href="#interview-scopes">跨追问累计与单段预算</a>
-          <a class="nav-subsection" href="#interview-full-flow">全流程：小程序 → Graph → 回复</a>
-          <a class="nav-subsection" href="#interview-flow-nodes">经过哪些节点，怎样中转</a>
-          <a class="nav-subsection" href="#interview-answer">面试时怎样回答</a>
-        </div>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">06 · 运行限制</summary>
+          <a href="#runtime-sandbox">最小权限运行</a>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">07 · 隐私清理</summary>
+          <a href="#privacy-deletion">精准删除总览</a>
+          <details class="nav-cluster" open>
+            <summary>原因与删除范围</summary>
+            <a class="nav-subsection" href="#privacy-root-cause">① 为什么原来会全清</a>
+            <a class="nav-subsection" href="#privacy-read-tracking">② 读数据时记录来源</a>
+            <a class="nav-subsection" href="#privacy-copy-minimization">③ 管理记录副本</a>
+            <a class="nav-subsection" href="#privacy-manifest">④ 依赖与删除预览</a>
+          </details>
+          <details class="nav-cluster">
+            <summary>恢复与验证</summary>
+            <a class="nav-subsection" href="#privacy-checkpoint-basics">进度存档基础</a>
+            <a class="nav-subsection" href="#privacy-concurrency">⑤ 防止并发写回</a>
+            <a class="nav-subsection" href="#privacy-recovery">⑥ 删除工单与恢复</a>
+            <a class="nav-subsection" href="#privacy-request-replay">⑦ 防止旧请求重建</a>
+            <a class="nav-subsection" href="#privacy-validation">验证：怎么证明修好了</a>
+          </details>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">08 · 面试讲解</summary>
+          <a href="#interview-prep">Q003 · 题目总览</a>
+          <details class="nav-cluster" open>
+            <summary>代码与限制范围</summary>
+            <a class="nav-subsection" href="#interview-code">饮食记录代码路径</a>
+            <a class="nav-subsection" href="#interview-scopes">限制如何累计与重置</a>
+          </details>
+          <details class="nav-cluster">
+            <summary>完整流程与回答</summary>
+            <a class="nav-subsection" href="#interview-full-flow">输入 → 工作流 → 回复</a>
+            <a class="nav-subsection" href="#interview-flow-nodes">咨询经过哪些节点</a>
+            <a class="nav-subsection" href="#interview-answer">面试时怎样回答</a>
+          </details>
+        </details>
+        <details class="nav-group nav-section">
+          <summary class="nav-label">09 · 维护边界</summary>
+          <a href="#maintenance-boundary">依赖与越界点</a>
+        </details>
       </aside>
     <main class="doc-main">
       <header>
         <div>
           <div class="eyebrow">CODE MAP / LANGGRAPH</div>
-          <h1>health-management · 工程 Graph</h1>
+          <h1>健康管理 Agent · 工程全景</h1>
           <p class="intro">
             安全入口 → 处理计划 → 本地授权 → 最小取数与写入。点击节点查看当前职责、输入输出与代码位置。
           </p>
@@ -2875,7 +2988,7 @@
 
       <div class="section-head" id="graph-overview" data-chapter>
         <div>
-          <h2>工作流总览 · 三个 Graph 独立运行</h2>
+          <h2>三个独立工作流</h2>
           <p>聊天 15 个、计划 6 个、分析 2 个节点；三个安全节点在前两图复用，共 20 个不同节点。计数不含 START / END，箭头展示路由函数实际可达的去向。</p>
         </div>
         <div class="tabs" role="tablist" aria-label="选择 Graph">
@@ -2989,9 +3102,9 @@
           <div class="llm-detail" id="detail-llm" hidden></div>
           <p id="detail-description"></p>
           <a id="detail-implementation" class="implementation-jump" href="#impl-parse_initial">查看完整实现、分支与例子 ↓</a>
-          <h3>读取 / 输入</h3>
+          <h3>输入与读取</h3>
           <div class="field-list" id="detail-input"></div>
-          <h3>更新 / 输出</h3>
+          <h3>输出与更新</h3>
           <div class="field-list" id="detail-output"></div>
           <a class="source" id="detail-source" href="backend/app/workflows/runtime.py"></a>
           <div class="route-rules" id="route-info"></div>
@@ -3044,7 +3157,7 @@
           </div>
         </div>
         <div class="decision"><div><b>① 安全路由</b><p>明确风险 / 不确定 → 固定回复；无本地信号 → 独立语义分类。</p><code>safety_gate / classify_safety</code></div><div><b>② 解析路径</b><p>incremental_answer 且有 extraction → patch_pending；其余 → parse_initial。</p><code>route_parse</code></div><div><b>③ 写入前权限</b><p>核对安全指纹、能力与原文；本地拒绝转安全边界，冲突按异常停止。</p><code>authorize_operation</code></div></div>
-        <h3>route_chat：通过权限与营养准备，save_ready 后依次匹配</h3>
+        <h3>聊天请求如何选择下一步</h3>
         <div class="decision">
           <div>
             <b>① question 存在</b>
@@ -3072,11 +3185,11 @@
 
       <section class="section panel" id="safety-routing" data-chapter aria-labelledby="safety-routing-title">
         <p class="safety-kicker">SAFETY ROUTING · 先判断能不能做，再决定怎么做</p>
-        <h2 id="safety-routing-title">一句“晚饭吃多少”，为什么要先过安全检查？</h2>
+        <h2 id="safety-routing-title">安全路由：先判断风险，再处理业务</h2>
         <p class="safety-lead">“记录午饭”和“催吐后还想减肥”都在谈饮食，处理方式却不同。现在请求先经过本地规则和独立 LLM 分类，再由程序决定是否允许继续估算、给建议或生成计划。本节对照当前安全实现，前面的总览保留原业务链路快照。</p>
 
         <div class="safety-background" aria-labelledby="safety-background-title">
-          <h3 id="safety-background-title">修复背景：旧程序为什么可能把身体不适当成普通饮食问题？</h3>
+          <h3 id="safety-background-title">为什么旧流程会漏掉身体不适？</h3>
           <p>问题来自《架构与安全 Review 建议》中的“医疗安全边界”检查。原来已有 <code>medical_question()</code>，但它只识别少量关键词，而且主要在回复阶段的部分分支使用。安全判断没有成为所有入口共同的前置检查。</p>
           <blockquote>“我头晕，晚饭吃多少？”</blockquote>
           <p>这句话同时包含身体不适和饮食咨询。旧正则没有“头晕”这个词，检查返回 <code>False</code>；代码便缺少一条强制停止普通建议的边界。低血糖、持续腹泻、催吐、未成年人和孕产期复杂问题，也存在类似的覆盖缺口。</p>
@@ -3110,7 +3223,7 @@ medical_question("我头晕，晚饭吃多少？")
           <p class="safety-caption">旧路径对照修复前提交 <code>df50bb4</code>。这里说明代码允许的漏判路径，不代表旧模型每次都会给出同样回答。<code>medical_question()</code> 仍保留为局部回复辅助，新的主安全入口已放到它之前。<a href="docs/架构与安全Review建议.md">背景来源：架构与安全 Review 建议 · 3.5</a></p>
         </div>
 
-        <h3>修复后：把安全检查放在普通业务前面</h3>
+        <h3>修复方案：安全检查前置</h3>
         <div class="safety-legend" aria-label="安全路由图例"><span>绿色 · 本地程序</span><span class="safety-model-key">紫色 · LLM 分类</span><span class="safety-stop-key">橙色 · 固定安全边界</span></div>
         <div class="safety-diagram" tabindex="0" role="region" aria-label="安全路由流程图，可横向滚动">
           <svg viewBox="0 0 960 465" role="img" aria-labelledby="safety-svg-title safety-svg-desc">
@@ -3148,7 +3261,7 @@ medical_question("我头晕，晚饭吃多少？")
         </div>
         <p class="safety-caption">图示模型可用时的主路径。安全入口已实际注册在 chat / plan 两图中，聊天还包含 authorize_operation。guarded_node 在敏感业务前复核权限，部分输出后再次复核；无备注计划跳过语义分类但仍检查资格。离线只放行完整白名单记录 / 查询 / 明确食物偏好等限定能力，其余自由输入走 uncertain。小屏可横向查看。</p>
 
-        <h3>换一句话，看它会走哪条路</h3>
+        <h3>不同输入会走哪条路？</h3>
         <div class="safety-switch" role="group" aria-label="选择安全路由示例">
           <button type="button" data-safety-case="explicit" aria-pressed="false">明确风险：本地挡住</button>
           <button type="button" data-safety-case="implicit" aria-pressed="true">隐晦风险：LLM 识别</button>
@@ -3165,7 +3278,7 @@ medical_question("我头晕，晚饭吃多少？")
         </div>
         <p class="safety-caption">这是固定示例演示，不会调用真实模型、接口或读取个人健康数据库。隐晦风险示例对应一次合成语料实测结果。</p>
 
-        <h3>结合代码：每道检查究竟做了什么？</h3>
+        <h3>代码里怎样逐层检查？</h3>
         <div class="safety-code-grid">
           <details open><summary>入口：首次输入和每次追问都先检查</summary>
             <pre># chat_flow.py · 关键行节选
@@ -3177,7 +3290,7 @@ graph.add_edge('clarify', 'safety_gate')
             <p>例如系统问“吃了多少”，用户答“100g，但我现在头晕”，先处理身体不适；选择记录 ID 也不能丢掉附言里的风险。</p>
             <a href="backend/app/workflows/chat_flow.py">chat_flow.py · build_chat / clarify</a>
           </details>
-          <details open><summary>分类：LLM 只提出标签，不决定执行权限</summary>
+          <details open><summary>分类：模型只给标签，不决定权限</summary>
             <pre># workflows/safety.py · 关键行节选
 self.parser.boundary.grant(
     'safety_classification', {'context': context}
@@ -3187,7 +3300,7 @@ result = merge_classification(value, context)</pre>
             <p><code>grant</code> 限定本次可发送的数据；<code>value</code> 是模型分类；<code>result</code> 是经本地检查后用于路由的结果。输入或档案变化后，旧分类不能直接复用。</p>
             <a href="backend/app/workflows/safety.py">workflows/safety.py · classify_safety</a>
           </details>
-          <details><summary>证据：不接受模型凭空编造的用户原话</summary>
+          <details><summary>证据：用户原话必须能够核对</summary>
             <pre># health/safety.py · 节选
 if evidence.source_id not in sources or \
         evidence.quote not in sources[evidence.source_id]:
@@ -3195,7 +3308,7 @@ if evidence.source_id not in sources or \
             <p>用户只说“体重65公斤”，模型却引用“我想催吐”，这份输出就无效。引用真的存在，也仍可能理解错，所以证据校验不等于分类正确。</p>
             <a href="backend/app/health/safety.py">health/safety.py · merge_classification</a>
           </details>
-          <details><summary>后续：普通分类通过，操作和回复仍要复核</summary>
+          <details><summary>后续：分类通过后仍要复核</summary>
             <pre># concurrency.py · 业务步骤前的关键行
 self.require_safety(state, operation.__name__)
 
@@ -3218,7 +3331,7 @@ if unsafe_generated_text(text):
 
       <section class="section panel dev-guide" id="developer-guide" data-chapter>
         <div class="support-head"><span>DEV</span><div>
-          <h2>节点实现手册 · 20 个不同图节点与底层执行机制</h2>
+          <h2>20 个工作流节点</h2>
           <p>每项包含用途、输入输出、处理顺序、分支、数据库与外部调用、异常和开发示例。</p>
         </div></div>
         <div class="support-body">
@@ -3232,7 +3345,7 @@ if unsafe_generated_text(text):
           <nav id="guide-index" class="dev-index" aria-label="实现说明索引"></nav>
           <div id="guide-cards"></div>
           <p id="guide-empty" class="dev-empty" hidden>没有匹配的节点或机制，可清空搜索或切换到全部说明。</p>
-          <div class="dev-state" id="state-dictionary" data-chapter><h3>State 状态字段字典</h3>
+          <div class="dev-state" id="state-dictionary" data-chapter><h3>状态字段说明（State）</h3>
             <p class="dev-intro"><code>State</code> 是三个 Graph 共用的 <code>TypedDict(total=False)</code>：字段缺席表示“尚未设置”，不等于空值。节点只返回本次修改的字段；普通列表没有 reducer，不会自动追加，需复制旧列表后再返回。checkpoint 保存的是流程执行状态，不是健康事实源，也不授予模型外发权限。</p>
             <div class="state-summary" aria-label="State 摘要"><span>51 个声明字段</span><span>一个字段一行</span><span>chat / plan / analysis 共用</span><span>thread_id 级 checkpoint</span></div>
             <div class="dev-table-wrap"><table class="dev-table state-table"><thead><tr><th>字段</th><th>类型 / 初值</th><th>语义</th><th>生产者</th><th>消费者 / checkpoint 生命周期</th></tr></thead><tbody id="state-rows"></tbody></table></div>
@@ -3249,7 +3362,7 @@ if unsafe_generated_text(text):
         <div class="support-head">
           <span>05</span>
           <div>
-            <h2>处理计划与数据 Harness</h2>
+            <h2>处理计划与数据边界</h2>
             <p class="case-note">本节部分规则描述对应改造前版本。2026-10-28 的咨询范围、日期参数、自然回答与修正重试变化，见<a href="#llm-consultation-summary">改造小结</a>。</p>
             <p>按当前源码核对：计划审批与外发授权是两层检查；包括首次 plan 在内，每次模型请求都经过同一个出口。图为节点内部调用关系，不新增 Graph 节点。</p>
           </div>
@@ -3308,7 +3421,7 @@ if unsafe_generated_text(text):
             </svg>
           </div>
           <p class="case-note">图上两处检查指的是同一个 <code>ModelBoundary</code>。<code>PlanHarness</code> 负责规划审批与引用绑定；补丁、营养、表达和建议分别在其业务节点构造资源，所有请求最后都走 <code>Parser.request → approve → model_request → consume → HTTP</code>。查询结果不送模型作二次总结；若另有 advice 任务，其上下文独立按批准视图构造。</p>
-          <div class="memory-subhead"><h3>建议的六种固定视图</h3><span>程序根据原文复核并选择；不是模型自己决定最终取数范围</span></div>
+          <div class="memory-subhead"><h3>六种固定数据视图</h3><span>程序根据原文复核并选择；不是模型自己决定最终取数范围</span></div>
           <div class="harness-views">
             <div class="harness-view"><b>最终获批不读历史</b><code>none</code><span>只有 question / scene / view / now；无健康历史。注意：计划默认 none 可能被程序按问题补成相关视图，见下方范围规则。</span></div>
             <div class="harness-view"><b>单餐指代</b><code>meal_reference</code><span>仅绑定一餐，最多 10 个食物；不带其他餐食、全天汇总或反馈。仍含下述饮食共用字段。</span></div>
@@ -3352,11 +3465,11 @@ if unsafe_generated_text(text):
 
       <section class="section panel harness-panel" id="llm-consultation-summary" data-chapter>
         <div class="support-head"><span>05+</span><div>
-          <h2>改造小结：让模型理解语言，让后端守住操作边界</h2>
+          <h2>改造结果：模型理解，程序把关</h2>
           <p>2026-10-28 · LLM 咨询链路整体改造。以上 Harness 章节保留了旧实现说明；本节说明本次变更，涉及差异时以本节为准。</p>
         </div></div>
         <div class="support-body">
-          <h3>为什么“今天是不是吃的有点油腻了”曾经报错？</h3>
+          <h3>咨询为什么会报错？</h3>
           <p>旧流程先让模型理解问题，再用关键词规则复核是否属于咨询。“是不是”没有命中疑问词列表时，本地可能判定不允许读取历史，与模型申请的今日饮食视图冲突。日志已证实该请求在模型返回后的本地审批阶段失败；当时未保存模型输出，无法追溯具体触发字段。关键词缺口是代码中确认存在的缺陷，不应把它当成那次失败的唯一已证实原因。</p>
           <p>改造后的分工是：模型提出结构化计划，后端只在允许的工具、记录绑定、日期上限和写入证据范围内执行。普通咨询不再依赖“吗、怎么、建议”等词才能通过。</p>
           <div class="table-wrap"><table><thead><tr><th>改了什么</th><th>现在怎样处理</th><th>对应代码</th></tr></thead><tbody>
@@ -3368,7 +3481,7 @@ if unsafe_generated_text(text):
             <tr><td>反馈分支抢答</td><td>模型已判断为咨询时，“油腻、偏咸”等感受不再优先触发固定话术，咨询继续读取获批上下文并回答。</td><td><a href="backend/app/workflows/chat_response.py">respond</a></td></tr>
             <tr><td>排错信息</td><td>记录 model_plan_*、model_tool_window_invalid 和 model_plan_repair 等原因，不把健康原文或模型回复写入错误日志。</td><td><a href="backend/app/observability/contracts.py">日志代码白名单</a></td></tr>
           </tbody></table></div>
-          <h3>现在一次咨询怎样完成？</h3>
+          <h3>现在怎样处理？</h3>
           <p>用户提问 → 安全分类 → 模型给出咨询计划与日期 → 后端审批并筛选记录 → 模型自然回答 → 独立审核 → 展示回答；失败则给出备用回复。原文证据、字段范围、记录写入和保存回执仍由后端控制。离线演示模式保留原规则，不擅自联网。</p>
           <h3>验证与边界</h3>
           <p>本轮后端全量测试 <strong>597 项通过</strong>。使用临时空数据库与真实模型验证“今天是不是吃的有点油腻了”和“上周饮食有什么需要注意的”，完整接口均返回成功，回答说明缺少饮食记录，没有编造个人摄入数据。测试未修改用户健康记录；未直接操作小程序界面验证。</p>
@@ -3378,21 +3491,21 @@ if unsafe_generated_text(text):
 
       <section class="section panel harness-case" id="harness-case" data-chapter>
         <div class="support-head"><span>06</span><div>
-          <h2>Harness 案例：65kg 改成 66kg</h2>
+          <h2>纠错案例：65kg 改成 66kg</h2>
           <p>场景、实际代码与数据范围放在一起看 · 按 2026-10-21 当前实现核对。</p>
         </div></div>
         <div class="support-body">
           <p class="dev-intro">核心不是让模型自己遵守“少看数据”，而是程序先装好允许发送的数据，再审核模型提出的任务。下面是假设模型正确识别纠错意图时的代码推演，不读取真实健康记录，也不代表已经执行过一次模型请求。代码片段省略了无关分支。</p>
           <div class="case-scene">
-            <div><h3>用户实际怎么说</h3><p>先记录：</p><blockquote>今天体重65kg。</blockquote><p>系统已保存，随后用户发现说错了：</p><blockquote>不是，刚才那条改成66kg。</blockquote></div>
-            <div><h3>本地有什么，但不该一并交给模型</h3><p>假设数据库还有昨天的餐食、睡眠与其他日期的体重。此次没有手动选中记录；同会话上一轮只有刚保存的那条体重结果。</p><p>第一轮规划不查、不发送上轮结果数量；只有后面确实需要解析“刚才那条”时，才在本地读取引用元数据。</p></div>
+            <div><h3>用户输入</h3><p>先记录：</p><blockquote>今天体重65kg。</blockquote><p>系统已保存，随后用户发现说错了：</p><blockquote>不是，刚才那条改成66kg。</blockquote></div>
+            <div><h3>本地数据边界</h3><p>假设数据库还有昨天的餐食、睡眠与其他日期的体重。此次没有手动选中记录；同会话上一轮只有刚保存的那条体重结果。</p><p>第一轮规划不查、不发送上轮结果数量；只有后面确实需要解析“刚才那条”时，才在本地读取引用元数据。</p></div>
           </div>
           <div class="case-flow" role="img" aria-label="当前修改要求进入第一次模型调用，返回计划后本地审批并解析指代，第二次模型调用只读取绑定体重记录，返回草稿再经过本地校验保存。两次调用均经过网络出口授权。">
             <span>当前修改要求</span><b aria-hidden="true">→</b><span class="model">① 模型只提计划</span><b aria-hidden="true">→</b><span>本地审批 / 绑定目标</span><b aria-hidden="true">→</b><span class="model">② 模型只改这一条</span><b aria-hidden="true">→</b><span>后续校验 / 保存</span>
           </div>
           <ol class="case-steps">
             <li class="case-step" id="harness-case-plan">
-              <h3>先让模型听懂这句话，不告诉它旧体重</h3>
+              <h3>模型先理解，不看旧体重</h3>
               <p><code>parse_initial</code> 把工作交给 <code>self.harness.prepare(state)</code>。在模型模式下，Harness 先登记允许发送的内容，再调用规划模型：</p>
               <pre class="case-code"><code>self.parser.boundary.grant('processing_plan', {
     'text': state['input_text'],  # 不是，刚才那条改成66kg。
@@ -3408,7 +3521,7 @@ plan = self.parser.plan(state['input_text'], bool(selected))</code></pre>
               <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · PlanHarness.prepare</a>
             </li>
             <li class="case-step" id="harness-case-approve">
-              <h3>模型提出“纠错”，程序先检查这张申请单</h3>
+              <h3>模型申请纠错，程序负责校验</h3>
               <p>假设模型提出一项 <code>correct</code>，<code>text</code> 是当前原话，<code>target=previous</code>、<code>events=[]</code>、<code>data_view=none</code>。这不是可直接执行的命令，必须先经过 <code>actions = self.approve_plan(state, plan)</code>：</p>
               <pre class="case-code"><code>if action.text not in state['input_text']:
     raise PolicyError('处理计划必须对应本次输入，不能自行扩展问题。')
@@ -3420,7 +3533,7 @@ if action.data_view != 'none' and action.intent != 'advice':
               <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · PlanHarness.approve_plan</a>
             </li>
             <li class="case-step" id="harness-case-resolve">
-              <h3>“刚才那条”由本地程序定位，不由模型选择 ID</h3>
+              <h3>本地定位“刚才那条”</h3>
               <p>模型说 <code>target=previous</code> 本身不构成授权。<code>resolve</code> 优先使用用户选中的记录；没有选中时，检查的是用户当前原话，然后才按需读取同会话上一轮的引用：</p>
               <pre class="case-code"><code>selected = self.selected(state)
 if selected:
@@ -3441,7 +3554,7 @@ if not prior:
               <a class="case-source" href="backend/app/workflows/policy.py">代码定位：workflows/policy.py · resolve / previous_ids / prepare</a>
             </li>
             <li class="case-step" id="harness-case-correct">
-              <h3>第二次才给原记录，而且只给绑定这一条的必要字段</h3>
+              <h3>只发送目标记录的必要字段</h3>
               <p>确定目标后，<code>record_projection</code> 按固定字段裁剪记录，排除数据库 ID、版本、无关反馈与营养派生元数据。然后为“本次修改要求 + 这份投影”单独授权：</p>
               <pre class="case-code"><code>projection = record_projection(prior)
 self.parser.boundary.grant('correct_selected', {
@@ -3458,7 +3571,7 @@ updated.event.occurred_at = datetime.fromisoformat(prior['occurred_at'])</code><
               <a class="case-source" href="backend/app/workflows/policy.py">纠错分支：workflows/policy.py · prepare</a>
             </li>
             <li class="case-step" id="harness-case-boundary">
-              <h3>两次模型调用，都必须经过同一个外发门卫</h3>
+              <h3>两次调用共用外发检查</h3>
               <p>这一关发生在每次 HTTP 请求之前，不是等第二次纠错结束后才检查。<code>grant</code> 登记内容指纹，<code>approve</code> 校验用途、字段、固定 Schema 与实际数据，再将请求固定为不可变内容：</p>
               <pre class="case-code"><code>grant = self._grant_key(purpose, self._resource(purpose, data))
 if grant not in scope.grants:
@@ -3476,14 +3589,14 @@ data = self.boundary.consume(call)</code></pre>
               <a class="case-source" href="backend/app/modeling/parser.py">网络出口：modeling/parser.py · request / model_request</a>
             </li>
           </ol>
-          <h3 class="small-heading">同一个案例，两次模型调用究竟各看到了什么</h3>
+          <h3 class="small-heading">两次调用的数据范围</h3>
           <div class="dev-table-wrap"><table class="dev-table case-data-table"><thead><tr><th>阶段</th><th>模型可见</th><th>仍留在本地 / 不附带</th></tr></thead><tbody>
             <tr><td>第一次：processing_plan</td><td>当前原话、selected_record=false、时间、固定任务与 Schema。</td><td>上轮结果数量、引用 ID、原体重65kg、历史正文；此时不查询上轮引用元数据。</td></tr>
             <tr><td>本地审批 / resolve</td><td>不是一次模型调用。</td><td>按需读取同会话上轮引用；只有唯一目标才读取该记录。用户选中记录优先。</td></tr>
             <tr><td>第二次：correct_selected</td><td>当前修改要求、原体重记录的必要字段投影、时间、固定任务与 Schema。</td><td>真实记录 ID / version、其他记录、历史聊天、无关反馈与营养派生元数据。</td></tr>
             <tr><td>返回 parse_initial</td><td>不会因为返回草稿就再发送全量历史。</td><td>本地绑定 correction_id / version，返回 extraction；后续 normalize_extraction → validate_drafts → prepare_nutrition → save_ready → persist → respond，按条件路由；缺信息则先 clarify。</td></tr>
           </tbody></table></div>
-          <h3 class="small-heading">走不通时，在哪一关停下</h3>
+          <h3 class="small-heading">失败会停在哪里？</h3>
           <div class="dev-table-wrap"><table class="dev-table"><thead><tr><th>发生什么</th><th>当前实现怎么处理</th></tr></thead><tbody>
             <tr><td>模型正确提出纠错，但上轮有多条结果</td><td>resolve 不返回唯一目标；prepare 生成问题，不调用 correct。</td></tr>
             <tr><td>纠错计划夹带事件草稿或申请饮食视图</td><td>approve_plan 抛 PolicyError；不执行该纠错模型调用。</td></tr>
@@ -3501,7 +3614,7 @@ data = self.boundary.consume(call)</code></pre>
         <div class="support-head">
           <span>07</span>
           <div>
-            <h2>提取 Grounding Harness · 模型给候选，本地证明原文</h2>
+            <h2>提取结果必须有原文依据</h2>
             <p>它不判断模型“有多自信”，而是重做原文绑定，并在写库前把证据完整重放一遍。</p>
           </div>
         </div>
@@ -3564,7 +3677,7 @@ data = self.boundary.consume(call)</code></pre>
             </div>
           </div>
 
-          <h3 class="small-heading">代码怎样把错误候选拉回原文</h3>
+          <h3 class="small-heading">代码怎样核对原文</h3>
           <div class="case-flow" role="img" aria-label="PlanHarness收集同一任务的食物名称，调用ground_event；ground_event查找食物和数量的位置，由bind_quantities在本地绑定，再生成字段证据。">
             <span>PlanHarness.approve_plan</span><b aria-hidden="true">→</b><span class="model">ground_event</span><b aria-hidden="true">→</b><span>_name_spans</span><b aria-hidden="true">→</b><span>_bind_quantities</span><b aria-hidden="true">→</b><span>_ground_items</span>
           </div>
@@ -3590,7 +3703,7 @@ item['quantity'], item['unit'] = quantity['value'], quantity['unit']</code></pre
             <tr><td>source</td><td colspan="2">message_id + source_text_hash + start/end</td><td>字符坐标始终指向原始消息，不指向拼接后的 raw_text。</td></tr>
           </tbody></table></div>
 
-          <h3 class="small-heading">最后一道门不是“有证据”，而是“证据证明当前值”</h3>
+          <h3 class="small-heading">证据必须证明当前值</h3>
           <pre class="case-code"><code># backend/app/evidence/verification.py · _verified / assert_grounded
 if source.text[evidence.start:evidence.end] != evidence.quote:
     raise GroundingError('证据片段与原文范围不一致')
@@ -3623,20 +3736,20 @@ if not _equal(replayed, _actual(event, evidence)):
         <div class="support-head">
           <span>07B</span>
           <div>
-            <h2 id="output-harness-title">输出 Harness · 模型选内容，程序说事实</h2>
+            <h2 id="output-harness-title">输出结果由程序确认</h2>
             <p>前面的规则检查能读什么、能保存什么；这一层负责把真实结果准确地展示出来。</p>
           </div>
         </div>
         <div class="support-body">
           <div class="case-scene">
             <div>
-              <h3>原来可能发生什么？</h3>
+              <h3>原来的问题</h3>
               <p>还在等用户补充米饭的做法，记录尚未保存。模型的追问却可能夹带：</p>
               <blockquote>已保存记录，目标已经改成900 kcal，计划已生效。</blockquote>
               <p>写入权限虽然被挡住，用户仍可能相信这句话，关掉页面，以为事情已经办好了。</p>
             </div>
             <div>
-              <h3>现在怎么处理？</h3>
+              <h3>现在的做法</h3>
               <p>程序检查待补字段是 <code>cooking</code>，只生成对应的本地问句：</p>
               <blockquote>米饭主要是什么做法？不知道也可以。</blockquote>
               <p>补充完成并真正保存后，程序才读取实际记录，生成“已记下……”的回执。输入理解和营养粗估仍由模型参与。</p>
@@ -3652,7 +3765,7 @@ if not _equal(replayed, _actual(event, evidence)):
 
           <ol class="case-steps">
             <li class="case-step">
-              <h3>把回复变成“点菜单”</h3>
+              <h3>模型只选择内容编号</h3>
               <p>例如，<code>review_portion</code> 对应“结合实际分量、饥饿程度和饱腹感复盘”。模型可以选择这个编号；最终文字从本地目录中取。</p>
               <pre class="case-code"><code>// AdviceReply：模型可以提交的候选
 {"point_ids": ["review_portion"]}
@@ -3665,10 +3778,10 @@ if not _equal(replayed, _actual(event, evidence)):
             </li>
 
             <li class="case-step">
-              <h3>编号合法，还要检查本次能不能选</h3>
+              <h3>程序再次检查选择范围</h3>
               <p>本次讨论一餐，就只开放对应的复盘要点。模型不能擅自选体重趋势，也不能重复选择同一项。下面检查的是编号与集合，属于确定的程序规则。</p>
               <details>
-                <summary>查看关键代码 · validate_advice（长条件等价换行）</summary>
+                <summary>关键代码：validate_advice</summary>
                 <pre class="case-code"><code>selected = AdviceReply.model_validate(candidate)
 plan = advice_plan(context)
 options = {point['point_id']: point['text'] for point in plan['options']}
@@ -3681,7 +3794,7 @@ if (len(selected.point_ids) != len(set(selected.point_ids))
             </li>
 
             <li class="case-step">
-              <h3>摄入量和目标，各自从对应字段取</h3>
+              <h3>数值从对应字段读取</h3>
               <p>假设本地记录为：摄入 <strong>360 kcal</strong>、当前目标 <strong>1850 kcal</strong>、记录差额 <strong>1490 kcal</strong>。这些是说明用的示例数据。程序分别填入对应句子，模型没有位置把它们写反。</p>
               <pre class="case-code"><code># advice_plan · 源码节选
 facts.append(f'{label}约 {totals["kcal"]:g} kcal。')
@@ -3695,7 +3808,7 @@ return ''.join([*plan['facts'], *[options[key] for key in selected.point_ids]])<
             </li>
 
             <li class="case-step">
-              <h3>缺信息先问，保存之后再给回执</h3>
+              <h3>信息不全先追问</h3>
               <p>追问用什么句子，由缺失字段决定。保存回执则根据工作流读取到的实际记录生成；回执函数本身不执行保存。</p>
               <pre class="case-code"><code># policy/output.py · clarification_question
 if field == 'items':
@@ -3726,7 +3839,7 @@ if not records:
           <div class="support-head">
             <span>08</span>
             <div>
-              <h2>记忆系统 · 四层记忆与修复方案</h2>
+              <h2>四层记忆系统</h2>
               <p>对应当前代码 · 2026-10-26 · 数据库 v7 / 长期事实 v2 · SQLite + LangGraph checkpoint</p>
             </div>
           </div>
@@ -3761,7 +3874,7 @@ if not records:
             </div>
 
             <section class="memfix-unit" id="memory-working" data-chapter aria-labelledby="memory-working-title">
-              <h3 id="memory-working-title">① 工作记忆：草稿过期，已保存的体重仍保留</h3>
+              <h3 id="memory-working-title">① 工作记忆：草稿会过期，记录会保留</h3>
               <div class="memfix-grid">
                 <div>
                   <p class="memfix-example">“今天体重 65 公斤，中午吃了炸鸡。”</p>
@@ -3787,7 +3900,7 @@ self.recover_context_expirations(completed_before)</code></pre>
             </section>
 
             <section class="memfix-unit" id="memory-ledger" data-chapter aria-labelledby="memory-ledger-title">
-              <h3 id="memory-ledger-title">② 事件账本：改成“一碗”，也能看到原来写了“两碗”</h3>
+              <h3 id="memory-ledger-title">② 事件账本：保留每次修订</h3>
               <div class="memfix-grid">
                 <div>
                   <div class="memfix-route"><span>v1 · 两碗米饭<br/><b>revisions 保留</b></span><i aria-hidden="true">→</i><span>v2 · 一碗米饭<br/><b>events 更新当前值</b></span></div>
@@ -3812,7 +3925,7 @@ revision = prior['version'] + 1 if prior else 1
             </section>
 
             <section class="memfix-unit" id="memory-facts" data-chapter aria-labelledby="memory-facts-title">
-              <h3 id="memory-facts-title">③ 长期事实：一句偏好，带上确认状态和有效期</h3>
+              <h3 id="memory-facts-title">③ 长期事实：确认状态与有效期</h3>
               <div class="memfix-grid">
                 <div>
                   <p>自由文本继续保留，同时增加可比较的对象、取值、来源和状态。<code>confirmation</code> 表示是否明确确认或冲突；<code>lifecycle</code> 表示现在是否适用。</p>
@@ -3845,7 +3958,7 @@ revision = prior['version'] + 1 if prior else 1
             </section>
 
             <section class="memfix-unit" id="memory-facts-v2" data-chapter aria-labelledby="memory-facts-v2-title">
-              <h3 id="memory-facts-v2-title">本次升级：偏好可以改变，临时例外到期后会恢复</h3>
+              <h3 id="memory-facts-v2-title">偏好变化与临时例外</h3>
               <p class="memfix-lead">现在，一句偏好会被整理成一张“事实卡片”：说的是谁或什么、是什么意思、适用到哪天、来自哪里。原话仍然保留，程序再按要使用的日期，挑出有效的信息。</p>
 
               <div class="memfix-grid">
@@ -3895,7 +4008,7 @@ revision = prior['version'] + 1 if prior else 1
                 </article>
               </div>
 
-              <div class="memory-subhead"><h3>保存之后，建议和计划如何使用？</h3><span>共用同一个日期解析入口</span></div>
+              <div class="memory-subhead"><h3>保存后怎样用于建议和计划？</h3><span>共用同一个日期解析入口</span></div>
               <div class="memfix-route" aria-label="有效事实进入建议和每日计划的流程"><span>检查确认状态<br/>和适用日期</span><i aria-hidden="true">→</i><span>处理永久替代<br/>与临时覆盖</span><i aria-hidden="true">→</i><span>未决冲突先核对<br/>保留限制保护</span><i aria-hidden="true">→</i><span>普通建议<br/>或每日安排</span></div>
               <div class="memfix-grid">
                 <div class="memfix-code">
@@ -3926,7 +4039,7 @@ require_resolved(view)</code></pre>
             </section>
 
             <section class="memfix-unit" id="memory-derived" data-chapter aria-labelledby="memory-derived-title">
-              <h3 id="memory-derived-title">④ 派生记忆：一餐改了，引用它的周报就需要更新</h3>
+              <h3 id="memory-derived-title">④ 派生记忆：来源变化后需要更新</h3>
               <div class="memfix-grid">
                 <div>
                   <div class="memfix-route"><span>餐食 v1</span><i aria-hidden="true">→</i><span>周报 · valid</span></div>
@@ -3961,7 +4074,7 @@ require_resolved(view)</code></pre>
             </section>
 
             <section class="memfix-unit" id="memory-guards" data-chapter aria-labelledby="memory-guards-title">
-              <h3 id="memory-guards-title">共同保障：清理可恢复，保存失败能完整回滚</h3>
+              <h3 id="memory-guards-title">共同保障：可恢复、可回滚</h3>
               <div class="memfix-rules">
                 <article><b>过期凭据与删除凭据分开</b><p><code>expired_requests</code> 阻止过期请求重放；<code>request_tombstones</code> 阻止删除后的内容重建。两者都不保留健康正文。</p></article>
                 <article><b>嵌套读取不能提交半份计划</b><p>保存计划时可能顺便检查事实是否到期。<code>provenance_transaction()</code> 复用外层事务；后续失败时，计划和来源关系一起回滚。</p></article>
@@ -3981,13 +4094,273 @@ require_resolved(view)</code></pre>
               </div>
               <div class="memory-guard"><b>删除范围仍需预览</b><span>这次沿用原有精准删除机制，事实和事件的所有修订及副本都纳入清理。<a href="#privacy-deletion">查看依赖、共享原文与删除工单 →</a></span></div>
             </section>
+
+            <section class="memfix-unit memory-evaluation" id="evaluation-loop" data-chapter aria-labelledby="evaluation-title">
+              <div class="eval-kicker">MEMORY EVALUATION / 证明“记得对、忘得净、恢复后不反悔”</div>
+              <h2 id="evaluation-title">如何判断记忆系统是否可信？</h2>
+              <p class="eval-lead">这里评测的对象是工程里的记忆系统：事件和事实怎样写入、怎样按时间选出当前有效值、怎样进入回答证据，以及更新、删除、重启后会不会把旧值带回来。六项指标不是一个总分，而是六个故障坐标；过期事实泄漏则是独立的隐私合规红线。</p>
+
+              <div class="eval-metrics" aria-label="记忆系统评测已验证结果">
+                <article class="eval-metric"><b>14 / 14</b><span>当前内置端到端场景通过</span></article>
+                <article class="eval-metric"><b>6</b><span>每个 trial 输出六个记忆观察面</span></article>
+                <article class="eval-metric"><b>0</b><span>过期事实泄漏次数</span></article>
+                <article class="eval-metric"><b>656</b><span>最终后端完整测试通过</span></article>
+              </div>
+
+              <h3 id="evaluation-pipeline" data-chapter>① 一道记忆用例怎样运行？</h3>
+              <div class="eval-flow" aria-label="评测执行流水线">
+                <article><b>YAML v2 单问题用例</b><span>dataset、固定时间、六项标注、ignore 和门禁全部显式声明。</span></article>
+                <i class="eval-arrow" aria-hidden="true">→</i>
+                <article><b>隔离 trial</b><span>每题每轮独立数据库；固定业务时钟；可重启、重放或执行受限 mutation。</span></article>
+                <i class="eval-arrow" aria-hidden="true">→</i>
+                <article><b>真实 Engine / Graph</b><span>运行生产工作流，观察记忆落库、effective facts、回复证据与出模载荷。</span></article>
+                <i class="eval-arrow" aria-hidden="true">→</i>
+                <article><b>六指标 + 硬门禁</b><span>普通能力分别计分；<code>no_stale_fact_output</code> 不参与平均。</span></article>
+                <i class="eval-arrow" aria-hidden="true">→</i>
+                <article><b>三级等权聚合</b><span>trial → case → dataset → metric；缺标注不补 0。</span></article>
+                <i class="eval-arrow" aria-hidden="true">→</i>
+                <article><b>报告与逐题归档</b><span>JSON / Markdown / manifest，加每个 trial 的状态与数据库证据。</span></article>
+              </div>
+              <p class="eval-caption">Mock 只替换最后的网络请求函数；记忆查询、权限许可、字段裁剪、Graph 执行、Repository 和 checkpoint 都走真实代码。这样测到的是“记忆如何被系统使用”，而不是一段脱离工程的模型回答。报告顶层明确禁止出现 <code>overall_score</code>。</p>
+
+              <h3 id="evaluation-principles" data-chapter>② 三个评测原则</h3>
+              <div class="eval-principles" aria-label="新版评测三个设计原则">
+                <article><em>1</em><b>一个数据集只回答一个问题</b><p><code>temporal</code> 只检查记忆时间，<code>abstention</code> 只检查没有记忆依据时该不该答。数字下降时直接定位主要责任链路。</p></article>
+                <article><em>2</em><b>跨数据集等权，缺标注不记 0</b><p>先平均同一 case 的重复 trial，再平均 dataset 内 case，最后对有标注的数据集做 macro average。</p></article>
+                <article><em>3</em><b>过期事实是一票否决</b><p>旧值进入模型上下文或最终回复一次即 FAIL；没有有效断言则 INCOMPLETE，同样不能声称发布通过。</p></article>
+              </div>
+
+              <h3 id="evaluation-metrics" data-chapter>③ 六个记忆指标</h3>
+              <div class="eval-vector" aria-label="六指标及责任子系统">
+                <article><code>state_correctness</code><b>记忆最终状态对不对</b><p>事件、事实、生命周期、修订关系和重复写入是否形成期望终态。</p><small>解析 / 事实消解 / Workflow / Repository</small></article>
+                <article><code>response_grounding</code><b>回答是否只读当前有效记忆</b><p>回复 claim 是否来自 effective facts 和获准进入上下文的证据。</p><small>记忆查询 / 上下文构建 / 输出策略</small></article>
+                <article><code>abstention_calibration</code><b>没有记忆依据时是否老实拒答</b><p>既检查结构化 disposition，也要求给出非空、可理解的拒答。</p><small>记忆检索 / 证据存在性 / 回答决策</small></article>
+                <article><code>temporal_correctness</code><b>记忆的日期、窗口和有效期对不对</b><p>相对时间、纠错日期、valid_from / valid_until 与冲突消解。</p><small>Clock / 时间解析 / 事实生命周期</small></article>
+                <article><code>safety_policy_correctness</code><b>记忆能否被读、写、外发的边界对不对</b><p>风险状态下禁止写入，敏感记忆出模前仍需权限和字段裁剪。</p><small>Safety / Policy / Model Boundary</small></article>
+                <article><code>execution_reliability</code><b>重启、重放后记忆是否仍一致</b><p>checkpoint、幂等、迟到结果和恢复流程不得复活旧事实。</p><small>Runtime / Checkpoint / 并发与恢复</small></article>
+              </div>
+              <p class="eval-caption">这六个名字是全工程共用的固定指标字典；本章只从记忆链路解读它们。它们分别回答“存得对、取得准、无据不编、时间有效、权限合规、恢复一致”，不能相加成一个掩盖问题的总分。</p>
+
+              <div class="eval-matrix-wrap" role="region" aria-label="数据集与主要结论映射，可横向滚动" tabindex="0">
+                <table class="eval-matrix">
+                  <thead><tr><th>dataset</th><th>在记忆链路中只回答</th><th>正式结论</th><th>首先排查</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>recording_state</code></td><td>用户表达是否形成正确记忆终态</td><td>state_correctness</td><td>解析、事实消解、Repository</td></tr>
+                    <tr><td><code>grounding</code></td><td>回答是否有当前有效记忆依据</td><td>response_grounding</td><td>记忆查询、证据投影、输出策略</td></tr>
+                    <tr><td><code>abstention</code></td><td>无记忆依据时是否明确拒答</td><td>abstention_calibration</td><td>查询、证据判断、回复契约</td></tr>
+                    <tr><td><code>temporal</code></td><td>记忆时间与冲突消解是否正确</td><td>temporal_correctness</td><td>Clock、时间解析、事实有效期</td></tr>
+                    <tr><td><code>safety_boundary</code></td><td>记忆读写与外发权限是否正确</td><td>safety_policy_correctness</td><td>Safety、Policy、Model Boundary</td></tr>
+                    <tr><td><code>recovery</code></td><td>故障恢复后记忆是否仍一致</td><td>execution_reliability</td><td>Workflow、Checkpoint、幂等</td></tr>
+                    <tr><td><code>fact_freshness</code></td><td>更新或删除后旧值是否重现</td><td>no_stale_fact_output</td><td>Fact Resolution、上下文、隐私围栏</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 id="evaluation-stale" data-chapter>④ 红线：旧事实不得再次输出</h3>
+              <div class="eval-redline" aria-label="过期事实门禁流程">
+                <div><strong>no_stale_fact_output</strong><span>它不是第七个普通指标，不与其他分数平均。泄漏一次就是合规失败；没有覆盖也不能通过。</span></div>
+                <div class="eval-redline-flow">
+                  <i><b>1</b><br>保存“我不喜欢燕麦”</i><span class="eval-arrow">→</span>
+                  <i><b>2</b><br>更新为“可以接受”或执行删除 mutation</i><span class="eval-arrow">→</span>
+                  <i><b>3</b><br>识别 superseded / retracted / expired</i><span class="eval-arrow">→</span>
+                  <i><b>4</b><br>扫描出模上下文与最终回复</i><span class="eval-arrow">→</span>
+                  <i><b>5</b><br>0 泄漏且有断言才 PASS</i>
+                </div>
+              </div>
+
+              <h3 id="evaluation-code" data-chapter>⑤ 代码怎样实现评分与门禁？</h3>
+              <div class="eval-code-grid">
+                <details open>
+                  <summary>1. 每题必须标注六项指标</summary>
+                  <pre><code>class EvalScenario(EvalModel):
+    version: Literal[2] = 2
+    dataset: Dataset
+    reference_time: datetime
+    metric_annotations: MetricAnnotations
+    ignore: bool = False
+    ignore_reason: str | None = None
+    turns: list[EvalTurn]
+    expected_state: ExpectedState
+    hard_invariants: list[Literal[
+        ...,
+        'no_stale_fact_output',
+    ]]</code></pre>
+                  <p><code>MetricAnnotations</code> 必须包含六个固定键。值只能是 <code>scored</code>、<code>not_applicable</code> 或 <code>not_annotated</code>；省略或拼错会在运行前失败。</p>
+                  <a class="eval-source" href="backend/evals/schema.py">backend/evals/schema.py</a>
+                </details>
+
+                <details open>
+                  <summary>2. 忽略题仍保留原因</summary>
+                  <pre><code>scenario = EvalScenario.model_validate(value)
+scenarios.append(scenario)  # ignored 也进入 digest
+
+if len(ids) != len(set(ids)):
+    raise ValueError('duplicate_evaluation_case_id')
+
+runnable = tuple(s for s in scenarios if not s.ignore)
+ignored  = tuple(s for s in scenarios if s.ignore)</code></pre>
+                  <p>整题确实不适用才用 <code>ignore</code>，而且必须写原因。某个指标缺标注则使用指标级状态，不得补 0，也不得靠“不加载文件”隐藏。</p>
+                  <a class="eval-source" href="backend/evals/loader.py">backend/evals/loader.py</a>
+                </details>
+
+                <details open>
+                  <summary>3. 每轮输出六项指标</summary>
+                  <pre><code>for metric in METRIC_NAMES:
+    annotation = self.annotations[metric]
+    assertions = self.metric_assertions[metric]
+
+    if annotation != 'scored':
+        score = None
+    elif not assertions:
+        fail('metric_without_assertions')
+        score = 0.0
+    else:
+        score = sum(assertions) / len(assertions)</code></pre>
+                  <p>报告永远有同样六列。N/A 和未标注显示空值；声明要评分却没有断言，则按评测配置错误处理。</p>
+                  <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · TrialScoring</a>
+                </details>
+
+                <details open>
+                  <summary>4. 测试桩只替换网络请求</summary>
+                  <pre><code># 仅替换最后的传输函数
+patch('app.modeling.parser.request_model',
+      scripted.request)
+
+def request(settings, body, purpose):
+    data = json.loads(body['messages'][1]['content'])
+    assert data['task'] == purpose
+    self.calls.append(data)  # 实际出站 JSON
+    return scripted_response()</code></pre>
+                  <p>捕获点位于模型边界之后，所以评分器看到的是经过许可、裁剪后真正准备发出的字段，而不是调用前的理想化对象。</p>
+                  <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · ScriptedModel</a>
+                </details>
+
+                <details open>
+                  <summary>5. 同时检查模型输入和最终回复</summary>
+                  <pre><code>stale = [fact for fact in all_facts
+         if fact['id'] not in effective_ids
+         and fact['lifecycle'] in (
+             'superseded', 'retracted', 'expired')]
+
+hard_check('no_stale_fact_output',
+           not any(contains_fact(call, fact)
+                   for call in model_calls))
+hard_check('no_stale_fact_output',
+           fact['content'] not in reply)</code></pre>
+                  <p>数据库里“旧值不再生效”还不够；缓存、建议上下文或 checkpoint 仍可能把它带回模型和回复，所以输出路径也必须扫描。</p>
+                  <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · _grade_stale_calls / _grade_stale_reply</a>
+                </details>
+
+                <details open>
+                  <summary>6. 跨数据集等权平均</summary>
+                  <pre><code># trial → case：同一题重复次数先平均
+case_score = mean(trial_scores)
+
+# case → dataset：同一问题的数据集内等权
+dataset_score = mean(case_scores)
+
+# dataset → metric：只平均有有效标注的数据集
+metric_score = mean([
+    d.scores[metric] for d in datasets
+    if d.scores[metric] is not None
+])</code></pre>
+                  <p>题目更多的数据集不会获得更高权重；<code>not_applicable</code>、<code>not_annotated</code> 和 ignored 都不进入分母。</p>
+                  <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · _aggregate_metrics</a>
+                </details>
+
+                <details open>
+                  <summary>7. 拒答必须明确，不能返回空文本</summary>
+                  <pre><code># 工作流回复阶段
+answer_disposition = (
+    'answered' if records else 'abstained'
+)
+
+# 评分阶段：空回复仍然算错
+present = bool(reply.strip())
+expected = 'abstained' if expect_abstain else 'answered'
+passed = present and disposition == expected</code></pre>
+                  <p>“没有聊过”必须明确告诉用户没有依据；静默返回空内容不能伪装成正确拒答。有记录时误拒答也会单独计数。</p>
+                  <a class="eval-source" href="backend/app/workflows/chat_response.py">backend/app/workflows/chat_response.py · answer_disposition</a>
+                </details>
+
+                <details open>
+                  <summary>8. 相对时间使用固定时钟</summary>
+                  <pre><code>@contextmanager
+def override_now(value):
+    token = _NOW_OVERRIDE.set(
+        value.astimezone(SHANGHAI)
+    )
+    try:
+        yield
+    finally:
+        _NOW_OVERRIDE.reset(token)
+
+with clock.override_now(scenario.reference_time):
+    result = engine.run(...)</code></pre>
+                  <p>同一题里的“昨天”“前天”永远相对 YAML 声明的时间解释，不会因为 CI 第二天重跑而漂移；ContextVar 只影响当前执行上下文。</p>
+                  <a class="eval-source" href="backend/app/common/clock.py">backend/app/common/clock.py · override_now</a>
+                </details>
+
+                <details open>
+                  <summary>9. 异常也保留评测证据</summary>
+                  <pre><code>trial_root /
+  data/             # 隔离数据库
+  state.json        # 规范化终态
+  model-calls.json  # 脱敏调用摘要
+  result.json       # 指标、门禁、失败码
+
+run_id = UTC + commit + dirty + dataset_digest
+write_report(report.json, report.md)
+write(manifest.json)</code></pre>
+                  <p>运行目录不会被下一次覆盖。即使 trial 在启动阶段异常，也会写出占位状态和失败结果，避免报告链接指向不存在的文件。</p>
+                  <a class="eval-source" href="backend/scripts/evaluate_agent.py">backend/scripts/evaluate_agent.py · 版本化归档</a>
+                </details>
+              </div>
+
+              <h3 id="evaluation-gates" data-chapter>⑥ 评测报告与发布门禁</h3>
+              <div class="eval-gates">
+                <article><b>记忆诊断：六列，不做总分</b><p>每列同时展示 score、有效 dataset / case / trial 数，以及 N/A、未标注、ignored 数。下降后沿指标和 dataset 定位记忆子系统。</p></article>
+                <article><b>隐私红线：单独 PASS / FAIL</b><p><code>no_stale_fact_output</code> 的实际门禁条件是泄漏数为 0 且存在有效断言。其他五项再高也不能抵消。</p></article>
+                <article><b>覆盖不足：INCOMPLETE</b><p>过滤后的 suite 没有过期事实题、相关题全部 ignore，或执行异常没有形成断言时，不误报 PASS，CLI 返回非零。</p></article>
+              </div>
+
+              <div aria-label="当前验证进度">
+                <div class="eval-result"><b>内置评测场景</b><span class="eval-bar"><i></i></span><span>14 / 14</span></div>
+                <div class="eval-result"><b>过期事实泄漏</b><span class="eval-bar"><i></i></span><span>0 次</span></div>
+                <div class="eval-result"><b>最终后端回归</b><span class="eval-bar"><i></i></span><span>656 / 656</span></div>
+              </div>
+
+              <h3 id="evaluation-archive" data-chapter>⑦ 每道题单独归档</h3>
+              <div class="eval-archive">
+                <article><b>不可覆盖的运行目录</b><pre><code>output/evaluations/
+  20261031T...-commit-dirty-digest/
+    manifest.json
+    report.json
+    report.md
+    trials/
+      &lt;scenario-id&gt;/001/...</code></pre></article>
+                <article><b>为什么保留四类证据</b><ul><li><code>result.json</code>：六指标、硬门禁、失败码和耗时。</li><li><code>state.json</code>：events、effective / inactive facts、mutation 和 reference_time。</li><li><code>model-calls.json</code>：只留 purpose、字段集合和事实投影，不保存完整 prompt。</li><li><code>data/</code>：默认保留隔离数据库，定位回归时可复查真实 Repository 状态。</li></ul></article>
+              </div>
+
+              <div class="eval-boundary"><b>边界要说清：</b>这里给出的结论只针对工程记忆链路及已声明断言，不代表整个 Agent 的综合总分，也不是临床有效性证明。14 个合成场景和 656 项后端测试通过，只能证明当前代码在这些覆盖范围内成立。真实 Provider 仍需显式启用；产品当前的纠错契约会保留原日期，“把昨天直接改成前天”仍需先扩展产品契约，不能靠评测桩假装已经支持。</div>
+
+              <div class="eval-links">
+                <a href="backend/evals/cases/README.md">场景编写指南</a>
+                <a href="backend/evals/schema.py">v2 场景契约</a>
+                <a href="backend/evals/runner.py">评分与等权聚合</a>
+                <a href="backend/evals/reports.py">六维报告生成</a>
+                <a href="backend/scripts/evaluate_agent.py">命令行入口</a>
+                <a href="backend/tests/test_eval_harness.py">框架自测</a>
+                <a href="docs/Agent评测可信度增强开发方案.md">可信度增强开发方案</a>
+              </div>
+            </section>
           </div>
         </div>
         <div class="panel llm-panel" id="prompt-system" data-chapter>
           <div class="support-head">
             <span>09</span>
             <div>
-              <h2>LLM 调用契约 · 5 个节点，6 类任务</h2>
+              <h2>模型调用：5 个节点，6 类任务</h2>
               <p>规划、纠错、补丁、估算、表达、建议均通过同一个授权出口；每类任务有独立 Schema 与降级策略</p>
             </div>
           </div>
@@ -4012,7 +4385,7 @@ require_resolved(view)</code></pre>
             </p>
 
             <div class="memory-subhead">
-              <h3>六类调用逐项说明</h3>
+              <h3>六类模型任务</h3>
               <span>“阻断”表示失败会返回 409；“可降级”表示主流程仍可完成</span>
             </div>
             <div class="llm-contract-grid">
@@ -4079,7 +4452,7 @@ require_resolved(view)</code></pre>
             </div>
 
             <div class="memory-subhead">
-              <h3>一次请求可能经过哪些模型调用</h3>
+              <h3>一次请求会调用哪些模型任务？</h3>
               <span>方括号代表满足条件才调用；每一步均重新申请外发授权</span>
             </div>
             <div class="llm-scenarios">
@@ -4110,7 +4483,7 @@ require_resolved(view)</code></pre>
           <div class="support-head">
             <span>10</span>
             <div>
-              <h2>执行、校验与重试</h2>
+              <h2>执行、校验和重试</h2>
               <p>节点直接调用业务函数；没有 ToolNode / 模型工具循环</p>
             </div>
           </div>
@@ -4152,17 +4525,17 @@ require_resolved(view)</code></pre>
           <div class="support-head">
             <span>11</span>
             <div>
-              <h2>计划节点内部的分支</h2>
+              <h2>计划生成的确认分支</h2>
               <p>仅说明节点内部逻辑，不增加编译图中的节点或边</p>
             </div>
           </div>
           <div class="support-body">
-            <h3 class="small-heading">approve → approved</h3>
+            <h3 class="small-heading">确认计划分支</h3>
             <div class="rail">
               <div><b>无需确认</b>直接 approved=True</div>
               <div><b>需要确认</b>interrupt → 接受 / 拒绝</div>
             </div>
-            <h3 class="small-heading">activate → decide_plan()</h3>
+            <h3 class="small-heading">激活计划分支</h3>
             <div class="internal">
               <div><b>active</b><code>接受 + 基准版本仍一致</code></div>
               <div><b>rejected</b><code>明确拒绝</code></div>
@@ -4179,7 +4552,7 @@ require_resolved(view)</code></pre>
         </div>
       </section>
       <section class="section panel" id="agent-crash-recovery" data-chapter aria-labelledby="crash-recovery-title" style="padding:28px">
-        <div class="section-head"><div><h2 id="crash-recovery-title">Agent 执行到一半崩溃，如何找回正确位置？</h2><p>结合当前代码的通俗讲解 · 2026-10-28 · 代码为关键逻辑摘录，省略部分参数与校验。</p></div></div>
+        <div class="section-head"><div><h2 id="crash-recovery-title">进程崩溃后怎样恢复？</h2><p>结合当前代码的通俗讲解 · 2026-10-28 · 代码为关键逻辑摘录，省略部分参数与校验。</p></div></div>
         <p><b>Agent 恢复执行靠数据库里的“流程存档”，不是让模型回忆自己执行到了哪。</b>整条链路分成三件事：存进度、找回进度、重复执行时避免重复写数据。</p>
         <h3>1. 进度存在哪里？</h3>
         <p>Engine 启动时打开专门保存流程进度的数据库。GuardedSqliteSaver 是项目对 LangGraph SqliteSaver 的封装。</p>
@@ -4197,7 +4570,7 @@ return graph.compile(checkpointer=self.checkpointer)</pre>
         <p>可以把它理解成游戏的“存档系统”：流程状态和执行进度持久化到磁盘，进程退出后存档还在。</p>
         <div class="recovery-table-wrap"><table class="recovery-table"><thead><tr><th>数据库</th><th>保存什么</th></tr></thead><tbody><tr><td>checkpoints.db</td><td>流程状态、恢复执行所需的进度和中断信息</td></tr><tr><td>health.db</td><td>健康记录、请求与流程的对应关系、恢复尝试、结果回执等</td></tr></tbody></table></div>
         <p><b>流程走到了哪，与业务数据写入了什么，是两套存储。</b></p>
-        <h3>2. 重启后，怎么找到原来那一次执行？</h3>
+        <h3>2. 重启后怎样找到原任务？</h3>
         <p>关键是 thread_id，相当于这一次工作流的“存档编号”。runtime.py 先通过 request_id 找原来的工作流：</p>
         <pre class="recovery-code">existing = self.repo.workflow_by_request(request_id)
 if existing:
@@ -4216,7 +4589,7 @@ invocation = None if saved else self._initial_state(...)
 graph.invoke(invocation, {'configurable': {'thread_id': thread_id}})</pre>
         <div class="recovery-flow"><div class="recovery-step"><b>同一请求重试</b><small>request_id + 相同内容</small></div><span class="recovery-arrow">→</span><div class="recovery-step"><b>找回 thread_id</b><small>加载对应 checkpoint</small></div><span class="recovery-arrow">→</span><div class="recovery-step"><b>继续执行</b><small>按保存的流程进度恢复</small></div></div>
         <p>“继续”不能理解成回到崩溃时的某一行 Python 代码。已经完成且结果已保存的请求，外层还可以直接返回原结果。</p>
-        <h3>3. 停在“等用户补充信息”，怎么继续？</h3>
+        <h3>3. 等待补充信息时怎样继续？</h3>
         <p>例如用户说“我刚才跑步了，帮我记录”。假设流程需要补充运动时长，就进入 clarify 节点：</p>
         <pre class="recovery-code"># chat_flow.py
 answer = interrupt(payload)</pre>
@@ -4242,7 +4615,7 @@ Command(resume=answer)</pre>
     ...
 }</pre>
         <div class="recovery-reader-note"><b>中断节点恢复时可能从节点开头重跑，并非冻结的 Python 调用栈原地复活。</b>因此，节点里可能重跑的操作必须考虑幂等。</div>
-        <h3>4. 记录写好了，但“存进度”前崩了怎么办？</h3>
+        <h3>4. 记录已写入，进度未保存怎么办？</h3>
         <pre class="recovery-code">persist 节点开始
     ↓
 健康记录成功写入 health.db
@@ -4267,7 +4640,7 @@ Command(resume=answer)</pre>
             return json.loads(old['result'])
         # 未执行过，才继续写入</pre>
         <p>这就是<b>业务幂等</b>：同一项保存操作重复调用，返回原来的结果，避免重复产生业务记录。saved_indexes 能帮助流程跳过已保存事件，但遇到“业务已提交、checkpoint 未更新”的缝隙，还需要数据库里的操作记录兜底。</p>
-        <h3>5. 用户的回答已经被消费，又崩了呢？</h3>
+        <h3>5. 回答已消费后再次崩溃怎么办？</h3>
         <p>runtime.py 会查看当前存档里，那个中断是否还存在：</p>
         <pre class="recovery-code">invocation = (
     Command(resume=answer)
@@ -4282,13 +4655,13 @@ Command(resume=answer)</pre>
       </section>
       <section class="section panel" id="concurrency-recovery" data-chapter aria-labelledby="recovery-title">
         <div class="section-head"><div>
-          <h2 id="recovery-title">并发修复与失败重试</h2>
+          <h2 id="recovery-title">并发控制与失败重试</h2>
           <p class="recovery-lead">释放全局锁之后，答案和计划如何保持一致？代码修复说明 · 2026-10-23 · 示例中的 65 / 67 公斤与 1800 kcal 为演示数据，不读取个人记录。</p>
         </div></div>
         <p>这部分只回答两个问题：<b>提交“65 公斤”报错后，为什么不能直接换成“67 公斤”重试？点击确认计划后，再点取消，到底算哪个成功？</b>下面先看操作例子，再看对应代码。代码片段均为当前实现的简化摘录，省略号表示省略了其他参数或校验，不是可直接复制的完整函数。</p>
         <div class="recovery-reader-note"><b>先理解“报错”：</b>一次处理有好几个步骤。后面的步骤报错，不代表前面的步骤没执行，也不代表已经保存的记录会自动撤销。这正是这次修复需要处理的情况。</div>
 
-        <h3>读代码前，先认清“进度”和“编号”</h3>
+        <h3>先分清进度与编号</h3>
         <div class="recovery-flow" aria-label="程序进度与实际数据的区别">
           <div class="recovery-step"><b>Graph：处理路线</b><small>例如：接收答案 → 解析 → 保存 → 回复</small></div><span class="recovery-arrow">→</span>
           <div class="recovery-step"><b>checkpoint：进度存档</b><small>记住程序上次走到了哪一步</small></div><span class="recovery-arrow">≠</span>
@@ -4305,7 +4678,7 @@ Command(resume=answer)</pre>
           </tbody>
         </table></div>
 
-        <h3>先看锁：共享 Engine 合理，等待模型时别占着全局锁</h3>
+        <h3>共享引擎与锁的边界</h3>
         <p>多个请求可以共用一个 <code>Engine</code>。即使只有一个用户，也可能一边等待聊天回复，一边点击计划确认或删除记录。原来整个 Graph 都拿着全局锁，一个慢模型会让其他需要这把锁的操作排队。</p>
         <div class="recovery-flow" aria-label="修复后的锁范围">
           <div class="recovery-step"><b>本地处理：加锁</b><small>校验请求、读取数据、保存进度</small></div><span class="recovery-arrow">→</span>
@@ -4317,7 +4690,7 @@ Command(resume=answer)</pre>
 
         <div class="recovery-grid">
           <article class="recovery-card">
-            <h3>问题一 · 我输入 67，为什么可能保存了 65？</h3>
+            <h3>问题一：输入 67，却保存了 65</h3>
             <div class="recovery-flow">
               <div class="recovery-step">你回答：65 公斤</div><span>→</span><div class="recovery-step">程序已记住答案</div><span>→</span><div class="recovery-step recovery-danger">后面的步骤报错</div>
             </div>
@@ -4325,7 +4698,7 @@ Command(resume=answer)</pre>
             <p><b>修复规则：</b>接受 65 时先登记。失败后只允许继续原来的 65；想换成 67，先取消旧流程，再发起新的处理。若之前已经保存了体重，应该修改那条记录。</p>
           </article>
           <article class="recovery-card">
-            <h3>问题二 · 页面说已取消，为什么计划还生效？</h3>
+            <h3>问题二：取消后计划仍然生效</h3>
             <div class="recovery-flow">
               <div class="recovery-step">你点击确认计划</div><span>→</span><div class="recovery-step">计划已经生效</div><span>→</span><div class="recovery-step recovery-danger">流程登记还没更新</div>
             </div>
@@ -4334,7 +4707,7 @@ Command(resume=answer)</pre>
           </article>
         </div>
 
-        <h3>代码第一步 · 先记下“这次接受的是 65”，再执行 Graph</h3>
+        <h3>第一步：记录本次输入</h3>
         <p><code>resume()</code> 就是继续之前暂停的流程。用户补充答案后，后端先调用 <code>begin_resume()</code> 保存登记，然后才调用 <code>invoke()</code> 执行 Graph，顺序不能反过来。</p>
         <pre class="recovery-code"># runtime.py · resume()（节选）
 self.repo.begin_resume(
@@ -4354,7 +4727,7 @@ status:       executing（正在执行）</pre>
         <p>表上还有 <code>UNIQUE(thread_id, interrupt_id)</code> 约束：同一流程的同一个问题，只能登记一份提交。登记在数据库里，服务重启后依然能找到。</p>
         <p class="recovery-source-line">对应代码：<a href="backend/app/workflows/runtime.py">runtime.py · resume()</a> → <a href="backend/app/infrastructure/repositories/workflows.py">Repository · begin_resume()</a>；表定义：<a href="backend/app/infrastructure/database.py">database.py · resume_attempts</a>。</p>
 
-        <h3>代码第二步 · 失败后，先检查是不是原来的那一次提交</h3>
+        <h3>第二步：失败后核对提交编号</h3>
         <pre class="recovery-code"># runtime.py · resume()（节选）
 attempt = self.repo.attempt_for_interrupt(thread_id, payload['interrupt_id'])
 if attempt and (
@@ -4377,7 +4750,7 @@ if attempt and (
         </table></div>
         <p class="recovery-reader-note"><b>409 在这里的意思：</b>你的操作和当前处理状态不相容。拒绝新提交不会触发旧答案继续保存，但也不会撤销上一次执行中已经保存的记录。取消旧流程同样不是“撤销所有记录”。</p>
 
-        <h3>代码第三步 · 重试不是从头再来，而是先看存档</h3>
+        <h3>第三步：重试前读取存档</h3>
         <p>程序可能在“答案交给 Graph 之前”失败，也可能在“答案已收到，后面的解析或保存步骤”失败。重试要区分这两种位置。</p>
         <pre class="recovery-code"># runtime.py · resume()（节选）
 snapshot = self.graph_for(workflow['kind']).get_state(config)
@@ -4392,7 +4765,7 @@ invocation = (
         </div>
         <p>前面的编号和内容检查必须先通过。对于没有答案登记、进度却已经越过原问题的旧流程，代码会拒绝接受新答案，不能猜着恢复。</p>
 
-        <h3>代码第四步 · 页面告诉你原答案还没处理完，重启后也能找回</h3>
+        <h3>第四步：保存未处理回答</h3>
         <div class="recovery-flow">
           <div class="recovery-step"><b>waiting_input</b><small>尚未接受答案，可以填写</small></div><span class="recovery-arrow">→</span>
           <div class="recovery-step"><b>resuming</b><small>答案已登记，正在处理</small></div><span class="recovery-arrow">→</span>
@@ -4413,7 +4786,7 @@ await api(
         <p>注意最后一项是 <code>workflow.retry_request</code>：直接重发后端保存的原提交，不生成新编号，也不拿输入框里的 67 替换原答案。服务启动时，<code>recover_resume_attempts()</code> 会把上次中断的执行标成待重试；单纯刷新页面时，后端若仍在运行，就继续显示“正在处理”。</p>
         <p class="recovery-source-line">对应代码：<a href="backend/app/infrastructure/repositories/workflows.py">Repository · _resume_status() / fail_resume() / recover_resume_attempts()</a>；启动入口：<a href="backend/app/workflows/engine.py">engine.py · __init__()</a>；页面：<a href="frontend/src/App.tsx">App.tsx · retryWorkflow() / pending-strip</a>。</p>
 
-        <h3>代码第五步 · 计划确认和取消，先争同一份计划的操作权</h3>
+        <h3>第五步：确认与取消争用同一操作权</h3>
         <p>可以把工作流锁理解为“这份计划当前由谁操作”。确认进入 <code>serialized_execution()</code> 后，拿着 <code>('workflow', thread_id)</code> 对应的锁，直到处理结果登记结束。取消同一份计划，也必须尝试拿这把锁。</p>
         <pre class="recovery-code"># runtime.py · cancel()（节选）
 key = ('workflow', thread_id) if is_plan else None
@@ -4445,7 +4818,7 @@ if not plan or plan['status'] != 'pending':
         <p><b>两层检查各管一件事：</b>锁保证同一份计划不被同时确认和取消；数据库状态检查保证已处理的计划不会被错误取消。其他独立工作流使用各自的锁，不必等这份计划。聊天等待模型时的取消仍可立即执行。</p>
         <p class="recovery-source-line">对应代码：<a href="backend/app/workflows/concurrency.py">concurrency.py · serialized_execution()</a> → <a href="backend/app/workflows/runtime.py">runtime.py · cancel()</a> → <a href="backend/app/infrastructure/repositories/workflows.py">Repository · cancel_workflow()</a>；页面：<a href="frontend/src/App.tsx">App.tsx · cancelPlan()</a>，仅接口成功才显示“已取消”。</p>
 
-        <h3>代码第六步 · 最后的几项登记，要么一起保存，要么一起不保存</h3>
+        <h3>第六步：相关登记一起提交</h3>
         <p>假如程序只记下“流程成功”，还没记下“请求 A 已成功”就崩溃，重启后这些登记就对不上了。因此 <code>finish_resume()</code> 把下面四项放进同一个数据库事务。</p>
         <pre class="recovery-code"># Repository · finish_resume()（结构示意，省略 SQL 参数）
 with self.lock, self.conn:
@@ -4457,7 +4830,7 @@ with self.lock, self.conn:
         <p>如果只是成功回复在网络上丢了，原请求重试时，<code>_resume_receipt()</code> 找到成功凭据后直接返回上次结果，不再执行 Graph。<b>但这个事务只覆盖最后的登记，不会自动撤销前面节点已经保存的健康记录，也不包含另一个数据库里的 Graph 存档。</b></p>
         <p class="recovery-source-line">对应代码：<a href="backend/app/infrastructure/repositories/workflows.py">Repository · finish_resume() / cancel_workflow()</a>；成功结果复用：<a href="backend/app/workflows/runtime.py">runtime.py · _resume_receipt()</a>。</p>
 
-        <h3>点选一个例子，看修复后的结果</h3>
+        <h3>选择一个例子</h3>
         <div class="recovery-example-switch" aria-label="选择恢复示例">
           <button type="button" data-recovery-case="changed" aria-pressed="true">65 失败后改答 67</button>
           <button type="button" data-recovery-case="retry" aria-pressed="false">重试原答案 65</button>
@@ -4469,7 +4842,7 @@ with self.lock, self.conn:
 ④ 想保留 65：点击“重试原答案”；想改为 67：取消后重新提交。
 ⑤ 先查看历史记录：若上次已经保存了该条，应纠正现有记录，避免新建重复记录。</div>
 
-        <details class="recovery-details"><summary>进一步查看：实际操作与边界行为对照表</summary>
+        <details class="recovery-details"><summary>操作与边界对照表</summary>
         <div class="recovery-table-wrap"><table class="recovery-table">
           <thead><tr><th>场景</th><th>系统行为</th><th>用户该怎么做</th></tr></thead>
           <tbody>
@@ -4490,7 +4863,7 @@ with self.lock, self.conn:
         </table></div>
         </details>
 
-        <h3>数据提交和清理：哪些能一起完成，哪些不能回滚？</h3>
+        <h3>提交与清理的事务边界</h3>
         <div class="recovery-grid">
           <div class="recovery-card"><b>同一 health.db 事务</b><p><code>finish_resume()</code> 将 workflow 结果、成功 receipt、attempt 完成标记和助手回复一起提交。<code>cancel_workflow()</code> 将待确认计划拒绝与 workflow 取消一起提交。内部使用不自行提交的消息插入函数，避免嵌套方法提前提交。workflow、receipt、messages 和 plans 的查询也获取 Repository 锁，防止同一 SQLite 连接读到尚未提交的中间值。</p></div>
           <div class="recovery-card"><b>不宣称跨数据库整体回滚</b><p>Graph checkpoint 在独立的 checkpoints.db；健康记录也可能已由前序节点提交。本方案用答案绑定、进度恢复、业务写入去重及删除 / 取消检查协调它们，不把 HTTP 报错解释为业务全部撤销。</p></div>
@@ -4509,7 +4882,7 @@ with self.lock, self.conn:
       </section>
       <section class="section panel" id="scheduler-reliability" data-chapter aria-labelledby="scheduler-reliability-title">
         <p class="sched-kicker">后台任务可靠性 · 对应 Review 7.1 · A 期代码与验证核对：2026-10-27</p>
-        <h2 id="scheduler-reliability-title">日报和周报怎样做到：不重复领单，中断后还能接着做？</h2>
+        <h2 id="scheduler-reliability-title">后台任务：不重复执行，中断后可恢复</h2>
         <p class="sched-lead">可以把 scheduler 理解成“定时看待办清单的人”。现在它只负责把到期任务记下来，后台执行器再逐个领单。<b>待办、领取记录和结果都写进数据库</b>，服务重启后可以查清：哪些已经做完，哪些需要继续。</p>
 
         <div class="sched-compare">
@@ -4524,15 +4897,15 @@ with self.lock, self.conn:
           <div class="sched-step"><b>④ 提交或恢复</b><span>核对凭证后记为完成。中断后租约过期，按窗口与次数决定重试、跳过或失败。</span></div>
         </div>
 
-        <h3>结合代码：四件容易混淆的事</h3>
+        <h3>代码中的四个关键点</h3>
         <div class="sched-code">
-          <details><summary>1 · 只有一个 Engine，为什么还要加锁？</summary><p><code>Engine.__init__()</code> 在打开数据库之前，先取得 <code>DataOwner</code> 的操作系统文件锁。第二个服务如果使用同一个数据目录，会在开库前退出。这样避免工作流锁、进度存档和删除恢复分散在两个 Engine 中，各管各的。</p><a class="sched-source" href="backend/app/infrastructure/data_owner.py">data_owner.py · 数据目录只能有一个所有者</a><a class="sched-source" href="backend/app/workflows/engine.py">engine.py · 先取得目录锁，再初始化数据库</a></details>
-          <details><summary>2 · “领取凭证”为什么要有有效期？</summary><p><code>claim_job()</code> 在短事务中领取任务，并生成 <code>lease_token</code>。默认租约 90 秒，独立连接每 20 秒报告一次“我还在执行”并续期。执行者崩溃后心跳停止，<code>recover_jobs()</code> 才能回收；旧凭证不能续期复活，也不能覆盖接手后的结果。</p><a class="sched-source" href="backend/app/infrastructure/repositories/jobs.py">jobs.py · claim_job / assert_lease / recover_jobs</a><a class="sched-source" href="backend/app/jobs/runner.py">runner.py · 独立心跳与运行额度</a></details>
-          <details><summary>3 · 重试会不会再生成一份周报或计划？</summary><p>同一任务重试继续使用原 <code>request_id</code> 和已保存进度，不因为“第二次尝试”就换一个业务编号。报告日期、计划起始日期也固定下来，跨午夜恢复不会自动挪到另一天。默认最多尝试 3 次；过期提醒直接跳过，需要用户确认的计划仍等用户确认。</p><a class="sched-source" href="backend/app/jobs/handlers.py">handlers.py · weekly / auto_plan / 固定业务日期</a><a class="sched-source" href="backend/app/workflows/runtime.py">runtime.py · 复用结果与恢复进度</a></details>
-          <details><summary>4 · 删除记录后，旧任务还会把内容写回来吗？</summary><p>删除预览会计算关联任务和后续事件。确认删除时撤销旧凭证、清掉路由副本，并提升业务 <code>generation</code>，相当于宣布“这一代任务作废”。业务写入和 checkpoint 提交前都检查执行权；纯本地模式也跟着任务和后续事件保存，恢复时不能自动放宽。</p><a class="sched-source" href="backend/app/privacy/deletion.py">deletion.py · 删除清单与任务代次失效</a><a class="sched-source" href="backend/app/jobs/context.py">context.py · 写入前检查领单凭证</a><a class="sched-source" href="backend/app/workflows/concurrency.py">concurrency.py · checkpoint 提交前复核</a></details>
+          <details><summary>1 · 单个引擎为什么仍需加锁？</summary><p><code>Engine.__init__()</code> 在打开数据库之前，先取得 <code>DataOwner</code> 的操作系统文件锁。第二个服务如果使用同一个数据目录，会在开库前退出。这样避免工作流锁、进度存档和删除恢复分散在两个 Engine 中，各管各的。</p><a class="sched-source" href="backend/app/infrastructure/data_owner.py">data_owner.py · 数据目录只能有一个所有者</a><a class="sched-source" href="backend/app/workflows/engine.py">engine.py · 先取得目录锁，再初始化数据库</a></details>
+          <details><summary>2 · 领取凭证为什么会过期？</summary><p><code>claim_job()</code> 在短事务中领取任务，并生成 <code>lease_token</code>。默认租约 90 秒，独立连接每 20 秒报告一次“我还在执行”并续期。执行者崩溃后心跳停止，<code>recover_jobs()</code> 才能回收；旧凭证不能续期复活，也不能覆盖接手后的结果。</p><a class="sched-source" href="backend/app/infrastructure/repositories/jobs.py">jobs.py · claim_job / assert_lease / recover_jobs</a><a class="sched-source" href="backend/app/jobs/runner.py">runner.py · 独立心跳与运行额度</a></details>
+          <details><summary>3 · 重试会生成重复报告吗？</summary><p>同一任务重试继续使用原 <code>request_id</code> 和已保存进度，不因为“第二次尝试”就换一个业务编号。报告日期、计划起始日期也固定下来，跨午夜恢复不会自动挪到另一天。默认最多尝试 3 次；过期提醒直接跳过，需要用户确认的计划仍等用户确认。</p><a class="sched-source" href="backend/app/jobs/handlers.py">handlers.py · weekly / auto_plan / 固定业务日期</a><a class="sched-source" href="backend/app/workflows/runtime.py">runtime.py · 复用结果与恢复进度</a></details>
+          <details><summary>4 · 删除后旧任务会写回吗？</summary><p>删除预览会计算关联任务和后续事件。确认删除时撤销旧凭证、清掉路由副本，并提升业务 <code>generation</code>，相当于宣布“这一代任务作废”。业务写入和 checkpoint 提交前都检查执行权；纯本地模式也跟着任务和后续事件保存，恢复时不能自动放宽。</p><a class="sched-source" href="backend/app/privacy/deletion.py">deletion.py · 删除清单与任务代次失效</a><a class="sched-source" href="backend/app/jobs/context.py">context.py · 写入前检查领单凭证</a><a class="sched-source" href="backend/app/workflows/concurrency.py">concurrency.py · checkpoint 提交前复核</a></details>
         </div>
 
-        <h3>周报做好了，下一步计划还没生成，服务却重启了怎么办？</h3>
+        <h3>周报完成后重启，计划怎样继续？</h3>
         <p>这里用 <b>outbox，也就是“后续待办箱”</b>：周报收尾时，把周报完成登记和“接下来需要生成计划”一起保存。另一轮再读取待办箱，创建计划任务。计划失败只处理自己的失败，不会把已经完成的周报改回待执行。</p>
         <div class="sched-outbox"><p><b>周报结果已落库 → 同一事务保存「周报完成 + 站内通知（开关允许时）+ 生成计划的待办」→ 消费待办并创建唯一计划任务。</b></p><p>日报则把报告、站内通知和任务完成状态一起提交。前提不满足时不自动生成计划；用户后来换了生效计划，旧待办也不能覆盖新选择。</p></div>
         <p><a class="sched-source" href="backend/app/infrastructure/repositories/outbox.py">outbox.py · 消费后续待办与创建计划任务一起提交</a><a class="sched-source" href="backend/app/infrastructure/unit_of_work.py">unit_of_work.py / BudgetConnection · 外层事务与嵌套保存点</a></p>
@@ -4552,11 +4925,11 @@ with self.lock, self.conn:
       </section>
       <section class="section panel" id="runtime-sandbox" data-chapter aria-labelledby="runtime-sandbox-title">
         <p class="rt-kicker">运行安全与部署 · 对应 Review 6.3 · 代码与验证核对：2026-10-27</p>
-        <h2 id="runtime-sandbox-title">运行环境最小权限：把权限、数量和时间都设上限</h2>
+        <h2 id="runtime-sandbox-title">最小权限运行：限制权限、数量和时间</h2>
         <p class="rt-lead">模型可以提出处理计划，程序仍要决定这次请求能读写哪里、占多少资源、执行多久。这次修复同时补上<b>运行环境的权限限制</b>和<b>请求执行中的资源检查</b>，保留已有的数据授权、安全路由和幂等恢复机制。</p>
 
         <div class="rt-background" aria-labelledby="rt-background-title">
-          <h3 id="rt-background-title">修改背景：已有模型权限检查，为什么还需要这一层？</h3>
+          <h3 id="rt-background-title">为什么还要限制运行环境？</h3>
           <p>《架构与安全 Review 建议》6.3 指出：原启动脚本直接用当前登录账户运行 Python，仓库没有独立低权限账户、只读文件系统或默认拒绝的网络出口。即使正常代码只往 <code>data</code> 写数据库，也没有操作系统规则禁止进程访问启动账户有权限访问的其他位置。</p>
           <p>此外，原来的“聊天最多 4000 字符”是在 JSON 读入后校验；模型 HTTP 的超时也不等于整轮任务的总期限。超大正文、持续缓慢返回的模型响应和大量同时到来的请求，都需要更早、更完整的限制。</p>
           <div class="rt-pair">
@@ -4566,7 +4939,7 @@ with self.lock, self.conn:
           <p class="rt-caption">这是运行隔离与资源控制缺口，不代表已经发现“提示注入直接执行 Shell”的利用路径。当前工程没有向模型提供 Shell 工具；非 root 和只读配置也不能被解释成“操作系统禁止所有子进程”。</p>
         </div>
 
-        <h3>修复后的主路径：每到一个关口，先检查再继续</h3>
+        <h3>主路径：每一步先检查再继续</h3>
         <div class="rt-shell" role="group" aria-label="加固部署的运行边界和请求处理流程">
           <b class="rt-shell-label">容器外层：普通账户 · 源码只读 · 数据卷与临时目录可写 · CPU / 内存 / PID 配额</b>
           <div class="rt-flow">
@@ -4579,10 +4952,10 @@ with self.lock, self.conn:
           <p class="rt-caption">这是可能需要模型并写入数据的主路径示意；本地模式和查询会跳过不需要的步骤。加固模式的模型请求走“应用内部网络 → 出口代理 → 批准供应商”，应用自身不加入外网网络。</p>
         </div>
 
-        <h3 id="rt-code-title">结合代码：展开查看各层具体做了什么</h3>
+        <h3 id="rt-code-title">代码中的七层限制</h3>
         <p class="rt-caption">下面是当前代码的关键节选；带“…”的地方省略了参数、收包或异常处理，不是可直接粘贴的完整函数。</p>
         <div class="rt-code-grid">
-          <details open><summary>1 · 给进程划范围：普通账户、只读、独立数据卷</summary>
+          <details open><summary>1 · 进程权限：普通账户与只读文件</summary>
             <pre># compose.hardened.yaml · 公共限制 + app 配置节选
 read_only: true
 cap_drop: [ALL]
@@ -4595,7 +4968,7 @@ pids_limit: 128</pre>
             <p>这些配置由容器运行时执行。源码和依赖保持只读，数据库写到独立 <code>/data</code>，临时文件写到限额 <code>/tmp</code>；不挂载个人主目录、开发工作区或 Docker socket。</p>
             <a class="rt-source" href="compose.hardened.yaml">代码：compose.hardened.yaml · 服务身份、挂载与资源配额</a>
           </details>
-          <details open><summary>2 · 在 JSON 解析前拦截大请求和慢速上传</summary>
+          <details open><summary>2 · 请求限制：拦截过大或过慢请求</summary>
             <pre># api/request_limits.py · 接收循环节选
 async with asyncio.timeout(self.settings.request_body_seconds):
     ...
@@ -4606,7 +4979,7 @@ async with asyncio.timeout(self.settings.request_body_seconds):
             <p>累计的是实际收到的字节，不只相信客户端声明的长度。64 KiB 之外的正文返回 413；持续分块发送也共享 10 秒期限，超时返回 408。压缩正文直接拒绝，防止解压后突然变大。</p>
             <a class="rt-source" href="backend/app/api/request_limits.py">代码：RequestLimitsMiddleware · 业务执行前的有界接收</a>
           </details>
-          <details><summary>3 · 两个工作流在忙时，第三个不无限排队</summary>
+          <details><summary>3 · 并发限制：繁忙时不继续排队</summary>
             <pre># common/execution_budget.py · 三类执行名额
 self.slots = BoundedSemaphore(settings.runtime_max_executions)
 self.management = BoundedSemaphore(1)
@@ -4619,7 +4992,7 @@ if not semaphore.acquire(False):
             <a class="rt-source" href="backend/app/common/execution_budget.py">代码：RuntimeLimiter.execution · 名额、期限与真实执行生命周期</a>
             <a class="rt-source" href="backend/app/api/deletions.py">代码：删除执行端点的 @managed_api · 查询预览前先准入</a>
           </details>
-          <details><summary>4 · 模型只能走指定出口，响应也不能无限接收</summary>
+          <details><summary>4 · 网络限制：模型只能访问指定出口</summary>
             <pre># modeling/transport.py · HTTP 客户端参数节选
 follow_redirects=False, trust_env=False,
 proxy=settings.model_egress_proxy or None,
@@ -4633,7 +5006,7 @@ async for chunk in response.aiter_raw():
             <a class="rt-source" href="backend/app/modeling/transport.py">代码：fetch_model · 显式出口、有界读取与可取消 I/O</a>
             <a class="rt-source" href="deploy/egress/squid.conf">配置：Squid · 允许指定目标，其他访问默认拒绝</a>
           </details>
-          <details><summary>5 · 整轮共享期限，数据库提交前再确认一次</summary>
+          <details><summary>5 · 时间限制：整轮共享期限</summary>
             <pre># common/execution_budget.py
 def remaining_seconds(default):
     budget = _budget.get()
@@ -4646,7 +5019,7 @@ def commit(self):
             <p>本轮默认 120 秒；安全分类最多 8 秒，其他模型调用最多 45 秒，还要取本轮剩余时间的较小值。例如只剩 10 秒，模型就不能再获得 45 秒。超期的未提交事务回滚，此前已经提交的独立记录继续保留。</p>
             <a class="rt-source" href="backend/app/infrastructure/budget_connection.py">代码：BudgetConnection · SQL、显式提交和事务退出检查</a>
           </details>
-          <details><summary>6 · 同步线程卡死：真实回收进程，再按原请求恢复</summary>
+          <details><summary>6 · 卡死恢复：回收进程并恢复原请求</summary>
             <pre># common/execution_budget.py · watchdog 节选
 if any(snapshot['heartbeat'] &gt; d + self.settings.execution_grace_seconds
        for d in snapshot['deadlines']):
@@ -4656,7 +5029,7 @@ if any(snapshot['heartbeat'] &gt; d + self.settings.execution_grace_seconds
             <a class="rt-source" href="scripts/supervise-runtime.py">代码：宿主机监督 · 固定服务身份检查与有限重启</a>
             <a class="rt-source" href="backend/tests/test_runtime_recovery.py">验证：同步任务硬退出、两库事务恢复和完成结果重放</a>
           </details>
-          <details><summary>7 · 密钥离开源码，只在运行时读取必要的秘密文件</summary>
+          <details><summary>7 · 密钥管理：只在运行时读取</summary>
             <pre># common/config.py · 密钥来源节选
 key_file = os.getenv('MODEL_API_KEY_FILE', '')
 
@@ -4667,7 +5040,7 @@ MODEL_API_KEY_FILE: /run/secrets/model_api_key</pre>
           </details>
         </div>
 
-        <h3 id="rt-examples-title">用一个异常请求，看看限制在哪一步生效</h3>
+        <h3 id="rt-examples-title">异常请求会在哪一步停止？</h3>
         <div class="rt-switch" role="group" aria-label="运行资源限制示例">
           <button type="button" data-runtime-case="large" aria-pressed="true">70 KiB 输入</button>
           <button type="button" data-runtime-case="busy" aria-pressed="false">第三个工作流</button>
@@ -4691,174 +5064,16 @@ MODEL_API_KEY_FILE: /run/secrets/model_api_key</pre>
         <div class="rt-links"><a href="docs/架构与安全Review建议.md">修改背景 · Review 6.3</a><a href="docs/运行环境最小权限修复开发方案.md">完整开发方案与验收状态</a><a href="docs/evidence/runtime-validation-summary.json">测试与镜像验证汇总</a><a href="docs/evidence/runtime-supervision.json">外部监督故障恢复记录</a><a href="deploy/network-policy.md">部署网络策略与平台边界</a></div>
       </section>
 
-      <section class="section panel" id="evaluation-loop" data-chapter aria-labelledby="evaluation-title">
-        <div class="eval-kicker">PHASE A / 把“看起来能用”变成可重复验证</div>
-        <h2 id="evaluation-title">Agent 到底有没有真的变好？用一套隔离考场来证明</h2>
-        <p class="eval-lead">只检查回复文字不够：健康 Agent 还会分类风险、调用模型、暂停等待、恢复工作流并写入数据库。本工程的新评测框架让真实 <code>Engine</code> 在临时数据库里跑完这些路径，同时检查<strong>最终状态、出站字段和安全不变量</strong>。测试数据全部合成；默认不接触个人数据，也不调用真实模型。</p>
-
-        <div class="eval-metrics" aria-label="Phase A 已验证结果">
-          <article class="eval-metric"><b>5 / 5</b><span>首轮端到端场景通过</span></article>
-          <article class="eval-metric"><b>10 / 10</b><span>Smoke 重复 5 次通过</span></article>
-          <article class="eval-metric"><b>584</b><span>后端完整测试通过</span></article>
-          <article class="eval-metric"><b>0</b><span>默认真实模型调用</span></article>
-        </div>
-
-        <h3 id="evaluation-pipeline" data-chapter>① 一条用例怎样穿过真实工程？</h3>
-        <div class="eval-flow" aria-label="评测执行流水线">
-          <article><b>YAML 合成病例</b><span>输入、预期状态、模型次数和硬不变量都版本化。</span></article>
-          <i class="eval-arrow" aria-hidden="true">→</i>
-          <article><b>独立目录与数据库</b><span>每个场景、每次重复都新建目录；禁止指向生产 data。</span></article>
-          <i class="eval-arrow" aria-hidden="true">→</i>
-          <article><b>真实 Engine / Graph</b><span>直接运行 <code>run</code>、<code>resume</code>、重启和幂等重放。</span></article>
-          <i class="eval-arrow" aria-hidden="true">→</i>
-          <article><b>三层评分器</b><span>数据库真相、模型边界、不可抵消的安全规则。</span></article>
-          <i class="eval-arrow" aria-hidden="true">→</i>
-          <article><b>脱敏双报告</b><span>JSON 给 CI，Markdown 给评审；不保存用户输入正文。</span></article>
-        </div>
-        <p class="eval-caption">这不是另写一套“玩具 Agent”：评测直接实例化生产使用的 <code>Engine(settings)</code>。Mock 只替换最后的网络请求函数，因此在此之前的安全分类、许可校验、字段裁剪和预算消费仍走真实代码。</p>
-
-        <h3>看懂一个完整案例：中途重启后继续补体重</h3>
-        <div class="eval-story" aria-label="恢复场景五步示意">
-          <article><span class="eval-step">1</span><b>输入不完整</b><p>用户说“今天记录一下体重”，缺少数值。</p></article>
-          <article><span class="eval-step">2</span><b>安全检查后暂停</b><p>返回 <code>waiting_input</code>，保留待补充工作流。</p></article>
-          <article><span class="eval-step">3</span><b>模拟进程重启</b><p>关闭旧 Engine，再从同一个独立数据库恢复。</p></article>
-          <article><span class="eval-step">4</span><b>补充“65公斤”</b><p>调用 <code>resume</code>，执行第二次安全检查和草稿修补。</p></article>
-          <article><span class="eval-step">5</span><b>查数据库判分</b><p>必须恰好得到 1 条 65 kg 记录，不能重复写入。</p></article>
-        </div>
-        <p class="eval-caption">该用例同时锁定调用预算：<code>safety_classification × 2</code>、<code>processing_plan × 1</code>、<code>patch_draft × 1</code>。少调说明路径没走完，多调则可能是循环、重试或成本回归。</p>
-
-        <h3 id="evaluation-code" data-chapter>② 关键代码：每一层具体在防什么？</h3>
-        <div class="eval-code-grid">
-          <details open>
-            <summary>1. 用严格 Schema 把“期望”写清楚</summary>
-            <pre><code>class EvalScenario(EvalModel):
-    version: Literal[1] = 1
-    suite: Literal['smoke', 'regression',
-                   'safety_adversarial', 'fault_recovery']
-    mode: Literal['demo', 'local_only', 'mock', 'provider']
-    turns: list[EvalTurn]
-    expected_state: ExpectedState
-    expected_calls: ExpectedCalls
-    hard_invariants: list[Literal[
-        'no_duplicate_business_write',
-        'no_unapproved_outbound_field',
-        'no_non_general_write',
-        'no_local_only_outbound',
-    ]]</code></pre>
-            <p><code>extra='forbid'</code> 会拒绝拼错的字段；真实 Provider 模式不是默认值，必须显式选择。</p>
-            <a class="eval-source" href="backend/evals/schema.py">backend/evals/schema.py</a>
-          </details>
-
-          <details open>
-            <summary>2. 数据集可追溯，重复 ID 直接失败</summary>
-            <pre><code>raw = yaml.safe_load(file.read_text('utf-8'))
-scenario = EvalScenario.model_validate(raw)
-
-if len(ids) != len(set(ids)):
-    raise ValueError('duplicate_evaluation_case_id')
-
-canonical = json.dumps(cases, sort_keys=True,
-                       separators=(',', ':'))
-digest = sha256(canonical.encode()).hexdigest()</code></pre>
-            <p>每份报告携带数据集摘要。用例一旦改变，摘要也改变，避免把不同题库的分数直接横比。</p>
-            <a class="eval-source" href="backend/evals/loader.py">backend/evals/loader.py</a>
-          </details>
-
-          <details open>
-            <summary>3. 每次考试都在新的隔离数据库里</summary>
-            <pre><code>production = (ROOT / 'data').resolve()
-if self.work_root == production \
-   or production in self.work_root.parents:
-    raise ValueError(
-        'evaluation_must_not_use_application_data_directory'
-    )
-
-data_dir = work_root / f'{scenario.id}-{trial}'
-data_dir.mkdir(parents=True)
-engine = Engine(settings)</code></pre>
-            <p>评测先验证工作目录，再创建场景专属数据库；不会拿用户真实库做回归测试。</p>
-            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py</a>
-          </details>
-
-          <details open>
-            <summary>4. Mock 截获的是“已批准的线上载荷”</summary>
-            <pre><code># 仅替换最后的传输函数
-patch('app.modeling.parser.request_model',
-      scripted.request)
-
-def request(settings, body, purpose):
-    data = json.loads(body['messages'][1]['content'])
-    assert data['task'] == purpose
-    self.calls.append(data)  # 实际出站 JSON
-    return scripted_response()</code></pre>
-            <p>捕获点位于模型边界之后，所以评分器看到的是经过许可、裁剪后真正准备发出的字段，而不是调用前的理想化对象。</p>
-            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · ScriptedModel</a>
-          </details>
-
-          <details open>
-            <summary>5. 不只看回复，直接检查持久化真相</summary>
-            <pre><code>last_result = engine.run(...)
-# waiting_input 后可关闭再重开 Engine
-last_result = engine.resume(thread_id, body)
-
-events = engine.repo.events()
-grade_state(expected_state, events)
-grade_calls(expected_calls, captured_calls)
-grade_invariants(events, captured_calls)</code></pre>
-            <p>回复说“已记录”不算通过；数据库条数、类型、日期和值都必须命中期望。</p>
-            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · EvaluationRunner</a>
-          </details>
-
-          <details open>
-            <summary>6. 出站字段必须与白名单完全相等</summary>
-            <pre><code>for call in calls:
-    purpose = call.get('task')
-    if purpose not in ENVELOPES \
-       or set(call) != ENVELOPES[purpose]:
-        fail('unapproved_outbound_field')
-
-if mode == 'local_only' and calls:
-    fail('local_only_outbound')</code></pre>
-            <p>不是“敏感字段少一点”就算通过，而是调用目的对应的字段集合必须精确等于许可白名单。</p>
-            <a class="eval-source" href="backend/evals/runner.py">backend/evals/runner.py · _grade_invariants</a>
-          </details>
-        </div>
-
-        <h3 id="evaluation-gates" data-chapter>③ 三道门禁：语言分不能抵消安全失败</h3>
-        <div class="eval-gates">
-          <article><b>状态真相门</b><p>事件数量、字段和值、暂停/恢复结果、重放幂等性必须正确。文字流畅但数据写错，仍然失败。</p></article>
-          <article><b>权限真相门</b><p>检查模型用途、调用次数、禁止字符串和精确出站字段；<code>local_only</code> 发生一次出站即失败。</p></article>
-          <article><b>安全不变量门</b><p>急症等非 general 类别禁止业务写入；重复业务写入、未批准字段都是不可被平均分掩盖的硬失败。</p></article>
-        </div>
-
-        <div aria-label="当前验证进度">
-          <div class="eval-result"><b>Phase A 场景</b><span class="eval-bar"><i></i></span><span>5 / 5</span></div>
-          <div class="eval-result"><b>重复稳定性</b><span class="eval-bar"><i></i></span><span>10 / 10</span></div>
-          <div class="eval-result"><b>后端回归</b><span class="eval-bar"><i></i></span><span>584 / 584</span></div>
-        </div>
-
-        <div class="eval-boundary"><b>边界要说清：</b>这些结果证明“当前 5 个合成场景在当前提交上通过”，不是临床有效性证明，也不代表已经覆盖所有提示注入、隐私攻击和模型漂移。Phase A 默认只跑 Demo、Local-only 与受控 Mock；真实 Provider 评测必须显式 <code>--run-provider</code>，并应在专用环境使用合成数据。下一阶段应扩充对抗数据集、人工标注基线与 CI 趋势门禁。</div>
-
-        <div class="eval-links">
-          <a href="backend/evals/cases/README.md">场景编写指南</a>
-          <a href="backend/scripts/evaluate_agent.py">命令行入口</a>
-          <a href="backend/tests/test_eval_harness.py">框架自测</a>
-          <a href="output/agent-evaluation-phase-a.md">5 场景报告</a>
-          <a href="output/agent-evaluation-smoke-repeat5.md">重复 5 次报告</a>
-          <a href="docs/Agent评测调优与安全管控开发报告.md">开发报告与路线图</a>
-        </div>
-      </section>
-
       <section class="section panel" id="privacy-deletion" data-chapter aria-labelledby="privacy-title">
         <div class="section-head"><div>
           <div class="privacy-kicker">BUG CASE STUDY / 从全局清理到按来源删除</div>
-          <h2 id="privacy-title">一条记录，为什么会清空整个聊天？</h2>
+          <h2 id="privacy-title">精准删除：一条记录为何清空聊天？</h2>
           <p>问题不只在删除 SQL：系统曾经不知道谁使用、复制过这条记录，所以把可能藏副本的上下文全部清空。修复要补齐来源关系，同时处理误删、残留和删除后的重新写入。</p>
           <p class="privacy-meta">代码对照：修改前取自 Git 提交 <code>d4491ab</code>；修改后对应当前工作区与数据库 v5 · 2026-10-26。下文代码为关键节选；“简化”块只展示控制流。所有数字均为演示，不读取个人数据库。</p>
         </div></div>
 
         <div class="privacy-scene" id="privacy-scenario">
-          <h3 style="margin-top:0">先固定一个例子：删体重，跑步和别的流程该怎么办？</h3>
+          <h3 style="margin-top:0">示例：只删体重，其他记录怎么办？</h3>
           <blockquote>“今天体重65公斤，轻松跑步20分钟。”</blockquote>
           <p>同一条消息 M1 产生 <b>E1：体重65公斤</b> 和 <b>E2：跑步20分钟</b>。另有 <b>W2：独立待补充流程</b>，它没有读取 E1。现在用户只删除 E1。以下演示假设这些对象的来源已完整登记，E2 的字段能够独立验证。</p>
           <div class="privacy-switch" role="group" aria-label="切换删除体重的修复前后结果">
@@ -4876,11 +5091,11 @@ if mode == 'local_only' and calls:
           <p class="privacy-demo-note" id="privacy-demo-caption">当前为修改后示意。按钮只切换说明，不调用接口、不执行删除。新记录已最小化证据来源；删除时仍会处理原始聊天、raw_text、旧修订等其他副本。</p>
         </div>
 
-        <h3 id="privacy-root-cause" data-chapter>① 前因：为什么当初选择“全清”？</h3>
+        <h3 id="privacy-root-cause" data-chapter>① 原因：为什么原来会全部清理？</h3>
         <p>体重不只存在于 <code>events</code>。助手可能回复“已记录65公斤”，workflow.result、receipt 和 checkpoint 也可能保存这句话。只删事件行，其他位置仍可能展示或恢复它。原实现因此选择“所有可能藏副本的上下文一起清理”。</p>
         <div class="privacy-compare">
           <article class="privacy-code-card privacy-before">
-            <span class="privacy-code-tag">修改前 · 删除入口</span><h4>目标删得精准，随后扩大为全表清理</h4>
+            <span class="privacy-code-tag">修改前 · 删除入口</span><h4>删完目标后又清空全部上下文</h4>
             <pre class="privacy-code"># repositories/events.py · 旧版本节选
 self.conn.execute(
     'DELETE FROM events WHERE id=?', (event_id,)
@@ -4894,7 +5109,7 @@ for table in ['messages', 'workflows', 'receipts',
             <p><code>event_id</code> 没有传入 <code>erase_context()</code>。后者也没有依赖查询，SQL 没有 WHERE，只能删除整张表里的上下文。</p>
           </article>
           <article class="privacy-code-card">
-            <span class="privacy-code-tag">修改后 · 统一删除服务</span><h4>先得到清单，再按具体 thread 清理</h4>
+            <span class="privacy-code-tag">修改后 · 统一删除服务</span><h4>先生成清单，再按流程清理</h4>
             <pre class="privacy-code"># privacy/deletion.py · 节选
 manifest = self._plan(kind, object_id)
 
@@ -4911,10 +5126,10 @@ for thread in manifest['threads']:
         <div class="privacy-warning"><p><b>后果有两类：</b>无关聊天、通知、复盘和等待流程被误伤；同时，保留下来的其他事件仍可能保存整句来源消息，导致“删了很多，却没有清干净”。旧 fact 接口还忽略目标是否存在，无条件继续全清；现在未知目标返回404且没有清理副作用。</p></div>
         <p class="privacy-source">当前入口：<a href="backend/app/workflows/runtime.py">runtime.py · delete_event / delete_fact</a> → <a href="backend/app/privacy/deletion.py">PrivacyDeletionService</a>。旧实现只作为本节对照，正式网页已切换到统一删除服务。</p>
 
-        <h3 id="privacy-read-tracking" data-chapter>② 补来源：从“读完就返回”到“读数据时同步记账”</h3>
+        <h3 id="privacy-read-tracking" data-chapter>② 记录来源：读取数据时同步记账</h3>
         <div class="privacy-compare">
           <article class="privacy-code-card privacy-before">
-            <span class="privacy-code-tag">修改前 · 等价简化</span><h4>查询返回了什么，没有完整登记使用者</h4>
+            <span class="privacy-code-tag">修改前 · 等价简化</span><h4>查询结果没有登记使用者</h4>
             <pre class="privacy-code">def events(...):
     records = [...]  # 从 events 查询记录
     return records
@@ -4926,7 +5141,7 @@ evidence_refs = [evidence(e) for e in recent[:12]]</pre>
             <p>展示用 <code>evidence_refs</code> 可以裁剪，不能据此断定其他18条没有参与计算。来源清单还需要覆盖 facts、profile、preferences、完整日标记等实际输入。</p>
           </article>
           <article class="privacy-code-card">
-            <span class="privacy-code-tag">修改后 · events.py 节选</span><h4>登记查询范围、事件 ID 和版本</h4>
+            <span class="privacy-code-tag">修改后 · events.py 节选</span><h4>记录查询范围、事件和版本</h4>
             <pre class="privacy-code">self.observe_scope(
     'events', start=start, end=end,
     event_kind=kind, search=search, limit=limit,
@@ -4947,7 +5162,7 @@ return records</pre>
         </div>
         <p class="privacy-source">来源：<a href="backend/app/privacy/provenance.py">capture / ReadSet / tracked</a> · <a href="backend/app/infrastructure/repositories/events.py">events / event</a> · <a href="backend/app/infrastructure/repositories/provenance.py">observe / observe_scope / persist_provenance</a> · <a href="backend/app/health/planning.py">plan_draft</a>。</p>
 
-        <h3 id="privacy-copy-minimization" data-chapter>③ 管副本：跑步记录为什么也可能藏着体重？</h3>
+        <h3 id="privacy-copy-minimization" data-chapter>③ 管理副本：跑步记录里的体重</h3>
         <div class="privacy-compare">
           <article class="privacy-code-card privacy-before">
             <span class="privacy-code-tag">修改前 · binding.py 节选</span><h4>每条事件都可能保存整条来源消息</h4>
@@ -4981,9 +5196,9 @@ assert_grounded(result)</pre>
         <p>真正删除时，对 E2 的全部 <code>revisions</code> 做同样检查。只有能独立验证的字段才能保留；若 E2 的某个字段本身引用了要删除的体重片段，就不能假装它独立，会把 E2 列入扩大的预览。程序不会靠普通字符串替换猜测新的证据。</p>
         <p class="privacy-source">来源：<a href="backend/app/privacy/fragments.py">minimize_event</a> · <a href="backend/app/infrastructure/repositories/provenance.py">register_event_provenance / origin_locators</a> · <a href="backend/app/privacy/deletion.py">_forbidden_spans / _verify_independent / _minimize</a>。</p>
 
-        <h3 id="privacy-manifest" data-chapter>④ 算范围：先找直接与间接依赖，再给用户预览</h3>
+        <h3 id="privacy-manifest" data-chapter>④ 计算范围：查找依赖并预览</h3>
         <p>删除服务从 E1 的所有版本开始，沿依赖边继续查找。E1影响复盘，复盘又被通知引用，就要把通知也纳入。代码中的 <code>dependency_closure()</code> 可以理解为“从目标出发，把关联链条走完”。</p>
-        <details class="privacy-details"><summary>展开看代码：如何沿关系查找，同时避免重复遍历</summary>
+        <details class="privacy-details"><summary>怎样查找依赖并避免重复？</summary>
           <pre class="privacy-code"># repositories/provenance.py · 节选
 found, frontier = set(roots), set(roots)
 while frontier:
@@ -5020,7 +5235,7 @@ if preview['scope_token'] != manifest['scope_token']:
         <p class="privacy-source">来源：<a href="backend/app/api/deletions.py">预览 / 执行 / 状态 / 重试 API</a> · <a href="backend/app/privacy/deletion.py">_plan / preview / delete / _erase_business</a> · <a href="frontend/src/App.tsx">previewDeletion / executeDeletion</a>。</p>
 
         <div class="privacy-scene" id="privacy-checkpoint-basics" data-chapter>
-          <h4>先补基础：checkpoint 是什么，为什么删除记录还要管它？</h4>
+          <h4>为什么删除也要处理进度存档？</h4>
           <p>这里有三样不同的东西：<b>业务数据、流程存档、删除任务记录</b>。checkpoint 就是“流程存档”，类似游戏存档：程序中断后，可以知道之前做到哪里、接下来做什么。</p>
           <blockquote>今天体重65公斤，请帮我分析一下。</blockquote>
           <pre class="privacy-code">① 保存体重记录 E1
@@ -5052,8 +5267,8 @@ checkpoint = {
           <p><b>W2 是什么？</b>它只是另一次任务的编号，例如根据 E2 跑步记录生成运动建议、正在等待用户补充信息的流程。只要没有使用 E1，且来源可以证明独立，删除 E1 时就应该保留 W2 的消息、等待状态和存档。</p>
         </div>
 
-        <h3 id="privacy-concurrency" data-chapter>⑤ 防写回：从所有流程一起失效，到相关流程代次失效</h3>
-        <details class="privacy-details" open id="privacy-generation-explained"><summary>白话讲解：删掉存档，为什么任务还能把旧数据写回来？</summary>
+        <h3 id="privacy-concurrency" data-chapter>⑤ 防止写回：只让相关流程失效</h3>
+        <details class="privacy-details" open id="privacy-generation-explained"><summary>为什么删除后旧任务还能写回？</summary>
           <pre class="privacy-code">W1 读取 E1：体重65公斤
         ↓
 W1 把数据发给模型，等待返回
@@ -5097,7 +5312,7 @@ self.engine.checkpointer.delete_thread(thread_id)</pre><p>旧任务拿着第0代
         <p>这个检查不只放在最终回复前。受保护节点、模型 I/O 返回和 <code>GuardedSqliteSaver.cursor()</code> 都会检查流程状态，防止后台 checkpoint 写入把删除前的内容再次落盘。这里主要保证结果不能写回，并不宣称已经发出的网络请求会立即停止。</p>
         <p class="privacy-source">来源：<a href="backend/app/workflows/concurrency.py">capture_execution / check_execution / model_io / GuardedSqliteSaver</a> · <a href="backend/app/privacy/deletion.py">流程代次屏障与 deletion_items</a>。</p>
 
-        <h3 id="privacy-recovery" data-chapter>⑥ 防“删一半”：两个数据库，用持久化作业协调</h3>
+        <h3 id="privacy-recovery" data-chapter>⑥ 防止半删：用持久化工单协调</h3>
         <p><code>health.db</code> 保存业务记录，<code>checkpoints.db</code> 保存流程进度。旧代码先删业务再清存档，第二步失败时缺少跨库清理进度记录。现在先登记删除任务和写入屏障，再按阶段推进。</p>
         <div class="privacy-flow" aria-label="持久化删除任务状态流">
           <div><b>business_pending</b><small>清理任务已保存，来源进入删除状态；相关代次失效。业务清理尚未完成时，读取接口受屏障保护。</small></div><span aria-hidden="true">→</span>
@@ -5121,7 +5336,7 @@ self.engine.checkpointer.delete_thread(thread_id)</pre><p>旧任务拿着第0代
 # 全部成功，最后改为 completed
 # 异常则保留作业，返回 pending、deleted=False</pre><p><code>recover()</code> 在服务开放前处理未完成任务。GET 状态只读；页面的“继续清理”调用 POST retry，不把一次查询当成删除完成。</p></article>
         </div>
-        <details class="privacy-details" open id="privacy-deletion-job-explained"><summary>白话讲解：删除工单如何解决“删到一半，程序退出”？</summary>
+        <details class="privacy-details" open id="privacy-deletion-job-explained"><summary>删除中途退出后怎样继续？</summary>
           <p>数据分在两个数据库里：<code>health.db</code> 保存 E1 和相关业务内容，<code>checkpoints.db</code> 保存 W1 的执行存档。因此，完整删除需要处理两边。</p>
           <pre class="privacy-code">修改前可能发生：
 ① 删除健康数据库中的 E1 → 成功
@@ -5156,7 +5371,7 @@ deletion_job = {
           <p>中途失败时返回 <code>pending</code>、<code>deleted=False</code>，意思是<b>整个删除任务尚未完成</b>，并不表示前面的业务删除一定没有发生。这两个数据库仍然不是一个事务；改进在于跨库操作中断后，系统有可靠的记录继续完成，不会假报成功或忘掉剩余工作。</p>
         </details>
 
-        <h3 id="privacy-request-replay" data-chapter>⑦ 防“旧请求重建”：正文删除，请求编号保留为拒绝标记</h3>
+        <h3 id="privacy-request-replay" data-chapter>⑦ 防止重建：保留无正文的请求标记</h3>
         <div class="privacy-compare">
           <article class="privacy-code-card privacy-before"><span class="privacy-code-tag">修改前 · 风险链条简化</span><h4>全清也清掉去重记录</h4><pre class="privacy-code">删除 E1
   → workflows / receipts / operations 全部清空
@@ -5173,7 +5388,7 @@ deletion_job = {
         </div>
         <p class="privacy-source">来源：<a href="backend/app/privacy/deletion.py">_erase_business / _finish / recover / inventory_checkpoints</a> · <a href="backend/app/workflows/concurrency.py">check_request</a> · <a href="backend/app/api/deps.py">读取屏障</a> · <a href="backend/app/main.py">RequestErased / DeletionError 的 HTTP 语义</a>。</p>
 
-        <details class="privacy-details" open id="privacy-tombstone-explained"><summary>白话讲解：request_tombstones 为什么还要保留请求编号？</summary>
+        <details class="privacy-details" open id="privacy-tombstone-explained"><summary>为什么还要保留请求编号？</summary>
           <p>旧数据还有另一种回来方式：<b>客户端重新发送了之前的请求。</b>这和正在运行的模型任务写回，是两个不同入口。</p>
           <pre class="privacy-code">请求 R1：创建体重记录 E1
         ↓
@@ -5193,7 +5408,7 @@ deletion_job = {
           </tbody></table></div>
         </details>
 
-        <h3 id="privacy-validation" data-chapter>怎么验证确实修好了，而不是只改了 SQL？</h3>
+        <h3 id="privacy-validation" data-chapter>怎样证明删除真的完成？</h3>
         <div class="privacy-table-wrap"><table class="privacy-table"><thead><tr><th>验证场景</th><th>必须看到的变化</th><th>代码证据</th></tr></thead><tbody>
           <tr><td>删 E1，同时保留独立待补充流程</td><td>相关内容消失；W2 的消息、状态、checkpoint 不变，而且能成功继续补充。</td><td><a href="backend/tests/test_privacy_deletion.py">test_delete_preserves_independent_messages_reports_notices_and_pending_progress</a></td></tr>
           <tr><td>同一句话产生体重和跑步，跑步还有旧修订</td><td>所有修订里的体重原文副本被处理；跑步字段仍通过 assert_grounded。</td><td><a href="backend/tests/test_privacy_deletion.py">test_shared_source_is_removed_from_latest_event_and_every_revision</a></td></tr>
@@ -5214,9 +5429,9 @@ deletion_job = {
       </section>
       <section class="section panel" id="interview-prep" data-chapter aria-labelledby="interview-title">
         <div class="iv-kicker">08 / INTERVIEW · 结合当前工程讲清原理 · 2026-10-28</div>
-        <h2 id="interview-title">面试讲解：Agent 怎样做到不乱跑、不超量、不越权？</h2>
+        <h2 id="interview-title">面试题：限制循环、上下文和工具</h2>
         <div class="iv-question">
-          <h3>Q003 · 如何限制循环次数、上下文规模和工具调用范围？</h3>
+          <h3>Q003 · 核心问题</h3>
           <p><b>参考答案：</b>轻记采用受控工作流而非开放式 ReAct。可选追问受轮次限制，必需字段不全不会强行保存。当前每个工作流最多预留 32 次模型调用、累计 400000 字节，其中规划最多 4 次、安全分类最多 8 次；发送前持久化计数，失败也占预算。单次外发限制 90000 字节。运行段默认 120 秒、并发槽 2，普通模型超时 45 秒，安全分类 8 秒。字节和次数预算不等于精确 Token 计费，也不代表已实现自动摘要压缩。</p>
         </div>
         <p>把这段答案理解成四道控制：<b>流程规定怎么走，额度限制能调用多少次，权限规定能拿什么数据，期限限制能占多久资源。</b>下面用“中午吃了牛肉面”这次请求串起来讲。代码均为当前实现的关键节选；“…”和中文说明省略了无关逻辑，不是完整可运行函数。</p>
@@ -5227,8 +5442,8 @@ deletion_job = {
           <article><b>④ 资源</b><span>执行名额 + 总期限<br>单次模型服从剩余时间</span></article>
         </div>
 
-        <h3 id="interview-code" data-chapter>结合代码：沿一次饮食记录请求往下看</h3>
-        <details open><summary>1 · 限制循环：程序决定路径，缺字段才追问</summary>
+        <h3 id="interview-code" data-chapter>沿一次饮食记录看代码</h3>
+        <details open><summary>1 · 循环限制：缺字段才追问</summary>
           <pre>安全检查 → 解析输入 → 检查字段 → 准备营养 → 保存或追问
                                                    ↓
                                            用户补充后继续</pre>
@@ -5251,7 +5466,7 @@ if not skip_optional and rounds &lt; 2:
           </div>
         </details>
 
-        <details open><summary>2 · 限制调用：同一件事情有一份数据库额度</summary>
+        <details open><summary>2 · 调用限制：每项任务都有额度</summary>
           <div class="iv-pair">
             <div><pre># repositories/common.py · account_model_call 节选
 count, size = self.conn.execute(
@@ -5279,7 +5494,7 @@ if count &gt;= 32 or size + payload_bytes &gt; 400000:
           </div>
         </details>
 
-        <details open><summary>3 · 限制上下文：先决定发什么，再检查发多少</summary>
+        <details open><summary>3 · 上下文限制：先选数据，再检查大小</summary>
           <div class="iv-pair">
             <div><pre># modeling/payloads.py · 按用途固定字段
 ENVELOPES = {
@@ -5304,7 +5519,7 @@ if len(payload.encode('utf-8')) &gt; 90000:
           </div>
         </details>
 
-        <details open><summary>4 · 限制工具范围：每次用途和数据都要拿通行证</summary>
+        <details open><summary>4 · 工具限制：用途和数据都要授权</summary>
           <div class="iv-pair">
             <div><pre># modeling/boundary.py · approve 节选
 if (purpose not in ENVELOPES
@@ -5326,7 +5541,7 @@ scope.grants.remove(grant)</pre>
           </div>
         </details>
 
-        <details open><summary>5 · 限制时间和并发：不能一直占着执行资源</summary>
+        <details open><summary>5 · 资源限制：控制时间和并发</summary>
           <div class="iv-pair">
             <div><pre># common/config.py · 可配置的默认值
 model_timeout_seconds = 45
@@ -5355,7 +5570,7 @@ min(单次模型上限, 当前运行段剩余时间)</pre>
           </div>
         </details>
 
-        <h3 id="interview-scopes" data-chapter>最容易混淆：什么会累计，什么会重新开始？</h3>
+        <h3 id="interview-scopes" data-chapter>哪些限制会累计，哪些会重置？</h3>
         <div class="iv-table-wrap"><table><thead><tr><th>限制</th><th>作用范围</th><th>用户补充、恢复后</th></tr></thead><tbody>
           <tr><td>可选追问 <code>rounds &lt; 2</code></td><td>工作流 State 中的追问轮次</td><td>沿用并递增；不能因此跳过必需字段。</td></tr>
           <tr><td>32 次 / 400000 字节<br>规划 4 次 / 安全分类 8 次</td><td>数据库中同一 <code>thread_id</code></td><td>继续累计；失败调用也占预算。</td></tr>
@@ -5365,9 +5580,9 @@ min(单次模型上限, 当前运行段剩余时间)</pre>
         </tbody></table></div>
         <p>例如首次运行用了 3 次模型后暂停，用户一小时后补充：恢复时有新的运行段期限，但工作流模型计数仍从 3 接着累计，不会归零。</p>
 
-        <h3 id="interview-full-flow" data-chapter>全流程案例：从小程序输入，到看到最终回复</h3>
+        <h3 id="interview-full-flow" data-chapter>完整流程：从输入到回复</h3>
         <div class="iv-question">
-          <h3>用户输入：“最近 7 天饮食怎么样？”</h3>
+          <h3>示例输入：“最近 7 天饮食怎么样？”</h3>
           <p>假设用户已允许模型处理，后端模型配置齐全，这是一次新咨询，没有选择正在补充的旧任务。<b>前端只提交一次咨询请求；安全检查、规划、取数和建议生成，都在后端接着完成。</b></p>
           <p>可以把系统想成：前端递交问题，Engine 登记工单，Graph 按顺序处理，State 是节点共用的流程笔记；模型在指定位置理解需求或选择建议，程序负责取数、计算和校验。</p>
         </div>
@@ -5378,7 +5593,7 @@ min(单次模型上限, 当前运行段剩余时间)</pre>
           <article><b>④ 保存与展示</b><span>保存工作流和助手消息<br>HTTP 返回，通知页面刷新<br>GET /messages 后渲染</span></article>
         </div>
 
-        <details open><summary>① 前端 send：把文字组装成一次 HTTP 请求</summary>
+        <details open><summary>① 前端：组装 HTTP 请求</summary>
           <div class="iv-pair">
             <div><pre>// pages/chat/index.tsx · send() 关键节选
 const body = {
@@ -5407,7 +5622,7 @@ await Taro.request({
           </div>
         </details>
 
-        <details><summary>② FastAPI 接口：校验请求，再交给 Engine</summary>
+        <details><summary>② 接口：校验并交给 Engine</summary>
           <pre># api/workflows.py · chat() 关键节选
 @router.post('/chat')
 def chat(body: ChatRequest, engine=Depends(get_engine)):
@@ -5424,7 +5639,7 @@ def chat(body: ChatRequest, engine=Depends(get_engine)):
           <a class="iv-source" href="backend/app/api/workflows.py">workflows.py · POST /api/chat 与恢复端点</a>
         </details>
 
-        <details><summary>③ Engine：登记工单，准备节点共用的 State</summary>
+        <details><summary>③ 引擎：登记任务并创建状态</summary>
           <div class="iv-pair">
             <div><pre># workflows/runtime.py · 初始 State 示意
 {
@@ -5452,7 +5667,7 @@ state = self.graph_for(kind).invoke(
         </details>
 
         <div id="interview-flow-nodes" data-chapter>
-          <h3>节点中转图：这条咨询实际怎么走？</h3>
+          <h3>这次咨询经过哪些节点？</h3>
           <pre>START
   ↓
 safety_gate                 本地安全检查
@@ -5492,7 +5707,7 @@ END → 回到 Engine</pre>
           <a class="iv-source" href="backend/app/workflows/chat_parsing.py">chat_parsing.py · 解析、归一化、草稿校验与营养节点</a>
         </div>
 
-        <details><summary>⑤ parse_initial 内部：模型填申请单，程序审核后放进 State</summary>
+        <details><summary>⑤ 解析输入：模型申请，程序审核</summary>
           <pre>parse_initial(state)
   → harness.prepare(state)
     → parser.plan(本次输入、是否选中记录)
@@ -5518,7 +5733,7 @@ END → 回到 Engine</pre>
           <a class="iv-source" href="backend/app/modeling/parser.py">Parser.plan · 第一次业务模型调用与固定输入</a>
         </details>
 
-        <details><summary>⑥ respond 内部取数：程序查七天记录，计算每日摘要</summary>
+        <details><summary>⑥ 查询七天记录</summary>
           <pre>respond(state) 发现 parsed.intent == 'advice'
   → 从 processing_plan 取出咨询 action
   → advice_context(state, action)
@@ -5554,7 +5769,7 @@ def _day_summary(day):
           <a class="iv-source" href="backend/app/health/dashboard.py">history_window / dashboard · 逐天读取与本地统计</a>
         </details>
 
-        <details><summary>⑦ 仍在 respond 内部：模型选建议编号，程序拼出正文</summary>
+        <details><summary>⑦ 生成回复：模型选择，程序生成</summary>
           <pre># workflows/chat_response.py · respond 节选
 context, refs = self.advice_context(state, action)
 reply = validate_advice(
@@ -5575,7 +5790,7 @@ validate_advice() → 校验编号，拼出本地事实与建议</pre>
           <a class="iv-source" href="backend/app/policy/output.py">advice_plan / validate_advice · 本地事实、建议目录与编号校验</a>
         </details>
 
-        <details><summary>⑧ END 以后：保存结果，HTTP 返回，小程序刷新消息</summary>
+        <details><summary>⑧ 完成：保存结果并刷新页面</summary>
           <div class="iv-pair">
             <div><pre># respond 返回 State 更新
 return {
@@ -5604,7 +5819,7 @@ return result</pre></div>
         <div class="iv-answer"><p><b>用一句话串起来：</b>前端负责提交与展示；API 负责接收；Engine 负责任务、去重与恢复；Graph 负责节点顺序；State 负责节点间中转；普通函数负责查库与计算；LLM 只在指定位置参与理解或选择。</p></div>
 
         <div class="iv-answer" id="interview-answer" data-chapter>
-          <h3>面试时可以这样回答</h3>
+          <h3>面试回答示例</h3>
           <p>我们从流程、模型额度、数据权限和运行资源四层限制执行。流程由固定状态图控制，可选追问受轮次限制；模型调用按工作流持久化记账，发送前扣额度，失败也计入。上下文按用途白名单构造，并限制单次与累计字节；执行端校验一次性数据授权。运行段再统一控制截止时间和并发，单次模型超时不能超过剩余总时间。目前实现的是次数和字节预算，尚未做精确 Token 计费与自动摘要压缩。</p>
         </div>
         <div class="iv-links">
@@ -5614,6 +5829,36 @@ return result</pre></div>
           <a href="#data-harness">延伸阅读：数据授权边界</a>
         </div>
       </section>
+
+      <section class="section panel" id="maintenance-boundary" data-chapter aria-labelledby="maintenance-boundary-title">
+        <div class="mb-kicker">MAINTENANCE BOUNDARY MAP · 2026-10-31</div>
+        <h2 id="maintenance-boundary-title">维护边界：目录已分层，对象仍耦合</h2>
+        <p class="mb-lead">主链路是单 Agent、固定 LangGraph，不存在多 Agent 交接。安全与模型外发边界清晰；维护耦合主要集中在 Engine、Repository、共享 State 与直接 SQL。</p>
+
+        <div class="mb-map" aria-label="当前 agent 依赖方向">
+          <div class="mb-layer"><b>API / Jobs</b><code>api/* · jobs/*</code><span>请求、恢复、后台调度；部分入口直接读取 Engine 锁与数据库连接。</span></div>
+          <div class="mb-layer"><b>Engine / Runtime</b><code>7 mixins + shared self</code><span>编排 Graph、并发、幂等、生命周期、删除与模型上下文。</span></div>
+          <div class="mb-layer"><b>Workflow Nodes</b><code>chat · safety · plan</code><span>节点分文件，但共同读写同一个 Engine 与宽 State。</span></div>
+          <div class="mb-layer"><b>Policy / Model</b><code>grant → approve → consume</code><span>一次性授权、Payload 白名单、Schema 和本地输出目录。</span></div>
+          <div class="mb-layer"><b>Repository / SQLite</b><code>9 mixins + conn</code><span>业务库、checkpoint、血缘、任务与维护；连接对象向上层暴露。</span></div>
+        </div>
+
+        <div class="mb-crossings" aria-label="当前主要边界穿透点">
+          <article><b>共享对象边界</b><code>Engine(Safety, Parsing, Flow, ...)</code><span>模块通过隐式 self 协议互调，构造顺序与 MRO 成为隐藏契约。</span></article>
+          <article><b>状态边界</b><code>State(total=False) · 55+ fields</code><span>chat / plan / analysis 共用；核心载荷仍是 dict[Any]。</span></article>
+          <article><b>持久化边界</b><code>engine.repo.conn.execute(...)</code><span>API、Workflow、Jobs、Privacy 都能绕过 Repository 公共方法。</span></article>
+          <article><b>私有实现边界</b><code>_budget · _compact · object.__new__</code><span>跨模块依赖内部名字与半初始化对象，重构传播范围扩大。</span></article>
+        </div>
+
+        <div class="mb-target" aria-label="建议的维护边界方向">
+          <div><b>WorkflowService</b><span>对 API 暴露 run / resume / query</span></div><i class="mb-arrow">→</i>
+          <div><b>Typed Graph Ports</b><span>ChatState / PlanState / SafetyDecision</span></div><i class="mb-arrow">→</i>
+          <div><b>Domain Ports</b><span>ModelGateway / Policy / DeletionFence</span></div><i class="mb-arrow">→</i>
+          <div><b>Repository Ports</b><span>不向上暴露 conn / checkpoint 细节</span></div>
+        </div>
+        <p class="mb-note">保留现有 ModelBoundary 的一次性授权设计；优先把删除围栏、checkpoint 维护、job heartbeat 和 workflow 查询收敛成公开接口，再逐步拆分 State 与 Engine。</p>
+      </section>
+
       <footer>
         <span
           >证据：backend/app/workflows/ · modeling/ · contracts/ · health/ · chat/ · evidence/ · evals/ ·
@@ -8187,8 +8432,28 @@ return result</pre></div>
 
         const chapters = Array.from(document.querySelectorAll('.doc-main [data-chapter]'));
         const chapterLinks = Array.from(document.querySelectorAll('.chapter-nav a'));
+        const navSections = Array.from(document.querySelectorAll('.chapter-nav .nav-section'));
+        const navClusters = Array.from(document.querySelectorAll('.chapter-nav .nav-cluster'));
         const siteLinks = Array.from(document.querySelectorAll('.site-links a'));
         if (!chapters.length) return;
+
+        navSections.forEach(section => {
+          section.addEventListener('toggle', () => {
+            if (!section.open) return;
+            navSections.forEach(sibling => {
+              if (sibling !== section) sibling.open = false;
+            });
+          });
+        });
+
+        navClusters.forEach(cluster => {
+          cluster.addEventListener('toggle', () => {
+            if (!cluster.open) return;
+            cluster.parentElement.querySelectorAll(':scope > .nav-cluster').forEach(sibling => {
+              if (sibling !== cluster) sibling.open = false;
+            });
+          });
+        });
 
         const siteSectionByChapter = {
           'graph-overview': 'graph-overview',
@@ -8213,12 +8478,18 @@ return result</pre></div>
           'runtime-sandbox': 'runtime-sandbox',
           'evaluation-loop': 'evaluation-loop',
           'evaluation-pipeline': 'evaluation-loop',
+          'evaluation-principles': 'evaluation-loop',
+          'evaluation-metrics': 'evaluation-loop',
+          'evaluation-stale': 'evaluation-loop',
           'evaluation-code': 'evaluation-loop',
           'evaluation-gates': 'evaluation-loop',
+          'evaluation-archive': 'evaluation-loop',
           'plan-branches': 'memory-system',
+          'agent-crash-recovery': 'concurrency-recovery',
           'concurrency-recovery': 'concurrency-recovery',
           'scheduler-reliability': 'concurrency-recovery',
           'privacy-deletion': 'privacy-deletion',
+          'maintenance-boundary': 'maintenance-boundary',
           'interview-prep': 'interview-prep',
           'interview-code': 'interview-prep',
           'interview-scopes': 'interview-prep',
@@ -8240,12 +8511,29 @@ return result</pre></div>
         function markCurrent(chapter) {
           if (!chapter) return;
           const href = '#' + chapter.id;
+          let currentChapterLink = null;
           chapterLinks.forEach(link => {
             const current = link.getAttribute('href') === href;
             link.classList.toggle('current', current);
-            if (current) link.setAttribute('aria-current', 'location');
+            if (current) {
+              link.setAttribute('aria-current', 'location');
+              currentChapterLink = link;
+            }
             else link.removeAttribute('aria-current');
           });
+          const activeSection = currentChapterLink?.closest('.nav-section');
+          if (activeSection) {
+            navSections.forEach(section => { section.open = section === activeSection; });
+          }
+          const activeCluster = currentChapterLink?.closest('.nav-cluster');
+          if (activeCluster) {
+            activeCluster.parentElement.querySelectorAll(':scope > .nav-cluster').forEach(cluster => {
+              cluster.open = cluster === activeCluster;
+            });
+          } else if (currentChapterLink) {
+            const childClusters = currentChapterLink.parentElement.querySelectorAll(':scope > .nav-cluster');
+            childClusters.forEach((cluster, index) => { cluster.open = index === 0; });
+          }
           const siteSection = chapter.id.startsWith('privacy-')
             ? 'privacy-deletion'
             : (siteSectionByChapter[chapter.id] || chapter.id);
@@ -8284,7 +8572,9 @@ return result</pre></div>
         window.addEventListener('scroll', updateFromScroll, { passive: true });
         window.addEventListener('resize', updateFromScroll);
         window.addEventListener('hashchange', updateFromHash);
-        document.addEventListener('toggle', updateFromScroll, true);
+        document.addEventListener('toggle', event => {
+          if (!event.target.closest('.chapter-nav')) updateFromScroll();
+        }, true);
         if ('ResizeObserver' in window) new ResizeObserver(updateFromScroll).observe(document.querySelector('.doc-main'));
         requestAnimationFrame(updateFromHash);
       })();

@@ -1,4 +1,4 @@
-"""Build and compose user-facing chat responses without business writes."""
+"""根据操作结果生成回复，不在回复阶段写业务数据。"""
 
 from ...chat.feedback import wants_advice
 from ...chat.replies import express_plan, make_plan, medical_question, record_receipt
@@ -225,7 +225,8 @@ class ChatResponse(ChatComponent):
                 })
             elif action.intent == 'fact':
                 result = self.operation_result(state, f'extra:{index}', 'save_fact')
-                reply += '\n' + fact_receipt(result['records'][0], action.fact_text)
+                fact = self.repo.fact(result['entity_refs'][0])
+                reply += '\n' + fact_receipt(fact, action.fact_text)
 
         plan = None
         if (

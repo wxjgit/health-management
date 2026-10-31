@@ -1,4 +1,4 @@
-"""Versioned input reads, copies and dependency traversal in the business DB."""
+"""管理数据来源图、读取追踪和隐私删除边界查询。"""
 
 import hashlib
 import json
@@ -10,6 +10,19 @@ from .common import dump
 
 
 class ProvenanceRepositoryMixin:
+    def deletion_pending(self):
+        with self.lock:
+            return bool(self.conn.execute(
+                "SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1"
+            ).fetchone())
+
+    def deletion_preview(self, preview_id):
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT * FROM deletion_previews WHERE id=?', (preview_id,)
+            ).fetchone()
+            return dict(row) if row else None
+
     @contextmanager
     def provenance_transaction(self):
         outer = self.conn.in_transaction

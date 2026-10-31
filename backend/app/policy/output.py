@@ -1,9 +1,4 @@
-"""Render local receipts and independently reviewed consultation prose.
-
-Schemas only validate shape. This boundary also validates membership and keeps
-dates, quantities, receipts, uncertainty and clarification under local control.
-It does not try to establish the truth of arbitrary natural language with regex.
-"""
+"""生成本地回执和受审核的咨询表达，确保关键事实由本地控制。"""
 from ..contracts.workflows import AdviceReply, ContextualReply
 from pydantic import ValidationError
 from ..common.errors import ModelOutputError, WorkflowStateError

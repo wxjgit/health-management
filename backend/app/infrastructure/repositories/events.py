@@ -1,4 +1,4 @@
-"""Health event, revision and completion persistence."""
+"""保存健康事件、修订历史、幂等回执和完成状态。"""
 
 from ...common.errors import ConflictError, DomainValidationError
 
@@ -57,12 +57,29 @@ class EventRepositoryMixin:
                 self.observe('event', record['id'], record['version'])
             return record
 
-    def save_events(self, drafts, op_key, correction_id=None, expected_version=None, *, user_correction=False):
+    def save_events(
+        self,
+        drafts,
+        op_key,
+        correction_id=None,
+        expected_version=None,
+        *,
+        user_correction=False,
+        request_hash=None,
+        owner_id='',
+        operation_kind='legacy',
+    ):
         with self.lock, self.conn:
             old = self.conn.execute(
-                'SELECT result FROM operations WHERE key=?', (op_key,)
+                'SELECT * FROM operations WHERE key=?', (op_key,)
             ).fetchone()
             if old:
+                if request_hash is not None and (
+                    old['request_hash'] != request_hash
+                    or old['owner_id'] != owner_id
+                    or old['kind'] != operation_kind
+                ):
+                    raise ConflictError(code='request_payload_conflict')
                 return json.loads(old['result'])
             saved = []
             if correction_id and len(drafts) != 1:
@@ -136,7 +153,8 @@ class EventRepositoryMixin:
                 self.register_event_provenance(event_id, revision, original_draft, op_key, stored=draft, prior=prior)
                 self.quality_record(event_id, draft, correction=prior is not None, user_correction=user_correction)
             self.conn.execute(
-                'INSERT INTO operations VALUES (?,?)', (op_key, dump(saved))
+                'INSERT INTO operations(key,result,owner_id,kind,request_hash) VALUES (?,?,?,?,?)',
+                (op_key, dump(saved), owner_id, operation_kind, request_hash),
             )
             if saved:
                 self._bump()

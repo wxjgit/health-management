@@ -1,3 +1,5 @@
+"""初始化业务数据库结构并执行兼容性字段迁移。"""
+
 import sqlite3
 
 SCHEMA_VERSION = 9
@@ -22,7 +24,10 @@ SCHEMA = '''
         version INTEGER NOT NULL, data TEXT NOT NULL, raw_text TEXT NOT NULL,
         reason TEXT NOT NULL, created_at TEXT NOT NULL,
         PRIMARY KEY(event_id, version));
-    CREATE TABLE IF NOT EXISTS operations (key TEXT PRIMARY KEY, result TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS operations (
+        key TEXT PRIMARY KEY, result TEXT NOT NULL,
+        owner_id TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'legacy',
+        request_hash TEXT);
     CREATE TABLE IF NOT EXISTS workflows (
         id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL,
         kind TEXT NOT NULL, status TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -131,6 +136,15 @@ def open_database(path):
             connection.execute(
                 'ALTER TABLE messages ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0'
             )
+        operation_columns = {
+            row['name'] for row in connection.execute('PRAGMA table_info(operations)').fetchall()
+        }
+        if 'owner_id' not in operation_columns:
+            connection.execute("ALTER TABLE operations ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''")
+        if 'kind' not in operation_columns:
+            connection.execute("ALTER TABLE operations ADD COLUMN kind TEXT NOT NULL DEFAULT 'legacy'")
+        if 'request_hash' not in operation_columns:
+            connection.execute('ALTER TABLE operations ADD COLUMN request_hash TEXT')
         execute_schema(connection, '''
             CREATE TABLE IF NOT EXISTS fact_details (
                 fact_id TEXT PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,

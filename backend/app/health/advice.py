@@ -1,4 +1,4 @@
-"""Small, relevance-first context builder for ordinary health consultations."""
+"""按最小必要原则构造普通健康咨询上下文。"""
 import re
 from datetime import timedelta
 

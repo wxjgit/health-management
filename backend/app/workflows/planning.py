@@ -1,4 +1,4 @@
-"""Plan confirmation and periodic analysis workflow graphs."""
+"""定义计划确认和周期复盘工作流。"""
 
 from datetime import date
 

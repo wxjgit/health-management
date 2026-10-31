@@ -1,4 +1,4 @@
-"""Workflow, message and idempotency receipt persistence."""
+"""保存工作流、消息、幂等回执、恢复尝试和执行代次。"""
 
 from ...common.errors import ConflictError, WorkflowStateError
 
@@ -10,6 +10,13 @@ from .common import dump
 
 
 class WorkflowRepositoryMixin:
+    def workflow_generation(self, thread_id):
+        with self.lock:
+            row = self.conn.execute(
+                'SELECT generation FROM workflow_generations WHERE thread_id=?', (thread_id,)
+            ).fetchone()
+            return row[0] if row else 0
+
     def touch_workflow(self, thread_id):
         workflow = self.workflow(thread_id)
         if not workflow or workflow['status'] == 'expired':

@@ -1,4 +1,4 @@
-"""Clarification rendering, interruption and bounded resume handling."""
+"""负责追问生成、流程暂停以及回答后的受限恢复。"""
 
 from langgraph.types import interrupt
 

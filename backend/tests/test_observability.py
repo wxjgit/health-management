@@ -1,4 +1,4 @@
-"""Synthetic-only telemetry contracts, transactions, privacy and real workflow probes."""
+"""验证可观测契约、事务、隐私边界和真实工作流探针。"""
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone

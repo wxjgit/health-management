@@ -1,4 +1,4 @@
-"""Adversarial candidates must not acquire authority through response prose."""
+"""验证模型不能通过回复文字获得额外业务权限。"""
 
 from app.common.errors import ModelOutputError
 from types import SimpleNamespace

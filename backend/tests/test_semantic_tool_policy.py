@@ -1,3 +1,5 @@
+"""验证语义工具选择不会突破本地数据范围策略。"""
+
 from types import SimpleNamespace
 import pytest
 from app.workflows.chat.policy import ChatPlanPolicy

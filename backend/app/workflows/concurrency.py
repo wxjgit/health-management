@@ -1,4 +1,4 @@
-"""Serialize local workflow work without holding a global lock over model I/O."""
+"""管理工作流并发、执行代次和模型调用期间的锁边界。"""
 
 from contextlib import contextmanager
 from contextvars import ContextVar

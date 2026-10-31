@@ -1,4 +1,4 @@
-"""Closed event vocabulary; values are checked before serialization or metrics."""
+"""定义可观测事件的有限词表，并在记录前校验字段。"""
 import math
 from uuid import UUID
 

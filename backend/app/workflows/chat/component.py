@@ -1,4 +1,4 @@
-"""Shared dependency access for chat workflow components."""
+"""为聊天工作流组件提供受限的公共依赖入口。"""
 
 
 class ChatComponent:
@@ -8,23 +8,23 @@ class ChatComponent:
     mixins. Only the services declared below cross the component boundary.
     """
 
-    def __init__(self, engine):
-        self.engine = engine
+    def __init__(self, dependencies):
+        self._dependencies = dependencies
 
     @property
     def repo(self):
-        return self.engine.repo
+        return self._dependencies.reader
 
     @property
     def parser(self):
-        return self.engine.parser
+        return self._dependencies.parser
 
     @property
     def harness(self):
-        return self.engine.harness
+        return self._dependencies.harness
 
     def safety_context(self, state):
-        return self.engine.safety_context(state)
+        return self._dependencies.safety_context(state)
 
     @staticmethod
     def traced(state, title, detail):

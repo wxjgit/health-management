@@ -1,4 +1,4 @@
-"""States for the non-chat workflow graphs."""
+"""定义计划和复盘等非聊天工作流的状态。"""
 
 from typing import Any, TypedDict
 

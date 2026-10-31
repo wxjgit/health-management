@@ -1,4 +1,4 @@
-"""Checkpointed state used only by the chat graph."""
+"""定义 Chat Graph 独立保存和恢复的流程状态。"""
 
 from typing import Any, TypedDict
 
@@ -57,6 +57,7 @@ class ChatState(TypedDict, total=False):
     record_ids: list[str]
     saved_indexes: list[int]
     fact_id: str
+    tool_schema_version: int
     operation_commands: list[dict]
     operation_results: list[dict]
 

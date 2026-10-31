@@ -1,3 +1,5 @@
+"""提供带运行限额和隐私删除围栏的 API 依赖。"""
+
 from fastapi import Request
 from .auth import require_user
 from functools import wraps
@@ -16,7 +18,7 @@ def check_engine(request, engine):
     if not engine.lock.acquire(timeout=1):
         raise RuntimeLimitError()
     try:
-        pending = engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone()
+        pending = engine.repo.deletion_pending()
         if pending and request.url.path != '/api/deletions' and not request.url.path.startswith('/api/deletions/'):
             raise PrivacyCleanupPending()
     finally:
@@ -31,7 +33,7 @@ def protected_read(operation):
     def guarded(*args, **kwargs):
         engine = parameters.bind_partial(*args, **kwargs).arguments['engine']
         with engine.runtime.execution('read'), engine.lock:
-            if engine.repo.conn.execute("SELECT 1 FROM deletion_jobs WHERE state='business_pending' LIMIT 1").fetchone():
+            if engine.repo.deletion_pending():
                 raise PrivacyCleanupPending()
             return operation(*args, **kwargs)
     return guarded

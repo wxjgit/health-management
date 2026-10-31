@@ -1,4 +1,4 @@
-"""Interpret chat input and produce validated persistence-ready drafts."""
+"""理解聊天输入并生成经过校验的记录草稿。"""
 
 from ...common.errors import ConflictError, WorkflowStateError, ModelOutputError
 

@@ -1,4 +1,4 @@
-"""Composition root for the application's LangGraph workflows."""
+"""初始化并组装应用的 LangGraph 工作流及公共依赖。"""
 
 import sqlite3
 
@@ -14,6 +14,12 @@ from .safety import SafetyWorkflowMixin
 from ..common.execution_budget import BudgetLock, RuntimeLimiter
 from ..infrastructure.budget_connection import BudgetConnection
 from ..infrastructure.data_owner import DataOwner
+from ..tools import (
+    ChatDependencies,
+    ChatReadFacade,
+    ChatRuntimeFacade,
+    ChatToolExecutor,
+)
 
 
 class Engine(
@@ -69,8 +75,19 @@ class Engine(
             self.recover_context_expirations()
             self.repo.recover_jobs()
             self.parser = Parser(settings, network_context=self.model_io)
-            self.harness = ChatPlanPolicy(self.repo, self.parser)
-            self.chat_workflow = ChatWorkflow(self)
+            self.chat_reader = ChatReadFacade(self.repo)
+            self.harness = ChatPlanPolicy(self.chat_reader, self.parser)
+            self.chat_runtime = ChatRuntimeFacade(self)
+            self.chat_tools = ChatToolExecutor(self.repo)
+            chat_dependencies = ChatDependencies(
+                reader=self.chat_reader,
+                parser=self.parser,
+                harness=self.harness,
+                safety_context=self.chat_runtime.safety_context,
+            )
+            self.chat_workflow = ChatWorkflow(
+                self.chat_runtime, chat_dependencies, self.chat_tools
+            )
             self.chat_graph = self.chat_workflow.build()
             self.plan_graph = self.build_plan()
             self.analysis_graph = self.build_analysis()

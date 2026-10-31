@@ -2978,8 +2978,8 @@
         </div>
       </header>
       <div class="status-row">
-        <span class="snapshot">系统流程快照 · 2026-10-28</span
-        ><span>已同步安全入口 / 操作权限 / 追问恢复</span><span>四层记忆已更新 · 2026-10-26</span><span>2 个 SQLite · 离线可打开</span
+        <span class="snapshot">系统流程快照 · 2026-10-31</span
+        ><span>已同步计划修正 / 显式日期窗口 / 咨询回答复核</span><span>四层记忆已更新 · 2026-10-26</span><span>2 个 SQLite · 离线可打开</span
         ><span class="skipped">Skipped：多 Agent 协作（未发现角色或交接）</span
         ><button class="print-button" onclick="window.print()">
           打印 / 另存 PDF
@@ -3030,14 +3030,14 @@
             <div class="graph-head">
               <div>
                 <h3>chat_graph</h3>
-                <p>安全检查 → 规划 / 补丁 → 草稿与权限复核 → 营养准备 → 保存 / 追问 / 回答</p>
+                <p>安全检查 → 规划（可修正一次）/ 补丁 → 草稿与权限复核 → 营养准备 → 保存 / 追问 / 回答与独立复核</p>
               </div>
               <code>build_chat() · 15 节点 / 25 条可达边</code>
             </div>
             <div class="canvas" id="canvas-chat"></div>
             <div class="diagram-note">
               蓝色节点带 <code>LLM</code> 徽标，表示模型模式下可能调用模型；
-              clarify 在 <code>interrupt()</code> 等待补充；恢复先回到 safety_gate，安全允许后再选择首次解析或草稿补丁。橙色回线表示这一恢复路径。
+              clarify 在 <code>interrupt()</code> 等待补充；恢复先回到 safety_gate，安全允许后再选择首次解析或草稿补丁。parse_initial 内的计划校验失败时最多修正规划一次；respond 的自然咨询回答会再做一次独立模型复核。这些是节点内部调用，不新增图节点。橙色回线表示恢复路径。
             </div>
             <div class="legend">
               <span><i></i>代码 / 数据操作</span
@@ -3363,8 +3363,7 @@ if unsafe_generated_text(text):
           <span>05</span>
           <div>
             <h2>处理计划与数据边界</h2>
-            <p class="case-note">本节部分规则描述对应改造前版本。2026-10-28 的咨询范围、日期参数、自然回答与修正重试变化，见<a href="#llm-consultation-summary">改造小结</a>。</p>
-            <p>按当前源码核对：计划审批与外发授权是两层检查；包括首次 plan 在内，每次模型请求都经过同一个出口。图为节点内部调用关系，不新增 Graph 节点。</p>
+            <p>按当前源码核对：模型模式由 ProcessingPlan 选择类型化数据视图和显式日期，PlanHarness 只执行白名单、跨度、原文、指代与写入边界；计划校验失败时可用同一输入修正一次。每次模型请求仍经过同一个出口，这些调用都发生在 Graph 节点内部。</p>
           </div>
         </div>
         <div class="support-body">
@@ -3405,7 +3404,7 @@ if unsafe_generated_text(text):
               <path class="map-line" d="M580 273H522" style="marker-end:url(#harness-arrow)" />
               <rect class="map-box blue" x="300" y="222" width="220" height="102" rx="8" />
               <text class="map-title" x="410" y="250" text-anchor="middle">统一 HTTP 出口 → LLM</text>
-              <text class="map-caption" x="410" y="273" text-anchor="middle">六种固定契约 · 非工具循环</text>
+              <text class="map-caption" x="410" y="273" text-anchor="middle">七类固定契约 · 非工具循环</text>
               <text class="map-caption" x="410" y="295" text-anchor="middle">consume 预记账 → 一次请求</text>
               <path class="map-line" d="M300 273H242" style="marker-end:url(#harness-arrow)" />
               <rect class="map-box" x="20" y="222" width="220" height="102" rx="8" />
@@ -3415,26 +3414,26 @@ if unsafe_generated_text(text):
               <path class="map-line" d="M1100 93H1110V390H1102" style="marker-end:url(#harness-arrow)" />
               <rect class="map-box orange" x="20" y="365" width="1080" height="50" rx="6" />
               <text class="map-caption" x="560" y="386" text-anchor="middle">本地支路：query → 本地查询并返回；歧义 → 追问；越界 → 拒绝；新增 / fact 可直接进入本地处理</text>
-              <text class="map-caption" x="560" y="405" text-anchor="middle">不是每次都要第二次调用模型；追问恢复可直接 patch，不重新调用 plan</text>
+              <text class="map-caption" x="560" y="405" text-anchor="middle">计划校验失败最多重规划一次；自然咨询正文需再审核一次；追问补丁不重新调用 plan</text>
               <rect class="map-box" x="20" y="438" width="1080" height="33" rx="6" />
               <text class="map-caption" x="560" y="460" text-anchor="middle">local_only：本地解析 / 查询 / 兜底，不使用模型或演示营养值；恢复只能收紧，不能自动放宽</text>
             </svg>
           </div>
-          <p class="case-note">图上两处检查指的是同一个 <code>ModelBoundary</code>。<code>PlanHarness</code> 负责规划审批与引用绑定；补丁、营养、表达和建议分别在其业务节点构造资源，所有请求最后都走 <code>Parser.request → approve → model_request → consume → HTTP</code>。查询结果不送模型作二次总结；若另有 advice 任务，其上下文独立按批准视图构造。</p>
-          <div class="memory-subhead"><h3>六种固定数据视图</h3><span>程序根据原文复核并选择；不是模型自己决定最终取数范围</span></div>
+          <p class="case-note">图上两处检查指的是同一个 <code>ModelBoundary</code>。<code>PlanHarness</code> 负责白名单审批、窗口上限与引用绑定；补丁、营养、表达和建议分别在业务节点构造资源，所有请求最后都走 <code>Parser.request → approve → model_request → consume → HTTP</code>。查询结果不送模型作二次总结；自然咨询正文会把同一受限 context 与草稿交给第二次独立审核。</p>
+          <div class="memory-subhead"><h3>六种类型化数据视图</h3><span>模型模式选择视图与日期；程序限制类型、跨度、绑定记录和可发送字段</span></div>
           <div class="harness-views">
-            <div class="harness-view"><b>最终获批不读历史</b><code>none</code><span>只有 question / scene / view / now；无健康历史。注意：计划默认 none 可能被程序按问题补成相关视图，见下方范围规则。</span></div>
+            <div class="harness-view"><b>最终获批不读历史</b><code>none</code><span>只有 question / scene / view / now；无健康历史。模型模式不会再用关键词把 none 改成历史视图；演示 / 本地模式仍用规则选择视图。</span></div>
             <div class="harness-view"><b>单餐指代</b><code>meal_reference</code><span>仅绑定一餐，最多 10 个食物；不带其他餐食、全天汇总或反馈。仍含下述饮食共用字段。</span></div>
-            <div class="harness-view"><b>相关日期饮食</b><code>diet_today</code><span>本地解析问题日期，默认今日；最多 10 餐 × 每餐 10 个食物，并带该日汇总、剩余额度、目标、完整性和最多 6 条反馈。可另附一条绑定餐食。</span></div>
-            <div class="harness-view"><b>近期饮食汇总</b><code>diet_week</code><span>最多 7 天，只列有餐食记录日期的餐数、营养汇总与完整性；无逐餐列表。明确更短窗口就缩短；含饮食共用字段。</span></div>
-            <div class="harness-view"><b>体重趋势</b><code>weight_trend</code><span>最多 28 天窗口内的每日体重及起止日期；无档案、目标、偏好、饮食和周期。除日期 / 体重外，保留问题等基础字段。</span></div>
+            <div class="harness-view"><b>相关日期饮食</b><code>diet_today</code><span>模型模式采用获批的一日显式窗口，缺省则截至当前业务日期；演示 / 本地模式从问题解析日期。最多 10 餐 × 每餐 10 个食物，并带该日汇总、剩余额度、目标、完整性和最多 6 条反馈。</span></div>
+            <div class="harness-view"><b>近期饮食汇总</b><code>diet_week</code><span>模型模式采用获批的 1–7 天显式窗口；只列有餐食记录日期的餐数、营养汇总与完整性，无逐餐列表；含饮食共用字段。</span></div>
+            <div class="harness-view"><b>体重趋势</b><code>weight_trend</code><span>模型模式采用获批的 1–28 天显式窗口，列每日体重及起止日期；无档案、目标、偏好、饮食和周期。除日期 / 体重外，保留问题等基础字段。</span></div>
             <div class="harness-view"><b>分量上下文</b><code>diet_portion</code><span>单日饮食视图 + 档案中的年龄、身高、体重、目标体重、活动档位、营养情境六项；档案不存在时不附加。</span></div>
           </div>
           <p class="case-note"><strong>饮食共用字段：</strong>meal_reference / diet_today / diet_week / diet_portion 都可能带 active_targets（四项营养目标）、constraints（最多 8 条）、preferences（最多 5 条）、nutrition_context 与固定 selection_policy。每条长期信息最多 500 字符。none 与 weight_trend 不带这些字段。证据 ID 和旧聊天原文不放入建议 context；单条纠错 / 补丁的投影仍可含目标记录 / 当前草稿的 raw_text，不能概括为“所有模型调用都不发送 raw_text”。</p>
           <div class="dev-table-wrap"><table class="dev-table harness-policy-table"><thead><tr><th>范围如何决定</th><th>当前工程的实际规则</th></tr></thead><tbody>
-            <tr><td>模型申请 data_view</td><td>approve_plan 根据当前原文重算相关视图，可以补全默认 none，或把单餐指代收窄成 meal_reference；不接受不相关的视图申请。用户明确要求不读历史时，只接受 none，不自动补成历史视图。</td></tr>
-            <tr><td>时间窗口</td><td>diet_week ≤ 7 天，weight_trend ≤ 28 天；明确更短就缩短，本周按已过天数。上周、上个月、去年等不支持窗口与超上限请求直接拒绝，不偷偷扩成默认窗口。单日数据按 question 解析日期；字段 today 不一定是今天。</td></tr>
-            <tr><td>本地查询 query</td><td>模型只提结构化查询条件，Repository 在本地执行，最多返回 100 条；类型与关键词受原文检查，同时给出起止时检查范围为 0–365 天。不是把这 100 条再交给模型总结。</td></tr>
+            <tr><td>模型选择 data_view</td><td>模型模式接受枚举内的类型化视图，不再用疑问词或领域词表做第二次语义分类；用户明确拒绝历史时只允许 none。绑定的单餐指代会强制收窄为 meal_reference，目标不唯一则追问；模型不能提交数据库 ID。</td></tr>
+            <tr><td>时间窗口</td><td>模型可返回成对的 view_start / view_end。diet_week 最多 7 天，weight_trend 最多 28 天，其余数据视图最多 1 天；没有日期时使用截至当前业务日期的默认上限窗口。演示 / 本地模式才继续从文字解析“本周、最近 N 天”等范围。</td></tr>
+            <tr><td>本地查询 query</td><td>模型模式选择 query_kind 与查询日期；query_search 必须出现在原文，同时给出起止时跨度为 0–365 天。Repository 在本地执行并最多返回 100 条，不把查询结果再交给模型总结；演示 / 本地模式才用领域词表复核类型。</td></tr>
             <tr><td>语义与写入边界</td><td>原文锚定、Schema 与范围规则能拒绝已覆盖的越界情况，不是任意自然语言的语义证明。模型只返回计划或草稿，健康事件仍需后续本地校验、准备和 Repository 写入。</td></tr>
           </tbody></table></div>
           <div class="harness-budgets" aria-label="模型外发预算">
@@ -3459,14 +3458,14 @@ if unsafe_generated_text(text):
             <a href="backend/tests/test_harness.py"><b>test_harness.py</b>模拟 HTTP · 访问边界验证</a>
             <a href="docs/模型数据访问边界.md"><b>详细设计</b>视图、授权、预算与本地模式</a>
           </div>
-          <p class="case-note">核对日期：2026-10-21。以上以当前实现为准；<a href="#harness-case">下一节用纠错案例逐步对照代码</a>，未调用真实模型或读取个人健康数据。</p>
+          <p class="case-note">核对日期：2026-10-31。以上以当前实现为准；<a href="#harness-case">下一节用纠错案例逐步对照代码</a>，未调用真实模型或读取个人健康数据。</p>
         </div>
       </section>
 
       <section class="section panel harness-panel" id="llm-consultation-summary" data-chapter>
         <div class="support-head"><span>05+</span><div>
-          <h2>改造结果：模型理解，程序把关</h2>
-          <p>2026-10-28 · LLM 咨询链路整体改造。以上 Harness 章节保留了旧实现说明；本节说明本次变更，涉及差异时以本节为准。</p>
+          <h2>当前咨询链路：模型理解，程序把关</h2>
+          <p>2026-10-31 · 本节解释主图中 parse_initial 与 respond 的节点内部调用；上方 Harness 已同步为同一版本。</p>
         </div></div>
         <div class="support-body">
           <h3>咨询为什么会报错？</h3>
@@ -3477,14 +3476,14 @@ if unsafe_generated_text(text):
             <tr><td>日期范围</td><td>新增 view_start / view_end，由模型返回明确日期；后端要求成对并检查跨度。单日饮食最多1天、饮食回顾7天、体重趋势28天。没有日期时使用截至今天的默认工具窗口。上周等表达可以通过合法日期参数执行。</td><td><a href="backend/app/contracts/workflows.py">PlannedAction</a>、<a href="backend/app/health/advice.py">build_advice_context</a></td></tr>
             <tr><td>指代与记录绑定</td><td>支持 target=previous；兼容既有指代提示，在当前对话内定位唯一记录。单餐咨询只发送绑定餐食，无法确定时追问，不能让模型自选数据库ID。</td><td><a href="backend/app/workflows/policy.py">resolve / approve_plan</a></td></tr>
             <tr><td>校验失败恢复</td><td>计划被本地校验拒绝后，最多重新规划一次，仍使用原输入和相同数据权限。网络、鉴权或无法解析的响应不走这条修正流程。</td><td><a href="backend/app/workflows/policy.py">prepare</a>、<a href="backend/app/modeling/parser.py">plan(repair=True)</a></td></tr>
-            <tr><td>自然语言回答</td><td>咨询支持 answer 正文，不再只能选固定 point_ids。第二次独立模型调用审核事实依据、不完整性、估算和健康风险；通过且原样返回同一草稿后才可展示。内部 _reviewed 标记不能由模型JSON伪造。失败时退回本地建议。</td><td><a href="backend/app/modeling/parser.py">answer_advice</a>、<a href="backend/app/policy/output.py">validate_advice</a></td></tr>
+            <tr><td>自然语言回答</td><td>咨询支持 answer 正文，也保留 point_ids 本地目录兼容路径。只有生成了 answer 才发起第二次独立审核；审核必须批准并逐字返回同一草稿，程序才设置不可由模型 JSON 伪造的 _reviewed 标记。任一步失败都退回同一 context 的本地建议。</td><td><a href="backend/app/modeling/parser.py">answer_advice</a>、<a href="backend/app/policy/output.py">validate_advice</a></td></tr>
             <tr><td>反馈分支抢答</td><td>模型已判断为咨询时，“油腻、偏咸”等感受不再优先触发固定话术，咨询继续读取获批上下文并回答。</td><td><a href="backend/app/workflows/chat_response.py">respond</a></td></tr>
             <tr><td>排错信息</td><td>记录 model_plan_*、model_tool_window_invalid 和 model_plan_repair 等原因，不把健康原文或模型回复写入错误日志。</td><td><a href="backend/app/observability/contracts.py">日志代码白名单</a></td></tr>
           </tbody></table></div>
           <h3>现在怎样处理？</h3>
-          <p>用户提问 → 安全分类 → 模型给出咨询计划与日期 → 后端审批并筛选记录 → 模型自然回答 → 独立审核 → 展示回答；失败则给出备用回复。原文证据、字段范围、记录写入和保存回执仍由后端控制。离线演示模式保留原规则，不擅自联网。</p>
+          <p>用户提问 → 安全分类 → 模型给出咨询计划与日期 → 后端审批并筛选记录 → 模型自然回答 → 若有 answer 则独立审核 → 展示回答；也允许模型退回批准的 point_ids，由本地目录拼接。失败则使用备用回复。原文证据、字段范围、记录写入和保存回执仍由后端控制。</p>
           <h3>验证与边界</h3>
-          <p>本轮后端全量测试 <strong>597 项通过</strong>。使用临时空数据库与真实模型验证“今天是不是吃的有点油腻了”和“上周饮食有什么需要注意的”，完整接口均返回成功，回答说明缺少饮食记录，没有编造个人摄入数据。测试未修改用户健康记录；未直接操作小程序界面验证。</p>
+          <p>当前回归用例覆盖显式日期窗口、错误计划的一次修正、自然回答的独立审核、审核改写拒绝和本地兜底；相关测试位于 <code>test_harness.py</code>、<code>test_advice_generation.py</code>、<code>test_model_errors.py</code> 与 <code>test_semantic_tool_policy.py</code>。本页不固化可能很快过期的全量测试数量。</p>
           <p class="case-note">独立模型审核是概率性检查，不保证事实或医疗判断绝对正确；自然回答增加一次模型调用和相应延迟、费用。本次不是移除全部校验：原文证据、数据最小化、日期上限、写入与恢复边界仍然保留。项目仍为单用户版本，多用户身份认证与隔离不包含在本轮改造内。详见 <a href="docs/llm-consultation-refactor.md">咨询链路改造说明</a>。</p>
         </div>
       </section>
@@ -3756,53 +3755,57 @@ if not _equal(replayed, _actual(event, evidence)):
             </div>
           </div>
 
-          <div class="case-flow" role="img" aria-label="本地生成可用选项，模型选择编号，本地校验编号，再把本地事实和批准文字拼成最终回复。">
-            <span>程序提供可用选项</span><b aria-hidden="true">→</b>
-            <span class="model">模型只选编号</span><b aria-hidden="true">→</b>
-            <span>校验格式与选择范围</span><b aria-hidden="true">→</b>
-            <span>本地事实 + 批准文字</span>
+          <div class="case-flow" role="img" aria-label="程序构造受限上下文，模型生成自然回答，第二次独立模型调用审核同一草稿，本地校验审核结果；失败时使用本地目录兜底。">
+            <span>程序构造受限 context</span><b aria-hidden="true">→</b>
+            <span class="model">模型生成 answer</span><b aria-hidden="true">→</b>
+            <span class="model">独立审核原样草稿</span><b aria-hidden="true">→</b>
+            <span>本地放行 / 固定兜底</span>
           </div>
 
           <ol class="case-steps">
             <li class="case-step">
-              <h3>模型只选择内容编号</h3>
-              <p>例如，<code>review_portion</code> 对应“结合实际分量、饥饿程度和饱腹感复盘”。模型可以选择这个编号；最终文字从本地目录中取。</p>
-              <pre class="case-code"><code>// AdviceReply：模型可以提交的候选
-{"point_ids": ["review_portion"]}
+              <h3>普通咨询可以生成自然回答</h3>
+              <p><code>AdviceReply</code> 现在允许 <code>answer</code> 正文，也保留 <code>point_ids</code> 兼容路径。生成请求只能看到已批准的结构化 context 与本地 options；不能读取整个数据库或历史聊天。</p>
+              <pre class="case-code"><code>// AdviceReply：生成阶段允许的结构
+{"answer": "根据目前记录……", "point_ids": []}
 
-// 下面这种候选会被拒绝：多了未允许的 answer 字段
-{"point_ids": ["review_portion"], "answer": "计划已经生效。"}</code></pre>
-              <p><code>StrictModel</code> 使用 <code>extra='forbid'</code>，拒绝多出来的字段。反馈表达同样只能交 <code>point_id + variant_id</code>；<code>default / warm</code> 是两种本地写好的表达版本。</p>
+// 兼容路径：不生成正文，改选本地批准目录
+{"answer": null, "point_ids": ["review_portion"]}</code></pre>
+              <p><code>StrictModel</code> 仍使用 <code>extra='forbid'</code>。反馈润色 <code>phrase_reply()</code> 没有改成自由正文，仍只能提交 <code>point_id + variant_id</code>；自然回答只存在于 <code>answer_advice()</code> 咨询路径。</p>
               <a class="case-source" href="backend/app/contracts/workflows.py">contracts/workflows.py · AdviceReply / ReplySegment</a> ·
               <a class="case-source" href="backend/app/policy/output.py">policy/output.py · ADVICE / feedback_options</a>
             </li>
 
             <li class="case-step">
-              <h3>程序再次检查选择范围</h3>
-              <p>本次讨论一餐，就只开放对应的复盘要点。模型不能擅自选体重趋势，也不能重复选择同一项。下面检查的是编号与集合，属于确定的程序规则。</p>
+              <h3>自然回答必须经过第二次独立审核</h3>
+              <p>只要生成阶段返回 <code>answer</code>，程序就把同一受限 context 与草稿交给第二次 <code>personalized_advice</code> 调用。审核器检查依据、不完整性、估算边界、诊断 / 药物 / 极端补偿建议和虚构状态；通过时必须逐字复制草稿。</p>
               <details>
-                <summary>关键代码：validate_advice</summary>
-                <pre class="case-code"><code>selected = AdviceReply.model_validate(candidate)
-plan = advice_plan(context)
-options = {point['point_id']: point['text'] for point in plan['options']}
-if (len(selected.point_ids) != len(set(selected.point_ids))
-        or any(key not in options for key in selected.point_ids)):
-    raise ValueError('建议要点未获本次上下文批准或存在重复')</code></pre>
+                <summary>关键代码：answer_advice</summary>
+                <pre class="case-code"><code>result = request('personalized_advice', generation_payload)
+if result.answer:
+    review = request('personalized_advice', {
+        'context': {**context, 'draft_answer': result.answer},
+        'options': options,
+    })
+    if not review.approved or review.answer != result.answer:
+        raise ModelOutputError()
+    result._reviewed = True</code></pre>
               </details>
-              <div class="case-outcome">格式检查回答“表有没有填对”；本地策略再回答“这次允许选哪些内容”。遇到错误候选，工作流使用同一上下文的本地回复，不扩大取数范围。</div>
-              <a class="case-source" href="backend/app/policy/output.py">policy/output.py · advice_plan / validate_advice / fallback_advice</a>
+              <div class="case-outcome">审核仍是概率性模型检查，不是数学证明；但生成器不能自己批准自己。审核失败、改写草稿、网络错误或结构错误都会进入同一 context 的本地兜底。</div>
+              <a class="case-source" href="backend/app/modeling/parser.py">modeling/parser.py · answer_advice</a>
             </li>
 
             <li class="case-step">
-              <h3>数值从对应字段读取</h3>
-              <p>假设本地记录为：摄入 <strong>360 kcal</strong>、当前目标 <strong>1850 kcal</strong>、记录差额 <strong>1490 kcal</strong>。这些是说明用的示例数据。程序分别填入对应句子，模型没有位置把它们写反。</p>
-              <pre class="case-code"><code># advice_plan · 源码节选
-facts.append(f'{label}约 {totals["kcal"]:g} kcal。')
-facts.append(f'当前生效热量目标为 {targets["kcal"]:g} kcal。')
-
-# validate_advice · 最后拼接：本地事实 + 模型选中的批准文字
-return ''.join([*plan['facts'], *[options[key] for key in selected.point_ids]])</code></pre>
-              <p>记录未确认完整、部分营养未知、模型粗估未核验等说明，也放进本地的 <code>facts</code>。模型选择建议时，不能把这些必要说明删掉。</p>
+              <h3>本地最终门禁区分两条路径</h3>
+              <p>自然回答只有带程序私有 <code>_reviewed</code> 标记才会展示；这个标记不能由模型 JSON 设置。若模型只返回 <code>point_ids</code>，程序仍检查编号属于本次 options、没有重复，再用本地事实和批准文字拼接。</p>
+              <pre class="case-code"><code>if selected.answer:
+    if not selected._reviewed:
+        raise ModelOutputError()
+    return selected.answer
+if not selected.point_ids:
+    raise ModelOutputError()
+# 兼容路径：校验 point_ids 后拼接本地 facts 与 options</code></pre>
+              <p>日期、记录、目标和营养字段仍由本地 context 构造，保存状态与回执始终由程序生成；但自然咨询的最终措辞由模型生成并经独立审核，不能再描述成“所有建议正文都来自本地目录”。</p>
               <a class="case-source" href="backend/app/policy/output.py">policy/output.py · advice_plan / validate_advice</a> ·
               <a class="case-source" href="backend/app/health/advice.py">health/advice.py · build_advice_context / 营养来源投影</a>
             </li>
@@ -3824,8 +3827,8 @@ if not records:
             </li>
           </ol>
 
-          <div class="case-outcome"><strong>这次保证什么：</strong>通过这层渲染的新回复，状态、日期、数值和必要边界由本地代码决定。关键词仍可用于其他识别任务，这层不靠关键词猜测任意正文的含义。<strong>当前限制：</strong>普通建议限于本地批准的目录；扩充建议要补充条目、适用条件和测试。模型的输入理解与营养粗估仍可能出错；已有完成会话的历史文字不做改写。</div>
-          <p class="case-note">验证快照：2026-10-27。后端全量 412 项通过，最后调整的专项回归 75 项通过，使用模拟模型和独立测试数据库。关键用例会故意让模型谎报保存、互换数字、在追问中夹带状态，并核对最终展示和数据库结果。</p>
+          <div class="case-outcome"><strong>当前边界：</strong>保存状态、追问字段、数据视图、记录绑定和数据库写入仍由本地代码决定；普通咨询允许模型生成自然正文，但必须只使用受限 context，并由第二次调用审核原样草稿。审核失败退回本地目录。<strong>当前限制：</strong>独立审核仍可能误判；模型的输入理解、自然回答和营养粗估都不是绝对正确，已有完成会话的历史文字不会被改写。</div>
+          <p class="case-note">源码核对：2026-10-31。重点回归位于 test_advice_generation.py、test_output_policy.py、test_model_errors.py 与 test_semantic_tool_policy.py；本页不把旧测试数量继续当作当前工程状态。</p>
           <div class="llm-source-grid">
             <a href="backend/tests/test_output_policy.py"><b>公共输出边界</b>自由正文、未知/重复编号、选项篡改、旧 checkpoint</a>
             <a href="backend/tests/test_draft_clarification.py"><b>追问到保存的真实流程</b>追问阶段无记录，补充并写入后才有回执</a>
@@ -4360,15 +4363,15 @@ write(manifest.json)</code></pre>
           <div class="support-head">
             <span>09</span>
             <div>
-              <h2>模型调用：5 个节点，6 类任务</h2>
-              <p>规划、纠错、补丁、估算、表达、建议均通过同一个授权出口；每类任务有独立 Schema 与降级策略</p>
+              <h2>模型调用：6 个图节点，7 类任务契约</h2>
+              <p>共享安全分类 + 六类聊天业务任务均通过同一个授权出口；计划可修正一次，咨询正文可再审核一次</p>
             </div>
           </div>
           <div class="support-body">
             <div class="llm-runtime" aria-label="统一模型调用链">
-              <div><b>Graph 节点</b>parse_initial · patch_pending · prepare_nutrition<br />prepare_clarification · respond</div>
+              <div><b>Graph 节点</b>classify_safety · parse_initial · patch_pending<br />prepare_nutrition · prepare_clarification · respond</div>
               <span>→</span>
-              <div><b>6 个任务方法</b>plan · correct · patch<br />estimate_nutrition · phrase_reply · answer_advice</div>
+              <div><b>7 类任务契约</b>safety_classification · processing_plan · correct_selected · patch_draft<br />estimate_nutrition · contextual_reply · personalized_advice</div>
               <span>→</span>
               <div><b>统一授权 + 传输</b>grant → approve → consume<br />model_request(ApprovedCall)</div>
               <span>→</span>
@@ -4380,23 +4383,32 @@ write(manifest.json)</code></pre>
               <code>无 HTTP 自动重试</code><code>去除 JSON Markdown fence</code><code>Pydantic model_validate_json</code>
             </div>
             <p class="small-note">
-              当前模型名以 qwen3.8-max 开头，因此六类请求都会发送 enable_thinking=false。
+              当前模型名以 qwen3.8-max 开头，因此七类请求都会发送 enable_thinking=false。
               Schema 使用程序固定版本，放在 user JSON 中；本地核验输出。demo 和 local_only 不调用模型；local_only 也不使用演示固定营养。
             </p>
 
             <div class="memory-subhead">
-              <h3>六类模型任务</h3>
+              <h3>七类模型任务契约</h3>
               <span>“阻断”表示失败会返回 409；“可降级”表示主流程仍可完成</span>
             </div>
             <div class="llm-contract-grid">
+              <article class="llm-contract">
+                <div class="llm-contract-head"><div><small>classify_safety 节点 · 本地无明确结论时</small><b>classify_safety()</b></div><span class="llm-risk">失败走保守边界</span></div>
+                <div class="llm-contract-body">
+                  <div class="llm-contract-row"><b>触发</b><span>safety_gate 返回 no_local_signal；已有同指纹分类缓存时不重复调用。</span></div>
+                  <div class="llm-contract-row"><b>输入</b><span>最小 SafetyContext：本次 / 必要原始用户文本与有限档案；不发送助手历史或完整健康数据库。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>SafetyClassification</code> 风险标签与连续原文证据；本地 merge_classification 决定最终类别。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>超时、非法结构或证据不成立 → uncertain → safety_response；不会按普通咨询继续。</span></div>
+                </div>
+              </article>
               <article class="llm-contract">
                 <div class="llm-contract-head"><div><small>parse_initial 节点 · 首轮规划</small><b>plan()</b></div><span class="llm-risk">失败阻断</span></div>
                 <div class="llm-contract-body">
                   <div class="llm-contract-row"><b>触发</b><span>model 模式下的新聊天；记录、纠错、查询、咨询、长期事实都先经过它。</span></div>
                   <div class="llm-contract-row"><b>输入</b><span><code>now / text / interaction / schema</code>；interaction 只有 selected_record 布尔值；不查询或发送上轮结果数量。</span></div>
                   <div class="llm-contract-row"><b>输出</b><span><code>ProcessingPlan.actions</code>：1–4 个 record / correct / query / advice / fact / clarify 任务。</span></div>
-                  <div class="llm-contract-row"><b>复核</b><span>PlanHarness 检查原文、申请视图、范围与指代；纠错计划不得包含记录 ID 或旧事件草稿。</span></div>
-                  <div class="llm-contract-row"><b>失败</b><span>请求、JSON 或 Schema 任一失败 → ValueError → workflow failed → HTTP 409；不切 demo。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>PlanHarness 检查原文锚定、任务 / 视图白名单、显式日期跨度、指代与写入证据；纠错计划不得包含记录 ID 或旧事件草稿。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>本地计划校验拒绝时，用同一输入和无新增历史的 repair 提示最多重规划一次；网络、鉴权、JSON 或 Schema 失败不修正规划，也不切 demo。</span></div>
                 </div>
               </article>
               <article class="llm-contract">
@@ -4444,9 +4456,9 @@ write(manifest.json)</code></pre>
                 <div class="llm-contract-body">
                   <div class="llm-contract-row"><b>触发</b><span>intent=advice，且不是医疗边界、保存回执、查询或 feedback-only 路径。</span></div>
                   <div class="llm-contract-row"><b>输入</b><span>获准的最小 context 和本地生成的 options；视图限单餐、指定日期、≤7 天饮食、≤28 天体重或分量档案，历史聊天原文不发送。</span></div>
-                  <div class="llm-contract-row"><b>输出</b><span><code>AdviceReply.point_ids</code>：从本次批准的目录选择一到两项，不生成回复正文。</span></div>
-                  <div class="llm-contract-row"><b>复核</b><span>检查编号范围与重复项；事实、数值角色、完整性和估算说明由本地生成，模型不能删改。</span></div>
-                  <div class="llm-contract-row"><b>失败</b><span>按同一个 context 生成 fallback_advice；不会将失败回答写成事实或事件。</span></div>
+                  <div class="llm-contract-row"><b>输出</b><span><code>AdviceReply.answer</code> 自然回答，或兼容的 <code>point_ids</code> 本地目录选择。</span></div>
+                  <div class="llm-contract-row"><b>复核</b><span>有 answer 时用同一任务契约再调用一次独立审核器；必须 approved=true 且逐字返回草稿，程序才设置私有 _reviewed。point_ids 路径仍检查范围与重复。</span></div>
+                  <div class="llm-contract-row"><b>失败</b><span>生成、审核或本地门禁任一步失败，都按同一个 context 生成 fallback_advice；不会把回答写成事实或事件。</span></div>
                 </div>
               </article>
             </div>
@@ -4456,10 +4468,10 @@ write(manifest.json)</code></pre>
               <span>方括号代表满足条件才调用；每一步均重新申请外发授权</span>
             </div>
             <div class="llm-scenarios">
-              <div class="llm-scenario"><b>新记录</b><code>plan → 本地审核 → [estimate_nutrition] → [phrase_reply]</code></div>
-              <div class="llm-scenario"><b>纠错</b><code>plan → 本地绑定目标 → correct → [estimate_nutrition]</code></div>
+              <div class="llm-scenario"><b>新记录</b><code>[safety_classification] → plan → [repair plan] → 本地审核 → [estimate_nutrition] → [phrase_reply]</code></div>
+              <div class="llm-scenario"><b>纠错</b><code>[safety_classification] → plan → [repair plan] → 本地绑定目标 → correct → [estimate_nutrition]</code></div>
               <div class="llm-scenario"><b>需要追问</b><code>plan → interrupt → patch → [estimate_nutrition]</code></div>
-              <div class="llm-scenario"><b>普通咨询</b><code>plan → 授权视图 → answer_advice</code></div>
+              <div class="llm-scenario"><b>普通咨询</b><code>[safety_classification] → plan → 授权视图 → answer_advice 生成 → [answer_advice 审核]</code></div>
               <div class="llm-scenario"><b>混合任务</b><code>plan → 保存记录 → respond 执行已批准的查询 / 建议 / fact</code></div>
               <div class="llm-scenario"><b>纯本地模式</b><code>本地解析 → 查询 / 校验 / 保存 / 本地兜底 · 0 次模型调用</code></div>
             </div>
@@ -4468,8 +4480,8 @@ write(manifest.json)</code></pre>
               <span><b>本地代码决定落库</b> 事件经校验、营养准备和 Repository 写入；事实来自本次原文，亦可由 respond 执行附加 fact；建议与润色不会成为长期事实。</span>
             </div>
             <div class="llm-source-grid" aria-label="LLM 调用代码位置">
-              <a href="backend/app/modeling/parser.py"><b>modeling/parser.py</b>6 个 prompt + model_request</a>
-              <a href="backend/app/workflows/policy.py"><b>workflows/policy.py</b>任务审核与固定视图</a>
+              <a href="backend/app/modeling/parser.py"><b>modeling/parser.py</b>7 类契约 + 生成 / 审核双阶段</a>
+              <a href="backend/app/workflows/policy.py"><b>workflows/policy.py</b>任务审核、显式窗口与一次修正规划</a>
               <a href="backend/app/modeling/boundary.py"><b>modeling/boundary.py</b>精确授权</a>
               <a href="backend/app/workflows/chat_flow.py"><b>workflows/chat_flow.py</b>节点触发条件与失败分支</a>
               <a href="backend/app/health/nutrition.py"><b>health/nutrition.py</b>营养候选、校验与 provenance</a>
@@ -5589,7 +5601,7 @@ min(单次模型上限, 当前运行段剩余时间)</pre>
         <div class="iv-flow" aria-label="从前端到回复的四段路径">
           <article><b>① 小程序提交</b><span>send → executeOperation<br>POST /api/chat<br>文字 + 请求编号 + 处理模式</span></article>
           <article><b>② 后端登记</b><span>ChatRequest → Engine<br>去重、创建 thread_id<br>构造初始 State</span></article>
-          <article><b>③ Graph 执行</b><span>安全 → 规划 → 校验<br>respond 内部查库<br>模型选建议，程序拼回复</span></article>
+          <article><b>③ Graph 执行</b><span>安全 → 规划 → 校验<br>respond 内部查库<br>模型起草，独立审核 / 本地兜底</span></article>
           <article><b>④ 保存与展示</b><span>保存工作流和助手消息<br>HTTP 返回，通知页面刷新<br>GET /messages 后渲染</span></article>
         </div>
 
@@ -5686,7 +5698,7 @@ prepare_nutrition           本例是 advice，返回 {}，不估算营养
   ↓
 save_ready                  本例无新增记录，返回 {}
   ↓ route_chat 判断没有追问、记录或长期信息要保存
-respond                     内部查库 → 模型选建议 → 本地拼回复
+respond                     内部查库 → 模型生成回答 → 独立审核 / 本地兜底
   ↓
 END → 回到 Engine</pre>
           <p>这张图展示本例在模型模式下正常通过安全检查的主路径。命中风险或分类失败会转入 <code>safety_response → END</code>；无需再次分类时可以跳过 <code>classify_safety</code>。<b>经过节点，不表示一定调用模型或写入数据。</b></p>
@@ -5699,7 +5711,7 @@ END → 回到 Engine</pre>
             <tr><td><code>authorize_operation</code></td><td>复核当前操作是否允许继续。</td><td>通过；不通过则更新安全状态并改道</td></tr>
             <tr><td><code>prepare_nutrition</code></td><td>只有新增或纠错才准备营养，本例不执行。</td><td><code>{}</code>，不改 State</td></tr>
             <tr><td><code>save_ready</code></td><td>用于可独立保存的新记录，本例没有。</td><td><code>{}</code>，不写餐食</td></tr>
-            <tr><td><code>respond</code></td><td>构造咨询上下文、选择建议、生成最终回复。</td><td><code>reply</code>、<code>cards</code>、<code>evidence_refs</code>、<code>process_trace</code></td></tr>
+            <tr><td><code>respond</code></td><td>构造咨询上下文、生成自然回答并独立审核；失败时使用本地建议。</td><td><code>reply</code>、<code>cards</code>、<code>evidence_refs</code>、<code>process_trace</code></td></tr>
           </tbody></table></div>
           <p>这条咨询不会进入 <code>persist</code> 保存餐食，也不会进入 <code>fact</code> 保存长期信息。正常情况下没有追问，因此也不进入 <code>clarify</code>；若需要补充，该节点会用 <code>interrupt</code> 暂停，用户经恢复接口补充后重新过安全入口。</p>
           <a class="iv-source" href="backend/app/workflows/chat_flow.py">chat_flow.py · build_chat 真实连线、route_chat 分支</a>
@@ -5720,16 +5732,18 @@ END → 回到 Engine</pre>
   "actions": [{
     "intent": "advice",
     "text": "最近 7 天饮食怎么样？",
-    "data_view": "diet_week"
+    "data_view": "diet_week",
+    "view_start": "2026-10-25",
+    "view_end": "2026-10-31"
   }]
 }</pre></div>
             <div><p>规划模型此时只看到本次输入、时间、操作状态和固定 Schema。<code>diet_week</code> 是预定义视图，相当于菜单上的选项，不能自行新增“读取全部数据库”。</p>
-              <p>程序根据用户原话再次判断视图与天数，检查是否禁止读历史、申请范围是否匹配。问饮食却申请体重视图，或超出允许时间，都会被拒绝。</p>
+              <p>模型模式不再用关键词重新猜一次咨询类型；程序检查视图属于枚举、日期成对且饮食窗口不超过 7 天，并保留“禁止读历史”、原文锚定和单餐绑定等确定边界。计划未通过这些检查时，可用同一输入修正规划一次。</p>
               <p>通过后，<code>processing_plan</code> 保留审核后的动作；<code>extraction</code> 存放统一业务提取结果。此时确定了“要做什么、允许读哪类数据”，还没有把七天汇总交给建议模型。</p>
             </div>
           </div>
           <a class="iv-source" href="backend/app/workflows/chat_parsing.py">parse_initial · harness.prepare 的返回值进入 State</a>
-          <a class="iv-source" href="backend/app/workflows/policy.py">PlanHarness.prepare / approve_plan / view_days · 本地审核</a>
+          <a class="iv-source" href="backend/app/workflows/policy.py">PlanHarness.prepare / approve_plan · 本地审核与一次修正规划</a>
           <a class="iv-source" href="backend/app/modeling/parser.py">Parser.plan · 第一次业务模型调用与固定输入</a>
         </details>
 
@@ -5769,7 +5783,7 @@ def _day_summary(day):
           <a class="iv-source" href="backend/app/health/dashboard.py">history_window / dashboard · 逐天读取与本地统计</a>
         </details>
 
-        <details><summary>⑦ 生成回复：模型选择，程序生成</summary>
+        <details><summary>⑦ 生成回复：模型起草，独立模型审核，程序放行</summary>
           <pre># workflows/chat_response.py · respond 节选
 context, refs = self.advice_context(state, action)
 reply = validate_advice(
@@ -5778,16 +5792,17 @@ reply = validate_advice(
 )
 
 # 内部调用顺序
-advice_context() → 查库、整理获准资料
-answer_advice()  → LLM 看 context 和 options
-LLM             → 返回 {"point_ids": ["complete_records"]}
-validate_advice() → 校验编号，拼出本地事实与建议</pre>
-          <p>近七天复盘的可选项由本地策略确定，例如 <code>complete_records</code> 与 <code>regular_meals</code>。模型只能选择本次允许的一到两项，不能自由增加正文、日期、热量或保存状态。失败时使用同一上下文的本地建议兜底。</p>
-          <p>假设七天内五天留下记录、三天确认完整，程序可以生成“有 5 天留下餐食记录，其中 3 天确认完整；缺失记录不能按零摄入计算”，再接上所选编号对应的固定建议。<b>5 和 3 来自程序统计，建议文字来自本地目录，模型负责选择编号。</b></p>
+advice_context()  → 查库、整理获准资料
+answer_advice()   → LLM 依据 context 生成 answer
+answer_advice()   → 第二次 LLM 审核同一 answer
+validate_advice() → 仅放行带私有 _reviewed 的原样草稿
+失败              → fallback_advice(context)</pre>
+          <p>近七天的日期、餐数、完整性和营养汇总仍由本地程序计算并放入受限 context。生成模型可以用自然语言解释这些资料，但不得编造记录、诊断、调整药物或声称已经写库；第二次审核必须逐字返回草稿并批准。</p>
+          <p>模型也可以不生成 answer，只返回本次允许的 <code>point_ids</code>；这时程序沿用本地目录拼接。生成、审核或最终门禁失败时，使用同一 context 的 <code>fallback_advice</code>，不会扩大读取范围。</p>
           <div class="iv-note"><p><b>不是每个函数都是 Graph 节点。</b><code>respond</code> 是节点；<code>advice_context()</code>、<code>answer_advice()</code> 和 <code>validate_advice()</code> 是它内部调用的函数。规划在 <code>parse_initial</code> 中调用模型，建议在 <code>respond</code> 中调用模型，安全分类可能更早调用；这些是不同用途的模型请求，不是三个独立 Agent。</p></div>
-          <a class="iv-source" href="backend/app/workflows/chat_response.py">respond · 咨询分支、模型选择与本地降级</a>
-          <a class="iv-source" href="backend/app/modeling/parser.py">answer_advice · 请求 context + options，接收 point_ids</a>
-          <a class="iv-source" href="backend/app/policy/output.py">advice_plan / validate_advice · 本地事实、建议目录与编号校验</a>
+          <a class="iv-source" href="backend/app/workflows/chat_response.py">respond · 咨询分支、自然回答与本地降级</a>
+          <a class="iv-source" href="backend/app/modeling/parser.py">answer_advice · 生成与独立审核</a>
+          <a class="iv-source" href="backend/app/policy/output.py">advice_plan / validate_advice · 私有审核标记与兼容目录路径</a>
         </details>
 
         <details><summary>⑧ 完成：保存结果并刷新页面</summary>
@@ -6257,7 +6272,8 @@ return result</pre></div>
   ],
   "steps": [
     "调用 PlanHarness.prepare；规划模型只看当前输入、时间和操作状态。",
-    "本地审核任务范围；纠错时绑定唯一记录，授权与 correct 调用在同一节点完成。",
+    "本地审核原文、任务白名单、数据窗口、指代和写入证据；若模型计划未通过本地校验，使用同一输入最多修正规划一次。",
+    "纠错时绑定唯一记录，授权与 correct 调用在同一节点完成。",
     "把主任务转换为 extraction，其余已批准任务保存为 extra_actions。",
     "提取本轮反馈候选，清除事件中的未核验反馈。",
     "生成 parse_context，进入纯本地 normalize_extraction。"
@@ -6277,11 +6293,11 @@ return result</pre></div>
     ]
   ],
   "sideEffects": [
-    "可条件调用 plan 与 correct；每次授权和消费在本节点内完成。",
+    "可条件调用一次或两次 plan（第二次仅修正本地拒绝的计划）以及 correct；每次授权和消费在本节点内完成。",
     "不写 events / facts；审批后的计划和草稿可进入 checkpoint。"
   ],
   "errors": [
-    "越界计划、结构化输出失败或纠错类型变化会被拒绝。",
+    "修正后的计划仍越界、结构化输出失败或纠错类型变化会被拒绝。网络、鉴权和 JSON / Schema 失败不触发修正规划。",
     "不会把模型返回的记录 ID 当作绑定依据。"
   ],
   "example": "输入：今天吃了炸鸡，今天饮食怎么调整？\n本节点：plan → 本地审批 → extraction(record) + extra_actions(advice)\n下一步：normalize_extraction。",
@@ -6560,10 +6576,10 @@ return result</pre></div>
           "purpose":"统一产出 reply、cards、evidence_refs 和执行摘要。主要查询与保存确认由本地代码生成；需要咨询时只使用批准的结构化上下文，附加任务也在这里顺序执行。",
           "input":[["parsed / record_ids / unrecorded_count","主要意图、实际落库 ID、放弃记录数量。"],["processing_plan / extra_actions / plan_input_text","用于重新核验的原始计划与尚未完成的批准任务。"],["conversation_feedback / guided_topics / extraction.events","本轮反馈与已经表达过的引导主题。"]],
           "output":[["reply / cards / evidence_refs / process_trace / reply_plan","用户文本、餐食等卡片、来源引用、可核验执行摘要与表达计划。"]],
-          "steps":["主分支按顺序处理：query → fact 回执 → 已保存记录 → 已放弃记录 → 反馈 / 医疗边界 / advice / 本地推荐。","query 用日期、类型、关键词在本地查最多 100 条，直接把原文结果与引用交给界面，不再把结果回传模型。","有 record_ids 时读取真实数据库记录；餐食卡片与营养说明均来自已保存数据，保存状态由本地回执固定。","主 advice 先调用 advice_context 重新审核范围，再调用 answer_advice 并检查答案；主咨询捕获 ValueError / TypeError 后使用同一 context 的本地兜底。","顺序处理 extra_actions：query 本地查询，advice 独立审核并生成建议，fact 再核对当前输入原文后幂等保存。附加咨询捕获 ValueError，不能假定所有异常都会被兜底。","非 query / fact 且有饮食反馈时，追加本地批准的回应；只有润色允许交给模型，日期、数值、保存结果和边界仍由程序组装。","存在部分放弃与部分成功时明确告知；追加最终组装摘要，随后到 END。"],
-          "branches":[["主要 query / fact","本地结果或确认，不使用模型改写事实。"],["主要记录 + 附加建议","先确认真实写入，再按原任务范围准备建议上下文。"],["有主观反馈","优先回应反馈；不是每次都走通用 answer_advice。"],["不允许模型或建议未通过边界","可用本地表达 / 建议兜底；未知数据仍保持未知。"]],
+          "steps":["主分支按顺序处理：query → fact 回执 → 已保存记录 → 已放弃记录 → 反馈 / 医疗边界 / advice / 本地推荐。","query 用日期、类型、关键词在本地查最多 100 条，直接把原文结果与引用交给界面，不再把结果回传模型。","有 record_ids 时读取真实数据库记录；餐食卡片与营养说明均来自已保存数据，保存状态由本地回执固定。","主 advice 先调用 advice_context 重新审核范围，再调用 answer_advice：生成自然 answer 后使用同一受限 context 独立审核；也兼容 point_ids 本地目录路径。生成、审核或门禁抛出 ModelError 时使用同一 context 的本地兜底。","顺序处理 extra_actions：query 本地查询，advice 走同样的生成 / 独立审核 / ModelError 兜底，fact 再核对当前输入原文后幂等保存。","非 query / fact 且有饮食反馈时，追加本地批准的回应；但模型模式的主 advice 不让反馈固定话术抢先，继续完成自然咨询。","存在部分放弃与部分成功时明确告知；追加最终组装摘要，随后到 END。"],
+          "branches":[["主要 query / fact","本地结果或确认，不使用模型改写事实。"],["主要记录 + 附加建议","先确认真实写入，再按原任务范围准备建议上下文。"],["模型模式的主 advice + 主观反馈","继续 answer_advice，不让固定反馈话术抢先。"],["建议生成或审核未通过","使用同一 context 的本地目录兜底；未知数据仍保持未知。"]],
           "sideEffects":["读取业务数据；有条件调用建议 / 表达模型；附加 fact 可写数据库。","本节点还未保存 messages / workflows 的最终结果，外层 Engine 在 Graph 返回后完成这些操作。"],
-          "errors":["advice_context 的授权检查在生成建议的 try 之外，越界或指代不明确会向上报错，而不是伪装成已成功读取。","已经在 persist / save_ready 成功保存的事件，不会因回答阶段报错自动撤回。"],
+          "errors":["advice_context 的授权检查在生成建议的 try 之外，DomainValidationError 等范围错误会向上报错；try 内仅捕获 ModelError 做建议兜底。","已经在 persist / save_ready 成功保存的事件，不会因回答阶段报错自动撤回。"],
           "example":"输入：今天体重65kg，最近是不是降得太快？\n主要任务先保存体重；extra_actions 留下 advice\n建议只得到批准窗口的日期与体重\n最终回答同时包含保存回执与趋势回答。",
           "related":["advice_rules","reply_rules","executor","repository_rules"],"sources":[["backend/app/workflows/chat_response.py","Engine.respond / advice_context"],["backend/app/health/dashboard.py","dashboard / evidence"],["backend/app/health/analysis.py","meal_assessment"]]
         },
@@ -6698,14 +6714,14 @@ return result</pre></div>
         {
           "id":"harness","group":"core","title":"PlanHarness：审核模型提出的任务与数据申请",
           "purpose":"这是 parse_initial 内部的本地控制器，不是独立 Graph 节点。它把模型计划转成原有流程可执行的主要任务与 extra_actions，并把目标绑定和数据范围留在程序中。",
-          "input":[["ProcessingPlan.actions","最多4项，每项 text 必须是当前输入的连续原文；计划不能携带 SQL、字段列表或任意记录 ID。"],["selected_id / 同会话上轮引用","由用户操作或本地 messages.evidence_refs 提供，模型的 target 字段本身不是授权。"]],
+          "input":[["ProcessingPlan.actions","最多4项，每项 text 必须是当前输入的连续原文；计划不能携带 SQL、字段列表或任意记录 ID。"],["selected_id / target=previous / 同会话上轮引用","selected_id 来自用户操作；target=previous 只表达引用意图，程序仍只在本地结果恰好唯一时绑定记录，模型拿不到也不能提交 ID。"]],
           "output":[["主要 ExtractionResult / extra_actions / 批准后 actions","优先纠错，其次合并新增，其次主 fact 或首项；剩余查询、建议、fact 留给 respond。"]],
-          "steps":["新模型规划只发 text、now、selected_record 布尔值与程序固定 task / Schema；不查询或发送上轮结果数量，不带历史正文。","检查 text 原文锚定、非新增任务不得携带事件草稿、只有 advice 能申请建议视图。","指代优先取用户选中记录；否则仅在当前原话存在明确引用或以“不是”开头时按需查询同会话上轮引用元数据，结果恰好唯一才在本地取那一条；模型声称 previous 本身不是授权。","建议视图由本地当前问题信号限制为 none、单餐、单日、≤7天饮食、≤28天体重或分量；更短窗口按实际天数，不支持的历史窗口拒绝自动扩大。","用户说不读历史时，none 可继续；申请历史视图则拒绝。query 的类型与关键词也受当前原文检查；起止同时存在时检查范围不超过一年。","新增与纠错混合、或多条纠错会整体先澄清；单次最多一个 query、一个 advice、一项 fact。","明确纠错后只把目标的 record_projection 给 correct；程序覆盖原日期、校验类型并绑定 ID；新记录可合并多个同类 action。"],
+          "steps":["新模型规划只发 text、now、selected_record 布尔值与程序固定 task / Schema；不查询或发送上轮结果数量，不带历史正文。","检查 text 原文锚定、非新增任务不得携带事件草稿、只有 advice 能申请建议视图。","指代优先取用户选中记录；否则 action.target=previous 或当前原话存在指代时，按需查询同会话上轮引用元数据；结果恰好唯一才在本地绑定那一条，模型仍不能提供数据库 ID。","模型模式直接采用枚举内 data_view 与成对 view_start / view_end，不再用关键词做第二次语义分类；diet_week 最多7天、weight_trend最多28天、其他视图最多1天，无日期时填入截至当前业务日期的默认上限窗口。","用户说不读历史时只接受 none；单餐指代强制收窄为 meal_reference。模型模式的 query_kind 不再用领域词表覆盖；query_search 仍须来自原文，成对日期跨度不超过一年。","本地审批出现 ModelOutputError 时，以同一输入和无新增历史最多重规划一次；网络、鉴权或 JSON / Schema 错误不进入修正。","新增与纠错混合、或多条纠错会整体先澄清；单次最多一个 query、一个 advice、一项 fact。","明确纠错后只把目标的 record_projection 给 correct；程序覆盖原日期、校验类型并绑定 ID；新记录可合并多个同类 action。"],
           "branches":[["模型计划有 clarify / 指代不清","返回可追问的 extraction，不先读全历史供模型猜。"],["有 correct","先解决唯一目标，再单条纠错提取。"],["有 record","合并新事件作为主任务，附加任务留后。"],["demo / local","本地 demo_parse 只得到必要的绑定记录；不读取全局历史列表。"]],
           "sideEffects":["只通过固定本地路径读取数据；不向模型开放工具循环。需要模型时为确切 payload 创建授权。"],
-          "errors":["超范围视图、伪造字段、原文不匹配、类型不符等拒绝执行。","这是有界、保守的语言路由，不是通用自然语言语义证明器；未知或不支持任务可要求用户澄清。"],
-          "example":"当前输入只有体重问题，模型申请 diet_week\n本地发现不属于允许视图 → 拒绝\n模型不能通过反复 tool_call 自行扩展，因为代码没有暴露通用数据库工具。",
-          "related":["parse_initial","boundary","advice_rules"],"sources":[["backend/app/workflows/policy.py","PlanHarness.prepare / approve_plan / resolve / view_days"],["backend/app/contracts/workflows.py","ProcessingPlan / PlannedAction"]]
+          "errors":["超跨度窗口、伪造字段、原文不匹配、无绑定的单餐引用等拒绝执行；首次本地拒绝只允许一次修正规划。","模型模式信任规划模型在类型化菜单中选择语义合适的视图；本地检查是工具与数据边界，不是第二个自然语言分类器。"],
+          "example":"模型申请 diet_week 并给出 10 天窗口\n本地按 7 天上限拒绝 → 同一输入最多修正规划一次\n代码没有通用 tool_call，模型不能自行扩大到其他表或任意字段。",
+          "related":["parse_initial","boundary","advice_rules"],"sources":[["backend/app/workflows/policy.py","PlanHarness.prepare / approve_plan / resolve"],["backend/app/contracts/workflows.py","ProcessingPlan / PlannedAction"]]
         },
         {
           "id":"boundary","group":"core","title":"ModelBoundary：精确内容授权与统一外发闸门",
@@ -6723,16 +6739,16 @@ return result</pre></div>
           "id":"transport",
           "group":"core",
           "title":"Parser 模型适配：七种固定契约与统一传输",
-          "purpose":"七类任务各有固定提示词与输出类型：安全分类、处理计划、单条纠错、草稿补丁、营养估算、反馈表达和建议选择。它们汇入同一个授权与传输出口，不给模型自由递归调用工具的权限。",
-          "input":[["plan / correct / patch / estimate_nutrition / phrase_reply / answer_advice","各自限定的任务数据；来源范围详见页面中的“LLM 调用契约”六类说明。"],["ApprovedCall / output_type","只有通过 ModelBoundary 的请求才能进入传输层。"]],
-          "output":[["Pydantic 对象（含 AdviceReply.point_ids）","模型内容先去除外层 JSON Markdown fence，再通过 model_validate_json；建议和反馈继续经过本地选择范围校验。"]],
+          "purpose":"七类任务各有固定提示词与输出类型：安全分类、处理计划、单条纠错、草稿补丁、营养估算、反馈表达和个性化建议。它们汇入同一个授权与传输出口，不给模型自由递归调用工具的权限。",
+          "input":[["classify_safety / plan / correct / patch / estimate_nutrition / phrase_reply / answer_advice","各自限定的任务数据；来源范围详见页面中的“LLM 调用契约”七类说明。"],["ApprovedCall / output_type","只有通过 ModelBoundary 的请求才能进入传输层。"]],
+          "output":[["Pydantic 对象（含 AdviceReply.answer / point_ids）","模型内容先去除外层 JSON Markdown fence，再通过 model_validate_json；自然 answer 还需第二次独立审核，point_ids 与反馈选择继续经过本地范围校验。"]],
           "steps":["Parser.request 调用 boundary.approve，再调用 model_request。","model_request 先 consume 授权与持久调用预算，再构造 HTTP 请求。","组装 system 固定提示词与 user JSON；模型名来自配置，特定适配参数按能力处理。","传输层使用 AsyncClient 并由同步入口驱动；安全分类默认8秒、其他默认45秒，都受运行段剩余时间和响应大小限制。","从兼容响应中提取 content，解析 JSON 并按对应 Pydantic 类型验证。","错误区分传输、限流、Schema与策略；执行截止、取消和冲突继续抛出，不被普通模型降级吞掉。"],
           "branches":[["safety_classification","SafetyClassification；仅风险标签与原文证据，本地合并路由。"],["processing_plan","ProcessingPlan；只规划当前输入。"],["correct_selected / patch_draft","CorrectionResult / EventPatch；目标与字段由程序限定。"],["估算 / 表达 / 建议","NutritionEstimates / ContextualReply / AdviceReply，均接受业务复核。"]],
-          "sideEffects":["每次调用只有一次 HTTP 请求；供应商由服务端配置，密钥不进入浏览器与数据导出。"],
+          "sideEffects":["每次 Parser.request 只发一个 HTTP 请求；一次 answer_advice 在生成自然正文后会再调用一次 Parser.request 做独立审核。供应商由服务端配置，密钥不进入浏览器与数据导出。"],
           "errors":["没有自动切换到演示估算，也没有传输层自动重试。","Schema 放在 user JSON 中提示模型，未使用服务端 response_format；最终靠本地验证接收输出。"],
           "example":"模型返回合法 JSON，但把体重写成9999\n输出 Schema 的范围验证失败\n调用方收到统一 ValueError；这个事件不会直接写库。",
           "related":["boundary","parse_initial","patch_pending","nutrition_rules","advice_rules"],
-          "sources":[["backend/app/modeling/parser.py","Parser.request / model_request 及六类任务方法"]]
+          "sources":[["backend/app/modeling/parser.py","Parser.request / model_request 及七类任务契约"]]
         },
         {
           "id":"route_chat","group":"core","title":"保存前后的主分支优先级",
@@ -6800,14 +6816,14 @@ return result</pre></div>
         {
           "id":"advice_rules",
           "group":"core",
-          "title":"建议的按需上下文、批准选项与本地事实",
+          "title":"建议的按需上下文、自然回答与独立审核",
           "purpose":"在 respond 内部重做数据范围检查，把获准数据投影为只读 context。它按已批准视图取数，不把整个数据库或历史对话当作万能上下文。",
           "input":[["action / plan_input_text / 当前 input_text","优先以原计划文本重新核验；明确转新咨询时才使用本次答案。"],["批准 view / bound record / scope_text","服务器选择的视图、唯一绑定记录和用于解析时间窗口的原文。"]],
-          "output":[["context / evidence_refs / 本地 reply","最小上下文、本地引用；模型只选择要点，本地拼接事实和批准文字。"]],
-          "steps":["Engine.advice_context 用原任务 source 重新跑 approve_plan；不把 checkpoint 中的 view 名当作永久权限。","none 只发问题与时间；weight_trend 只发窗口、日期和体重，不发档案、饮食或周期。","饮食相关视图最多取8条确认限制、5条偏好及营养目标；相关日期最多10餐、每餐10个食物；单餐指代只放绑定一餐。","diet_week 最多7天汇总，weight_trend 最多28天；明确更短则用更短窗口；分量视图可含必要档案。","不发送 messages 原文或旧助手回复；引用列表留给本地界面，模型看到的是结构化子集。","本地 advice_plan 生成事实与可用建议选项；context 和 options 共同授权，模型只返回一到两个 point_ids。","validate_advice 拒绝未知、跨场景、重复编号和额外正文；日期、热量、目标、差额、完整性和来源由本地按字段生成。","选择失败时，fallback_advice 使用同一 context 和目录；不扩大数据范围。"],
+          "output":[["context / evidence_refs / reply","最小上下文、本地引用；模型可生成自然 answer，也可选择本地批准要点，失败时返回本地兜底。"]],
+          "steps":["Engine.advice_context 用原任务 source 重新跑 approve_plan；不把 checkpoint 中的 view 名当作永久权限。","none 只发问题与时间；weight_trend 只发窗口、日期和体重，不发档案、饮食或周期。","饮食相关视图最多取8条确认限制、5条偏好及营养目标；相关日期最多10餐、每餐10个食物；单餐指代只放绑定一餐。","diet_week 最多7天汇总，weight_trend 最多28天；模型模式使用已审批的显式窗口，分量视图可含必要档案。","不发送 messages 原文或旧助手回复；引用列表留给本地界面，模型看到的是结构化子集。","context 和本地 options 共同授权给生成请求；模型可返回自然 answer，或回退到一到两个 point_ids。","有 answer 时，把同一 context 与 draft_answer 再授权给独立审核请求；审核必须 approved=true 且逐字返回草稿，程序才设置私有 _reviewed。","validate_advice 只放行带 _reviewed 的 answer；point_ids 路径继续检查未知与重复编号并拼接本地事实。","生成、审核或校验失败时，fallback_advice 使用同一 context 和目录；不扩大数据范围。"],
           "branches":[["指代对象不唯一","要求用户明确，不用更多历史让模型猜。"],["用户要求不读取历史","none 可回答；历史视图申请会被拒绝。"],["模型无法给出合格建议","同上下文本地兜底。"]],
           "sideEffects":["读取获准数据，可能发送一份授权 context；不会把答案保存为 facts 或 events。"],
-          "errors":["当前普通建议只覆盖本地目录中的复盘、规律进餐与趋势观察；新增建议需扩充目录和适用条件。","字段名 today 也承载用户明确指定日期的单日数据；展示使用其中的 date。"],
+          "errors":["独立模型审核是附加防线，不保证自然回答绝对正确；本地目录仍是失败时的确定性兜底。","字段名 today 也承载用户明确指定日期的单日数据；展示使用其中的 date。"],
           "example":"问题：最近三天体重趋势怎么样？\n窗口只取3天，不自动扩成28天\n模型收到日期和体重；不会顺带收到这三天吃了什么或生理周期。",
           "related":["respond","harness","boundary"],
           "sources":[["backend/app/workflows/chat_response.py","advice_context / respond"],["backend/app/health/advice.py","build_advice_context"],["backend/app/policy/output.py","advice_plan / validate_advice / fallback_advice"]]
@@ -7412,7 +7428,7 @@ return result</pre></div>
             name: "首次输入规划",
             kind: "条件调用 LLM",
             description:
-              "只处理新输入或重新规划的澄清文本。plan 仅看当前输入与操作状态，PlanHarness 本地审核后才形成草稿；纠错只读取程序绑定的一条记录。",
+              "只处理新输入或重新规划的澄清文本。plan 仅看当前输入与操作状态；PlanHarness 审核失败时可用同一输入修正规划一次，通过后才形成草稿。纠错只读取程序绑定的一条记录。",
             input: [
               "input_text",
               "original",
@@ -7422,8 +7438,8 @@ return result</pre></div>
             output: ["processing_plan / extra_actions", "plan_input_text", "extraction", "parse_context / 绑定 ID 与版本"],
             source: "workflows/chat_parsing.py · Engine.parse_initial() / workflows/policy.py / modeling/parser.py",
             tone: "model",
-            llm: "plan / correct（经 ModelBoundary）",
-            sub: "LLM · 当前输入计划 / 单条纠错",
+            llm: "plan（最多一次修正）/ correct（经 ModelBoundary）",
+            sub: "LLM · 当前输入计划 / 修正 / 单条纠错",
           },
           patch_pending: {
             name: "补充当前草稿",
@@ -7526,13 +7542,13 @@ return result</pre></div>
             name: "组织回答与证据",
             kind: "条件调用 LLM",
             description:
-              "本地生成查询、保存回执和事实确认，再执行 extra_actions 中已批准的查询、建议或 fact。建议重新审核原始任务范围，仅发固定视图；反馈表达和建议均经统一授权出口。",
+              "本地生成查询、保存回执和事实确认，再执行 extra_actions 中已批准的查询、建议或 fact。建议重新审核原始任务范围，只发送获批类型化视图；自然 answer 需要第二次独立审核，失败退回本地目录。",
             input: ["parsed.intent / extra_actions", "record_ids / plan_input_text", "经批准的最小数据视图", "conversation_feedback"],
             output: ["reply", "cards", "evidence_refs"],
             source: "workflows/chat_response.py · Engine.respond()",
             tone: "model",
-            llm: "answer_advice / phrase_reply",
-            sub: "LLM · 建议要点 / 表达选择",
+            llm: "answer_advice（生成 + 条件审核）/ phrase_reply",
+            sub: "LLM · 自然回答与审核 / 表达选择",
           },
           prepare: {
             name: "生成并保存草案",

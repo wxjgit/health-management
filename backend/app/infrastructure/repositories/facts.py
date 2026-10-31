@@ -1,4 +1,4 @@
-"""Versioned long-term facts, with conservative conflict and expiry handling."""
+"""保存版本化长期事实，并处理冲突、并发读集和到期状态。"""
 
 from ...common.errors import ConflictError, DomainValidationError, ModelOutputError
 from pydantic import ValidationError
@@ -13,6 +13,12 @@ from .common import dump
 
 
 class FactRepositoryMixin:
+    def fact_versions(self):
+        """返回事实聚合的并发读集；任何 sibling 变化都会使旧命令失效。"""
+        with self.lock:
+            self.expire_facts()
+            return {record['id']: record['version'] for record in self._fact_rows()}
+
     def _fact(self, row):
         if row is None:
             return None
@@ -121,17 +127,36 @@ class FactRepositoryMixin:
         return self.resolve_facts(reference_date, 'safety')['constraints']
 
     def save_fact(self, fact_id, content, *, source_message_id=None, context_text=None,
-                  structured=None, draft=None, expected_version=None):
+                  structured=None, draft=None, expected_version=None, operation_id=None,
+                  request_hash=None, owner_id='', operation_kind='legacy', peer_versions=None):
         # Operation replay precedes parsing relative dates: retries cannot move a deadline.
         with self.lock, self.conn:
+            operation_key = operation_id or f'fact:{fact_id}'
             if expected_version is None:
-                operation = self.conn.execute('SELECT result FROM operations WHERE key=?', (f'fact:{fact_id}',)).fetchone()
+                operation = self.conn.execute(
+                    'SELECT * FROM operations WHERE key=?', (operation_key,)
+                ).fetchone()
                 if operation:
-                    return self.fact(json.loads(operation[0])['id'])
+                    if request_hash is not None and (
+                        operation['request_hash'] != request_hash
+                        or operation['owner_id'] != owner_id
+                        or operation['kind'] != operation_kind
+                    ):
+                        raise ConflictError(code='request_payload_conflict')
+                    replay = json.loads(operation['result'])
+                    if operation_id is not None and replay.get('record'):
+                        return replay['record']
+                    return self.fact(replay['id'])
                 prior = self.fact(fact_id)
                 if prior:
+                    if operation_id is not None:
+                        raise ConflictError(code='request_payload_conflict')
                     return prior
             self.expire_facts()
+            if peer_versions is not None and peer_versions != {
+                record['id']: record['version'] for record in self._fact_rows()
+            }:
+                raise ConflictError(code='resource_version_conflict')
             prior = self.fact(fact_id)
             if expected_version is not None and (not prior or prior['version'] != expected_version):
                 raise ConflictError(code='resource_version_conflict')
@@ -192,7 +217,9 @@ class FactRepositoryMixin:
                 if extra or source_message_id:
                     duplicate.update(version=duplicate['version'] + 1, evidence=data['evidence'], content=content)
                     self._write_fact(duplicate, '补充明确来源证据', source_message_id)
-                self._bind_fact_operation(fact_id, duplicate)
+                self._bind_fact_operation(
+                    operation_key, duplicate, request_hash, owner_id, operation_kind
+                )
                 return self.fact(duplicate['id'])
             scheduled = bool(data['valid_from'] and data['valid_from'] > clock.now().date().isoformat())
             replacing = next((r for r in siblings if r['id'] == data.get('supersedes')), None)
@@ -227,12 +254,26 @@ class FactRepositoryMixin:
             self._write_fact(record, '用户修改' if prior else '用户明确陈述', source_message_id)
             saved = self.fact(fact_id)
             if expected_version is None:
-                self._bind_fact_operation(fact_id, saved)
+                self._bind_fact_operation(
+                    operation_key, saved, request_hash, owner_id, operation_kind
+                )
             return saved
 
-    def _bind_fact_operation(self, mutation_id, record):
-        key = f'fact:{mutation_id}'
-        self.conn.execute('INSERT OR IGNORE INTO operations VALUES (?,?)', (key, dump({'id': record['id']})))
+    def _bind_fact_operation(self, key, record, request_hash=None, owner_id='', operation_kind='legacy'):
+        receipt = {
+            field: record.get(field)
+            for field in ('id', 'confirmation', 'lifecycle', 'valid_from')
+        }
+        self.conn.execute(
+            'INSERT OR IGNORE INTO operations(key,result,owner_id,kind,request_hash) VALUES (?,?,?,?,?)',
+            (
+                key,
+                dump({'id': record['id'], 'record': receipt}),
+                owner_id,
+                operation_kind,
+                request_hash,
+            ),
+        )
         self.observe('fact', record['id'])
         self.persist_provenance('operation', key, sources=[self.provenance_node('fact', record['id'])], use_reads=False)
 

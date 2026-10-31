@@ -1,4 +1,4 @@
-"""Composition root for the modular chat workflow."""
+"""组装模块化 Chat Graph 的节点和路由。"""
 
 from langgraph.graph import StateGraph, START, END
 
@@ -13,13 +13,15 @@ from .state import ChatState
 class ChatWorkflow:
     """Assemble focused chat components without extending Engine."""
 
-    def __init__(self, engine):
-        self.engine = engine
-        self.safety = ChatSafetyFlow(engine)
-        self.interpretation = ChatInterpretation(engine)
-        self.clarification = ChatClarification(engine)
-        self.operations = ChatOperations(engine, self.interpretation)
-        self.response = ChatResponse(engine)
+    def __init__(self, runtime, dependencies, tool_executor):
+        self.runtime = runtime
+        self.safety = ChatSafetyFlow(runtime)
+        self.interpretation = ChatInterpretation(dependencies)
+        self.clarification = ChatClarification(dependencies)
+        self.operations = ChatOperations(
+            dependencies, self.interpretation, tool_executor, runtime
+        )
+        self.response = ChatResponse(dependencies)
 
     def build(self):
         graph = StateGraph(ChatState)
@@ -29,7 +31,7 @@ class ChatWorkflow:
             'patch_pending': self.interpretation.patch_pending,
             'normalize_extraction': self.interpretation.normalize_extraction,
             'validate_drafts': self.interpretation.validate_drafts,
-            'authorize_operation': self.engine.authorize_operation,
+            'authorize_operation': self.runtime.authorize_operation,
             'prepare_nutrition': self.interpretation.prepare_nutrition,
             'prepare_operations': self.operations.prepare_commands,
             'save_ready': self.operations.save_ready,
@@ -44,7 +46,7 @@ class ChatWorkflow:
             'compose_response': self.response.compose,
         }
         for name, operation in nodes.items():
-            graph.add_node(name, self.engine.guarded_node(operation, node_name=name))
+            graph.add_node(name, self.runtime.guarded_node(operation, node_name=name))
 
         parse_routes = {name: name for name in ('parse_initial', 'patch_pending')}
         safety_routes = {
@@ -96,4 +98,4 @@ class ChatWorkflow:
         for name in response_routes:
             graph.add_edge(name, 'compose_response')
         graph.add_edge('compose_response', END)
-        return graph.compile(checkpointer=self.engine.checkpointer)
+        return graph.compile(checkpointer=self.runtime.checkpointer)

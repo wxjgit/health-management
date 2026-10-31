@@ -1,3 +1,5 @@
+"""提供隐私删除预览、执行、查询和重试接口。"""
+
 from typing import Literal
 
 from fastapi import APIRouter, Depends
@@ -29,7 +31,7 @@ def preview(body: PreviewRequest, engine=Depends(get_engine)):
 @managed_api
 def execute(body: DeleteRequest, engine=Depends(get_engine)):
     with engine.lock:
-        row = engine.repo.conn.execute('SELECT * FROM deletion_previews WHERE id=?', (body.preview_id,)).fetchone()
+        row = engine.repo.deletion_preview(body.preview_id)
         if not row:
             raise DeletionError('not_found', '删除预览不存在，请重新查看范围。', 404)
         return engine.deletions.delete(row['target_type'], row['target_id'], preview_id=body.preview_id,

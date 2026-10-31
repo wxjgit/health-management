@@ -1,4 +1,4 @@
-"""Local authority for chat plans, references and approved data views."""
+"""审核聊天处理计划、历史指代和允许的数据视图。"""
 
 from datetime import datetime, timedelta
 import re

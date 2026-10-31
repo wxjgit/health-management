@@ -118,14 +118,19 @@ def clarification_question(intent, event=None, field=None, item_index=None, *, f
 
 
 def question_from_state(state):
-    index = state.get('pending_event_index')
+    from ..workflows.chat.contracts import active_clarification
+    task = active_clarification(state)
+    if task is None:
+        raise WorkflowStateError()
+    index = task.event_index
     events = state.get('extraction', {}).get('events', [])
     event = events[index] if index is not None and 0 <= index < len(events) else None
-    fields = state.get('pending_fields', [])
+    fields = task.requested_fields
     if fields and event is None:
         raise WorkflowStateError()
     return clarification_question(state['parsed']['intent'], event, fields[0] if fields else None,
-                                  state.get('pending_item_index'), feedback_only=state.get('feedback_only', False),
+                                  task.item_index,
+                                  feedback_only=state.get('feedback_only', False),
                                   has_target=bool(state['parsed'].get('correction_id')))
 
 

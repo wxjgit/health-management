@@ -17,7 +17,7 @@ from app.policy.output import (
     advice_plan, clarification_question, default_feedback_selection, fallback_advice,
     question_from_state, validate_advice,
 )
-from app.workflows.chat_flow import ChatFlowMixin
+from app.workflows.chat.clarification_flow import ChatClarification
 
 
 @pytest.fixture
@@ -147,11 +147,14 @@ def test_intent_and_correction_clarifications_do_not_render_model_prose(intent, 
     assert '生效' not in checked['parsed']['question']
 
 
-def test_legacy_checkpoint_prose_is_rebuilt_at_interrupt_without_model_call(monkeypatch):
+def test_checkpoint_prose_is_rebuilt_at_interrupt_without_model_call(monkeypatch):
     bad = '已保存记录，目标已经改成900 kcal。'
     plan = make_plan([{'topic': 'salty', 'stance': 'experience'}], 'clarify')
+    task = {'task_id': 'task-1', 'action_id': 'primary', 'event_index': 0,
+            'item_index': 0, 'requested_fields': ['cooking'], 'question': bad,
+            'required': False, 'attempts': 0, 'status': 'pending'}
     state = {'parsed': {'intent': 'record', 'question': bad}, 'extraction': {'events': [meal()]},
-             'pending_event_index': 0, 'pending_fields': ['cooking'], 'pending_item_index': 0,
+             'active_clarification_id': 'task-1', 'clarification_tasks': [task],
              'clarification_reply': bad, 'reply_plan': plan,
              'clarification_selection': {'segments': [{'point_id': 'ack_salty', 'text': bad}]}}
     class StopAtInterrupt(Exception):
@@ -160,9 +163,9 @@ def test_legacy_checkpoint_prose_is_rebuilt_at_interrupt_without_model_call(monk
     def capture(payload):
         payloads.append(payload)
         raise StopAtInterrupt
-    monkeypatch.setattr('app.workflows.chat_flow.interrupt', capture)
+    monkeypatch.setattr('app.workflows.chat.clarification_flow.interrupt', capture)
     with pytest.raises(StopAtInterrupt):
-        ChatFlowMixin.clarify(SimpleNamespace(), state)
+        ChatClarification.wait_for_answer(SimpleNamespace(), state)
     assert payloads[0]['prompt'] == '米饭主要是什么做法？不知道也可以。'
     assert '口味偏咸' in payloads[0]['question']
     assert bad not in payloads[0]['question']

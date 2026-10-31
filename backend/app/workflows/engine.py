@@ -5,12 +5,10 @@ import sqlite3
 from ..infrastructure.repositories.repository import Repository
 from ..modeling.parser import Parser
 from ..privacy.deletion import PrivacyDeletionService
-from .chat_flow import ChatFlowMixin
-from .chat_parsing import ChatParsingMixin
-from .chat_response import ChatResponseMixin
+from .chat import ChatWorkflow
 from .concurrency import GuardedSqliteSaver, KeyedLocks, WorkflowConcurrencyMixin
 from .planning import PlanningWorkflowMixin
-from .policy import PlanHarness
+from .chat.policy import ChatPlanPolicy
 from .runtime import WorkflowRuntimeMixin
 from .safety import SafetyWorkflowMixin
 from ..common.execution_budget import BudgetLock, RuntimeLimiter
@@ -20,9 +18,6 @@ from ..infrastructure.data_owner import DataOwner
 
 class Engine(
     SafetyWorkflowMixin,
-    ChatParsingMixin,
-    ChatFlowMixin,
-    ChatResponseMixin,
     PlanningWorkflowMixin,
     WorkflowConcurrencyMixin,
     WorkflowRuntimeMixin,
@@ -74,8 +69,9 @@ class Engine(
             self.recover_context_expirations()
             self.repo.recover_jobs()
             self.parser = Parser(settings, network_context=self.model_io)
-            self.harness = PlanHarness(self.repo, self.parser)
-            self.chat_graph = self.build_chat()
+            self.harness = ChatPlanPolicy(self.repo, self.parser)
+            self.chat_workflow = ChatWorkflow(self)
+            self.chat_graph = self.chat_workflow.build()
             self.plan_graph = self.build_plan()
             self.analysis_graph = self.build_analysis()
 

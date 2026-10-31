@@ -6,8 +6,10 @@ PURPOSES = frozenset({'safety_classification', 'processing_plan', 'correct_selec
     'patch_draft', 'personalized_advice', 'contextual_reply', 'estimate_nutrition'})
 NODES = frozenset({'safety_gate', 'classify_safety', 'safety_response', 'authorize_operation',
     'parse_initial', 'patch_pending', 'normalize_extraction', 'validate_drafts',
-    'prepare_nutrition', 'save_ready', 'prepare_clarification', 'clarify', 'persist',
-    'fact', 'respond', 'prepare_plan', 'approve_plan', 'activate_plan', 'analyze', 'review'})
+    'prepare_nutrition', 'prepare_operations', 'save_ready', 'prepare_clarification',
+    'clarify', 'execute_operations', 'route_response', 'query_response', 'fact_response',
+    'record_response', 'advice_response', 'compose_response', 'prepare_plan', 'approve_plan',
+    'activate_plan', 'analyze', 'review'})
 KINDS = frozenset({'chat', 'plan', 'analysis'})
 JOBS = frozenset({'archive', 'daily', 'weekly', 'next_meal', 'missing_meal', 'checkin', 'auto_plan', 'outbox'})
 STATUS = frozenset({'none', '1xx', '2xx', '3xx', '4xx', '5xx'})

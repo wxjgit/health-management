@@ -1,14 +1,14 @@
-"""Local authority for plans, references and approved data views."""
+"""Local authority for chat plans, references and approved data views."""
 
 from datetime import datetime, timedelta
 import re
 
-from ..common import clock
-from ..evidence import ground_correction, ground_event
-from ..common.errors import ConflictError, DomainValidationError, ModelOutputError
-from ..common.request_context import log_failure
-from ..modeling.projections import record_projection
-from ..contracts.workflows import ExtractionResult, PlannedAction, ProcessingPlan
+from ...common import clock
+from ...evidence import ground_correction, ground_event
+from ...common.errors import ConflictError, DomainValidationError, ModelOutputError
+from ...common.request_context import log_failure
+from ...modeling.projections import record_projection
+from ...contracts.workflows import ExtractionResult, PlannedAction, ProcessingPlan
 
 
 REFERENCE = re.compile(r'它|这条|那条|这顿|那顿|上一条|刚才(?:的|那|这)|那个|这个|上面那')
@@ -27,7 +27,7 @@ KINDS = {
 }
 
 
-class PlanHarness:
+class ChatPlanPolicy:
     def __init__(self, repo, parser):
         self.repo, self.parser = repo, parser
 

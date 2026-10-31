@@ -325,7 +325,10 @@ def test_real_workflow_privacy_replay_and_metrics_access(tmp_path, caplog):
     output = json.dumps(events(tmp_path)) + caplog.text
     assert SECRET not in output and '65公斤' not in output
     assert 'model_fallback' not in output
-    assert any(event.get('node') == 'persist' and 'operation_id' in event for event in events(tmp_path))
+    assert any(
+        event.get('node') == 'execute_operations' and 'operation_id' in event
+        for event in events(tmp_path)
+    )
     assert 'schema_version' in output
 
 

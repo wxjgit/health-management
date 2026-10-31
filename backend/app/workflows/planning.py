@@ -8,7 +8,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
 from ..health import analyze, plan_draft, review
-from .state import State
+from .state import AnalysisState, PlanState
 
 
 class PlanningWorkflowMixin:
@@ -70,7 +70,7 @@ class PlanningWorkflowMixin:
         }
 
     def build_plan(self):
-        graph = StateGraph(State)
+        graph = StateGraph(PlanState)
         self.add_safety_nodes(graph)
         graph.add_node('prepare', self.guarded_node(self.prepare_plan))
         graph.add_node('approve', self.guarded_node(self.approve_plan))
@@ -86,7 +86,7 @@ class PlanningWorkflowMixin:
         return graph.compile(checkpointer=self.checkpointer)
 
     def build_analysis(self):
-        graph = StateGraph(State)
+        graph = StateGraph(AnalysisState)
         graph.add_node('analyze', self.guarded_node(lambda state: {'analysis': analyze(
             self.repo, date.fromisoformat(state['period_end']) if state.get('period_end') else None)}, node_name='analyze'))
         graph.add_node('review', self.guarded_node(lambda state: {

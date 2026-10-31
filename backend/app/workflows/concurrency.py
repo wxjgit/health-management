@@ -162,21 +162,27 @@ class WorkflowConcurrencyMixin:
         def guarded(state):
             from ..observability.context import bind
             from ..observability.spans import node_span
-            with bind(self.observability), self.lock, node_span(node_name or operation.__name__):
+            logical_name = node_name or operation.__name__
+            with bind(self.observability), self.lock, node_span(logical_name):
                 self.check_execution()
                 token = _node_engine.set(self)
                 try:
                     with capture(self.repo, self.repo.workflow_node(state['thread_id'])):
-                        if operation.__name__ in {
+                        if logical_name in {
                             'parse_initial', 'patch_pending', 'prepare_nutrition', 'save_ready',
-                            'prepare_clarification', 'persist', 'fact', 'respond',
+                            'prepare_clarification', 'execute_operations',
+                            'query_response', 'fact_response', 'record_response',
+                            'advice_response', 'compose_response',
                             'prepare_plan', 'activate_plan',
                         }:
-                            if operation.__name__ != 'activate_plan' or state.get('approved'):
-                                self.require_safety(state, operation.__name__)
+                            if logical_name != 'activate_plan' or state.get('approved'):
+                                self.require_safety(state, logical_name)
                         result = operation(state)
-                        if operation.__name__ in ('respond', 'prepare_clarification'):
-                            self.require_safety(state, operation.__name__)
+                        if logical_name in {
+                            'query_response', 'fact_response', 'record_response',
+                            'advice_response', 'compose_response', 'prepare_clarification',
+                        }:
+                            self.require_safety(state, logical_name)
                         return result
                 finally:
                     _node_engine.reset(token)

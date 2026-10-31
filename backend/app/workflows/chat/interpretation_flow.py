@@ -1,26 +1,28 @@
-"""Chat workflow nodes that turn user input into persistence-ready drafts."""
+"""Interpret chat input and produce validated persistence-ready drafts."""
 
-from ..common.errors import ConflictError, WorkflowStateError, ModelOutputError
+from ...common.errors import ConflictError, WorkflowStateError, ModelOutputError
 
 import json
 import re
 
-from ..common.clock import date_from_text, local_day
-from ..chat.feedback import (
+from ...common.clock import date_from_text, local_day
+from ...chat.feedback import (
     attach_feedback,
     explicitly_recording,
     reconcile_feedback,
     wants_advice,
 )
-from ..chat.drafts import check_drafts, merge_patch
-from ..evidence import assert_grounded, ground_patch
-from ..modeling import record_projection
-from ..health.nutrition import prepare_nutrition
-from ..chat.replies import medical_question
-from ..contracts.events import EventDraft
+from ...chat.drafts import check_drafts, merge_patch
+from ...evidence import assert_grounded, ground_patch
+from ...modeling import record_projection
+from ...health.nutrition import prepare_nutrition
+from ...chat.replies import medical_question
+from ...contracts.events import EventDraft
+from .component import ChatComponent
+from .contracts import ClarificationTask, active_clarification
 
 
-class ChatParsingMixin:
+class ChatInterpretation(ChatComponent):
     """Parsing, normalization and nutrition preparation nodes."""
 
     @staticmethod
@@ -84,7 +86,8 @@ class ChatParsingMixin:
         calls_before = self.parser.boundary.call_count
         text = state['input_text']
         extraction = json.loads(json.dumps(state['extraction']))
-        index = state.get('pending_event_index')
+        task = active_clarification(state)
+        index = task.event_index if task else None
         if index is None or not 0 <= index < len(extraction['events']):
             raise WorkflowStateError()
         bound_version = state.get('correction_version')
@@ -119,7 +122,7 @@ class ChatParsingMixin:
             # An optional feedback follow-up is not a mandatory logging form.
             extraction.update(intent='advice', events=[])
             feedback_only = False
-        elif cancelled or (unknown and state.get('pending_required')):
+        elif cancelled or (unknown and task.required):
             abandoned.append(index)
         elif unknown:
             skip_optional = True
@@ -128,30 +131,30 @@ class ChatParsingMixin:
                 self.parser.boundary.grant('patch_draft', {
                     'text': text,
                     'draft': record_projection(extraction['events'][index]),
-                    'requested_fields': state['pending_fields'],
-                    'item_index': state.get('pending_item_index'),
+                    'requested_fields': task.requested_fields,
+                    'item_index': task.item_index,
                 })
             patch = self.parser.patch(
                 text,
                 extraction['events'][index],
-                state['pending_fields'],
-                state.get('pending_item_index'),
+                task.requested_fields,
+                task.item_index,
             )
             patch = ground_patch(
                 patch,
                 text,
                 extraction['events'][index]['kind'],
-                state['pending_fields'],
-                state.get('pending_item_index'),
+                task.requested_fields,
+                task.item_index,
                 state.get('source_message_id'),
             )
             supplied_feedback = patch.feedback
             extraction['events'][index] = merge_patch(
                 extraction['events'][index],
                 patch,
-                state['pending_fields'],
+                task.requested_fields,
                 text,
-                state.get('pending_item_index'),
+                task.item_index,
             )
             if feedback_only and extraction['events'][index].get('items'):
                 extraction['intent'] = 'record'
@@ -258,8 +261,33 @@ class ChatParsingMixin:
                 pending_item_index=None,
             )
             checked['parsed']['question'] = '如果想一起复盘，这次主要吃了什么？不知道或不想记录也可以。'
+        pending_index = checked.pop('pending_event_index')
+        pending_fields = checked.pop('pending_fields')
+        pending_required = checked.pop('pending_required')
+        pending_item_index = checked.pop('pending_item_index')
+        tasks = []
+        active_id = None
+        if checked['parsed'].get('question'):
+            active_id = ':'.join([
+                state['thread_id'],
+                'clarify',
+                str(pending_index) if pending_index is not None else 'intent',
+                ','.join(pending_fields) or 'target',
+                str(state.get('rounds', 0)),
+            ])
+            tasks = [ClarificationTask(
+                task_id=active_id,
+                event_index=pending_index,
+                item_index=pending_item_index,
+                requested_fields=pending_fields,
+                question=checked['parsed']['question'],
+                required=pending_required,
+                attempts=state.get('rounds', 0),
+            ).model_dump(mode='json')]
         return {
             **checked,
+            'clarification_tasks': tasks,
+            'active_clarification_id': active_id,
             'process_trace': self.traced(
                 state,
                 '结构校验',

@@ -1,0 +1,1 @@
+<pyui-tab-bar id="pyui-tabs" wx:if="{{!hidden}}" tab="{{selected}}" slots="{{items}}" bind:change="switchPage" />

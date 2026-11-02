@@ -1,0 +1,4 @@
+{
+  "component": true,
+  "usingComponents": { "native-fold": "/components/fold/index" }
+}

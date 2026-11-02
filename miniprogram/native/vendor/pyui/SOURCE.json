@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/p2003722/pyui",
+  "commit": "667a2dcfbfcc1077294da0035af40620b015af73",
+  "version": "0.1.0",
+  "archive_sha256": "a1c289ab9c03a24f1d61147fc089636c45c8470bbb4af37c8ee700ed920c51eb",
+  "files": [
+    "common/tokens.wxss",
+    "pyui-button/pyui-button.js",
+    "pyui-button/pyui-button.json",
+    "pyui-button/pyui-button.wxml",
+    "pyui-button/pyui-button.wxss",
+    "pyui-empty/pyui-empty.js",
+    "pyui-empty/pyui-empty.json",
+    "pyui-empty/pyui-empty.wxml",
+    "pyui-empty/pyui-empty.wxss",
+    "pyui-tab-bar/pyui-tab-bar.js",
+    "pyui-tab-bar/pyui-tab-bar.json",
+    "pyui-tab-bar/pyui-tab-bar.wxml",
+    "pyui-tab-bar/pyui-tab-bar.wxss",
+    "pyui-icon/pyui-icon.js",
+    "pyui-icon/pyui-icon.json",
+    "pyui-icon/pyui-icon.wxml",
+    "pyui-icon/pyui-icon.wxss"
+  ],
+  "license_declared_in_package": "MIT",
+  "license_file_in_archive": false,
+  "local_changes": {
+    "pyui-tab-bar/pyui-tab-bar.wxss": "Responsive four-slot width, retaining pixel measurement basis.",
+    "pyui-tab-bar/pyui-tab-bar.js": "Snap lens on attachment; expose syncSelection to cancel stale gesture animation and align with the owning page."
+  }
+}

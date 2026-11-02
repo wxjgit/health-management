@@ -1,0 +1,12 @@
+<view class="page">
+  <view class="card">
+    <view class="title">登录轻记</view>
+    <view>使用微信身份建立账号，不读取微信昵称、头像或手机号。</view>
+    <view class="muted">登录后记录和查看自己的健康数据。</view>
+  </view>
+  <view wx:if="{{loading}}" class="muted">正在读取…</view>
+  <native-agreements wx:if="{{policy}}" policy="{{policy}}" value="{{agreement}}" disabled="{{busy}}" bind:change="onAgreement" />
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <pyui-button text="微信登录" loading="{{busy}}" disabled="{{busy || !policy.ready || !agreement.privacy || !agreement.health}}" bind:click="onLogin" />
+  <button wx:if="{{error}}" class="refresh-button" bindtap="reload">重试读取</button>
+</view>

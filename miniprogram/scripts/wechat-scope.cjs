@@ -1,0 +1,78 @@
+const vm = require("node:vm");
+
+// WeChat devtools 2.02.2609240 wraps each module in a function whose
+// parameters include NO_BOM_VAR. A top-level const/let with one of these
+// names is a SyntaxError even when standalone JavaScript parsing succeeds.
+const injectedNames = [
+  "window",
+  "top",
+  "document",
+  "frames",
+  "self",
+  "location",
+  "navigator",
+  "localStorage",
+  "history",
+  "Caches",
+  "screen",
+  "alert",
+  "confirm",
+  "prompt",
+  "fetch",
+  "XMLHttpRequest",
+  "WebSocket",
+  "webkit",
+  "WeixinJSCore",
+  "Reporter",
+  "print",
+  "URL",
+  "DOMParser",
+  "requestAnimationFrame",
+  "getComputedStyle",
+  "Node",
+  "upload",
+  "preview",
+  "build",
+  "showDecryptedInfo",
+  "cleanAppCache",
+  "syncMessage",
+  "checkProxy",
+  "showSystemInfo",
+  "showMyOpenId",
+  "restoreLocalData",
+  "openVendor",
+  "openMiniapp",
+  "openMiniappBuilder",
+  "openMiniappIpa",
+  "openCrashDir",
+  "openCache",
+  "openEngine",
+  "cleanEngineWASM",
+  "openEditorCache",
+  "openToolsLog",
+  "showRequestInfo",
+  "help",
+  "showDebugInfoTable",
+  "closeDebug",
+  "showDebugInfo",
+  "__global",
+  "getMessageTunnelInfo",
+  "loadBabelMod",
+  "openInspect",
+  "openGameEngineDebugMode",
+  "closeGameEngineDebugMode",
+  "openGameEngineAssetsInspect",
+  "openUserDataPath",
+  "WeixinJSBridge",
+  "__WeixinJSBridge",
+  "__passWAServiceGlobal__",
+];
+
+function compileWeChatModule(source, filename) {
+  return new vm.Script(
+    `(function(require,module,exports,${injectedNames.join(",")}){\n${source}\n})`,
+    { filename },
+  );
+}
+
+module.exports = { compileWeChatModule, injectedNames };

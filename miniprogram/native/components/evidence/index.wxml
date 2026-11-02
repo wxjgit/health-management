@@ -1,0 +1,1 @@
+<native-fold wx:if="{{rows.length}}" title="依据 · {{rows.length}} 条记录"><view wx:for="{{rows}}" wx:key="id" class="field" data-id="{{item.id}}" bindtap="open"><view>{{item.date}} · {{item.kind}}</view><view>{{item.text}}</view><text class="link">查看记录</text></view></native-fold>

@@ -1,10 +1,15 @@
 import { expect, it } from "vitest";
-import { buildEnvironment } from "../config/environment";
+import { createRequire } from "node:module";
+const { buildEnvironment } = createRequire(import.meta.url)(
+  "../scripts/environment.cjs",
+);
 
 it("正式构建必须显式提供 HTTPS 域名", () => {
   for (const value of [
     undefined,
-    "http://example.com", "https://api.example.com:8443", "https://[::ffff:127.0.0.1]",
+    "http://example.com",
+    "https://api.example.com:8443",
+    "https://[::ffff:127.0.0.1]",
     "https://127.0.0.1",
     "https://localhost",
     "https://api.example.com/path",

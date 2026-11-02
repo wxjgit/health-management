@@ -3,12 +3,19 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "node",
-    "jsx": "react-jsx",
-    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["@tarojs/taro", "webpack-env"],
+    "types": [
+      "node"
+    ],
     "noEmit": true
   },
-  "include": ["src", "config", "tests"]
+  "include": [
+    "native/**/*.js",
+    "native/**/*.d.ts",
+    "tests/**/*.ts"
+  ]
 }

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { api, ApiError } from "../src/api";
+import { createRequire } from "node:module";
+const { createApi } = createRequire(import.meta.url)(
+  "../native/native-runtime/api-core.js",
+);
 
 const platform = vi.hoisted(() => ({
   request: vi.fn(),
@@ -9,7 +12,10 @@ const platform = vi.hoisted(() => ({
   getCurrentPages: vi.fn().mockReturnValue([]),
   reLaunch: vi.fn().mockResolvedValue({}),
 }));
-vi.mock("@tarojs/taro", () => ({ default: platform }));
+const { api, ApiError } = createApi(platform, {
+  development: true,
+  apiOrigin: "http://127.0.0.1:8000",
+});
 beforeEach(() => {
   vi.clearAllMocks();
   platform.getStorageSync.mockReturnValue("https://api.example.test");

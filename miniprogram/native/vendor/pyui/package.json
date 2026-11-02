@@ -1,0 +1,11 @@
+{
+  "name": "pyui-miniprogram",
+  "version": "0.1.0",
+  "description": "pyui — Liquid Glass / iOS 26 解剖的微信小程序组件库；API 对标 tdesign-miniprogram",
+  "miniprogram": "miniprogram_dist",
+  "files": ["miniprogram_dist"],
+  "scripts": {
+    "build:dist": "bash scripts/build-dist.sh"
+  },
+  "license": "MIT"
+}

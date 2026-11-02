@@ -1,0 +1,5 @@
+<view class="field"><view class="muted">{{label}}</view>
+ <picker wx:if="{{type === 'select'}}" mode="selector" value="{{selectedIndex}}" range="{{options}}" range-key="label" disabled="{{disabled}}" bindchange="change"><view>{{display}}</view></picker>
+ <picker wx:elif="{{type === 'date' || type === 'time'}}" mode="{{type}}" value="{{value}}" disabled="{{disabled}}" bindchange="change"><view>{{value || '请选择'}}</view></picker>
+ <input wx:else value="{{value}}" type="{{type}}" disabled="{{disabled}}" maxlength="{{maxlength}}" bindinput="change" />
+</view>

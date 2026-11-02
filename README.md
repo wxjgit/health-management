@@ -1,6 +1,6 @@
 # 轻记 · 个人减脂 Agent
 
-前端已统一为微信小程序，Web 前端已废弃。工程与导入方式见 [miniprogram](miniprogram/README.md)，功能映射与验收见 [微信小程序开发方案](docs/微信小程序开发方案.md)。
+前端已统一为微信原生小程序 + PyUI，Taro/React 与 Web 前端已移除。工程与导入方式见 [miniprogram](miniprogram/README.md)，功能映射与验收见 [微信小程序开发方案](docs/微信小程序开发方案.md)。
 
 一个支持微信登录与账号独立数据存储的小程序，连接可本地运行的 Python API 服务，必须登录后使用。用自然语言记录饮食、体重、睡眠、运动和生理周期，数据保存在 SQLite 中；LangGraph 负责解析、关键追问、纠错、历史检索、计划确认和复盘流程。
 
@@ -206,13 +206,12 @@ backend/app/
   infrastructure/
     database.py   SQLite 结构与连接初始化
     repositories/ Repository 组装及按事件、工作流、计划和维护拆分的数据访问
-miniprogram/src/
-  pages/          记录、历史、计划、发现、我的及管理页面
-  components/     小程序通用组件与记录详情
-  api.ts          Taro 网络协议适配
-  state.ts        页面刷新、请求重试与隐私缓存失效
-  types.ts        API 数据类型
-  app.css         小程序样式
+miniprogram/native/
+  pages/          原生记录、足迹、复盘占位、我的及管理页面
+  components/     原生表单、弹窗、记录详情与授权组件
+  native-runtime/ 请求协议、原请求重试、账号与隐私缓存失效
+  contracts.d.ts  API 数据契约
+  app.js/json/wxss 原生应用入口、路由与样式
 ```
 
 完整设计见 [开发文档](docs/开发文档.md)。原型使用 Python 自带 SQLite Repository 和版本化初始化，暂未引入 SQLAlchemy/Alembic；小程序通过微信开发者工具构建上传，FastAPI 只提供 API。只监听本机，不包含公网访问保护或多用户隔离。

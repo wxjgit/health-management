@@ -1,0 +1,1 @@
+<image wx:if="{{src}}" class="py-icon" style="width:{{size}};height:{{size}};{{customStyle}}" src="{{src}}" mode="aspectFit"></image>

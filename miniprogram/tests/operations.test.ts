@@ -1,3 +1,4 @@
+import { createHarness } from "./native-harness";
 import { beforeEach, expect, it, vi } from "vitest";
 
 const platform = vi.hoisted(() => ({
@@ -5,19 +6,7 @@ const platform = vi.hoisted(() => ({
   request: vi.fn(),
   unlink: vi.fn(),
 }));
-vi.mock("@tarojs/taro", () => ({
-  default: {
-    request: platform.request,
-    getStorageSync: (key: string) => platform.storage.get(key),
-    setStorageSync: (key: string, value: unknown) =>
-      platform.storage.set(key, value),
-    removeStorageSync: (key: string) => platform.storage.delete(key),
-    env: { USER_DATA_PATH: "/app" },
-    getFileSystemManager: () => ({ unlink: platform.unlink }),
-  },
-  useDidShow: vi.fn(),
-  useDidHide: vi.fn(),
-}));
+let harness: any;
 beforeEach(() => {
   platform.storage.clear();
   platform.storage.set("auth-session", {
@@ -27,12 +16,16 @@ beforeEach(() => {
   });
   platform.request.mockReset();
   platform.unlink.mockReset();
-  vi.resetModules();
+  harness = createHarness({
+    storage: platform.storage,
+    server: platform.request,
+    unlink: platform.unlink,
+  });
 });
 const success = (data: unknown = {}) => ({ statusCode: 200, data, header: {} });
 
 it("切换账号后不能显示或重试原账号待处理请求", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   platform.storage.set("auth-session", {
     base: "http://127.0.0.1:8000",
     user: { id: "account-a" },
@@ -49,7 +42,7 @@ it("切换账号后不能显示或重试原账号待处理请求", async () => {
 });
 
 it("隐私清理预览不会继承到其他账号", async () => {
-  const privacy = await import("../src/privacy");
+  const privacy = await harness.load("native-runtime/privacy");
   platform.storage.set("auth-session", {
     base: "http://127.0.0.1:8000",
     user: { id: "account-a" },
@@ -67,7 +60,7 @@ it("隐私清理预览不会继承到其他账号", async () => {
 });
 
 it("没有账号归属的旧请求不再恢复或迁移", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   platform.storage.set("pending-submission", {
     path: "/chat",
     body: { request_id: "old" },
@@ -83,7 +76,7 @@ it("没有账号归属的旧请求不再恢复或迁移", async () => {
 });
 
 it("超时后持久化原参数，重启后重试仍使用同一业务编号", async () => {
-  let state = await import("../src/state");
+  let state = await harness.load("native-runtime/state");
   const original = state.operation(
     "/chat",
     {
@@ -95,8 +88,8 @@ it("超时后持久化原参数，重启后重试仍使用同一业务编号", a
   );
   platform.request.mockRejectedValueOnce(new Error("timeout"));
   await expect(state.executeOperation(original)).rejects.toThrow();
-  vi.resetModules();
-  state = await import("../src/state");
+  harness.resetModules();
+  state = await harness.load("native-runtime/state");
   expect(state.pendingOperation()).toEqual(original);
   platform.request.mockResolvedValueOnce(success());
   await state.executeOperation(state.pendingOperation()!);
@@ -104,7 +97,7 @@ it("超时后持久化原参数，重启后重试仍使用同一业务编号", a
   expect(state.pendingOperation()).toBeNull();
 });
 it("不允许其他请求覆盖待核对请求", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   platform.request.mockRejectedValue(new Error("timeout"));
   const original = state.operation(
     "/chat",
@@ -120,7 +113,7 @@ it("不允许其他请求覆盖待核对请求", async () => {
   expect(platform.request).toHaveBeenCalledTimes(1);
 });
 it("并发点击只发送一个请求", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   let finish!: (value: unknown) => void;
   platform.request.mockReturnValue(
     new Promise((resolve) => {
@@ -135,14 +128,14 @@ it("并发点击只发送一个请求", async () => {
   expect(platform.request).toHaveBeenCalledTimes(1);
 });
 it("切换服务不会把旧请求发送到新服务", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   const original = state.operation("/chat", { request_id: "same" }, "记录");
   platform.storage.set("api-base", "https://another.test");
   await expect(state.executeOperation(original)).rejects.toThrow("另一服务");
   expect(platform.request).not.toHaveBeenCalled();
 });
 it("旧本地缓存不阻止默认模型请求恢复", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   platform.storage.set("local-only", true);
   platform.request.mockResolvedValue(success({ local_only: false }));
   await state.executeOperation(
@@ -155,7 +148,7 @@ it("旧本地缓存不阻止默认模型请求恢复", async () => {
   expect(platform.request).toHaveBeenCalledTimes(2);
 });
 it("服务端强制纯本地也禁止重发模型请求", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   platform.storage.set("local-only", false);
   platform.request.mockResolvedValue(success({ local_only: true }));
   await expect(
@@ -170,7 +163,7 @@ it("服务端强制纯本地也禁止重发模型请求", async () => {
   expect(platform.request).toHaveBeenCalledTimes(1);
 });
 it("计划恢复保留上次拒绝选择与 interrupt_id", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   const body = {
     request_id: "previous-decision",
     interrupt_id: "current-interrupt",
@@ -183,7 +176,7 @@ it("计划恢复保留上次拒绝选择与 interrupt_id", async () => {
   expect(platform.request.mock.calls[0][0].data).toEqual(body);
 });
 it("校验失败允许修改输入，执行冲突则继续保留原请求", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   const original = state.operation("/chat", { request_id: "same" }, "记录");
   platform.request.mockResolvedValueOnce({
     statusCode: 422,
@@ -201,7 +194,7 @@ it("校验失败允许修改输入，执行冲突则继续保留原请求", asyn
   expect(state.pendingOperation()).toEqual(original);
 });
 it("删除前后失效私有缓存，并持久化未完成作业以便重启恢复", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   const preview = {
     preview_id: "preview",
     target_id: "event",
@@ -239,7 +232,7 @@ it("删除前后失效私有缓存，并持久化未完成作业以便重启恢�
   });
 });
 it("范围改变后保存新预览，旧删除请求不再自动重试", async () => {
-  const state = await import("../src/state");
+  const state = await harness.load("native-runtime/state");
   const preview = {
     preview_id: "new",
     target_id: "event",

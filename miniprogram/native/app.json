@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/chat/index",
+    "pages/login/index",
+    "pages/consent/index",
+    "pages/history/index",
+    "pages/insights/index",
+    "pages/settings/index",
+    "pages/today/index",
+    "pages/facts/index",
+    "pages/preferences/index",
+    "pages/notifications/index",
+    "pages/privacy/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "轻记",
+    "navigationBarBackgroundColor": "#eef5f5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#eef5f5"
+  },
+  "usingComponents": {
+    "pyui-button": "/vendor/pyui/pyui-button/pyui-button",
+    "pyui-empty": "/vendor/pyui/pyui-empty/pyui-empty"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#7b899a",
+    "selectedColor": "#2854ea",
+    "backgroundColor": "#eef5f5",
+    "list": [
+      {
+        "pagePath": "pages/chat/index",
+        "text": "记录"
+      },
+      {
+        "pagePath": "pages/history/index",
+        "text": "足迹"
+      },
+      {
+        "pagePath": "pages/insights/index",
+        "text": "复盘"
+      },
+      {
+        "pagePath": "pages/settings/index",
+        "text": "我的"
+      }
+    ]
+  }
+}

@@ -1,0 +1,201 @@
+/**
+ * 悬浮 TabBar（iOS 26 Liquid Glass 还原）—— 1:1 移植自 chengshichuxing glass-tab-bar：
+ * - bar 本体几乎隐形：高透光弱存在，只承担承载与极轻的磨砂；
+ * - 玻璃质感集中在「选中透镜」：唯一一个玻璃体，translateX 在 N 个 tab 间滑动（本项目 N=2）；
+ * - N 个 Tab 项在 UI 上完全保持一致（槽位数由 slots 属性驱动，.lens 宽度在 wxml 内联参数化）；
+ * - 裁剪：模式切换气泡菜单（停车/地铁业务专属）；保留：拖拽舌片 + 沉底隐藏。
+ */
+
+.tabbar-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+.tabbar-static { position: relative; left: auto; right: auto; bottom: auto; margin: 24rpx auto; transform: none; }
+
+.tabbar {
+  /* 双 tab 紧凑居中：不撑满左右，宽度随槽位收拢（left/right 0 + margin auto + fit-content，
+     避免与 tabbar-hidden 的 translateY 沉底动画抢 transform） */
+  margin: 0 auto;
+  width: calc(100% - 44rpx);
+  max-width: 420px;
+  /* 让出 home indicator 安全区（constant 为旧版 iOS 微信写法，env 为新版） */
+  z-index: 120;
+  display: flex;
+  flex-direction: row;
+  padding: 6px;
+  border-radius: 32px;
+  background-color: rgba(255, 255, 255, 0.25);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-sizing: border-box;
+  /* 弹簧曲线：越界回弹/沉底归位都带 Q 弹过冲 */
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0.28, 1.1), opacity 0.3s;
+}
+
+/* 抽屉展开时顺滑沉底降下退出视野 */
+.tabbar-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(100% + 32px + env(safe-area-inset-bottom)));
+}
+
+/* 拖拽跟手中：bar 本体不 transform，仅舌片走极短线性过渡 */
+.tabbar-dragging {
+  transition: transform 0.12s linear, opacity 0.3s;
+}
+
+.tabbar-dragging .tongue {
+  transition: transform 0.12s linear;
+}
+
+/* 拉伸舌片：藏在 bar 玻璃后面（z -1） */
+.tongue {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 3%;
+  z-index: -1;
+  background-color: rgba(255, 255, 255, 0.42);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  backdrop-filter: blur(28px) saturate(200%);
+  transform: scaleX(0);
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0.28, 1.1);
+}
+
+.tongue-left {
+  left: -3%;
+  border-radius: 32px 0 0 32px;
+  transform-origin: right center;
+}
+
+.tongue-right {
+  right: -3%;
+  border-radius: 0 32px 32px 0;
+  transform-origin: left center;
+}
+
+/* ── 滑动透镜：整体等比缩放 1.12，无内部残留分界线 ── */
+
+.lens {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  /* width: calc((100% - 12px) / N) —— N 槽位参数化，由 wxml 按 slotCount 内联（源为 /5 写死于此） */
+  border-radius: 26px;
+  /* 位移/缩放全部由 JS 帧循环驱动（同帧同值），CSS 不再过渡，杜绝插值相位差 */
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+.lens-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  background-color: rgba(255, 255, 255, 0.45);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  /* 折射环：左右色散边（粉/青）+ 上下镜面高光 + 内辉光，模拟玻璃边缘折光 */
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.4),
+    inset 0 0 12px rgba(255, 255, 255, 0.28),
+    0 4px 16px rgba(15, 23, 42, 0.1);
+  box-sizing: border-box;
+  /* box-shadow 参与过渡：光晕出现/消失渐进淡入淡出 */
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+/* 按压 / 拖动状态：增强光晕与亮度，整体放大无内外重叠分界线 */
+.lens-body.lens-active {
+  background-color: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 16px rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 0 26px rgba(150, 195, 255, 0.45),
+    0 4px 16px rgba(15, 23, 42, 0.1);
+}
+
+/* ── N 槽位 tab 项：结构完全一致 ── */
+
+.tab-item {
+  flex: 1;
+  width: 0;   /* 紧凑槽宽：图标+两字文案；透镜宽度由 JS 实测 bar 宽均分，自动适配 */
+  position: relative;
+  min-width: 0;
+  z-index: 1;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0.28, 1.1);
+}
+
+.tab-pill {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 0;
+  box-sizing: border-box;
+}
+
+/* 图标体系差异：源为 .icon 字体精灵（纯盒模型），此处为 .pyicon 字体图标 → 补 font-size/line-height，盒尺寸 20px 不变 */
+.tab-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.tab-text {
+  font-size: var(--fs-xs, 11px);
+}
+
+.pill-base .tab-icon {
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.pill-base .tab-text {
+  color: rgba(15, 23, 42, 0.55);
+}
+
+/* 裁剪窗 = 透镜 footprint：恒为透镜按压放大态尺寸，居中罩住本槽；
+   未按压时透镜 100% 宽，多出的边条落在槽内空白区，视觉上无差异 */
+.tab-clip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* left/width 由 wxml 按 pressScale 逐帧内联（与透镜 scale 同值同帧） */
+  border-radius: 28px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 亮 pill：宽 = 窗的 100/pressScale（= 整槽），left 居中补偿；
+   反移 transform 与窗的 transform 逐帧相消 → 亮色内容恒定居中于本槽原位置 */
+.tab-clip .tab-pill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* left/width 由 wxml 按 pressScale 逐帧内联，与窗等量相消 → 亮色内容恒定居中本槽 */
+}
+
+/* 强调色令牌差异：源项目 --c-accent(#2563eb) 本项目未定义 → 回退链落到项目主色 --fui-color-primary */
+.pill-lit .tab-icon {
+  color: var(--c-accent, var(--fui-color-primary, #015293));
+}
+
+.pill-lit .tab-text {
+  color: var(--c-accent, var(--fui-color-primary, #015293));
+  font-weight: 600;
+}

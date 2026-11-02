@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "native-agreements": "/components/agreements/index",
+    "pyui-button": "/vendor/pyui/pyui-button/pyui-button"
+  }
+}

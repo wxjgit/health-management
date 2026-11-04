@@ -1,4 +1,0 @@
-{
-  "component": true,
-  "usingComponents": { "pyui-button": "/vendor/pyui/pyui-button/pyui-button" }
-}

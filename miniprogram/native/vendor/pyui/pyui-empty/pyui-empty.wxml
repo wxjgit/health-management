@@ -1,5 +1,0 @@
-<view class="py-empty">
-    <image wx:if="{{src}}" class="py-empty-img" src="{{src}}" style="width:{{size}}rpx;height:{{size}}rpx;" mode="aspectFit"></image>
-    <text class="py-empty-text" style="color:{{color === '#B2B2B2' ? 'var(--c-minor)' : color}};font-size:{{textSize}}rpx;">{{text}}</text>
-    <slot></slot>
-</view>

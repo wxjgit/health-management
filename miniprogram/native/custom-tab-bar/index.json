@@ -1,6 +1,0 @@
-{
-  "component": true,
-  "usingComponents": {
-    "pyui-tab-bar": "/vendor/pyui/pyui-tab-bar/pyui-tab-bar"
-  }
-}

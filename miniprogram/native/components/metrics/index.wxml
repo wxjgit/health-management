@@ -1,1 +1,0 @@
-<view class="metrics"><view wx:for="{{rows}}" wx:key="key" class="metric"><view class="metric-value">{{item.text}}</view><view class="muted">{{item.label}} · {{item.unit}}</view></view></view>

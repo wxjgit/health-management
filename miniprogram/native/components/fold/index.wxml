@@ -1,1 +1,0 @@
-<view class="fold"><view class="fold-title" bindtap="toggle"><text>{{title}}</text><text>{{open ? '⌃' : '⌄'}}</text></view><view wx:if="{{open}}" class="fold-body"><slot /></view></view>

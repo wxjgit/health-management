@@ -1,8 +1,0 @@
-{
-  "usingComponents": {
-    "native-fold": "/components/fold/index",
-    "native-field": "/components/field/index",
-    "native-metrics": "/components/metrics/index",
-    "pyui-button": "/vendor/pyui/pyui-button/pyui-button"
-  }
-}

@@ -1,6 +1,0 @@
-<template name="header">
- <view class="page-heading"><view class="brand-row"><text class="brand-name">轻记</text><text class="brand-note">个人健康手记</text></view><view class="title">{{title}}</view></view>
- <view wx:if="{{pending}}" class="card warning"><view>待核对：{{pending.label}}</view><view class="muted">上次操作可能已完成，请先核对结果，避免重复提交。</view><button disabled="{{busy}}" bindtap="onPendingRetry">重新尝试</button><button disabled="{{busy}}" bindtap="onAcknowledge">{{pending.path === '/deletions' ? '查看隐私清理' : '已确认结果'}}</button></view>
- <view wx:if="{{error}}" class="error">{{error}}</view><view wx:if="{{loading}}" class="muted">正在读取…</view>
-</template>
-<template name="footer"><button class="refresh-button" disabled="{{busy || loading}}" bindtap="reload">刷新</button></template>

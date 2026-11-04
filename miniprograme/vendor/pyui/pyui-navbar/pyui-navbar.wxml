@@ -1,0 +1,92 @@
+<!-- 毛玻璃自绘导航栏（Liquid Glass 移植自 chengshichuxing glass-nav-bar / uniappx py-navigation）
+     行为契约不变：标题取 globalData.pagesData；胶囊 5 分支；返回/首页/分享；touch 按压态
+     按压物理与 py-button 同款（批 H 终版）：seg 自管 pressing + 手指亮斑 translate3d 合成器通道
+     + catchtouchmove 吞滚动；放大走 .nav-capsule-seg:active 零延时 -->
+<view class="glass-nav-wrapper" style="height: {{wrapperHeight}}px; --nav-bg: {{navBg}};">
+    <view class="glass-nav-inner" style="height: {{navigationHeight}}px; top: {{marginTop}}px;">
+        <!-- 返回 | 首页 -->
+        <view class="nav-capsule capsule-double" wx:if="{{showMenu && !showShare && canNavigateBack && notIndex}}">
+            <view class="nav-capsule-seg seg-double seg-1 {{isTouching == 1 ? 'active' : ''}}" data-index="1"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 1}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateBack">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik03MzEuMiwyMi41YzMwLjEsMzAuMSwzMC4xLDc4LjgsMCwxMDguOUwzNTAuMSw1MTIuNWwzODEuMSwzODEuMWMyOS41LDMwLjYsMjguNyw3OS4zLTEuOSwxMDguOQ0KCWMtMjkuOCwyOC44LTc3LjEsMjguOC0xMDcsMEwxODYuOCw1NjYuOWMtMzAuMS0zMC4xLTMwLjEtNzguOCwwLTEwOC45TDYyMi4zLDIyLjVDNjUyLjQtNy41LDcwMS4xLTcuNSw3MzEuMiwyMi41TDczMS4yLDIyLjV6Ii8+DQo8L3N2Zz4="></image>
+                </view>
+            </view>
+            <view class="nav-capsule-divider"></view>
+            <view class="nav-capsule-seg seg-double seg-2 {{isTouching == 2 ? 'active' : ''}}" data-index="2"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 2}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateToIndex">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik01MTIsMEwwLDQyNi42VjEwMjRoMzQxLjJWNjgyLjdoMzQxLjRWMTAyNGgzNDEuMlY0MjYuNkw1MTIsMHoiLz4NCjwvc3ZnPg0K"></image>
+                </view>
+            </view>
+        </view>
+        <!-- 返回 | 首页 | 分享 -->
+        <view class="nav-capsule capsule-triple" wx:elif="{{showMenu && showShare && canNavigateBack && notIndex}}">
+            <view class="nav-capsule-seg seg-triple seg-3 {{isTouching == 3 ? 'active' : ''}}" data-index="3"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 3}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateBack">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik03MzEuMiwyMi41YzMwLjEsMzAuMSwzMC4xLDc4LjgsMCwxMDguOUwzNTAuMSw1MTIuNWwzODEuMSwzODEuMWMyOS41LDMwLjYsMjguNyw3OS4zLTEuOSwxMDguOQ0KCWMtMjkuOCwyOC44LTc3LjEsMjguOC0xMDcsMEwxODYuOCw1NjYuOWMtMzAuMS0zMC4xLTMwLjEtNzguOCwwLTEwOC45TDYyMi4zLDIyLjVDNjUyLjQtNy41LDcwMS4xLTcuNSw3MzEuMiwyMi41TDczMS4yLDIyLjV6Ii8+DQo8L3N2Zz4="></image>
+                </view>
+            </view>
+            <view class="nav-capsule-divider"></view>
+            <view class="nav-capsule-seg seg-triple seg-4 {{isTouching == 4 ? 'active' : ''}}" data-index="4"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 4}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateToIndex">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik01MTIsMEwwLDQyNi42VjEwMjRoMzQxLjJWNjgyLjdoMzQxLjRWMTAyNGgzNDEuMlY0MjYuNkw1MTIsMHoiLz4NCjwvc3ZnPg0K"></image>
+                </view>
+            </view>
+            <view class="nav-capsule-divider"></view>
+            <view class="nav-capsule-seg seg-triple seg-5 {{isTouching == 5 ? 'active' : ''}}" data-index="5"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 5}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <button class="navigation-button capsule-share-button" open-type="share" bindtap="navigateShare">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik03MzUuOCwyOTQuNEwzMzMuNSw1NDUuOWM3LjEsMjIuNSw5LjQsNDYuMSw2LjgsNjkuNWwzNzMuMiwxMzkuOWM1NC4xLTc3LjIsMTYwLjUtOTUuOSwyMzcuNy00MS44DQoJYzc3LjIsNTQuMSw5NS45LDE2MC41LDQxLjgsMjM3LjdjLTU0LjEsNzcuMi0xNjAuNSw5NS45LTIzNy43LDQxLjhjLTUwLjgtMzUuNi03OC4zLTk2LjEtNzEuNy0xNTcuOEwzMTAuNCw2OTUuMw0KCWMtNTQuMSw3Ny4yLTE2MC41LDk5LjktMjM3LjcsNDEuOEMtNC41LDY4Mi45LTIzLjIsNTc2LjUsMzEsNDk5LjNzMTYwLjUtOTUuOSwyMzcuNy00MS44YzYuOSw0LjgsMTMuNSwxMC4yLDE5LjYsMTZsNDAyLjMtMjUxLjUNCglDNjYyLjEsMTMyLjIsNzEyLDM2LjQsODAxLjksOFM5ODcuNiwyOS40LDEwMTYsMTE5LjNjMjguNCw4OS45LTIxLjUsMTg1LjgtMTExLjMsMjE0LjFDODQ1LjUsMzUyLjIsNzgwLjgsMzM3LjIsNzM1LjgsMjk0LjQNCglMNzM1LjgsMjk0LjR6Ii8+DQo8L3N2Zz4NCg=="></image>
+                </button>
+            </view>
+        </view>
+        <!-- 首页 -->
+        <view class="nav-capsule capsule-single" wx:elif="{{showMenu && !showShare && !canNavigateBack && notIndex}}">
+            <view class="nav-capsule-seg seg-single seg-6 {{isTouching == 6 ? 'active' : ''}}" data-index="6"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 6}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateToIndex">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik01MTIsMEwwLDQyNi42VjEwMjRoMzQxLjJWNjgyLjdoMzQxLjRWMTAyNGgzNDEuMlY0MjYuNkw1MTIsMHoiLz4NCjwvc3ZnPg0K"></image>
+                </view>
+            </view>
+        </view>
+        <!-- 首页 | 分享 -->
+        <view class="nav-capsule capsule-double" wx:elif="{{showMenu && showShare && !canNavigateBack && notIndex}}">
+            <view class="nav-capsule-seg seg-double seg-7 {{isTouching == 7 ? 'active' : ''}}" data-index="7"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 7}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <view class="navigation-button" bindtap="navigateToIndex">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik01MTIsMEwwLDQyNi42VjEwMjRoMzQxLjJWNjgyLjdoMzQxLjRWMTAyNGgzNDEuMlY0MjYuNkw1MTIsMHoiLz4NCjwvc3ZnPg0K"></image>
+                </view>
+            </view>
+            <view class="nav-capsule-divider"></view>
+            <view class="nav-capsule-seg seg-double seg-8 {{isTouching == 8 ? 'active' : ''}}" data-index="8"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 8}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <button class="navigation-button capsule-share-button" open-type="share" bindtap="navigateShare">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik03MzUuOCwyOTQuNEwzMzMuNSw1NDUuOWM3LjEsMjIuNSw5LjQsNDYuMSw2LjgsNjkuNWwzNzMuMiwxMzkuOWM1NC4xLTc3LjIsMTYwLjUtOTUuOSwyMzcuNy00MS44DQoJYzc3LjIsNTQuMSw5NS45LDE2MC41LDQxLjgsMjM3LjdjLTU0LjEsNzcuMi0xNjAuNSw5NS45LTIzNy43LDQxLjhjLTUwLjgtMzUuNi03OC4zLTk2LjEtNzEuNy0xNTcuOEwzMTAuNCw2OTUuMw0KCWMtNTQuMSw3Ny4yLTE2MC41LDk5LjktMjM3LjcsNDEuOEMtNC41LDY4Mi45LTIzLjIsNTc2LjUsMzEsNDk5LjNzMTYwLjUtOTUuOSwyMzcuNy00MS44YzYuOSw0LjgsMTMuNSwxMC4yLDE5LjYsMTZsNDAyLjMtMjUxLjUNCglDNjYyLjEsMTMyLjIsNzEyLDM2LjQsODAxLjksOFM5ODcuNiwyOS40LDEwMTYsMTE5LjNjMjguNCw4OS45LTIxLjUsMTg1LjgtMTExLjMsMjE0LjFDODQ1LjUsMzUyLjIsNzgwLjgsMzM3LjIsNzM1LjgsMjk0LjQNCglMNzM1LjgsMjk0LjR6Ii8+DQo8L3N2Zz4NCg=="></image>
+                </button>
+            </view>
+        </view>
+        <!-- 分享（首页本身） -->
+        <view class="nav-capsule capsule-single" wx:elif="{{showMenu && showShare && !canNavigateBack && !notIndex}}">
+            <view class="nav-capsule-seg seg-single seg-9 {{isTouching == 9 ? 'active' : ''}}" data-index="9"
+                bindtouchstart="handleTouchStart" catchtouchmove="handleTouchMove" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+                <view wx:if="{{isTouching == 9}}" class="py-nav-spot" style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+                <button class="navigation-button capsule-share-button" open-type="share" bindtap="navigateShare">
+                    <image class="navigation-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij4NCjxwYXRoIGQ9Ik03MzUuOCwyOTQuNEwzMzMuNSw1NDUuOWM3LjEsMjIuNSw5LjQsNDYuMSw2LjgsNjkuNWwzNzMuMiwxMzkuOWM1NC4xLTc3LjIsMTYwLjUtOTUuOSwyMzcuNy00MS44DQoJYzc3LjIsNTQuMSw5NS45LDE2MC41LDQxLjgsMjM3LjdjLTU0LjEsNzcuMi0xNjAuNSw5NS45LTIzNy43LDQxLjhjLTUwLjgtMzUuNi03OC4zLTk2LjEtNzEuNy0xNTcuOEwzMTAuNCw2OTUuMw0KCWMtNTQuMSw3Ny4yLTE2MC41LDk5LjktMjM3LjcsNDEuOEMtNC41LDY4Mi45LTIzLjIsNTc2LjUsMzEsNDk5LjNzMTYwLjUtOTUuOSwyMzcuNy00MS44YzYuOSw0LjgsMTMuNSwxMC4yLDE5LjYsMTZsNDAyLjMtMjUxLjUNCglDNjYyLjEsMTMyLjIsNzEyLDM2LjQsODAxLjksOFM5ODcuNiwyOS40LDEwMTYsMTE5LjNjMjguNCw4OS45LTIxLjUsMTg1LjgtMTExLjMsMjE0LjFDODQ1LjUsMzUyLjIsNzgwLjgsMzM3LjIsNzM1LjgsMjk0LjQNCglMNzM1LjgsMjk0LjR6Ii8+DQo8L3N2Zz4NCg=="></image>
+                </button>
+            </view>
+        </view>
+        <text class="glass-nav-title">{{title || autoTitle}}</text>
+        <view class="nav-slot"><slot></slot></view>
+    </view>
+</view>

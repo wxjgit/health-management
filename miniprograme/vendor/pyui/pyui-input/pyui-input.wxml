@@ -1,0 +1,11 @@
+<view class="py-input-wrap glass-field" style="{{radius === 12 ? '' : 'border-radius:' + radius + 'rpx;'}}{{background ? 'background:' + background + ';' : ''}}padding:{{padding}};{{border === 'none' ? '' : 'border:' + border + ';'}}">
+    <text wx:if="{{label}}" class="py-input-label" style="{{labelColor ? 'color:' + labelColor + ';' : ''}}font-size:{{labelSize}}rpx;">{{label}}</text>
+    <input class="py-input" style="{{color ? 'color:' + color + ';' : ''}}font-size:{{size}}rpx;text-align:{{align}};"
+        value="{{val}}" type="{{type}}" password="{{password}}" placeholder="{{placeholder}}"
+        placeholder-style="color:{{placeholderColor === '#B2B2B2' ? '#94a3b8' : placeholderColor}};font-size:{{size}}rpx;"
+        disabled="{{disabled || formDisabled}}" focus="{{focus}}" maxlength="{{maxlength}}" confirm-type="{{confirmType}}"
+        bindinput="onInput" bindfocus="onFocus" bindblur="onBlur" bindconfirm="onConfirm" />
+    <view wx:if="{{clearable && val && !disabled}}" class="py-input-clear" catchtap="onClear">
+        <text class="py-input-clear-icon">✕</text>
+    </view>
+</view>

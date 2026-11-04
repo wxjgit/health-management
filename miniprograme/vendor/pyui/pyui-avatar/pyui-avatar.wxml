@@ -1,0 +1,4 @@
+<view class="py-avatar py-avatar-{{shape}}" style="width:{{sizePx}};height:{{sizePx}};">
+    <image wx:if="{{image && !failed}}" class="py-avatar-img" src="{{image}}" mode="aspectFill" binderror="onError"></image>
+    <pyui-icon wx:else name="{{icon}}" size="{{sizePx}}" color="#94a3b8"></pyui-icon>
+</view>

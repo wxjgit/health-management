@@ -1,0 +1,4 @@
+/* pages/profile/profile.wxss */
+.qj-field { margin-bottom: 28rpx; }
+.qj-field:last-child { margin-bottom: 0; }
+picker { display: block; }

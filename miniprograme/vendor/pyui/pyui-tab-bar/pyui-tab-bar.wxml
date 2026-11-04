@@ -1,0 +1,41 @@
+<view
+  class="{{fixed ? 'tabbar-fixed' : 'tabbar-static'}} tabbar {{hidden ? 'tabbar-hidden' : ''}} {{dragging ? 'tabbar-dragging' : ''}}"
+  bindtouchstart="onTouchStart"
+  catchtouchmove="onTouchMove"
+  bindtouchend="onTouchEnd"
+  bindtouchcancel="onTouchCancel"
+>
+  <!-- 拉伸舌片：藏在 bar 玻璃后面（z -1），拖拽越界时左右独立 scaleX 拉伸，bar 本体零 transform -->
+  <view class="tongue tongue-left" style="transform: scaleX({{stretchL}});"></view>
+  <view class="tongue tongue-right" style="transform: scaleX({{stretchR}});"></view>
+
+  <!-- 滑动透镜：位置由组件内部 progress 单一数据源驱动；宽度按槽位数 N 参数化（源为 /5 写死） -->
+  <view class="lens" style="width: calc((100% - 12px) / {{slotCount}}); transform: translateX({{progress * 100}}%) scale({{pressScale}});">
+    <view class="lens-body {{pressing || dragging ? 'lens-active' : ''}}" style="transform: scaleX({{stretch}});">
+      <view class="lens-clip"><view class="lens-refract"></view></view>
+    </view>
+  </view>
+
+  <!-- N 槽位：灰底 pill + 透镜裁剪窗内的亮色 pill -->
+  <view wx:for="{{slots}}" wx:key="text" class="tab-item" data-idx="{{index}}">
+    <view class="tab-pill pill-base">
+      <pyui-icon class="tab-icon" name="{{item.iconName}}" size="40rpx" color="rgba(15,23,42,0.55)"></pyui-icon>
+      <text class="tab-text">{{item.text}}</text>
+    </view>
+    <!-- 裁剪窗恒为透镜按压放大后的 footprint，平移系数 100/pressScale；
+         内部亮 pill 宽 100/pressScale%、等量反移 → 内容静止、裁区跟透镜，全程无条件跳变 -->
+    <view
+      class="tab-clip"
+      style="left: {{-(pressScale - 1) * 50}}%; width: {{pressScale * 100}}%; transform: translateX({{(progress - index) * 100 / pressScale}}%);"
+    >
+      <view
+        class="tab-pill pill-lit"
+        style="left: {{(pressScale - 1) / pressScale * 50}}%; width: {{100 / pressScale}}%; transform: translateX({{(index - progress) * 100}}%);"
+      >
+        <pyui-icon class="tab-icon" name="{{item.selectedIconName}}" size="40rpx" color="#015293"></pyui-icon>
+        <text class="tab-text">{{item.text}}</text>
+      </view>
+    </view>
+  </view>
+
+</view>

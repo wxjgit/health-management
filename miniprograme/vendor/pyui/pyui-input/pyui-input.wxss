@@ -1,0 +1,45 @@
+/* py-input — .glass-field 玻璃输入域（批次 G0）
+   外壳套用全局 glass-field 工具类；内联灰底/文字色默认值由此处 !important 接管，
+   radius/border 默认值在 wxml 条件摘除（自定义传参仍生效）。 */
+
+.py-input-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    /* 去灰底：内联 background 默认灰底被玻璃底覆盖 */
+    background: var(--glass-field-bg);
+}
+
+.py-input-label {
+    margin-right: 16rpx;
+    white-space: nowrap;
+    color: var(--c-text);
+}
+
+.py-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    min-height: 48rpx;
+    color: var(--c-text);
+}
+
+/* 清除钮磨砂化：深色半透底 + 白 ✕ */
+.py-input-clear {
+    flex-shrink: 0;
+    width: 40rpx;
+    height: 40rpx;
+    margin-left: 12rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 50%;
+}
+
+.py-input-clear-icon {
+    font-size: 22rpx;
+    color: #FFFFFF;
+    line-height: 1;
+}

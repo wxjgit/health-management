@@ -1,0 +1,16 @@
+<!-- py-bottom-popup — iOS 26 sheet 解剖（DESIGN.md §6）：grabber 横条 + 顶大圆角玻璃面 + 圆形玻璃关闭
+     渲染层加固：wx:if 只挂 visible；show 仅驱动 class -->
+<view class="py-popup-mask {{show ? 'show' : ''}}" wx:if="{{visible}}" bindtap="onMaskTap" catchtouchmove="noop">
+    <view class="py-popup-box {{show ? 'show' : ''}}"
+        style="{{background === '#FFFFFF' ? '' : 'background:' + background + ';'}}height:{{height}};" catchtap="noop">
+        <view class="py-popup-grabber"></view>
+        <view wx:if="{{title}}" class="py-popup-title">
+            <text>{{title}}</text>
+            <view class="py-popup-close" bindtap="onClose">✕</view>
+        </view>
+        <view class="py-popup-body {{title ? '' : 'no-title'}}">
+            <slot></slot>
+        </view>
+        <view class="py-popup-safearea"></view>
+    </view>
+</view>

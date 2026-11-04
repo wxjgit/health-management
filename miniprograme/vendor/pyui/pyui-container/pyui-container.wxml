@@ -1,0 +1,8 @@
+<!-- 页面内容容器（v3 原生滚动版）：全屏普通 view + padding 让位导航/悬浮 tabbar，
+     页面滚动与下拉刷新交给微信原生（enablePullDownRefresh / onReachBottom），
+     不再使用 scroll-view（性能）。scroll/refresher 等旧 props 保留声明以兼容存量 wxml 传参（no-op）。 -->
+<view class="pyui-page {{fullscreen ? 'pyui-page-fullscreen' : ''}}"
+    style="padding-top: {{fullscreen ? 0 : padTop}}px; padding-bottom: {{fullscreen ? 0 : padBottom}}px; background: {{color}};">
+    <slot></slot>
+    <pyui-overlay></pyui-overlay>
+</view>

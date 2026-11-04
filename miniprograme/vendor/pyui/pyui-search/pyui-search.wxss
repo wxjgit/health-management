@@ -1,0 +1,76 @@
+/* py-search-bar — 玻璃搜索条（批次 G0）
+   外壳默认透明（露出页面底色），box 套全局 glass-field 磨砂配方；
+   内联白底/灰底默认值在 wxml 条件摘除，自定义传参仍生效。 */
+
+.py-search {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 12rpx 20rpx;
+    border-radius: 16rpx;
+}
+
+.py-search-box {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    padding: 12rpx 24rpx;
+}
+
+/* 磨砂 box 保持 pill 圆角（覆盖 glass-field 默认 14px） */
+.py-search-box.glass-field {
+    border-radius: 32rpx;
+}
+
+.py-search-icon {
+    width: 32rpx;
+    height: 32rpx;
+    flex-shrink: 0;
+    margin-right: 12rpx;
+}
+
+.py-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 44rpx;
+    line-height: 44rpx;
+    color: var(--c-text);
+}
+
+/* 清除钮磨砂化：深色半透底 + 白 ✕ */
+.py-search-clear {
+    flex-shrink: 0;
+    width: 36rpx;
+    height: 36rpx;
+    margin-left: 12rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.15);
+    border-radius: 50%;
+}
+
+.py-search-clear-icon {
+    font-size: 20rpx;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+.py-search-placeholder {
+    flex: 1;
+    min-width: 0;
+    height: 44rpx;
+    line-height: 44rpx;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.py-search-action {
+    flex-shrink: 0;
+    margin-left: 20rpx;
+    font-size: 28rpx;
+    color: var(--fui-color-primary, #015293);
+}

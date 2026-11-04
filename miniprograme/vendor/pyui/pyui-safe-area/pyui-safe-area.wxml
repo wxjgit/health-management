@@ -1,0 +1,4 @@
+<!-- 底部安全区占位：默认插槽可放隐私弹窗等 fixed 内容 -->
+<view class="pyui-safearea" style="height: {{safeareaHeight}}px; background-color: {{color}}; bottom: 0;">
+    <slot></slot>
+</view>

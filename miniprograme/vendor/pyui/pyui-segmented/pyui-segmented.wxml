@@ -1,0 +1,17 @@
+<!-- py-segmented · Q 弹分段选择器（透镜跟手 + 裁剪窗渐亮 + 按压缩放统一数据源）
+     pressScale 同时驱动透镜 scale 与裁剪窗扩边（glass-tab-bar 数学，中心放大不变式） -->
+<view class="seg {{dragging ? 'is-dragging' : ''}}"
+    bindtouchstart="onTouchStart" catchtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd">
+    <view class="seg-lens" style="width: calc((100% - 16rpx) / {{items.length}}); transform: translateX({{progress * 100}}%) scale({{pressScale}});">
+        <view class="seg-lens-body"></view>
+    </view>
+    <view wx:for="{{items}}" wx:key="key" class="seg-item">
+        <text class="seg-txt">{{item.text || item.name}}</text>
+        <!-- 裁剪窗跟随透镜（含 pressScale 扩边）；窗内亮字等量反移保持原位 →
+             透镜罩住哪部分文字、哪部分渐亮 -->
+        <view class="seg-clip" style="left: {{-(pressScale - 1) * 50}}%; width: {{pressScale * 100}}%; transform: translateX({{(progress - index) * 100 / pressScale}}%);">
+            <text class="seg-txt seg-lit" style="left: {{(pressScale - 1) / pressScale * 50}}%; width: {{100 / pressScale}}%; transform: translateX({{(index - progress) * 100}}%);">{{item.text || item.name}}</text>
+        </view>
+    </view>
+</view>

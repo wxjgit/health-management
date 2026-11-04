@@ -1,0 +1,72 @@
+<view class="qj-page">
+  <pyui-navbar title="个人档案"></pyui-navbar>
+  <view class="qj-body qj-body--action" style="padding-top:{{navH}}px">
+
+    <view class="qj-note">档案用于本地计算默认目标（Mifflin–St Jeor 公式），不调用模型。自动估算仅覆盖 19–78 岁。</view>
+
+    <view class="qj-card">
+      <view class="qj-field {{err.age ? 'is-invalid' : ''}}">
+        <view class="qj-field__lb">年龄 <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-input value="{{form.age}}" type="number" placeholder="如 32" bind:input="onField" data-k="age"></pyui-input></view>
+        <view class="qj-field__err">请输入 1–120 之间的年龄</view>
+      </view>
+      <view class="qj-field {{err.height_cm ? 'is-invalid' : ''}}">
+        <view class="qj-field__lb">身高 cm <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-input value="{{form.height_cm}}" type="digit" placeholder="如 165" bind:input="onField" data-k="height_cm"></pyui-input></view>
+        <view class="qj-field__err">请输入 80–250 之间的数值</view>
+      </view>
+      <view class="qj-field {{err.weight_kg ? 'is-invalid' : ''}}">
+        <view class="qj-field__lb">当前体重 kg <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-input value="{{form.weight_kg}}" type="digit" placeholder="如 65.0" bind:input="onField" data-k="weight_kg"></pyui-input></view>
+        <view class="qj-field__err">请输入 20–400 之间的体重</view>
+      </view>
+      <view class="qj-field {{err.goal_weight_kg ? 'is-invalid' : ''}}">
+        <view class="qj-field__lb">目标体重 kg <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-input value="{{form.goal_weight_kg}}" type="digit" placeholder="如 58.0" bind:input="onField" data-k="goal_weight_kg"></pyui-input></view>
+        <view class="qj-field__err">请输入合理目标体重（目标 BMI 不宜低于 18.5）</view>
+      </view>
+
+      <view class="qj-field">
+        <view class="qj-field__lb">性别 <text class="req">*</text></view>
+        <pyui-segmented items="{{sexOptions}}" current="{{form.sex}}" bind:change="onSex"></pyui-segmented>
+      </view>
+      <view class="qj-field">
+        <view class="qj-field__lb">活动水平</view>
+        <pyui-segmented items="{{activityOptions}}" current="{{form.activity}}" bind:change="onActivity"></pyui-segmented>
+      </view>
+      <view class="qj-field {{err.goal_date ? 'is-invalid' : ''}}">
+        <view class="qj-field__lb">目标日期</view>
+        <picker mode="date" value="{{form.goal_date}}" start="2020-01-01" end="2035-12-31" bindchange="onDate">
+          <view class="qj-input-wrap qj-tap">
+            <view class="qj-flex" style="justify-content:space-between;height:72rpx">
+              <text class="qj-t3">{{form.goal_date || '选择日期'}}</text>
+              <pyui-icon name="calendar" size="32rpx" color="#94a3b8"></pyui-icon>
+            </view>
+          </view>
+        </picker>
+        <view class="qj-field__err">请选择目标日期</view>
+      </view>
+      <view class="qj-field">
+        <view class="qj-field__lb">营养适用情况</view>
+        <pyui-segmented items="{{nutritionOptions}}" current="{{form.nutrition_context}}" bind:change="onNutrition"></pyui-segmented>
+      </view>
+    </view>
+
+    <view class="qj-warn">性别不明确、BMI &lt;18.5 或 ≥40、孕期/哺乳期/临床营养需求时，不会自动生成通用目标；期望日期不会直接转成节食强度。</view>
+
+    <view class="qj-card" wx:if="{{defaultTargets}}">
+      <view class="qj-card__hd"><text class="qj-card__title">系统默认目标</text><text class="qj-card__sub">本地计算 · 可在计划页采用</text></view>
+      <view class="qj-kv"><text class="qj-kv__k">每日热量</text><text class="qj-kv__v">{{defaultTargets.kcal}} kcal</text></view>
+      <view class="qj-kv"><text class="qj-kv__k">蛋白 / 碳水 / 脂肪</text><text class="qj-kv__v">{{defaultTargets.protein_g}} / {{defaultTargets.carbs_g}} / {{defaultTargets.fat_g}} g</text></view>
+      <view class="qj-t5" style="margin-top:10rpx">{{defaultTargets.reason}}</view>
+    </view>
+  </view>
+
+  <view class="qj-actionbar">
+    <pyui-button type="primary" plain="{{true}}" text="取消" style="flex:1" bind:click="onCancel"></pyui-button>
+    <pyui-button type="primary" text="保存档案" style="flex:2" loading="{{saving}}" bind:click="onSave"></pyui-button>
+  </view>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

@@ -1,0 +1,40 @@
+/* progress · 玻璃轨道进度条：轨道=弱玻璃，bar=品牌渐变或 status 语义色 */
+
+.py-progress {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    width: 100%;
+}
+
+.py-progress-track {
+    flex: 1;
+    border-radius: var(--r-full);
+    background: rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.py-progress-bar {
+    height: 100%;
+    border-radius: var(--r-full);
+    background: linear-gradient(90deg, #2563eb, var(--fui-color-primary, #015293));
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    transition: width 0.3s cubic-bezier(0.32, 0.72, 0.28, 1.1);
+}
+
+.py-progress-inlabel {
+    font-size: 18rpx;
+    color: #fff;
+    padding-right: 10rpx;
+    line-height: 1;
+}
+
+.py-progress-label {
+    font-size: 22rpx;
+    color: var(--c-sub);
+    min-width: 64rpx;
+    text-align: right;
+}

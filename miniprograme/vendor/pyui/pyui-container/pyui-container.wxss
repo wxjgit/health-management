@@ -1,0 +1,13 @@
+/* v3：普通文档流全屏容器，页面级原生滚动；导航/tabbar 由 padding 让位 */
+.pyui-page {
+    width: 100vw;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* 全屏模式（map 等满屏页）：不让位、不滚动，内容自管布局 */
+.pyui-page-fullscreen {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}

@@ -1,0 +1,22 @@
+/* avatar · 玻璃描边头像（DESIGN.md：圆形头像加玻璃描边） */
+
+.py-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.55);
+    border: 2rpx solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.12);
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.py-avatar-circle { border-radius: 50%; }
+.py-avatar-round { border-radius: 16rpx; }
+
+.py-avatar-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}

@@ -1,0 +1,212 @@
+/* ══════════════════════════════════════════════════════════════
+   轻记 · 全局样式与设计 Token（单一事实源）
+   统一策略：
+   1) 颜色/玻璃/圆角 token → 复用 PyUI（@import vendor tokens），品牌深蓝 #015293
+   2) 页面宽度、卡片圆角、内边距、列表、统计、表单 → 本文件全局布局类，所有页面强制复用
+   → 保证「宽度、圆角、间距」等一眼可见的观感全局一致
+   ══════════════════════════════════════════════════════════════ */
+@import "/vendor/pyui/common/tokens.wxss";
+
+/* ── 轻记品牌层：在 PyUI token 之上补充健康 App 语义色 ── */
+page {
+  /* 五类记录语义色（全局唯一来源，禁止页面内硬编码） */
+  --qj-meal: #e8a33d;      /* 饮食 · 暖橙 */
+  --qj-weight: #4b9fe1;    /* 体重 · 天蓝 */
+  --qj-sleep: #9370db;     /* 睡眠 · 紫 */
+  --qj-exercise: #09be4f;  /* 运动 · 绿 */
+  --qj-cycle: #ff6b8a;     /* 周期 · 粉 */
+  /* 轻记统一间距阶梯（4 的倍数） */
+  --qj-gap-xs: 8rpx;
+  --qj-gap-sm: 12rpx;
+  --qj-gap: 16rpx;
+  --qj-gap-md: 24rpx;
+  --qj-gap-lg: 32rpx;
+  /* 统一页面左右安全边距（所有列表/卡片页一致） */
+  --qj-page-pad: 24rpx;
+  /* 统一圆角阶梯（卡片复用 PyUI --r-card:20px；此处补充小/中档） */
+  --qj-r-sm: 12rpx;
+  --qj-r-md: 16rpx;
+  --qj-r-lg: 20rpx;
+  --qj-r-pill: 999rpx;
+  color: var(--c-text);
+}
+
+/* ══════════ 页面骨架（与 PyUI container 协同） ══════════ */
+.qj-page {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--page-bg);
+}
+.qj-body {
+  padding: 0 var(--qj-page-pad);
+  box-sizing: border-box;
+}
+/* 底部让位：Root 页悬浮 tabbar；Task 页底部操作栏 */
+.qj-body--tab { padding-bottom: calc(180rpx + env(safe-area-inset-bottom)); }
+.qj-body--action { padding-bottom: calc(160rpx + env(safe-area-inset-bottom)); }
+
+/* ══════════ 卡片（统一圆角/阴影/内边距） ══════════ */
+.qj-card {
+  background: var(--glass-card-bg);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  backdrop-filter: var(--glass-blur-md);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-card);
+  box-shadow: var(--glass-ring);
+  box-sizing: border-box;
+  padding: var(--qj-gap-md);
+  margin-bottom: var(--qj-gap-md);
+}
+.qj-card__hd {
+  display: flex;
+  align-items: center;
+  gap: var(--qj-gap-sm);
+  margin-bottom: var(--qj-gap);
+}
+.qj-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--c-text);
+  flex: 1;
+}
+.qj-card__sub {
+  font-size: 22rpx;
+  color: var(--c-minor);
+}
+
+/* ══════════ 文本层级（统一字号，禁止页面自定） ══════════ */
+.qj-t1 { font-size: 34rpx; font-weight: 700; color: var(--c-text); }
+.qj-t2 { font-size: 30rpx; font-weight: 600; color: var(--c-text); }
+.qj-t3 { font-size: 28rpx; color: var(--c-text); line-height: 1.6; }
+.qj-t4 { font-size: 26rpx; color: var(--c-sub); line-height: 1.6; }
+.qj-t5 { font-size: 22rpx; color: var(--c-minor); line-height: 1.5; }
+.qj-num { font-variant-numeric: tabular-nums; }
+
+/* ══════════ 分区标题 ══════════ */
+.qj-section {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--c-sub);
+  letter-spacing: 1rpx;
+  padding: var(--qj-gap) var(--qj-gap-xs) var(--qj-gap-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--qj-gap-xs);
+}
+
+/* ══════════ 列表行（统一分隔/内边距/最小高度=44pt 触控） ══════════ */
+.qj-list { padding: 0 var(--qj-gap-md); }
+.qj-row {
+  display: flex;
+  align-items: center;
+  gap: var(--qj-gap);
+  padding: var(--qj-gap-md) 0;
+  border-bottom: 1px solid var(--hairline);
+  min-height: 96rpx;
+  box-sizing: border-box;
+}
+.qj-row:last-child { border-bottom: none; }
+.qj-row--tap { transition: opacity .12s; }
+.qj-row--tap:active { opacity: .6; }
+.qj-row__ic {
+  width: 76rpx; height: 76rpx; border-radius: var(--qj-r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36rpx; flex: none;
+}
+.qj-row__bd { flex: 1; min-width: 0; }
+.qj-row__tt { font-size: 28rpx; font-weight: 600; color: var(--c-text); display: block; }
+.qj-row__desc { font-size: 24rpx; color: var(--c-minor); margin-top: 4rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qj-row__arw { color: var(--c-minor); flex: none; }
+
+/* 五类记录图标底色（语义色统一来源） */
+.qj-ic--meal { background: rgba(232,163,61,.14); }
+.qj-ic--weight { background: rgba(75,159,225,.14); }
+.qj-ic--sleep { background: rgba(147,112,219,.14); }
+.qj-ic--exercise { background: rgba(9,190,79,.14); }
+.qj-ic--cycle { background: rgba(255,107,138,.14); }
+
+/* ══════════ 键值行（档案/详情统一） ══════════ */
+.qj-kv {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--qj-gap); padding: 22rpx 0; border-bottom: 1px solid var(--hairline);
+  font-size: 28rpx;
+}
+.qj-kv:last-child { border-bottom: none; }
+.qj-kv__k { color: var(--c-sub); flex: none; }
+.qj-kv__v { color: var(--c-text); font-weight: 600; text-align: right; }
+.qj-kv__v small { display: block; font-weight: 400; color: var(--c-minor); font-size: 22rpx; margin-top: 2rpx; }
+
+/* ══════════ 统计块（今日汇总/复盘统一三列） ══════════ */
+.qj-stats { display: flex; gap: var(--qj-gap); }
+.qj-stat {
+  flex: 1; background: rgba(255,255,255,.5);
+  border: 1px solid var(--glass-border); border-radius: var(--qj-r-lg);
+  padding: var(--qj-gap) var(--qj-gap-xs); text-align: center; box-sizing: border-box;
+}
+.qj-stat__num { font-size: 38rpx; font-weight: 700; color: var(--c-text); display: block; line-height: 1.2; }
+.qj-stat__num small { font-size: 22rpx; font-weight: 600; }
+.qj-stat__lb { font-size: 22rpx; color: var(--c-minor); margin-top: 6rpx; display: block; }
+.qj-stat--up .qj-stat__num { color: var(--fui-color-danger); }
+.qj-stat--down .qj-stat__num { color: var(--fui-color-success); }
+
+/* ══════════ 表单字段（统一标签/输入/错误） ══════════ */
+.qj-field { margin-bottom: var(--qj-gap-md); }
+.qj-field__lb { font-size: 26rpx; color: var(--c-sub); font-weight: 600; margin-bottom: 12rpx; display: block; }
+.qj-field__lb .req { color: var(--fui-color-danger); }
+.qj-field__err { font-size: 22rpx; color: var(--fui-color-danger); margin-top: 8rpx; display: none; }
+.qj-field.is-invalid .qj-input-wrap { border-color: var(--fui-color-danger); }
+.qj-field.is-invalid .qj-field__err { display: block; }
+.qj-input-wrap {
+  background: var(--glass-field-bg); border: 1.5px solid rgba(255,255,255,.6);
+  border-radius: 14px; padding: 4rpx 20rpx; box-sizing: border-box;
+}
+
+/* ══════════ 胶囊/筛选 chips（历史筛选、快捷入口统一） ══════════ */
+.qj-chips { display: flex; gap: var(--qj-gap-sm); flex-wrap: wrap; }
+.qj-chips--scroll { flex-wrap: nowrap; overflow-x: auto; }
+.qj-chip {
+  padding: 12rpx 28rpx; border-radius: var(--qj-r-pill);
+  background: rgba(255,255,255,.6); border: 1px solid var(--glass-border);
+  font-size: 26rpx; color: var(--c-sub); white-space: nowrap; box-sizing: border-box;
+  min-height: 64rpx; display: flex; align-items: center;
+}
+.qj-chip.is-on {
+  background: rgba(1,82,147,.1); border-color: var(--fui-color-primary);
+  color: var(--fui-color-primary); font-weight: 600;
+}
+
+/* ══════════ 提示框（note / warn，全局统一） ══════════ */
+.qj-note {
+  background: rgba(75,159,225,.09); border: 1px solid rgba(75,159,225,.2);
+  border-radius: var(--qj-r-lg); padding: 20rpx 24rpx;
+  font-size: 24rpx; color: #2f6f9e; line-height: 1.65; margin-bottom: var(--qj-gap-md);
+}
+.qj-warn {
+  background: rgba(232,163,61,.1); border: 1px solid rgba(232,163,61,.28);
+  border-radius: var(--qj-r-lg); padding: 20rpx 24rpx;
+  font-size: 24rpx; color: #8f6420; line-height: 1.65; margin-bottom: var(--qj-gap-md);
+}
+
+/* ══════════ 底部操作栏（Task 页统一，禁用系统 tabBar 时替代） ══════════ */
+.qj-actionbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; gap: var(--qj-gap);
+  padding: 16rpx var(--qj-page-pad) calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ══════════ 通用工具 ══════════ */
+.qj-flex { display: flex; align-items: center; }
+.qj-flex-1 { flex: 1; min-width: 0; }
+.qj-gap-sm { gap: var(--qj-gap-sm); }
+.qj-gap { gap: var(--qj-gap); }
+.qj-mt { margin-top: var(--qj-gap-md); }
+.qj-mb { margin-bottom: var(--qj-gap-md); }
+.qj-center { text-align: center; }
+.qj-hairline { height: 1px; background: var(--hairline); margin: var(--qj-gap) 0; }
+.qj-tap { transition: opacity .12s; }
+.qj-tap:active { opacity: .6; }

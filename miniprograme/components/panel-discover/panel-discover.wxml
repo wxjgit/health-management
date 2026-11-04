@@ -1,0 +1,50 @@
+<!-- panel-discover：发现面板（洞察 + 复盘）· 虚拟页 -->
+<view class="disc-panel">
+  <pyui-segmented id="seg" items="{{tabs}}" current="{{tab}}" bind:change="onTab" style="margin-bottom:20rpx"></pyui-segmented>
+
+  <scroll-view class="disc-scroll" scroll-y>
+    <block wx:if="{{tab === 'insights'}}">
+      <pyui-skeleton wx:if="{{loadingI}}" theme="paragraph" row="{{4}}" loading="{{true}}"></pyui-skeleton>
+      <block wx:if="{{!loadingI}}">
+        <pyui-empty wx:if="{{!insightsList.length}}" text="还没有规律洞察" size="{{200}}"></pyui-empty>
+        <view wx:for="{{insightsList}}" wx:key="id" class="qj-card insight {{item.stale ? 'is-stale' : ''}}">
+          <view class="qj-card__hd">
+            <text class="qj-card__title">{{item.title}}</text>
+            <view class="qj-chip {{item.statusCls}}" style="pointer-events:none">{{item.statusLabel}}</view>
+          </view>
+          <view class="qj-t3">{{item.body}}</view>
+          <view class="insight-ev"><pyui-icon name="pin" size="22rpx" color="#94a3b8"></pyui-icon> {{item.evidence}}</view>
+          <view wx:if="{{item.status === 'pending'}}" class="qj-flex qj-gap" style="margin-top:16rpx">
+            <pyui-button type="primary" text="符合实际" size="26" height="72rpx" style="flex:1" bind:click="onFb" data-id="{{item.id}}" data-fb="accepted"></pyui-button>
+            <pyui-button type="primary" plain="{{true}}" text="不准确" size="26" height="72rpx" style="flex:1" bind:click="onFb" data-id="{{item.id}}" data-fb="rejected"></pyui-button>
+          </view>
+        </view>
+        <view class="qj-t5" style="margin:12rpx 8rpx">规律只在有足够证据时生成，展示样本、窗口、覆盖率与限制；数据不足不会强行生成。认可/否认将影响后续权重学习。</view>
+      </block>
+    </block>
+
+    <block wx:if="{{tab === 'reviews'}}">
+      <pyui-skeleton wx:if="{{loadingR}}" theme="paragraph" row="{{4}}" loading="{{true}}"></pyui-skeleton>
+      <block wx:if="{{!loadingR}}">
+        <view wx:for="{{reviewsList}}" wx:key="id" class="qj-card">
+          <view class="qj-card__hd">
+            <pyui-icon name="calendar" size="28rpx" color="#015293"></pyui-icon>
+            <text class="qj-card__title">{{item.periodLabel}}</text>
+            <view class="qj-chip is-on" style="pointer-events:none">已生成</view>
+          </view>
+          <view class="qj-stats" wx:if="{{item.metrics.length}}">
+            <view wx:for="{{item.metrics}}" wx:for-item="m" wx:key="label" class="qj-stat {{m.cls}}">
+              <text class="qj-stat__num qj-num">{{m.value}}<small>{{m.unit}}</small></text>
+              <text class="qj-stat__lb">{{m.label}}</text>
+            </view>
+          </view>
+          <view class="qj-t3" style="margin-top:16rpx">{{item.body}}</view>
+          <view class="qj-t5" style="margin-top:10rpx">{{item.source}}</view>
+        </view>
+        <pyui-empty wx:if="{{!reviewsList.length}}" text="还没有复盘报告" size="{{200}}"></pyui-empty>
+        <pyui-button type="primary" plain="{{true}}" text="生成新的周复盘" height="88rpx" style="margin-top:8rpx" loading="{{generating}}" bind:click="genReview"></pyui-button>
+        <view class="qj-t5" style="margin:16rpx 8rpx">复盘保留原统计窗口；来源变化、方法升级或窗口过期会显示更新提示。</view>
+      </block>
+    </block>
+  </scroll-view>
+</view>

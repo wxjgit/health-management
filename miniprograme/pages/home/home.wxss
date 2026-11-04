@@ -1,0 +1,4 @@
+/* pages/home/home.wxss — 高度链：page(100vh) → home-body(flex:1) → home-panel(100%) → 面板内部 */
+.home-page { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.home-body { flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; }
+.home-panel { flex: 1; min-height: 0; height: 100%; }

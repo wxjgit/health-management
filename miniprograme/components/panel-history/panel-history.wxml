@@ -1,0 +1,42 @@
+<!-- panel-history：历史面板 · 虚拟页 -->
+<view class="hist-panel">
+  <view class="hist-filter">
+    <pyui-search value="{{search}}" placeholder="搜索食物、关键词…" bind:input="onSearch" bind:search="onSearch"></pyui-search>
+    <view class="qj-chips" style="margin-top:16rpx">
+      <view wx:for="{{kinds}}" wx:key="k" class="qj-chip {{kind === item.k ? 'is-on' : ''}}" bindtap="pickKind" data-k="{{item.k}}">
+        <pyui-icon name="{{item.icon}}" size="26rpx" color="{{kind === item.k ? '#015293' : '#64748b'}}"></pyui-icon>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+    <view class="hist-meta">
+      <view class="qj-chip" bindtap="cycleRange">近 {{range}} 天 ▾</view>
+      <text class="qj-t5" style="margin-left:auto">共 {{list.length}} 条</text>
+    </view>
+  </view>
+
+  <scroll-view class="hist-scroll" scroll-y>
+    <pyui-skeleton wx:if="{{loading}}" theme="paragraph" row="{{5}}" loading="{{true}}"></pyui-skeleton>
+    <block wx:if="{{!loading}}">
+      <pyui-empty wx:if="{{!list.length}}" text="{{search ? '没有匹配的记录' : '该筛选下暂无记录'}}" size="{{200}}"></pyui-empty>
+      <block wx:for="{{groups}}" wx:key="day" wx:for-item="grp">
+        <view class="day-hd">
+          <text>{{grp.dayLabel}}</text>
+          <view wx:if="{{grp.kcal}}" class="day-kcal">{{grp.kcal}} kcal</view>
+        </view>
+        <view class="qj-card qj-list" style="padding:0 24rpx">
+          <view wx:for="{{grp.items}}" wx:key="id" wx:for-item="e" class="qj-row qj-row--tap" bindtap="openEvent" data-id="{{e.id}}">
+            <view class="qj-row__ic {{e.cls}}"><pyui-icon name="{{e.icon}}" size="34rpx" color="{{e.iconColor}}"></pyui-icon></view>
+            <view class="qj-row__bd">
+              <view class="qj-row__tt">{{e.title}}
+                <text wx:if="{{e.rev > 1}}" class="rev-tag">修订×{{e.rev - 1}}</text>
+              </view>
+              <view class="qj-row__desc">{{e.detail}}</view>
+              <view class="evt-meta"><text>{{e.time}}</text><text wx:if="{{e.kcal}}">{{e.kcal}} kcal</text><text>{{e.source}}</text></view>
+            </view>
+            <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+          </view>
+        </view>
+      </block>
+    </block>
+  </scroll-view>
+</view>

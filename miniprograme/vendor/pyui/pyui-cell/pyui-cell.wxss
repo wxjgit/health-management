@@ -1,0 +1,79 @@
+/* py-list-cell — 玻璃列表行（批次 G0）
+   行底默认透明（wxml 条件摘除白底，露出外层 glass-card），
+   hover 亮斑、分隔线与文字色全部 token 化。 */
+
+.py-cell {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    padding: 24rpx;
+    border-bottom: none;
+}
+
+.py-cell.last {
+    border-bottom: none;
+}
+
+/* 按压亮斑 */
+.py-cell-hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.py-cell-left {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.py-cell-title {
+    font-size: 28rpx;
+    /* 覆盖内联 titleColor 默认值 */
+    color: var(--c-text) !important;
+}
+
+.py-cell-desc {
+    font-size: 24rpx;
+    color: var(--c-sub);
+    margin-top: 6rpx;
+}
+
+.py-cell-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 16rpx;
+}
+
+.py-cell-value {
+    font-size: 26rpx;
+    color: var(--c-sub);
+}
+
+.py-cell-arrow {
+    font-size: 36rpx;
+    color: var(--c-minor);
+    margin-left: 8rpx;
+    line-height: 1;
+}
+
+.pyui-press {
+    transition: background 0.12s cubic-bezier(0.2, 0, 0, 1), transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pyui-press-hover {
+    background: rgba(15, 23, 42, 0.05);
+}
+
+/* iOS 内缩发丝线：左 inset 28rpx */
+.py-cell { position: relative; }
+.py-cell::after {
+    content: '';
+    position: absolute;
+    left: 28rpx;
+    right: 0;
+    bottom: 0;
+    height: 1rpx;
+    background: rgba(15, 23, 42, 0.06);
+}

@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>轻记 · 个人减脂 Agent — 高保真交互原型</title>
+<style>
+/* ============ Design Tokens（冻结继承：薄荷绿—浅蓝—暖白渐变风格） ============ */
+:root{
+  --mint:#7ed8b5; --mint-deep:#3fbf8f; --sky:#a8d4f0; --sky-deep:#4b9fe1;
+  --warm-white:#fdfbf6; --brand:#2f6fed; --brand-deep:#2559c4; --brand-light:rgba(47,111,237,.10);
+  --ink:#1f2d3d; --ink-2:#5a6b7e; --ink-3:#8b98a8;
+  --bg-page:#f2f6fb; --bg-card:rgba(255,255,255,.82); --border:#e2ebf5;
+  --ok:#2fb57c; --warn:#e8a33d; --err:#e5566d; --info:#4b9fe1;
+  --r-s:8px; --r-m:12px; --r-l:18px; --r-xl:24px;
+  --nav-h:62px; --safe-b:env(safe-area-inset-bottom,0px);
+  --shell-w:390px; --shell-h:844px;
+  --shadow:0 2px 10px rgba(31,45,61,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  color:var(--ink);background:linear-gradient(135deg,#e8f4ee 0%,#eaf2fa 50%,#fbf7ee 100%);
+  display:flex;flex-direction:column;align-items:center;min-height:100dvh}
+
+/* ============ 评审工具条（仅原型壳，非产品界面） ============ */
+.review-bar{width:100%;max-width:980px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:14px 16px 8px;font-size:13px;color:var(--ink-2)}
+.review-bar b{color:var(--ink);font-size:14px;margin-right:4px}
+.review-bar button{border:1px solid var(--border);background:#fff;border-radius:999px;
+  padding:6px 14px;font-size:12px;cursor:pointer;color:var(--ink-2);transition:.15s}
+.review-bar button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.review-bar .hint{flex:1;min-width:200px;font-size:12px;color:var(--ink-3)}
+
+/* ============ 手机壳 ============ */
+.phone{width:var(--shell-w);max-width:100vw;height:min(var(--shell-h),100dvh);background:var(--bg-page);
+  border-radius:36px;box-shadow:0 18px 60px rgba(31,45,61,.22),0 0 0 10px #101820,0 0 0 12px #2a3644;
+  overflow:hidden;position:relative;display:flex;flex-direction:column;margin-bottom:26px}
+body.no-shell .phone{border-radius:0;box-shadow:none;width:100vw;height:100dvh;max-width:none}
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;font-size:13px;font-weight:600;color:var(--ink);flex:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,0));position:relative;z-index:60}
+.statusbar .sb-r{display:flex;gap:5px;align-items:center}
+.notch{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:110px;height:26px;
+  background:#101820;border-radius:999px;z-index:61}
+body.no-shell .notch{display:none}
+
+/* ============ 视口 / 页面栈 ============ */
+.viewport{flex:1;position:relative;overflow:hidden}
+.page{position:absolute;inset:0;display:none;flex-direction:column;background:
+  linear-gradient(170deg,#eaf7f0 0%,#edf4fb 34%,#fbf8f1 100%)}
+.page.active{display:flex}
+.page-body{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:0 16px calc(var(--nav-h) + 26px + var(--safe-b))}
+.page.no-nav .page-body{padding-bottom:calc(20px + var(--safe-b))}
+.page.no-nav.has-action .page-body{padding-bottom:calc(92px + var(--safe-b))}
+
+/* 页头 */
+.hd{flex:none;padding:6px 16px 10px;display:flex;align-items:center;gap:10px;position:relative;z-index:20}
+.hd .back{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-card);
+  box-shadow:var(--shadow);cursor:pointer;font-size:17px;color:var(--ink);display:flex;align-items:center;
+  justify-content:center;flex:none}
+.hd h1{font-size:17px;font-weight:700;flex:1}
+.hd .hd-act{font-size:13px;color:var(--brand);background:none;border:none;cursor:pointer;padding:8px}
+
+/* ============ Root Navigation（悬浮底部导航） ============ */
+.root-nav{position:absolute;left:14px;right:14px;bottom:calc(12px + var(--safe-b));height:var(--nav-h);
+  background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.7);border-radius:var(--r-xl);box-shadow:0 8px 26px rgba(31,45,61,.13);
+  display:none;z-index:50}
+.page.root.active .root-nav{display:flex}
+.root-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;color:var(--ink-3);position:relative;border:none;background:none;min-height:44px}
+.root-nav .nav-item svg{width:23px;height:23px}
+.root-nav .nav-item span{font-size:11px;font-weight:500}
+.root-nav .nav-item.on{color:var(--brand)}
+.root-nav .nav-item.on::before{content:"";position:absolute;top:6px;width:18px;height:3px;border-radius:2px;background:var(--brand)}
+.root-nav .nav-item .badge{position:absolute;top:8px;right:50%;margin-right:-20px;min-width:16px;height:16px;
+  border-radius:8px;background:var(--err);color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px}
+
+/* ============ 通用组件 ============ */
+.card{background:var(--bg-card);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.8);
+  border-radius:var(--r-l);box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card h3 .sub{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:auto}
+.sec-title{font-size:13px;color:var(--ink-2);font-weight:600;margin:16px 2px 2px;display:flex;align-items:center;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:999px;font-weight:500}
+.pill.ok{background:rgba(47,181,124,.12);color:var(--ok)}
+.pill.warn{background:rgba(232,163,61,.14);color:#b57b1c}
+.pill.err{background:rgba(229,86,109,.12);color:var(--err)}
+.pill.info{background:rgba(75,159,225,.13);color:#2f7cb8}
+.pill.brand{background:var(--brand-light);color:var(--brand)}
+.pill.gray{background:#eef1f5;color:var(--ink-2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:999px;
+  border:none;font-size:15px;font-weight:600;cursor:pointer;transition:.14s;padding:0 22px;width:100%}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--brand),#5a8df6);color:#fff;box-shadow:0 6px 16px rgba(47,111,237,.28)}
+.btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.soft{background:var(--brand-light);color:var(--brand)}
+.btn.danger{background:rgba(229,86,109,.1);color:var(--err)}
+.btn.plain{background:#fff;color:var(--ink-2);border:1px solid var(--border)}
+.btn.sm{min-height:36px;font-size:13px;padding:0 16px;width:auto;border-radius:999px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.row{display:flex;gap:10px;align-items:center}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid #f0f3f7;font-size:14px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.kv .v{font-weight:600;color:var(--ink);text-align:right;max-width:62%}
+.kv .v small{display:block;font-weight:400;color:var(--ink-3);font-size:11px}
+.cell{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid #f0f3f7;cursor:pointer;min-height:48px}
+.cell:last-child{border-bottom:none}
+.cell .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.cell .tt{flex:1;min-width:0}
+.cell .tt b{font-size:14px;font-weight:600;display:block}
+.cell .tt small{font-size:12px;color:var(--ink-3);display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .arw{color:var(--ink-3);font-size:14px;flex:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:999px;background:#fff;border:1px solid var(--border);
+  font-size:13px;color:var(--ink-2);cursor:pointer;transition:.14s;min-height:34px}
+.chip.on{background:var(--brand-light);border-color:var(--brand);color:var(--brand);font-weight:600}
+.progress{height:8px;background:#e9eef5;border-radius:4px;overflow:hidden}
+.progress i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--mint),var(--sky-deep))}
+.divider{height:1px;background:#eef1f5;margin:10px 0}
+.muted{font-size:12px;color:var(--ink-3);line-height:1.6}
+.note{background:rgba(75,159,225,.08);border:1px solid rgba(75,159,225,.18);border-radius:var(--r-m);
+  padding:10px 12px;font-size:12px;color:#3a6d96;line-height:1.65;margin-top:10px}
+.warnbox{background:rgba(232,163,61,.09);border:1px solid rgba(232,163,61,.25);border-radius:var(--r-m);
+  padding:10px 12px;font-size:12px;color:#8f6420;line-height:1.65;margin-top:10px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:46px 20px;color:var(--ink-3);text-align:center}
+.empty .ei{font-size:40px;opacity:.5}
+.empty p{font-size:13px;line-height:1.7}
+.skeleton{background:linear-gradient(90deg,#edf1f6 25%,#f6f8fb 50%,#edf1f6 75%);background-size:200% 100%;
+  animation:sk 1.2s infinite;border-radius:8px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* 表单 */
+.field{margin-top:12px}
+.field label{font-size:13px;color:var(--ink-2);font-weight:600;display:block;margin-bottom:6px}
+.field label i{color:var(--err);font-style:normal}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--r-m);
+  padding:11px 12px;font-size:14px;background:#fff;color:var(--ink);outline:none;transition:.15s;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(47,111,237,.1)}
+.field .err-tip{font-size:12px;color:var(--err);margin-top:5px;display:none}
+.field.invalid input{border-color:var(--err)}
+.field.invalid .err-tip{display:block}
+.seg{display:flex;background:#eef1f5;border-radius:999px;padding:3px}
+.seg button{flex:1;border:none;background:none;padding:8px 0;border-radius:999px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:#fff;color:var(--brand);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.switch{width:46px;height:27px;border-radius:999px;background:#d8dee7;position:relative;cursor:pointer;transition:.2s;flex:none;border:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on{background:var(--ok)}
+.switch.on::after{left:22px}
+
+/* Bottom Sheet & 弹层 */
+.mask{position:absolute;inset:0;background:rgba(16,24,32,.45);z-index:80;opacity:0;pointer-events:none;transition:.22s}
+.mask.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;z-index:81;
+  transform:translateY(105%);transition:.26s cubic-bezier(.32,.72,.35,1);max-height:82%;display:flex;flex-direction:column;
+  padding-bottom:var(--safe-b)}
+.sheet.show{transform:translateY(0)}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:#dde3ea;margin:10px auto 2px;flex:none}
+.sheet .sheet-hd{padding:10px 18px 6px;font-size:16px;font-weight:700;display:flex;align-items:center;flex:none}
+.sheet .sheet-hd .x{margin-left:auto;border:none;background:#f0f2f6;width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--ink-2);font-size:14px}
+.sheet .sheet-bd{padding:6px 18px 20px;overflow-y:auto}
+.dialog{position:absolute;left:26px;right:26px;top:50%;transform:translateY(-50%) scale(.92);background:#fff;
+  border-radius:var(--r-xl);z-index:81;opacity:0;pointer-events:none;transition:.2s;padding:22px 20px 16px;text-align:center}
+.dialog.show{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
+.dialog h4{font-size:16px;margin-bottom:8px}
+.dialog p{font-size:13px;color:var(--ink-2);line-height:1.7}
+.dialog .dg-btns{display:flex;gap:10px;margin-top:18px}
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%) translateY(14px);background:rgba(22,30,40,.9);
+  color:#fff;font-size:13px;padding:10px 18px;border-radius:999px;z-index:99;opacity:0;pointer-events:none;transition:.25s;max-width:80%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ 登录页 ============ */
+#pg-login{background:linear-gradient(165deg,#d9f2e5 0%,#dcecfb 46%,#fdf6e8 100%)}
+.login-wrap{flex:1;display:flex;flex-direction:column;padding:0 30px calc(30px + var(--safe-b));overflow-y:auto}
+.logo-area{margin-top:52px;text-align:center}
+.logo-area .lg{width:84px;height:84px;margin:0 auto 16px;border-radius:26px;
+  background:linear-gradient(135deg,var(--mint),var(--sky-deep));display:flex;align-items:center;justify-content:center;
+  font-size:42px;box-shadow:0 10px 26px rgba(75,159,225,.35)}
+.logo-area h2{font-size:24px;font-weight:800;letter-spacing:2px}
+.logo-area p{font-size:13px;color:var(--ink-2);margin-top:8px;line-height:1.7}
+.consent-box{margin-top:26px;background:rgba(255,255,255,.75);border-radius:var(--r-l);padding:14px;font-size:12px;
+  color:var(--ink-2);line-height:1.8;border:1px solid rgba(255,255,255,.9)}
+.consent-box b{color:var(--ink)}
+.consent-row{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.cbx{width:20px;height:20px;border-radius:6px;border:1.5px solid #b9c4d2;background:#fff;flex:none;margin-top:1px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;transition:.15s}
+.cbx.on{background:var(--brand);border-color:var(--brand)}
+.consent-row a{color:var(--brand);text-decoration:none}
+
+/* ============ 聊天（记录页） ============ */
+.chat-top{flex:none;padding:2px 16px 8px;display:flex;align-items:center;gap:8px}
+.chat-top h1{font-size:18px;font-weight:800;flex:1}
+.mode-tag{font-size:11px;padding:4px 10px;border-radius:999px;background:rgba(47,181,124,.12);color:var(--ok);font-weight:600;border:1px solid rgba(47,181,124,.2)}
+.mode-tag.local{background:#eef1f5;color:var(--ink-2);border-color:#e0e5ec}
+.chat-scroll{flex:1;overflow-y:auto;padding:4px 14px 10px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:84%;display:flex;flex-direction:column;gap:5px}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.bot{align-self:flex-start;align-items:flex-start}
+.bub{padding:11px 14px;font-size:14px;line-height:1.65;border-radius:16px;word-break:break-word}
+.msg.user .bub{background:linear-gradient(135deg,var(--brand),#5a8df6);color:#fff;border-bottom-right-radius:5px}
+.msg.bot .bub{background:#fff;border:1px solid #eef1f5;border-bottom-left-radius:5px;box-shadow:var(--shadow)}
+.msg .meta{font-size:10.5px;color:var(--ink-3);padding:0 4px}
+.meal-card{background:#fff;border:1px solid #eef1f5;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;width:min(300px,84vw);align-self:flex-start}
+.meal-card .mc-hd{padding:10px 14px;background:linear-gradient(120deg,rgba(126,216,181,.18),rgba(168,212,240,.18));
+  display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+.meal-card .mc-bd{padding:10px 14px}
+.mc-food{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed #eef1f5}
+.mc-food:last-child{border-bottom:none}
+.mc-food .amt{color:var(--ink-2)}
+.mc-sum{display:flex;gap:8px;margin-top:8px}
+.mc-sum .s{flex:1;background:#f6f8fb;border-radius:10px;padding:7px 4px;text-align:center}
+.mc-sum .s b{font-size:14px;display:block}
+.mc-sum .s span{font-size:10px;color:var(--ink-3)}
+.mc-ft{padding:8px 14px;border-top:1px solid #f0f3f7;font-size:11px;color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.clarify{background:#fff;border:1.5px solid rgba(47,111,237,.25);border-radius:14px;padding:12px 14px;width:min(300px,84vw);align-self:flex-start;box-shadow:var(--shadow)}
+.clarify b{font-size:13.5px;display:flex;align-items:center;gap:6px}
+.clarify p{font-size:13px;color:var(--ink-2);margin:6px 0 10px;line-height:1.6}
+.clarify .opts{display:flex;flex-direction:column;gap:8px}
+.clarify .opt{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;cursor:pointer;background:#fff;min-height:40px;display:flex;align-items:center}
+.clarify .opt:active{background:var(--brand-light)}
+.clarify .opt.secondary{color:var(--ink-2)}
+.typing{display:flex;gap:4px;padding:12px 14px;background:#fff;border-radius:16px;border-bottom-left-radius:5px;border:1px solid #eef1f5;width:fit-content}
+.typing i{width:7px;height:7px;border-radius:50%;background:#b9c4d2;animation:tp 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes tp{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.proc{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:5px;padding:2px 6px;flex-wrap:wrap}
+.proc .st{background:#f0f3f7;border-radius:6px;padding:2px 7px}
+.proc .st.done{background:rgba(47,181,124,.12);color:var(--ok)}
+.proc .st.doing{background:var(--brand-light);color:var(--brand)}
+/* 聊天输入区（Root 页 + 底部输入：预留导航高度） */
+.chat-input{flex:none;padding:8px 14px calc(var(--nav-h) + 22px + var(--safe-b));display:flex;gap:8px;align-items:flex-end;
+  background:linear-gradient(180deg,rgba(242,246,251,0),rgba(242,246,251,.95) 30%)}
+.chat-input .ci-box{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:9px 14px;
+  display:flex;align-items:center;gap:8px;min-height:46px}
+.chat-input input{flex:1;border:none;outline:none;font-size:14px;background:none;color:var(--ink)}
+.chat-input .send{width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--brand),#5a8df6);
+  color:#fff;font-size:17px;cursor:pointer;flex:none;box-shadow:0 4px 12px rgba(47,111,237,.3);display:flex;align-items:center;justify-content:center}
+.chat-input .send[disabled]{opacity:.4;box-shadow:none}
+.quick-row{display:flex;gap:7px;padding:0 14px 6px;overflow-x:auto;flex:none;scrollbar-width:none}
+.quick-row::-webkit-scrollbar{display:none}
+.quick-row .chip{white-space:nowrap;flex:none;background:rgba(255,255,255,.85)}
+.pending-banner{margin:10px 14px 0;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.3);
+  border-radius:var(--r-m);padding:10px 12px;font-size:12.5px;color:#8f6420;display:flex;align-items:center;gap:8px;cursor:pointer}
+.offline-banner{margin:10px 14px 0;background:rgba(229,86,109,.08);border:1px solid rgba(229,86,109,.22);
+  border-radius:var(--r-m);padding:9px 12px;font-size:12px;color:#b04257;display:none;align-items:center;gap:8px}
+.offline-banner.show{display:flex}
+
+/* ============ 今日汇总 ============ */
+.ring-row{display:flex;gap:10px;margin-top:4px}
+.ring{flex:1;text-align:center;background:#fff;border-radius:var(--r-m);padding:12px 4px;border:1px solid #f0f3f7}
+.ring svg{width:74px;height:74px}
+.ring .rl{font-size:11px;color:var(--ink-3);margin-top:2px}
+.ring b{font-size:13px}
+.stat3{display:flex;gap:10px}
+.stat3 .st{flex:1;background:#fff;border:1px solid #f0f3f7;border-radius:var(--r-m);padding:12px 10px;text-align:center}
+.stat3 .st b{font-size:19px;display:block}
+.stat3 .st span{font-size:11px;color:var(--ink-3)}
+.stat3 .st small{font-size:10px;color:var(--ink-3)}
+
+/* ============ 趋势条形图 ============ */
+.bars{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:10px}
+.bars .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0}
+.bars .bar i{width:100%;max-width:16px;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,var(--sky-deep),var(--mint));display:block}
+.bars .bar.miss i{background:#e3e8ef}
+.bars .bar span{font-size:9px;color:var(--ink-3)}
+.bar-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-2);margin-top:8px;flex-wrap:wrap}
+.bar-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+
+/* ============ 历史列表 ============ */
+.filter-bar{position:sticky;top:0;z-index:10;padding:8px 0 6px;background:linear-gradient(180deg,#edf3fa 70%,rgba(237,243,250,0))}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:9px 14px;min-height:42px}
+.search-box input{flex:1;border:none;outline:none;font-size:13.5px;background:none}
+.evt{display:flex;gap:11px;align-items:flex-start;padding:12px 2px;border-bottom:1px solid #f0f3f7;cursor:pointer}
+.evt:last-child{border-bottom:none}
+.evt .eic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.evt .ebd{flex:1;min-width:0}
+.evt .ebd b{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.evt .ebd p{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt .ebd .em{font-size:11px;color:var(--ink-3);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.evt .ear{color:var(--ink-3);font-size:14px;align-self:center;flex:none}
+.day-hd{font-size:12.5px;color:var(--ink-2);font-weight:700;padding:12px 2px 2px;display:flex;align-items:center;gap:8px}
+.day-hd .pill{margin-left:auto}
+.e-meal{background:rgba(232,163,61,.13)} .e-weight{background:rgba(75,159,225,.13)}
+.e-sleep{background:rgba(147,112,219,.14)} .e-exercise{background:rgba(47,181,124,.14)} .e-cycle{background:rgba(229,86,109,.12)}
+
+/* ============ 计划 ============ */
+.target-hero{background:linear-gradient(135deg,rgba(126,216,181,.25),rgba(168,212,240,.3));border-radius:var(--r-l);
+  padding:16px;margin-top:12px;border:1px solid rgba(255,255,255,.7)}
+.target-hero .th-top{display:flex;align-items:baseline;gap:8px}
+.target-hero .th-top b{font-size:28px;font-weight:800}
+.target-hero .th-top span{font-size:13px;color:var(--ink-2)}
+.th-row{display:flex;gap:8px;margin-top:12px}
+.th-row .t{flex:1;background:rgba(255,255,255,.72);border-radius:10px;padding:8px;text-align:center}
+.th-row .t b{font-size:14px;display:block}
+.th-row .t span{font-size:10.5px;color:var(--ink-2)}
+.plan-actions{display:flex;gap:8px;margin-top:10px}
+details.fold{margin-top:10px}
+details.fold summary{font-size:12.5px;color:var(--brand);cursor:pointer;padding:6px 0;list-style:none;display:flex;align-items:center;gap:4px}
+details.fold summary::before{content:"▸";transition:.2s;font-size:11px}
+details.fold[open] summary::before{transform:rotate(90deg)}
+details.fold .fold-bd{font-size:12px;color:var(--ink-2);line-height:1.75;padding:6px 2px}
+.week-row{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #f0f3f7;font-size:13px}
+.week-row:last-child{border-bottom:none}
+.week-row .wd{color:var(--ink-2);width:44px;flex:none}
+.week-row .ws{flex:1;color:var(--ink);padding:0 8px}
+
+/* ============ 发现 ============ */
+.tabbar{display:flex;gap:4px;background:#e9eef5;border-radius:999px;padding:3px;margin-top:12px}
+.tabbar button{flex:1;border:none;background:none;padding:8px 0;border-radius:999px;font-size:13px;color:var(--ink-2);cursor:pointer;min-height:36px}
+.tabbar button.on{background:#fff;color:var(--brand);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.insight{background:#fff;border:1px solid #f0f3f7;border-radius:var(--r-l);padding:14px;margin-top:12px;box-shadow:var(--shadow)}
+.insight .ih{display:flex;align-items:center;gap:8px}
+.insight .ih b{font-size:14px;flex:1}
+.insight p{font-size:13px;color:var(--ink-2);line-height:1.7;margin-top:8px}
+.insight .iev{font-size:11px;color:var(--ink-3);margin-top:8px;background:#f7f9fc;border-radius:8px;padding:8px 10px;line-height:1.6}
+.insight .iact{display:flex;gap:8px;margin-top:10px}
+.review-card{background:#fff;border:1px solid #f0f3f7;border-radius:var(--r-l);padding:15px;margin-top:12px;box-shadow:var(--shadow)}
+.review-card h4{font-size:14.5px;display:flex;align-items:center;gap:8px}
+.rc-metrics{display:flex;gap:8px;margin:10px 0}
+.rc-metrics .m{flex:1;background:#f7f9fc;border-radius:10px;padding:9px 6px;text-align:center}
+.rc-metrics .m b{font-size:16px;display:block}
+.rc-metrics .m span{font-size:10.5px;color:var(--ink-3)}
+.rc-metrics .m.up b{color:var(--err)} .rc-metrics .m.down b{color:var(--ok)}
+
+/* ============ 我的 ============ */
+.mine-hd{display:flex;align-items:center;gap:14px;padding:20px 4px 8px}
+.avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--mint),var(--sky-deep));
+  display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;flex:none;box-shadow:0 6px 16px rgba(75,159,225,.3)}
+.usage-mini{display:flex;gap:8px;margin-top:12px}
+.usage-mini .u{flex:1;background:#fff;border:1px solid #f0f3f7;border-radius:var(--r-m);padding:10px;text-align:center}
+.usage-mini .u b{font-size:15px;display:block}
+.usage-mini .u span{font-size:10.5px;color:var(--ink-3)}
+
+/* ============ 长期信息 facts ============ */
+.fact{background:#fff;border:1px solid #f0f3f7;border-radius:var(--r-m);padding:12px 14px;margin-top:10px}
+.fact .fh{display:flex;align-items:center;gap:8px}
+.fact .fh b{font-size:14px;flex:1}
+.fact p{font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.6}
+.fact .fm{font-size:11px;color:var(--ink-3);margin-top:7px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fact .fa{display:flex;gap:8px;margin-top:10px}
+.conflict{border:1.5px solid rgba(232,163,61,.5);background:rgba(232,163,61,.05)}
+
+/* ============ 消息 ============ */
+.ntf{display:flex;gap:11px;padding:13px 2px;border-bottom:1px solid #f0f3f7;cursor:pointer}
+.ntf .nic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none;background:var(--brand-light)}
+.ntf .nbd{flex:1;min-width:0}
+.ntf .nbd b{font-size:13.5px;display:flex;align-items:center;gap:6px}
+.ntf .nbd p{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.55}
+.ntf .nbd .nt{font-size:11px;color:var(--ink-3);margin-top:4px}
+.ntf.unread .nbd b::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--err);flex:none}
+
+/* ============ 删除流程 ============ */
+.scope-row{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid #f0f3f7;font-size:13px}
+.scope-row:last-child{border-bottom:none}
+.scope-row b{font-variant-numeric:tabular-nums}
+.step-dots{display:flex;gap:6px;align-items:center;margin:6px 0 2px}
+.step-dots i{width:22px;height:4px;border-radius:2px;background:#dfe5ec}
+.step-dots i.on{background:var(--brand)}
+
+/* Sticky bottom action (Task 页) */
+.bottom-action{position:absolute;left:0;right:0;bottom:0;padding:12px 16px calc(12px + var(--safe-b));
+  background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid #eef1f5;z-index:40;display:flex;gap:10px}
+
+/* 修订时间线 */
+.rev{display:flex;gap:10px;padding:4px 0}
+.rev .rl{display:flex;flex-direction:column;align-items:center;flex:none}
+.rev .rl i{width:9px;height:9px;border-radius:50%;background:var(--sky-deep);margin-top:5px;flex:none}
+.rev .rl .ln{width:1.5px;flex:1;background:#e2e8f0;margin-top:3px}
+.rev:last-child .rl .ln{display:none}
+.rev .rb{flex:1;padding-bottom:14px}
+.rev .rb b{font-size:13px}
+.rev .rb p{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.6}
+.rev .rb .rt{font-size:11px;color:var(--ink-3);margin-top:3px}
+.diff-del{color:var(--err);text-decoration:line-through}
+.diff-add{color:var(--ok);font-weight:600}
+
+@media (max-width:420px){
+  .review-bar{padding:8px 10px 6px;gap:5px;justify-content:center}
+  .review-bar .hint{display:none}
+  .review-bar button{padding:5px 10px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<div class="review-bar">
+  <b>轻记 · 交互原型</b>
+  <button data-w="360">360</button><button data-w="375">375</button>
+  <button data-w="390" class="on">390</button><button data-w="414">414</button><button data-w="430">430</button>
+  <button id="btn-shell">去手机壳</button>
+  <button id="btn-offline">模拟：离线</button>
+  <span class="hint">评审壳：切宽度 / 全屏 / 断网模拟。产品内所有交互均可点击。</span>
+</div>
+
+<div class="phone" id="phone">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span id="sb-time">9:41</span>
+    <span class="sb-r"><span id="sb-net">●●● ᯤ 🔋</span></span>
+  </div>
+  <div class="viewport" id="viewport">
+
+    <!-- ═══════════ P0 登录/授权（Immersive） ═══════════ -->
+    <section class="page no-nav" id="pg-login">
+      <div class="login-wrap">
+        <div class="logo-area">
+          <div class="lg">🌿</div>
+          <h2>轻记</h2>
+          <p>用一句话记录饮食、体重、睡眠、运动<br>让数据自己讲出规律</p>
+        </div>
+        <div class="consent-box">
+          <b>微信登录仅用于建立账号</b>，不读取头像、昵称或手机号。你的健康数据按账号隔离保存在服务端，可随时导出或删除。<span style="color:var(--brand);cursor:pointer" onclick="go('consent')">查看完整隐私政策 →</span>
+        </div>
+        <div class="consent-row">
+          <div class="cbx on" id="cbx-privacy" onclick="toggleCbx(this)"></div>
+          <div>我已阅读并同意 <a href="javascript:go('consent')">《隐私政策》</a>与<a href="javascript:go('consent')">《健康数据处理说明》</a>（版本 2026-10-29.1）</div>
+        </div>
+        <div class="consent-row">
+          <div class="cbx" id="cbx-model" onclick="toggleCbx(this)"></div>
+          <div>可选：同意将本次输入与必要档案片段发送给模型服务，用于理解、营养粗估与建议表达。<b>拒绝不影响基础记录功能</b>。</div>
+        </div>
+        <div style="margin-top:auto;padding-top:26px">
+          <button class="btn primary" id="btn-login" onclick="doLogin()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8.7 4C4.9 4 2 6.6 2 9.8c0 1.8 1 3.4 2.5 4.5l-.6 1.9 2.2-1.1c.6.2 1.2.3 1.9.4a5 5 0 0 1-.1-1c0-3 2.9-5.4 6.4-5.4h.5C14.2 6.3 11.7 4 8.7 4zM6.5 8.6a.8.8 0 1 1 0-1.6.8.8 0 0 1 0 1.6zm4.4 0a.8.8 0 1 1 0-1.6.8.8 0 0 1 0 1.6zM22 14.4c0-2.7-2.6-4.9-5.7-4.9s-5.7 2.2-5.7 4.9 2.6 4.9 5.7 4.9c.6 0 1.2-.1 1.8-.3l1.9.9-.5-1.6c1.4-.9 2.5-2.3 2.5-3.9zm-7.6-.8a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4zm3.8 0a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4z"/></svg>
+            微信一键登录
+          </button>
+          <p class="muted" style="text-align:center;margin-top:12px">POST /api/auth/wechat/login · code2session</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ P1 记录（对话） Root ═══════════ -->
+    <section class="page root" id="pg-chat">
+      <div class="chat-top">
+        <h1>记录</h1>
+        <span class="mode-tag" id="mode-tag">模型模式 · Qwen3.8-Max</span>
+        <button class="hd-act" onclick="go('messages')" style="position:relative">🔔<span id="chat-badge" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--err)"></span></button>
+      </div>
+      <div class="offline-banner" id="chat-offline">📡 当前离线 · 已输入的请求已保存本地，联网后将按原编号重试，不会重复记录</div>
+      <div class="pending-banner" id="pending-banner" onclick="resumePending()" style="display:none">
+        ⏳ 你有 1 条待补充的记录（昨晚睡眠时长）· 点击继续
+      </div>
+      <div class="chat-scroll" id="chat-scroll"></div>
+      <div class="quick-row" id="quick-row">
+        <span class="chip" onclick="quickSend('中午吃了一大碗牛肉面，加了一个卤蛋')">🍜 记一餐</span>
+        <span class="chip" onclick="quickSend('今天早上体重65公斤')">⚖️ 记体重</span>
+        <span class="chip" onclick="quickSend('昨晚睡了7小时')">😴 记睡眠</span>
+        <span class="chip" onclick="quickSend('今天跑步30分钟，有点累')">🏃 记运动</span>
+        <span class="chip" onclick="quickSend('今天月经开始了')">🌸 记周期</span>
+        <span class="chip" onclick="quickSend('查看最近7天的饮食记录')">🔍 查记录</span>
+      </div>
+      <div class="chat-input">
+        <div class="ci-box">
+          <input id="chat-text" placeholder="说说你吃了什么、睡得怎么样…" enterkeyhint="send"
+            onkeydown="if(event.key==='Enter')sendChat()">
+        </div>
+        <button class="send" id="btn-send" onclick="sendChat()">➤</button>
+      </div>
+      <nav class="root-nav" id="nav-chat"></nav>
+    </section>
+
+    <!-- ═══════════ P2 今日汇总 Task ═══════════ -->
+    <section class="page no-nav" id="pg-today">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>今日汇总</h1>
+        <span class="pill gray" id="today-date">11月4日 周三</span></div>
+      <div class="page-body">
+        <div class="card">
+          <h3>热量与目标 <span class="sub">GET /api/dashboard</span></h3>
+          <div class="ring-row" id="today-rings"></div>
+          <div class="kv" style="margin-top:8px"><span class="k">目标热量</span><span class="v">1650 kcal<small>来自已确认计划 · 可修改</small></span></div>
+        </div>
+        <div class="card">
+          <h3>身体状态</h3>
+          <div class="stat3">
+            <div class="st"><b>65.0<small style="font-size:10px">kg</small></b><span>今晨体重</span></div>
+            <div class="st"><b>7.0<small style="font-size:10px">h</small></b><span>昨晚睡眠</span></div>
+            <div class="st"><b>30<small style="font-size:10px">min</small></b><span>今日运动</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>今日记录 <span class="sub">3 条</span></h3>
+          <div id="today-events"></div>
+        </div>
+        <div class="card" id="complete-card">
+          <h3>饮食完整性确认</h3>
+          <p class="muted">只有标记完整且营养齐全的日期，才会用于摄入规律分析与周复盘。</p>
+          <button class="btn ghost" style="margin-top:12px" id="btn-complete" onclick="toggleComplete()">✓ 确认今日饮食已记录完整</button>
+          <p class="muted" style="margin-top:8px;text-align:center" id="complete-state">今日尚未标记完整</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ P3 历史 Root ═══════════ -->
+    <section class="page root" id="pg-history">
+      <div class="hd" style="padding-top:10px"><h1>历史</h1>
+        <button class="hd-act" onclick="go('trends-full')">趋势 ›</button></div>
+      <div class="page-body" style="padding-top:0">
+        <div class="filter-bar">
+          <div class="search-box">🔍<input id="hist-search" placeholder="搜索食物、关键词…" onkeydown="if(event.key==='Enter')renderHistory()"></div>
+          <div class="chips" style="margin-top:8px" id="hist-kinds">
+            <span class="chip on" data-k="">全部</span><span class="chip" data-k="meal">🍜 饮食</span>
+            <span class="chip" data-k="weight">⚖️ 体重</span><span class="chip" data-k="sleep">😴 睡眠</span>
+            <span class="chip" data-k="exercise">🏃 运动</span><span class="chip" data-k="cycle">🌸 周期</span>
+          </div>
+          <div class="row" style="margin-top:8px;gap:8px">
+            <span class="chip" id="hist-range" onclick="cycleRange()">近 7 天 ▾</span>
+            <span class="muted" style="margin-left:auto" id="hist-count"></span>
+          </div>
+        </div>
+        <div id="hist-list"></div>
+      </div>
+      <nav class="root-nav" id="nav-history"></nav>
+    </section>
+
+    <!-- ═══════════ P3b 趋势 Task ═══════════ -->
+    <section class="page no-nav" id="pg-trends-full">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>历史趋势</h1>
+        <span class="pill gray">GET /api/trends</span></div>
+      <div class="page-body">
+        <div class="seg" style="margin-top:6px" id="trend-seg">
+          <button class="on" data-d="7">近 7 天</button><button data-d="28">近 28 天</button><button data-d="90">近 90 天</button>
+        </div>
+        <div class="card"><h3>每日摄入热量 <span class="sub">kcal · 缺失日不计为零</span></h3>
+          <div class="bars" id="trend-kcal"></div>
+          <div class="bar-legend"><span><i style="background:linear-gradient(180deg,var(--sky-deep),var(--mint))"></i>已记录</span><span><i style="background:#e3e8ef"></i>无记录</span><span>目标线 1650 kcal</span></div>
+        </div>
+        <div class="card"><h3>体重变化 <span class="sub">kg</span></h3>
+          <div class="bars" id="trend-weight"></div>
+          <div id="weight-list" style="margin-top:8px"></div>
+        </div>
+        <div class="card"><h3>月度摘要 <span class="sub">归档 · 不可重算</span></h3>
+          <div id="monthly-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ P4 记录详情 Task ═══════════ -->
+    <section class="page no-nav" id="pg-event">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>记录详情</h1>
+        <button class="hd-act" onclick="openEventSheet()">···</button></div>
+      <div class="page-body" id="event-body"></div>
+    </section>
+
+    <!-- ═══════════ P5 计划 Root ═══════════ -->
+    <section class="page root" id="pg-plan">
+      <div class="hd" style="padding-top:10px"><h1>计划</h1>
+        <span class="pill ok" id="plan-state">已生效</span></div>
+      <div class="page-body" style="padding-top:0" id="plan-body"></div>
+      <nav class="root-nav" id="nav-plan"></nav>
+    </section>
+
+    <!-- ═══════════ P6 发现 Root ═══════════ -->
+    <section class="page root" id="pg-discover">
+      <div class="hd" style="padding-top:10px"><h1>发现</h1>
+        <button class="hd-act" onclick="openReviewSheet()">生成周复盘</button></div>
+      <div class="page-body" style="padding-top:0">
+        <div class="tabbar" id="disc-tabs">
+          <button class="on" data-t="insights">规律洞察</button>
+          <button data-t="reviews">复盘报告</button>
+        </div>
+        <div id="disc-insights"></div>
+        <div id="disc-reviews" style="display:none"></div>
+      </div>
+      <nav class="root-nav" id="nav-discover"></nav>
+    </section>
+
+    <!-- ═══════════ P7 我的 Root ═══════════ -->
+    <section class="page root" id="pg-mine">
+      <div class="page-body" style="padding-top:6px">
+        <div class="mine-hd">
+          <div class="avatar">🌿</div>
+          <div style="flex:1">
+            <b style="font-size:17px">微信用户</b>
+            <p class="muted" style="margin-top:3px">账号 u_8f3a…c21 · 已保护 47 天</p>
+          </div>
+          <span class="pill ok">已登录</span>
+        </div>
+        <div class="usage-mini">
+          <div class="u"><b>128</b><span>总记录</span></div>
+          <div class="u"><b>-2.4kg</b><span>累计变化</span></div>
+          <div class="u"><b>6/8</b><span>今日模型调用</span></div>
+        </div>
+        <div class="sec-title">数据与档案</div>
+        <div class="card" style="margin-top:8px;padding:4px 16px">
+          <div class="cell" onclick="go('profile-edit')"><div class="ic" style="background:rgba(126,216,181,.2)">📋</div>
+            <div class="tt"><b>个人档案</b><small>身高 165cm · 32岁 · 女 · 轻度活动</small></div><span class="arw">›</span></div>
+          <div class="cell" onclick="go('facts')"><div class="ic" style="background:rgba(168,212,240,.25)">🧠</div>
+            <div class="tt"><b>长期信息</b><small>偏好 · 过敏 · 限制 · 冲突待处理 1 条</small></div><span class="arw">›</span></div>
+          <div class="cell" onclick="go('prefs')"><div class="ic" style="background:rgba(232,163,61,.15)">⚖️</div>
+            <div class="tt"><b>评分权重与提醒</b><small>权重建议待确认 · 提醒 20:30</small></div><span class="arw">›</span></div>
+        </div>
+        <div class="sec-title">消息与数据</div>
+        <div class="card" style="margin-top:8px;padding:4px 16px">
+          <div class="cell" onclick="go('messages')"><div class="ic" style="background:rgba(229,86,109,.12)">🔔</div>
+            <div class="tt"><b>站内消息</b><small>2 条未读 · 日报 / 周报 / 提醒</small></div><span class="arw">›</span></div>
+          <div class="cell" onclick="exportData()"><div class="ic" style="background:rgba(47,181,124,.14)">📤</div>
+            <div class="tt"><b>导出我的数据</b><small>JSON · 含全部记录与血缘说明</small></div><span class="arw">›</span></div>
+        </div>
+        <div class="sec-title">隐私与安全</div>
+        <div class="card" style="margin-top:8px;padding:4px 16px">
+          <div class="cell" onclick="go('consent')"><div class="ic" style="background:rgba(75,159,225,.14)">🛡️</div>
+            <div class="tt"><b>隐私政策与模型授权</b><small>模型授权：已同意 · 可撤回</small></div><span class="arw">›</span></div>
+          <div class="cell" onclick="go('deletion')"><div class="ic" style="background:rgba(229,86,109,.1)">🗑️</div>
+            <div class="tt"><b>隐私删除</b><small>预览影响范围后精准删除</small></div><span class="arw">›</span></div>
+          <div class="cell" onclick="confirmLogout()"><div class="ic" style="background:#eef1f5">🚪</div>
+            <div class="tt"><b>退出登录</b><small>撤销当前登录凭证</small></div><span class="arw">›</span></div>
+        </div>
+        <p class="muted" style="text-align:center;margin:18px 0 6px">轻记 v0.1.0 · Asia/Shanghai · 本地服务 127.0.0.1:8001</p>
+      </div>
+      <nav class="root-nav" id="nav-mine"></nav>
+    </section>
+
+    <!-- ═══════════ P8 档案编辑 Task ═══════════ -->
+    <section class="page no-nav has-action" id="pg-profile-edit">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>个人档案</h1></div>
+      <div class="page-body">
+        <div class="note">档案用于本地计算默认目标（Mifflin–St Jeor 公式），不调用模型。自动估算仅覆盖 19–78 岁。</div>
+        <div class="card">
+          <div class="field"><label>年龄 <i>*</i></label><input id="pf-age" type="number" inputmode="numeric" value="32"><div class="err-tip">请输入 19–78 之间的年龄</div></div>
+          <div class="field"><label>身高 cm <i>*</i></label><input id="pf-height" type="number" inputmode="decimal" value="165"><div class="err-tip">请输入 100–250 之间的数值</div></div>
+          <div class="field"><label>当前体重 kg <i>*</i></label><input id="pf-weight" type="number" inputmode="decimal" value="65.0"><div class="err-tip">请输入合理体重</div></div>
+          <div class="field"><label>目标体重 kg</label><input id="pf-goal" type="number" inputmode="decimal" value="58.0"><div class="err-tip">目标 BMI 不能低于 18.5</div></div>
+          <div class="field"><label>性别 <i>*</i></label>
+            <div class="seg" id="pf-sex"><button class="on" data-v="female">女</button><button data-v="male">男</button><button data-v="other">不明确</button></div></div>
+          <div class="field"><label>活动水平</label>
+            <select id="pf-activity"><option value="1.4">久坐（1.4）</option><option value="1.6" selected>轻度（1.6）</option>
+            <option value="1.8">中等（1.8）</option><option value="2.0">较多（2.0）</option></select></div>
+        </div>
+        <div class="warnbox">性别不明确、BMI &lt;18.5 或 ≥40、孕期/哺乳期时，不会自动生成通用目标；期望日期不会直接转成节食强度。</div>
+      </div>
+      <div class="bottom-action">
+        <button class="btn plain" style="flex:1" onclick="back()">取消</button>
+        <button class="btn primary" style="flex:2" onclick="saveProfile()">保存档案 · PUT /api/profile</button>
+      </div>
+    </section>
+
+    <!-- ═══════════ P9 长期信息 Task ═══════════ -->
+    <section class="page no-nav" id="pg-facts">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>长期信息</h1>
+        <button class="hd-act" onclick="openFactSheet()">＋ 新增</button></div>
+      <div class="page-body" style="padding-top:2px">
+        <div class="seg" id="fact-seg" style="margin-top:4px">
+          <button class="on" data-f="active">生效中</button><button data-f="conflict">待处理冲突</button><button data-f="inactive">已失效</button>
+        </div>
+        <div id="fact-list"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ P10 权重与提醒 Task ═══════════ -->
+    <section class="page no-nav has-action" id="pg-prefs">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>评分权重与提醒</h1></div>
+      <div class="page-body">
+        <div class="card" id="sug-card">
+          <h3>系统权重建议 <span class="pill warn">待确认</span></h3>
+          <p class="muted">基于最近 42 条完整饮食记录学习得出，需你确认后生效。</p>
+          <div id="sug-rows"></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn soft sm" style="flex:1" onclick="acceptSug()">采纳建议</button>
+            <button class="btn plain sm" style="flex:1" onclick="rejectSug()">不采纳</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>手动调整权重</h3>
+          <div id="weight-sliders"></div>
+        </div>
+        <div class="card">
+          <h3>记录提醒</h3>
+          <div class="kv"><span class="k">开启站内提醒</span><button class="switch on" id="sw-notify" onclick="this.classList.toggle('on')"></button></div>
+          <div class="kv"><span class="k">提醒时间</span><span class="v" style="color:var(--brand);cursor:pointer" onclick="openTimeSheet()">20:30 ›</span></div>
+          <div class="kv"><span class="k">允许跳过单次记录</span><button class="switch on" onclick="this.classList.toggle('on')"></button></div>
+          <p class="muted" style="margin-top:8px">小程序关闭时服务仍会生成消息，下次打开后查看；当前没有设备级推送。</p>
+        </div>
+      </div>
+      <div class="bottom-action"><button class="btn primary" onclick="savePrefs()">保存设置</button></div>
+    </section>
+
+    <!-- ═══════════ P11 站内消息 Task ═══════════ -->
+    <section class="page no-nav" id="pg-messages">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>站内消息</h1>
+        <button class="hd-act" onclick="readAll()">全部已读</button></div>
+      <div class="page-body" style="padding-top:2px"><div id="ntf-list"></div></div>
+    </section>
+
+    <!-- ═══════════ P12 隐私与模型授权 Task ═══════════ -->
+    <section class="page no-nav" id="pg-consent">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>隐私政策与模型授权</h1></div>
+      <div class="page-body">
+        <div class="card">
+          <h3>模型处理授权 <span class="pill ok" id="consent-state">已同意</span></h3>
+          <div class="kv"><span class="k">供应商</span><span class="v">aiproxy.pengyg.top</span></div>
+          <div class="kv"><span class="k">模型</span><span class="v">Qwen3.8-Max</span></div>
+          <div class="kv"><span class="k">用途</span><span class="v"><small style="max-width:100%">安全判断 · 输入理解 · 营养粗估 · 建议表达</small></span></div>
+          <div class="kv"><span class="k">数据类别</span><span class="v"><small style="max-width:100%">本次输入 · 必要档案 · 相关记录片段<br>不发送完整历史</small></span></div>
+          <button class="btn danger" style="margin-top:14px" id="btn-revoke" onclick="revokeModel()">撤回模型授权</button>
+          <p class="muted" style="margin-top:8px">撤回后请求将携带 processing_mode=local_only，识别与建议能力受限，但基础记录不受影响。该限制随流程保存，重启后不会自动放宽。</p>
+        </div>
+        <div class="card">
+          <h3>隐私说明（版本 2026-10-29.1）</h3>
+          <div id="policy-list" style="font-size:12.5px;color:var(--ink-2);line-height:1.8"></div>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--err)">注销账号</h3>
+          <p class="muted">立即撤销所有登录凭证，清理服务端数据，仅保留最小注销清单防止备份恢复重新引入。备份最长保留 30 天。</p>
+          <button class="btn danger" style="margin-top:12px" onclick="closeAccount()">申请注销账号</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ P13 隐私删除 Task ═══════════ -->
+    <section class="page no-nav" id="pg-deletion">
+      <div class="hd"><button class="back" onclick="back()">‹</button><h1>隐私删除</h1></div>
+      <div class="page-body">
+        <div class="step-dots" id="del-steps"><i class="on"></i><i></i><i></i></div>
+        <div id="del-step1">
+          <div class="card">
+            <h3>选择删除对象</h3>
+            <p class="muted">删除前先预览实际影响范围：需要删除、清除共享原文和保留独立目标的对象数量。</p>
+            <div id="del-targets" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div id="del-step2" style="display:none">
+          <div class="card">
+            <h3>影响范围预览 <span class="pill info">POST /api/deletions/preview</span></h3>
+            <div id="del-scope"></div>
+            <div class="warnbox">范围如有变化需要重新确认。清理只影响可证明相关的聊天、复盘、规律、通知与流程进度；独立记录继续保留。</div>
+          </div>
+        </div>
+        <div id="del-step3" style="display:none">
+          <div class="card" style="text-align:center;padding:30px 20px">
+            <div style="font-size:44px" id="del-done-ic">✅</div>
+            <h3 style="justify-content:center;margin-top:10px" id="del-done-tt">删除作业已完成</h3>
+            <p class="muted" id="del-done-msg">已清理 SQLite 页与 WAL。你自己导出的文件不在应用清理范围内，需要自行删除。</p>
+            <button class="btn ghost" style="margin-top:16px" onclick="delReset()">再删除其他内容</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 弹层容器 ═══════════ -->
+    <div class="mask" id="mask" onclick="closeSheets()"></div>
+    <div class="sheet" id="sheet">
+      <div class="grab"></div>
+      <div class="sheet-hd"><span id="sheet-title">标题</span><button class="x" onclick="closeSheets()">✕</button></div>
+      <div class="sheet-bd" id="sheet-body"></div>
+    </div>
+    <div class="dialog" id="dialog">
+      <h4 id="dg-title">确认</h4><p id="dg-msg"></p>
+      <div class="dg-btns">
+        <button class="btn plain" style="flex:1" onclick="closeDialog()">取消</button>
+        <button class="btn primary" style="flex:1" id="dg-ok">确定</button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ 全局状态 & 路由 ══════════════════ */
+"use strict";
+const $ = id => document.getElementById(id);
+const state = {
+  loggedIn:false, offline:false, histKind:'', histRange:7, completeMarked:false,
+  modelConsent:true, pendingClarify:null, currentEvent:null, delTarget:null,
+  factTab:'active', discTab:'insights', unread:2,
+  stack:[],
+};
+const PAGES = {
+  login:{level:'immersive',root:false}, chat:{level:'root',root:true}, today:{level:'task',root:false},
+  history:{level:'root',root:true}, 'trends-full':{level:'task',root:false}, event:{level:'task',root:false},
+  plan:{level:'root',root:true}, discover:{level:'root',root:true}, mine:{level:'root',root:true},
+  'profile-edit':{level:'task',root:false}, facts:{level:'task',root:false}, prefs:{level:'task',root:false},
+  messages:{level:'task',root:false}, consent:{level:'task',root:false}, deletion:{level:'task',root:false},
+};
+let current = 'login';
+function go(name, opts){
+  if(!PAGES[name]) return;
+  if(name!==current){ state.stack.push(current); }
+  show(name, opts);
+}
+function back(){
+  const prev = state.stack.pop() || (state.loggedIn?'chat':'login');
+  show(prev);
+}
+function show(name, opts){
+  current = name;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = $('pg-'+name);
+  pg.classList.add('active');
+  const meta = PAGES[name];
+  pg.classList.toggle('no-nav', !meta.root);
+  document.querySelectorAll('.root-nav').forEach(n=>n.style.display='');
+  const render = RENDERERS[name];
+  if(render) render(opts);
+  const body = pg.querySelector('.page-body, .chat-scroll');
+  if(body) body.scrollTop = 0;
+}
+/* ══════════════════ Root Navigation ══════════════════ */
+const TABS = [
+  {n:'chat',label:'记录',icon:'M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm2 0v5h5a5 5 0 0 0-5-5zM8 11h8v2H8v-2zm0 4h5v2H8v-2z'},
+  {n:'history',label:'历史',icon:'M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm-1 5v5l4 2 1-1.7-3-1.8V8h-2z'},
+  {n:'plan',label:'计划',icon:'M9 2h6a1 1 0 0 1 1 1v1h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V3a1 1 0 0 1 1-1zm0 3h6V4H9v1zM7 10h10v2H7v-2zm0 4h7v2H7v-2z'},
+  {n:'discover',label:'发现',icon:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.2 5.8l-2.4 5.6-5.6 2.4 2.4-5.6 5.6-2.4zM12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'},
+  {n:'mine',label:'我的',icon:'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 10c4.4 0 8 2.2 8 5v1H4v-1c0-2.8 3.6-5 8-5z'},
+];
+function buildNavs(){
+  TABS.forEach(t=>{
+    document.querySelectorAll('.root-nav').forEach(nav=>{
+      const owner = nav.id.replace('nav-','');
+      const btn = document.createElement('button');
+      btn.className = 'nav-item' + (owner===t.n?' on':'');
+      btn.setAttribute('aria-label', t.label);
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${t.icon}"/></svg><span>${t.label}</span>`
+        + (t.n==='chat' ? '<i class="badge" id="nav-badge-'+owner+'" style="display:none">2</i>' : '');
+      btn.onclick = ()=>{ if(current!==t.n){ state.stack=[]; show(t.n); syncNavs(t.n);} };
+      nav.appendChild(btn);
+    });
+  });
+  syncNavs('chat');
+}
+function syncNavs(active){
+  document.querySelectorAll('.root-nav').forEach(nav=>{
+    const owner = nav.id.replace('nav-','');
+    nav.querySelectorAll('.nav-item').forEach((it,i)=>{
+      it.classList.toggle('on', TABS[i].n === (PAGES[current]&&PAGES[current].root? current : owner));
+    });
+  });
+  const badge = state.unread>0;
+  document.querySelectorAll('[id^="nav-badge-"]').forEach(b=>{
+    b.style.display = badge?'block':'none'; b.textContent = state.unread;
+  });
+  const cb = $('chat-badge'); if(cb) cb.style.display = badge?'block':'none';
+}
+const RENDERERS = {};
+/* ══════════════════ Mock 数据（演示身份，无真实个人信息） ══════════════════ */
+const EVENTS = [
+  {id:'e1',kind:'meal',day:'2026-11-04',time:'12:10',title:'午餐 · 牛肉面+卤蛋',
+   detail:'一大碗牛肉面（约450g）×1、卤蛋 ×1',kcal:680,protein:28,carbs:82,fat:22,
+   nutrition:{kcal:'user_label',protein:'model_est'},source:'聊天解析',rev:2,
+   foods:[{n:'牛肉面（大碗）',a:'约450g',k:590,s:'模型粗估 ±25%'},{n:'卤蛋',a:'1个',k:90,s:'本地已知'}],
+   feedback:[{t:'偏咸',tag:'自述'}]},
+  {id:'e2',kind:'weight',day:'2026-11-04',time:'07:32',title:'体重 65.0 kg',
+   detail:'今晨空腹称重',kcal:null,source:'聊天解析',rev:1,foods:[]},
+  {id:'e3',kind:'sleep',day:'2026-11-03',time:'23:40',title:'睡眠 7.0 小时',
+   detail:'23:40 入睡 · 06:40 醒来 · 按入睡日期归属',source:'追问补全',rev:2,foods:[],
+   pending:true},
+  {id:'e4',kind:'exercise',day:'2026-11-03',time:'19:05',title:'跑步 30 分钟',
+   detail:'配速约 6\'30"，自觉有点累',kcal:260,source:'聊天解析',rev:1,foods:[]},
+  {id:'e5',kind:'meal',day:'2026-11-03',time:'18:30',title:'晚餐 · 家常',
+   detail:'杂粮饭一小碗、清炒西兰花、煎鸡胸肉 120g',kcal:520,protein:38,carbs:52,fat:14,
+   source:'聊天解析',rev:1,
+   foods:[{n:'杂粮饭',a:'一小碗 150g',k:180,s:'本地已知'},{n:'清炒西兰花',a:'一盘',k:110,s:'模型粗估'},{n:'煎鸡胸肉',a:'120g',k:230,s:'用户标签'}]},
+  {id:'e6',kind:'meal',day:'2026-11-03',time:'12:15',title:'午餐 · 外卖',
+   detail:'麻辣烫（中辣）一份，少放麻酱',kcal:610,protein:24,carbs:66,fat:26,
+   nutrition:{kcal:'model_est'},source:'聊天解析',rev:3,
+   foods:[{n:'麻辣烫',a:'一份 约600g',k:610,s:'模型粗估 ±25%'}],
+   feedback:[{t:'油腻',tag:'自述'},{t:'吃撑',tag:'自述'}]},
+  {id:'e7',kind:'cycle',day:'2026-11-02',time:'09:00',title:'生理周期 · 开始',
+   detail:'周期第 1 天',source:'聊天解析',rev:1,foods:[]},
+  {id:'e8',kind:'weight',day:'2026-11-01',time:'07:45',title:'体重 65.4 kg',
+   detail:'晨起称重',source:'聊天解析',rev:1,foods:[]},
+  {id:'e9',kind:'meal',day:'2026-10-31',time:'12:30',title:'午餐 · 轻食',
+   detail:'鸡胸肉沙拉、全麦面包 2 片、无糖豆浆',kcal:480,protein:35,carbs:44,fat:16,
+   source:'历史纠正',rev:2,
+   foods:[{n:'鸡胸肉沙拉',a:'一份',k:300,s:'模型粗估'},{n:'全麦面包',a:'2片',k:140,s:'本地已知'},{n:'无糖豆浆',a:'300ml',k:40,s:'本地已知'}]},
+];
+const KIND_META = {
+  meal:{ic:'🍜',cls:'e-meal',label:'饮食'}, weight:{ic:'⚖️',cls:'e-weight',label:'体重'},
+  sleep:{ic:'😴',cls:'e-sleep',label:'睡眠'}, exercise:{ic:'🏃',cls:'e-exercise',label:'运动'},
+  cycle:{ic:'🌸',cls:'e-cycle',label:'周期'},
+};
+const FACTS = [
+  {id:'f1',type:'preference',title:'不吃香菜',content:'明确表示所有餐食都不要香菜',status:'长期',from:'用户陈述',ver:3,conflict:false,tab:'active'},
+  {id:'f2',type:'allergy',title:'海鲜过敏（虾蟹）',content:'食用后起疹子，建议永久保留保护',status:'长期 · 不可被普通喜好解除',from:'用户陈述',ver:1,conflict:false,tab:'active'},
+  {id:'f3',type:'limit',title:'乳糖不耐受',content:'牛奶超过 200ml 会不适；酸奶可以少量',status:'长期',from:'转述专业建议 · 未经独立核验',ver:2,conflict:false,tab:'active'},
+  {id:'f4',type:'preference',title:'喜欢燕麦',content:'2026-09 记录：早餐常吃燕麦',status:'与「最近说不喜欢燕麦」冲突',from:'用户陈述',ver:4,conflict:true,tab:'conflict',
+   peer:{title:'不喜欢燕麦',content:'2026-11-02 聊天中明确表示',from:'用户陈述 · 本次输入',ver:1}},
+  {id:'f5',type:'preference',title:'临时：本周想吃清淡',content:'有效期至 2026-11-09，到期自动恢复原偏好',status:'临时 · 剩余 5 天',from:'用户陈述',ver:1,conflict:false,tab:'active'},
+  {id:'f6',type:'limit',title:'医生要求控糖（历史）',content:'已于 2026-10-01 到期，进入待核对状态',status:'到期待核对 · 保护仍生效',from:'转述专业建议',ver:2,conflict:false,tab:'inactive'},
+];
+const INSIGHTS = [
+  {id:'i1',title:'周末晚餐热量偏高',body:'近 28 天里，你的周末晚餐平均比工作日高约 210 kcal，主要差在主食分量和油炸类。',
+   ev:'样本 8 个周末日 / 20 个工作日 · 窗口 28 天 · 覆盖率 71% · 方法 v3 · 生成于 11-02',status:'待反馈',stale:false},
+  {id:'i2',title:'睡眠不足与次日进食量相关',body:'睡眠少于 6.5 小时的次日，你的总摄入平均多 180 kcal，且更倾向选择高脂食物。',
+   ev:'样本 12 天 · 窗口 28 天 · 覆盖率 64% · 方法 v3 · 限制：无法证明因果',status:'已认可',stale:false},
+  {id:'i3',title:'工作日午餐规律进餐',body:'工作日午餐时间集中在 12:00–12:30，规律性良好，有助于稳定下午的饥饿感。',
+   ev:'样本 18 天 · 窗口 28 天 · 覆盖率 90% · 方法 v3',status:'已认可',stale:false},
+  {id:'i4',title:'旧规律：晚间加餐频繁',body:'窗口已过期（数据来自 8 月），近期记录中未再观察到。',
+   ev:'样本 9 天 · 窗口过期 · 方法 v2',status:'已过期',stale:true},
+];
+const REVIEWS = [
+  {id:'r1',period:'周复盘 · 10-27 ~ 11-02',gen:'生成于 11-03 08:00 · 方法 v3',
+   metrics:[{l:'日均摄入',v:'1720',u:'kcal',d:'up',t:'+60 vs 目标'},{l:'体重变化',v:'-0.4',u:'kg',d:'down',t:'65.4→65.0'},
+            {l:'运动',v:'135',u:'min',d:'',t:'目标150'},{l:'记录完整',v:'5/7',u:'天',d:'',t:'2天未标记'}],
+   body:'本周蛋白质达标率 82%，碳水略超；周三、周五未标记完整，摄入规律分析未纳入这两天。周末聚餐两顿拉高了脂肪占比。建议下周关注晚餐主食分量。',
+   src:'来源版本：events@v128 · 计划 10-15 确认'},
+];
+const NOTIFS = [
+  {id:'n1',ic:'📊',title:'今日日报已生成',body:'11-04 摄入 680 kcal，距目标还有 970 kcal。体重较昨日持平。',time:'今天 21:00',unread:true},
+  {id:'n2',ic:'📅',title:'周复盘提醒',body:'上周数据完整度 71%，点击查看复盘并反馈。',time:'昨天 09:00',unread:true},
+  {id:'n3',ic:'⏰',title:'记录提醒',body:'今天的晚餐还没有记录，现在补记只需一句话。',time:'11-03 20:30',unread:false},
+  {id:'n4',ic:'🗂️',title:'月度归档完成',body:'2026-09 已归档为月度摘要，逐餐细节不再保留，无法恢复。',time:'10-01 03:00',unread:false},
+];
+const PLAN = {
+  kcal:1650, protein:82, carbs:206, fat:55, exercise:150,
+  source:'系统默认估算 + 手动确认', formula:'Mifflin–St Jeor · v2',
+  confirmed:'2026-10-15', basis:'维持估算 1950 kcal（10×65.4+6.25×165−5×32−161，活动系数1.6），初始缺口 300 kcal（上限），按 50 kcal 取整。宏量 20/50/30。',
+  week:[['周一','三餐规律 · 晚餐主食减半'],['周二','午餐带便当 · 加餐选酸奶'],['周三','跑步 30 分钟'],['周四','晚餐清蒸鱼 + 杂粮饭'],['周五','聚餐日 · 先吃蔬菜和蛋白质'],['周六','快走 45 分钟 · 控制甜品'],['周日','备餐日 · 准备下周午餐']],
+  next:'下一餐建议：晚餐 煎鸡胸肉 120g + 清炒西兰花 + 半碗杂粮饭（约 480 kcal，蛋白质 36g）',
+};
+/* ══════════════════ 通用 UI ══════════════════ */
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200); }
+function openSheet(title, html){ $('sheet-title').textContent=title; $('sheet-body').innerHTML=html;
+  $('mask').classList.add('show'); $('sheet').classList.add('show'); }
+function closeSheets(){ $('mask').classList.remove('show'); $('sheet').classList.remove('show'); $('dialog').classList.remove('show'); }
+function openDialog(title,msg,okText,onOk,danger){
+  $('dg-title').textContent=title; $('dg-msg').innerHTML=msg;
+  const ok=$('dg-ok'); ok.textContent=okText;
+  ok.className='btn '+(danger?'danger':'primary'); ok.style.flex='1';
+  ok.onclick=()=>{ closeSheets(); onOk&&onOk(); };
+  $('mask').classList.add('show'); $('dialog').classList.add('show');
+}
+function closeDialog(){ closeSheets(); }
+function toggleCbx(el){ el.classList.toggle('on'); el.textContent = el.classList.contains('on')?'✓':''; }
+/* ══════════════════ 登录 ══════════════════ */
+function doLogin(){
+  if(!$('cbx-privacy').classList.contains('on')){ toast('请先阅读并同意隐私政策'); return; }
+  const btn=$('btn-login'); btn.innerHTML='<span class="spin"></span> 登录中…'; btn.disabled=true;
+  setTimeout(()=>{
+    state.loggedIn=true; state.modelConsent=$('cbx-model').classList.contains('on');
+    $('mode-tag').textContent = state.modelConsent?'模型模式 · Qwen3.8-Max':'纯本地模式 local_only';
+    $('mode-tag').classList.toggle('local', !state.modelConsent);
+    btn.innerHTML='微信一键登录'; btn.disabled=false;
+    state.stack=[]; show('chat'); syncNavs('chat');
+    if(!state.modelConsent) toast('已按纯本地模式登录，识别能力受限');
+  },900);
+}
+function confirmLogout(){
+  openDialog('退出登录','将撤销当前登录凭证（POST /api/auth/logout），本地缓存的请求凭据保留以便恢复。','退出',()=>{
+    state.loggedIn=false; state.stack=[]; show('login'); toast('已退出登录');
+  });
+}
+function closeAccount(){
+  openDialog('注销账号','⚠️ 此操作不可逆。将立即撤销所有凭证并清理服务端数据，仅保留最小注销清单。','继续申请',()=>{
+    openSheet('注销确认',`<div style="text-align:center;padding:10px 0 20px">
+      <p style="font-size:14px;line-height:1.8">请输入 <b style="color:var(--err)">注销账号</b> 四个字以确认</p>
+      <input id="close-input" style="margin-top:14px;width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:15px;text-align:center" placeholder="注销账号">
+      <button class="btn danger" style="margin-top:16px" onclick="doCloseAccount()">确认注销 · DELETE /api/auth/account</button>
+    </div>`);
+  },true);
+}
+function doCloseAccount(){
+  if($('close-input').value.trim()!=='注销账号'){ toast('输入不匹配，已取消'); return; }
+  closeSheets(); state.loggedIn=false; state.stack=[]; show('login');
+  toast('账号已注销，服务端数据清理完成');
+}
+/* ══════════════════ 聊天页 ══════════════════ */
+const chatMsgs = [];
+function renderChat(){
+  const box=$('chat-scroll'); box.innerHTML='';
+  chatMsgs.forEach(m=>{
+    if(m.type==='text'){
+      const d=document.createElement('div'); d.className='msg '+m.role;
+      d.innerHTML=`<div class="bub">${m.html}</div><span class="meta">${m.time||''}${m.proc?(' · '+m.proc):''}</span>`;
+      box.appendChild(d);
+    }else if(m.type==='meal'){
+      const d=document.createElement('div');
+      d.innerHTML=mealCardHtml(m.data); box.appendChild(d.firstElementChild);
+    }else if(m.type==='clarify'){
+      const d=document.createElement('div'); d.className='clarify';
+      d.innerHTML=`<b>❓ 需要补充</b><p>${m.q}</p><div class="opts">${
+        m.opts.map((o,i)=>`<button class="opt${o.secondary?' secondary':''}" onclick="answerClarify(${chatMsgs.indexOf(m)},${i})">${o.label}</button>`).join('')
+      }</div>`;
+      box.appendChild(d);
+    }else if(m.type==='proc'){
+      const d=document.createElement('div'); d.className='msg bot';
+      d.innerHTML=`<div class="proc">${m.steps.map(s=>`<span class="st ${s.st}">${s.t}</span>`).join('→')}</div>`;
+      box.appendChild(d);
+    }else if(m.type==='typing'){
+      const d=document.createElement('div'); d.className='msg bot';
+      d.innerHTML='<div class="typing"><i></i><i></i><i></i></div>';
+      d.id='typing-el'; box.appendChild(d);
+    }
+  });
+  box.scrollTop=box.scrollHeight;
+}
+function mealCardHtml(e){
+  const foods=(e.foods||[]).map(f=>`<div class="mc-food"><span>${f.n} <span class="amt">${f.a}</span></span><span class="amt">${f.k} kcal</span></div>`).join('');
+  const sums=e.kcal!=null?`<div class="mc-sum">
+    <div class="s"><b>${e.kcal}</b><span>kcal</span></div>
+    <div class="s"><b>${e.protein??'?'}</b><span>蛋白质g</span></div>
+    <div class="s"><b>${e.carbs??'?'}</b><span>碳水g</span></div>
+    <div class="s"><b>${e.fat??'?'}</b><span>脂肪g</span></div></div>`:'';
+  const fb=(e.feedback||[]).map(f=>`<span class="pill warn">${f.t} · ${f.tag}</span>`).join(' ');
+  return `<div class="meal-card" onclick="openEvent('${e.id}')">
+    <div class="mc-hd">${KIND_META[e.kind].ic} ${e.title} <span class="pill ok" style="margin-left:auto">已保存</span></div>
+    <div class="mc-bd">${foods}${sums}${fb?`<div style="margin-top:8px">${fb}</div>`:''}</div>
+    <div class="mc-ft"><span>营养来源：${(e.foods||[]).map(f=>f.s).filter((v,i,a)=>a.indexOf(v)===i).join(' / ')||'—'}</span><span style="margin-left:auto">点击查看详情 ›</span></div>
+  </div>`;
+}
+function nowTime(){ const d=new Date(); return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); }
+function pushMsg(m){ m.time=m.time||nowTime(); chatMsgs.push(m); renderChat(); }
+function quickSend(t){ $('chat-text').value=t; sendChat(); }
+function sendChat(){
+  const inp=$('chat-text'); const t=inp.value.trim(); if(!t) return;
+  if(state.offline){
+    pushMsg({type:'text',role:'user',html:esc(t)});
+    pushMsg({type:'text',role:'bot',html:'📡 已保存到本地队列（request_id 已固定），联网后按原编号重试，不会重复记录。',proc:'离线'});
+    return;
+  }
+  inp.value=''; $('btn-send').disabled=true;
+  pushMsg({type:'text',role:'user',html:esc(t)});
+  chatMsgs.push({type:'typing'}); renderChat();
+  setTimeout(()=>{
+    const idx=chatMsgs.findIndex(m=>m.type==='typing'); if(idx>=0) chatMsgs.splice(idx,1);
+    $('btn-send').disabled=false;
+    handleBotReply(t);
+  }, 900);
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function handleBotReply(t){
+  pushMsg({type:'proc',steps:[{t:'安全检查 ✓',st:'done'},{t:'理解输入 ✓',st:'done'},{t:'数据操作',st:'doing'}]});
+  if(/牛肉面|卤蛋/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'已为你记录午餐 ✓ 分量按「大碗」保存。热量来自模型粗估（±25% 示意误差带），如有包装标签数值可以直接告诉我。',proc:'model_allowed'});
+    pushMsg({type:'meal',data:EVENTS[0]});
+  }else if(/体重/.test(t)){
+    const m=t.match(/([\d.]+)\s*(公斤|kg|KG)?/i);
+    pushMsg({type:'text',role:'bot',html:`已记录今晨体重 <b>${m?m[1]:'65.0'} kg</b> ✓ 较上次（11-01，65.4kg）下降 0.4kg。`,proc:'model_allowed'});
+    pushMsg({type:'meal',data:EVENTS[1]});
+  }else if(/睡/.test(t)&&!/昨晚/.test(t)||/昨晚睡了/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'收到～还差一个信息就能保存这条睡眠记录：',proc:'model_allowed'});
+    state.pendingClarify={field:'hours'};
+    pushMsg({type:'clarify',q:'昨晚睡了几个小时？（必需信息，缺失不会保存）',opts:[
+      {label:'6 小时左右'},{label:'7 小时左右'},{label:'8 小时以上'},
+      {label:'不知道',secondary:true},{label:'不记了',secondary:true}]});
+  }else if(/跑步|运动/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'已记录：跑步 30 分钟 ✓ 「有点累」已作为主观体验保存，不算作健康风险。',proc:'model_allowed'});
+    pushMsg({type:'meal',data:EVENTS[3]});
+  }else if(/月经|周期/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'已记录生理周期开始日 ✓ 后续复盘会区分周期阶段对食欲的影响。',proc:'model_allowed'});
+    pushMsg({type:'meal',data:EVENTS[6]});
+  }else if(/查看|查询|最近/.test(t)){
+    pushMsg({type:'text',role:'bot',html:`最近 7 天共 <b>9 条</b>记录：饮食 4 · 体重 2 · 睡眠 1 · 运动 1 · 周期 1。日均摄入约 1680 kcal，其中 11-03 晚餐标记「油腻、吃撑」（自述反馈，非营养超标结论）。<br><span style="color:var(--brand);cursor:pointer" onclick="state.stack.push('chat');show('history')">在历史页查看全部 ›</span>`,proc:'固定视图 · 7天'});
+  }else if(/不喜欢|不吃|过敏/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'这与已有长期信息「喜欢燕麦」冲突。我不会静默覆盖，请在 <b>我的 → 长期信息</b> 中选择保留哪一条。<span style="color:var(--brand);cursor:pointer" onclick="go(\'facts\')">去处理 ›</span>',proc:'long_term_fact'});
+  }else if(/咸|怎么办/.test(t)){
+    pushMsg({type:'text',role:'bot',html:'关注到你觉得最近吃得偏咸。一般建议（本地审核目录 · 参考 WHO 减钠）：<br>① 逐步减少烹调用盐，用香料替代；② 少选腌制/加工食品；③ 点外卖时备注少盐。<br><br>要不要顺便回顾一下这几餐的分量？也可以说「不记了」结束。',proc:'本地目录要点'});
+  }else{
+    pushMsg({type:'text',role:'bot',html:'我可以帮你：记录五类数据、纠错、查询历史、生成建议。试着说「中午吃了一大碗牛肉面，加了一个卤蛋」。',proc:'model_allowed'});
+  }
+}
+function answerClarify(msgIdx,optIdx){
+  const m=chatMsgs[msgIdx]; const opt=m.opts[optIdx];
+  m.answered=true;
+  chatMsgs.splice(msgIdx,1,{type:'text',role:'user',html:esc(opt.label)});
+  renderChat();
+  if(opt.label==='不知道'||opt.label==='不记了'){
+    pushMsg({type:'text',role:'bot',html:'好的，已结束本次补充，不会保存空记录。之前已保存的其他记录不受影响。'});
+    state.pendingClarify=null; $('pending-banner').style.display='none';
+    return;
+  }
+  const e=JSON.parse(JSON.stringify(EVENTS[2])); e.pending=false;
+  pushMsg({type:'text',role:'bot',html:'已补全并保存 ✓ 睡眠按入睡日期（11-03）归属。',proc:'resume · 幂等回执'});
+  pushMsg({type:'meal',data:e});
+  state.pendingClarify=null; $('pending-banner').style.display='none';
+}
+function resumePending(){
+  show('chat'); syncNavs('chat');
+  pushMsg({type:'clarify',q:'继续未完成的补充：昨晚睡了几个小时？',opts:[
+    {label:'6 小时左右'},{label:'7 小时左右'},{label:'不知道',secondary:true},{label:'不记了',secondary:true}]});
+  $('pending-banner').style.display='none';
+}
+RENDERERS.chat = function(){
+  if(chatMsgs.length===0){
+    chatMsgs.push({type:'text',role:'bot',time:'09:30',
+      html:'早上好，我是轻记 🌿<br>直接用一句话记录就好，比如：<br>· 「中午吃了一大碗牛肉面，加了一个卤蛋」<br>· 「今天早上体重65公斤」<br>· 「昨晚睡了7小时」<br><br>今天已记录 <b>2 条</b>。<span style="color:var(--brand);cursor:pointer" onclick="go(\'today\')">查看今日汇总 ›</span>',
+      proc:''});
+    if(state.pendingClarify!==null && EVENTS[2].pending){
+      $('pending-banner').style.display='flex';
+    }
+  }
+  renderChat(); syncNavs('chat');
+};
+/* ══════════════════ 今日汇总 ══════════════════ */
+function ring(pct,color,label,val,sub){
+  const r=30,c=2*Math.PI*r,off=c*(1-Math.min(pct,1));
+  return `<div class="ring"><svg viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="${r}" fill="none" stroke="#eef1f5" stroke-width="8"/>
+    <circle cx="37" cy="37" r="${r}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 37 37)"/>
+    <text x="37" y="35" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2d3d">${val}</text>
+    <text x="37" y="48" text-anchor="middle" font-size="9" fill="#8b98a8">${sub}</text>
+  </svg><div class="rl">${label}</div></div>`;
+}
+RENDERERS.today=function(){
+  $('today-rings').innerHTML =
+    ring(680/1650,'url(#g1)','热量',680,'/1650')+
+    ring(28/82,'#4b9fe1','蛋白质g',28,'/82')+
+    ring(82/206,'#7ed8b5','碳水g',82,'/206')+
+    ring(22/55,'#e8a33d','脂肪g',22,'/55');
+  $('today-events').innerHTML = EVENTS.filter(e=>e.day==='2026-11-04').map(e=>`
+    <div class="cell" onclick="openEvent('${e.id}')">
+      <div class="ic ${KIND_META[e.kind].cls}">${KIND_META[e.kind].ic}</div>
+      <div class="tt"><b>${e.title}</b><small>${e.time} · ${e.kcal!=null?e.kcal+' kcal':'—'}</small></div>
+      <span class="arw">›</span></div>`).join('') || emptyHtml('今天还没有记录','去「记录」页说一句话即可');
+  $('complete-state').textContent = state.completeMarked?'已标记完整 · 将纳入规律分析':'今日尚未标记完整';
+  $('btn-complete').textContent = state.completeMarked?'↩ 撤销完整标记':'✓ 确认今日饮食已记录完整';
+  $('btn-complete').className = 'btn '+(state.completeMarked?'plain':'ghost');
+};
+function toggleComplete(){
+  state.completeMarked=!state.completeMarked;
+  toast(state.completeMarked?'已标记完整 · PUT /api/days/2026-11-04/complete':'已撤销完整标记');
+  RENDERERS.today();
+}
+function emptyHtml(t,s){ return `<div class="empty"><div class="ei">🍃</div><p><b>${t}</b><br>${s||''}</p></div>`; }
+/* ══════════════════ 历史 ══════════════════ */
+let rangeIdx=0; const RANGES=[7,28,90];
+function cycleRange(){ rangeIdx=(rangeIdx+1)%3; state.histRange=RANGES[rangeIdx];
+  $('hist-range').textContent=`近 ${state.histRange} 天 ▾`; renderHistory(); }
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('#hist-kinds .chip');
+  if(chip){ document.querySelectorAll('#hist-kinds .chip').forEach(c=>c.classList.remove('on'));
+    chip.classList.add('on'); state.histKind=chip.dataset.k; renderHistory(); }
+  const seg=e.target.closest('#trend-seg button');
+  if(seg){ document.querySelectorAll('#trend-seg button').forEach(b=>b.classList.remove('on'));
+    seg.classList.add('on'); renderTrends(+seg.dataset.d); }
+  const dseg=e.target.closest('#disc-tabs button');
+  if(dseg){ document.querySelectorAll('#disc-tabs button').forEach(b=>b.classList.remove('on'));
+    dseg.classList.add('on'); state.discTab=dseg.dataset.t;
+    $('disc-insights').style.display=state.discTab==='insights'?'':'none';
+    $('disc-reviews').style.display=state.discTab==='reviews'?'':'none'; }
+  const fseg=e.target.closest('#fact-seg button');
+  if(fseg){ document.querySelectorAll('#fact-seg button').forEach(b=>b.classList.remove('on'));
+    fseg.classList.add('on'); state.factTab=fseg.dataset.f; renderFacts(); }
+  const psex=e.target.closest('#pf-sex button');
+  if(psex){ document.querySelectorAll('#pf-sex button').forEach(b=>b.classList.remove('on')); psex.classList.add('on'); }
+});
+function renderHistory(){
+  const q=($('hist-search')?.value||'').trim();
+  let list=EVENTS.filter(e=>!state.histKind||e.kind===state.histKind);
+  if(q) list=list.filter(e=>(e.title+e.detail).includes(q));
+  $('hist-count').textContent=`共 ${list.length} 条 · GET /api/events`;
+  if(!list.length){ $('hist-list').innerHTML=emptyHtml(q?'没有匹配的记录':'该筛选下暂无记录',q?'换个关键词试试':'试试切换类型或时间范围'); return; }
+  const byDay={};
+  list.forEach(e=>{ (byDay[e.day]=byDay[e.day]||[]).push(e); });
+  $('hist-list').innerHTML=Object.keys(byDay).sort().reverse().map(day=>{
+    const es=byDay[day];
+    const kcal=es.filter(e=>e.kind==='meal').reduce((s,e)=>s+(e.kcal||0),0);
+    return `<div class="day-hd">${fmtDay(day)}${es.every(e=>e.day==='2026-11-04')?'<span class="pill gray">今天</span>':''}${kcal?`<span class="pill info">${kcal} kcal</span>`:''}</div>
+    <div class="card" style="margin-top:6px;padding:4px 16px">`+
+    es.map(e=>`<div class="evt" onclick="openEvent('${e.id}')">
+      <div class="eic ${KIND_META[e.kind].cls}">${KIND_META[e.kind].ic}</div>
+      <div class="ebd"><b>${e.title}${e.rev>1?`<span class="pill gray">修订×${e.rev-1}</span>`:''}</b>
+        <p>${e.detail}</p>
+        <div class="em"><span>${e.time}</span>${e.kcal!=null?`<span>${e.kcal} kcal</span>`:''}<span>${e.source}</span></div></div>
+      <span class="ear">›</span></div>`).join('')+`</div>`;
+  }).join('');
+}
+function fmtDay(d){ const [y,m,dd]=d.split('-'); const wd='日一二三四五六'[new Date(+y,+m-1,+dd).getDay()]; return `${+m}月${+dd}日 周${wd}`; }
+RENDERERS.history=function(){ renderHistory(); syncNavs('history'); };
+/* ══════════════════ 趋势 ══════════════════ */
+function renderTrends(days){
+  const data=[]; for(let i=days-1;i>=0;i--){ const d=new Date(2026,10,4); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const ev=EVENTS.find(e=>e.day===key&&e.kind==='meal');
+    data.push({d:key.slice(5),v:ev?(ev.kcal||0)+((key==='2026-11-03')?610:0)+(key==='2026-10-31'?480:0):null}); }
+  const max=Math.max(2000,...data.map(x=>x.v||0));
+  $('trend-kcal').innerHTML=data.map(x=>`<div class="bar${x.v==null?' miss':''}" title="${x.d}: ${x.v??'无记录'}">
+    <i style="height:${x.v!=null?Math.max(6,x.v/max*88):4}px"></i><span>${x.d.slice(3)}</span></div>`).join('');
+  const wData=[{d:'10-20',v:66.2},{d:'10-25',v:65.8},{d:'10-28',v:65.6},{d:'11-01',v:65.4},{d:'11-04',v:65.0}];
+  const wMin=64,wMax=67;
+  $('trend-weight').innerHTML=wData.map(x=>`<div class="bar" title="${x.d}: ${x.v}kg">
+    <i style="height:${Math.max(10,(wMax-x.v)/(wMax-wMin)*80+8)}px;background:linear-gradient(180deg,#9370db,#4b9fe1)"></i><span>${x.d.slice(3)}</span></div>`).join('');
+  $('weight-list').innerHTML=wData.slice().reverse().map(x=>`<div class="kv" style="padding:7px 2px"><span class="k">${x.d}</span><span class="v">${x.v} kg</span></div>`).join('');
+  $('monthly-list').innerHTML=`<div class="cell" onclick="toast('归档摘要只读 · 不能承诺重新计算')">
+    <div class="ic" style="background:rgba(147,112,219,.13)">🗂️</div>
+    <div class="tt"><b>2026-09 月度摘要</b><small>日均 1740 kcal · 体重 66.8→65.9 · 记录 89 条已归档</small></div><span class="arw">›</span></div>
+    <p class="muted" style="margin-top:6px">超过一年的逐餐细节不再保留，摘要附带来源版本与方法版本。</p>`;
+}
+RENDERERS['trends-full']=function(){ renderTrends(7); };
+/* ══════════════════ 记录详情 ══════════════════ */
+function openEvent(id){
+  state.currentEvent=EVENTS.find(e=>e.id===id)||EVENTS[0];
+  state.stack.push(current); show('event');
+}
+RENDERERS.event=function(){
+  const e=state.currentEvent; if(!e) return;
+  const km=KIND_META[e.kind];
+  const nut=e.kcal!=null?`
+    <div class="card"><h3>营养构成 <span class="sub">按来源标注</span></h3>
+      <div class="stat3">
+        <div class="st"><b>${e.kcal}</b><span>kcal</span><small>${nutSrc(e,'kcal')}</small></div>
+        <div class="st"><b>${e.protein??'?'}</b><span>蛋白质 g</span><small>${e.protein!=null?nutSrc(e,'protein'):'未知'}</small></div>
+        <div class="st"><b>${e.carbs??'?'}</b><span>碳水 g</span><small>${e.carbs!=null?'模型粗估':'未知'}</small></div>
+      </div>
+      ${e.foods&&e.foods.length?`<div class="divider"></div>`+e.foods.map(f=>`
+        <div class="kv" style="padding:8px 2px"><span class="k">${f.n} <small style="color:var(--ink-3)">${f.a}</small></span>
+        <span class="v">${f.k} kcal<small>${f.s}</small></span></div>`).join(''):''}
+      <div class="note">模型粗估 ±25% 只是示意误差带，不是经校准的置信区间。未知营养不会按零计算，当天有未知项时不据已知部分计算剩余额度。</div>
+    </div>`:'';
+  const fb=(e.feedback||[]).length?`<div class="card"><h3>饮食反馈</h3>${e.feedback.map(f=>`
+    <div class="kv"><span class="k">${f.t}</span><span class="v"><span class="pill warn">${f.tag}</span></span></div>`).join('')}
+    <p class="muted" style="margin-top:6px">主观反馈，不是钠或热量已超标结论；明确否认可撤回。</p></div>`:'';
+  $('event-body').innerHTML=`
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:40px">${km.ic}</div>
+      <h3 style="justify-content:center;margin-top:8px">${e.title}</h3>
+      <p class="muted">${fmtDay(e.day)} ${e.time} · ${km.label} · ${e.source}</p>
+      <div style="margin-top:8px"><span class="pill ok">已保存 v${e.rev}</span> <span class="pill gray">发生时间 ${e.day}T${e.time}:00+08:00</span></div>
+    </div>
+    <div class="card"><h3>原文</h3><p style="font-size:13.5px;line-height:1.7">「${e.detail}」</p>
+      <p class="muted" style="margin-top:6px">证据片段随记录保存，用于纠错与血缘追溯。</p></div>
+    ${nut}${fb}
+    <div class="card"><h3>修订历史 <span class="sub">GET /api/events/${e.id}/revisions</span></h3>
+      ${revTimeline(e)}</div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn ghost" style="flex:1" onclick="correctEvent()">✏️ 纠正记录</button>
+      <button class="btn danger" style="flex:1" onclick="deleteEventFlow()">🗑 删除</button>
+    </div>`;
+};
+function nutSrc(e,k){ if(e.nutrition&&e.nutrition[k])return e.nutrition[k]==='user_label'?'用户提供标签':'模型粗估'; return '本地已知'; }
+function revTimeline(e){
+  const revs=[{v:e.rev,t:'当前版本',d:fmtDay(e.day)+' '+e.time,by:'—'}];
+  if(e.rev>=2) revs.push({v:e.rev-1,t:'追问补全',d:'保存后 2 分钟',by:'补充了分量信息',diff:['大碗→一大碗（约450g）']});
+  if(e.rev>=3) revs.push({v:1,t:'首次解析',d:e.day,by:'聊天解析',diff:['麻辣烫（分量未知）→ 一份约600g']});
+  return revs.map((r,i)=>`<div class="rev"><div class="rl"><i></i><div class="ln"></div></div>
+    <div class="rb"><b>v${r.v} · ${r.t}</b><p>${r.by||''}${r.diff?r.diff.map(d=>`<br><span class="diff-del">${d.split('→')[0]}</span> → <span class="diff-add">${d.split('→')[1]||''}</span>`).join(''):''}</p>
+    <span class="rt">${r.d}</span></div></div>`).join('');
+}
+function correctEvent(){
+  openSheet('纠正记录',`<p class="muted">用自然语言说明要改什么，例如「不是大碗，是小碗」。纠正会生成新修订版本，营养将按新分量重新估算。</p>
+    <div class="field"><label>纠正说明</label><textarea id="corr-text" rows="3" placeholder="不是大碗，是小碗"></textarea></div>
+    <button class="btn primary" style="margin-top:12px" onclick="doCorrect()">提交纠正 · POST /api/chat</button>`);
+}
+function doCorrect(){
+  const t=$('corr-text').value.trim(); if(!t){ toast('请输入纠正内容'); return; }
+  closeSheets(); const e=state.currentEvent; e.rev++;
+  toast('已提交，工作流解析中…');
+  setTimeout(()=>{ RENDERERS.event(); toast('纠正已保存为 v'+e.rev+' · 营养已按新分量重新估算'); },1000);
+}
+function deleteEventFlow(){
+  const e=state.currentEvent;
+  openDialog('删除这条记录？','将进入隐私删除流程：先预览实际影响范围（关联聊天、复盘、规律），确认后再执行。不会静默删除。','进入删除流程',()=>{
+    state.delTarget={type:'event',id:e.id,title:e.title};
+    state.stack.push('event'); show('deletion'); delGoStep(1);
+  },true);
+}
+/* ══════════════════ 计划 ══════════════════ */
+let planState='active'; // active | draft
+RENDERERS.plan=function(){
+  syncNavs('plan');
+  const p=PLAN;
+  const hero=`<div class="target-hero">
+    <div class="th-top"><b>${p.kcal}</b><span>kcal / 天 · 目标热量</span>
+      <span class="pill brand" style="margin-left:auto">${p.source}</span></div>
+    <div class="th-row">
+      <div class="t"><b>${p.protein}g</b><span>蛋白质 20%</span></div>
+      <div class="t"><b>${p.carbs}g</b><span>碳水 50%</span></div>
+      <div class="t"><b>${p.fat}g</b><span>脂肪 30%</span></div>
+      <div class="t"><b>${p.exercise}min</b><span>每周运动</span></div>
+    </div>
+    <p class="muted" style="margin-top:10px">确认于 ${p.confirmed} · ${p.formula} · 资料指纹 a3f9…（档案变化后旧估算版本失效）</p>
+  </div>`;
+  const draft=planState==='draft'?`
+    <div class="card" style="border:1.5px solid rgba(47,111,237,.35)">
+      <h3>草案待确认 <span class="pill warn">单次变化 &gt;5% 需确认</span></h3>
+      <p style="font-size:13px;line-height:1.7">你修改后的目标：<b>1550 kcal/天</b>（较生效目标 −6.1%）。<br>
+      小幅变化会自动生效；这次超过了 5%，需要你确认。<b>过时草案不会生效</b>，档案再次变化后本草案作废。</p>
+      <div class="plan-actions">
+        <button class="btn primary sm" style="flex:1" onclick="acceptPlan()">确认生效</button>
+        <button class="btn plain sm" style="flex:1" onclick="cancelPlan()">取消草案</button>
+      </div>
+    </div>`:'';
+  $('plan-body').innerHTML=hero+draft+`
+    <div class="card"><h3>下一餐建议 <span class="sub">本地目录 · 模型选表达</span></h3>
+      <p style="font-size:13.5px;line-height:1.7">${p.next}</p>
+      <div class="plan-actions">
+        <button class="btn soft sm" onclick="toast('已加入今日建议 · 记录后自动核对')">就吃这个</button>
+        <button class="btn plain sm" onclick="toast('换一个建议（同一目录内）')">换一个</button>
+      </div></div>
+    <div class="card"><h3>一周安排</h3>
+      ${p.week.map(w=>`<div class="week-row"><span class="wd">${w[0]}</span><span class="ws">${w[1]}</span></div>`).join('')}
+    </div>
+    <div class="card"><h3>目标管理</h3>
+      <div class="kv"><span class="k">修改目标</span><span class="v" style="color:var(--brand);cursor:pointer" onclick="editTarget()">手动填写 ›</span></div>
+      <div class="kv"><span class="k">恢复系统默认</span><span class="v" style="color:var(--brand);cursor:pointer" onclick="refreshDefault()">重新估算 ›</span></div>
+      <details class="fold"><summary>查看计算依据与参考</summary>
+        <div class="fold-bd">${p.basis}<br><br>参考：Mifflin–St Jeor 原始研究（19–78岁）· NIDDK 活动水平分档 · WHO 每周 150 分钟中等强度活动 · 加拿大成人宏量参考范围。<br>默认值不是精确测量或医疗处方；缺口上限 300 kcal/天，处理区间 1500–3500 kcal/天属于产品边界。</div>
+      </details>
+    </div>`;
+  $('plan-state').textContent = planState==='draft'?'草案待确认':'已生效';
+  $('plan-state').className = 'pill '+(planState==='draft'?'warn':'ok');
+};
+function editTarget(){
+  openSheet('修改目标',`
+    <div class="field"><label>每日热量目标 kcal <i>*</i></label><input id="tg-kcal" type="number" inputmode="numeric" value="1550">
+      <div class="err-tip">支持范围 1500–3500 kcal/天（产品边界，非医疗阈值）</div></div>
+    <div class="field"><label>每周运动分钟</label><input id="tg-ex" type="number" inputmode="numeric" value="150">
+      <div class="err-tip">每周运动不超过 300 分钟</div></div>
+    <div class="field"><label>备注（可选，需通过安全检查）</label><textarea rows="2" placeholder="期望春节前到 58kg（不会倒推节食强度）"></textarea></div>
+    <button class="btn primary" style="margin-top:14px" onclick="submitTarget()">提交草案 · POST /api/plans/propose</button>`);
+}
+function submitTarget(){
+  const v=+$('tg-kcal').value;
+  const f=$('tg-kcal').closest('.field');
+  if(v<1500||v>3500){ f.classList.add('invalid'); return; } f.classList.remove('invalid');
+  closeSheets(); planState='draft'; RENDERERS.plan();
+  toast('草案已生成 · 变化超过5%，等待你确认');
+}
+function acceptPlan(){ planState='active'; PLAN.kcal=1550; RENDERERS.plan(); toast('新目标已生效 · 已保存来源与指纹'); }
+function cancelPlan(){ planState='active'; RENDERERS.plan(); toast('草案已取消，生效目标保持不变'); }
+function refreshDefault(){
+  openDialog('恢复系统默认？','已有生效目标将保持不变，只有点击「恢复系统默认」才会重新采用当前估算（GET /api/targets/default，本地计算不调模型）。','重新估算',()=>{
+    toast('已按当前档案重新估算：1950 维持 / 1650 目标');
+  });
+}
+/* ══════════════════ 发现 ══════════════════ */
+RENDERERS.discover=function(){
+  syncNavs('discover');
+  $('disc-insights').innerHTML = INSIGHTS.filter(i=>!i.stale).map(i=>`
+    <div class="insight">
+      <div class="ih"><b>${i.title}</b>
+        <span class="pill ${i.status==='已认可'?'ok':i.status==='已否认'?'err':'warn'}">${i.status}</span>
+        ${i.stale?'<span class="pill gray">已过期</span>':''}</div>
+      <p>${i.body}</p>
+      <div class="iev">📎 ${i.ev}</div>
+      ${i.status==='待反馈'?`<div class="iact">
+        <button class="btn soft sm" style="flex:1" onclick="insightFb('${i.id}','accepted')">✓ 符合实际</button>
+        <button class="btn plain sm" style="flex:1" onclick="insightFb('${i.id}','rejected')">✕ 不准确</button>
+      </div>`:''}
+    </div>`).join('')
+    + `<details class="fold" style="margin:14px 4px"><summary>查看已过期规律（1）</summary><div class="fold-bd">${INSIGHTS.filter(i=>i.stale).map(i=>i.title+' · '+i.ev).join('<br>')}</div></details>`
+    + `<p class="muted" style="margin:8px 4px">规律只在有足够证据时生成，展示样本、窗口、覆盖率与限制；数据不足不会强行生成。认可/否认将影响后续权重学习。</p>`;
+  $('disc-reviews').innerHTML = REVIEWS.map(r=>`
+    <div class="review-card">
+      <h4>📅 ${r.period} <span class="pill ok" style="margin-left:auto">已生成</span></h4>
+      <div class="rc-metrics">${r.metrics.map(m=>`<div class="m ${m.d}"><b>${m.v}</b><span>${m.l}${m.u}</span><small style="font-size:10px;color:var(--ink-3)">${m.t}</small></div>`).join('')}</div>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.75">${r.body}</p>
+      <p class="muted" style="margin-top:8px">${r.src} · ${r.gen}</p>
+      <div class="iact" style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn soft sm" style="flex:1" onclick="toast('反馈已记录，将影响下次复盘')">有帮助</button>
+        <button class="btn plain sm" style="flex:1" onclick="toast('已标记，可在历史页纠正具体记录')">数据有误</button>
+      </div>
+    </div>`).join('')
+    + `<div class="card" style="text-align:center"><p class="muted">复盘保留原统计窗口；来源变化、方法升级或窗口过期会显示更新提示。</p>
+      <button class="btn ghost" style="margin-top:12px" onclick="openReviewSheet()">生成新的周复盘</button></div>`;
+};
+function insightFb(id,fb){
+  const i=INSIGHTS.find(x=>x.id===id); i.status=fb==='accepted'?'已认可':'已否认';
+  toast(fb==='accepted'?'已认可该规律 · PATCH /api/insights':'已否认，将降低该模式权重');
+  RENDERERS.discover();
+}
+function openReviewSheet(){
+  openSheet('生成周复盘',`<p class="muted">复盘需要足够的完整记录。未标记完整的日期不会纳入摄入规律分析。</p>
+    <div class="kv"><span class="k">周期</span><span class="v">day / <b>week</b></span></div>
+    <div class="kv"><span class="k">本周完整天数</span><span class="v">5 / 7 天</span></div>
+    <div class="kv"><span class="k">预计调用</span><span class="v">analysis 工作流 · 幂等 request_id</span></div>
+    <button class="btn primary" style="margin-top:14px" onclick="genReview()">生成 · POST /api/reviews</button>`);
+}
+function genReview(){
+  closeSheets(); toast('工作流执行中…');
+  setTimeout(()=>{ state.discTab='reviews';
+    document.querySelectorAll('#disc-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==='reviews'));
+    $('disc-insights').style.display='none'; $('disc-reviews').style.display='';
+    toast('周复盘已生成'); },1200);
+}
+/* ══════════════════ 我的 / 档案 / 事实 / 偏好 ══════════════════ */
+RENDERERS.mine=function(){ syncNavs('mine'); };
+RENDERERS['profile-edit']=function(){};
+function saveProfile(){
+  let ok=true;
+  const checks=[['pf-age',v=>v>=19&&v<=78],['pf-height',v=>v>=100&&v<=250],['pf-weight',v=>v>0],['pf-goal',v=>v>0]];
+  checks.forEach(([id,fn])=>{
+    const el=$(id); const f=el.closest('.field');
+    const bad=!fn(parseFloat(el.value));
+    f.classList.toggle('invalid',bad); if(bad) ok=false;
+  });
+  if(!ok){ toast('请修正标红的字段'); return; }
+  const btn=event.target; btn.innerHTML='<span class="spin"></span> 保存中';
+  setTimeout(()=>{ btn.textContent='保存档案 · PUT /api/profile'; back(); toast('档案已保存 · 计划页估算指纹将更新'); },700);
+}
+function renderFacts(){
+  const list=FACTS.filter(f=>f.tab===state.factTab);
+  $('fact-list').innerHTML = list.length? list.map(f=>`
+    <div class="fact ${f.conflict?'conflict':''}">
+      <div class="fh"><b>${typeIc(f.type)} ${f.title}</b><span class="pill ${f.conflict?'warn':'gray'}">v${f.ver}</span></div>
+      <p>${f.content}</p>
+      <div class="fm"><span>状态：${f.status}</span><span>来源：${f.from}</span></div>
+      ${f.conflict?`<div class="fa">
+        <button class="btn soft sm" style="flex:1" onclick="decideFact('${f.id}','keep_new')">以新说法为准</button>
+        <button class="btn plain sm" style="flex:1" onclick="decideFact('${f.id}','keep_old')">保留原有</button>
+      </div>
+      <p class="muted" style="margin-top:8px">冲突不会静默覆盖：普通偏好明确改口后替代旧偏好并保留替代历史；临时偏好需选择后限期覆盖。</p>`:`
+      <div class="fa">
+        <button class="btn plain sm" onclick="editFact('${f.id}')">修改</button>
+        <button class="btn plain sm" onclick="factRevisions('${f.id}')">修订</button>
+        <button class="btn danger sm" onclick="deleteFactFlow('${f.id}')">删除</button>
+      </div>`}
+    </div>`).join('')
+    : emptyHtml(state.factTab==='conflict'?'没有待处理冲突':'暂无内容','长期信息来自聊天中的明确陈述，也可手动新增');
+}
+function typeIc(t){ return {preference:'💚',allergy:'⚠️',limit:'🚫'}[t]||'📌'; }
+RENDERERS.facts=renderFacts;
+function decideFact(id,act){
+  const f=FACTS.find(x=>x.id===id);
+  f.conflict=false; f.tab='active';
+  if(act==='keep_new'){ f.title='不喜欢燕麦'; f.content='2026-11-02 明确改口；原「喜欢燕麦」保留为替代历史'; f.ver++; }
+  renderFacts(); toast(act==='keep_new'?'已以新说法为准 · 替代历史保留':'已保留原有信息，新说法记为临时');
+}
+function editFact(id){
+  const f=FACTS.find(x=>x.id===id);
+  openSheet('修改长期信息',`
+    <div class="field"><label>类型</label><select><option ${f.type==='preference'?'selected':''}>偏好</option><option ${f.type==='allergy'?'selected':''}>过敏</option><option ${f.type==='limit'?'selected':''}>健康限制</option></select></div>
+    <div class="field"><label>内容 <i>*</i></label><textarea id="fact-content" rows="2">${f.content}</textarea></div>
+    <div class="field"><label>有效期</label><select><option>长期</option><option>临时（指定到期日）</option></select></div>
+    <div class="field"><label>陈述状态</label><select><option>用户直接陈述</option><option>转述专业建议（未经独立核验）</option></select></div>
+    <button class="btn primary" style="margin-top:12px" onclick="saveFact('${id}')">保存 · PUT /api/facts/${id}（带版本号乐观锁）</button>`);
+}
+function saveFact(id){
+  const c=$('fact-content').value.trim(); if(!c){ toast('内容不能为空'); return; }
+  FACTS.find(x=>x.id===id).content=c; closeSheets(); renderFacts(); toast('已保存新修订版本');
+}
+function factRevisions(id){
+  openSheet('修订历史',`<div class="rev"><div class="rl"><i></i><div class="ln"></div></div>
+    <div class="rb"><b>v4 · 当前</b><p>补充「早餐场景」限定</p><span class="rt">2026-09-20 · 聊天明确陈述</span></div></div>
+    <div class="rev"><div class="rl"><i></i><div class="ln"></div></div>
+    <div class="rb"><b>v3</b><p><span class="diff-del">偶尔吃燕麦</span> → <span class="diff-add">早餐常吃燕麦</span></p><span class="rt">2026-09-02</span></div></div>
+    <div class="rev"><div class="rl"><i></i></div>
+    <div class="rb"><b>v1 · 首次</b><p>喜欢燕麦（自由文本，保留为历史类型）</p><span class="rt">2026-08-14</span></div></div>`);
+}
+function deleteFactFlow(id){
+  const f=FACTS.find(x=>x.id===id);
+  openDialog('删除这条长期信息？','将进入隐私删除流程，先预览影响范围（关联建议、计划视图）。','进入删除流程',()=>{
+    state.delTarget={type:'fact',id:f.id,title:f.title};
+    state.stack.push('facts'); show('deletion'); delGoStep(1);
+  },true);
+}
+function openFactSheet(){
+  openSheet('新增长期信息',`
+    <div class="field"><label>类型 <i>*</i></label><div class="seg"><button class="on">偏好</button><button>过敏</button><button>限制</button></div></div>
+    <div class="field"><label>内容 <i>*</i></label><textarea id="nf-content" rows="2" placeholder="例如：不吃香菜"></textarea></div>
+    <button class="btn primary" style="margin-top:12px" onclick="addFact()">保存 · POST /api/facts</button>`);
+}
+function addFact(){
+  const c=$('nf-content').value.trim(); if(!c){ toast('请填写内容'); return; }
+  FACTS.unshift({id:'f'+Date.now(),type:'preference',title:c.slice(0,12),content:c,status:'长期',from:'手动新增',ver:1,conflict:false,tab:'active'});
+  closeSheets(); state.factTab='active';
+  document.querySelectorAll('#fact-seg button').forEach(b=>b.classList.toggle('on',b.dataset.f==='active'));
+  renderFacts(); toast('已保存');
+}
+/* 偏好权重 */
+const WEIGHTS=[{k:'热量控制',v:40},{k:'营养均衡',v:30},{k:'规律性',v:20},{k:'主观体验',v:10}];
+const SUGGEST=[{k:'热量控制',from:40,to:35},{k:'营养均衡',from:30,to:30},{k:'规律性',from:20,to:25},{k:'主观体验',from:10,to:10}];
+RENDERERS.prefs=function(){
+  $('sug-rows').innerHTML=SUGGEST.map(s=>`<div class="kv"><span class="k">${s.k}</span>
+    <span class="v">${s.to===s.from?s.from+'%（不变）':`<span style="color:var(--ink-3);text-decoration:line-through">${s.from}%</span> → <b style="color:var(--brand)">${s.to}%</b>`}</span></div>`).join('')
+    +`<p class="muted" style="margin-top:8px">建议依据：最近 42 条完整饮食记录（GET /api/preferences/suggestion）。基于实际执行效果，不是医学适配。</p>`;
+  $('weight-sliders').innerHTML=WEIGHTS.map((w,i)=>`
+    <div style="padding:8px 0"><div class="row" style="justify-content:space-between">
+      <span style="font-size:13px;color:var(--ink-2)">${w.k}</span><b style="font-size:13px" id="wv-${i}">${w.v}%</b></div>
+    <input type="range" min="0" max="100" step="5" value="${w.v}" style="width:100%;accent-color:var(--brand)"
+      oninput="$('wv-${i}').textContent=this.value+'%'"></div>`).join('')
+    +`<p class="muted">四项之和建议为 100%。保存时记录变更历史（before/after/source）。</p>`;
+};
+function acceptSug(){ WEIGHTS.forEach((w,i)=>w.v=SUGGEST[i].to); RENDERERS.prefs(); toast('已采纳建议权重'); }
+function rejectSug(){ $('sug-card').style.display='none'; toast('已拒绝，保留手动权重'); }
+function savePrefs(){ toast('设置已保存 · PUT /api/preferences'); setTimeout(back,600); }
+function openTimeSheet(){
+  const hours=Array.from({length:24},(_,i)=>String(i).padStart(2,'0'));
+  openSheet('提醒时间',`<div class="row" style="gap:10px;justify-content:center;padding:10px 0 20px">
+    <select id="tp-h" style="width:100px;padding:12px;border-radius:12px;border:1.5px solid var(--border);font-size:16px;text-align:center">${hours.map(h=>`<option ${h==='20'?'selected':''}>${h}</option>`).join('')}</select>
+    <b style="font-size:18px">:</b>
+    <select id="tp-m" style="width:100px;padding:12px;border-radius:12px;border:1.5px solid var(--border);font-size:16px;text-align:center">${['00','15','30','45'].map(m=>`<option ${m==='30'?'selected':''}>${m}</option>`).join('')}</select>
+  </div><button class="btn primary" onclick="closeSheets();toast('提醒时间已设为 '+$('tp-h').value+':'+$('tp-m').value)">确定</button>`);
+}
+/* 消息 */
+RENDERERS.messages=function(){
+  $('ntf-list').innerHTML=NOTIFS.map(n=>`
+    <div class="ntf ${n.unread?'unread':''}" onclick="readNtf('${n.id}')">
+      <div class="nic">${n.ic}</div>
+      <div class="nbd"><b>${n.title}</b><p>${n.body}</p><span class="nt">${n.time}</span></div>
+    </div>`).join('');
+};
+function readNtf(id){ const n=NOTIFS.find(x=>x.id===id);
+  if(n.unread){ n.unread=false; state.unread=Math.max(0,state.unread-1); syncNavs(current); RENDERERS.messages(); }
+  toast('已标记已读 · PATCH /api/notifications'); }
+function readAll(){ NOTIFS.forEach(n=>n.unread=false); state.unread=0; syncNavs(current); RENDERERS.messages(); toast('全部已读'); }
+/* 授权 */
+RENDERERS.consent=function(){
+  const pol=['微信登录仅用于建立账号，不读取头像、昵称或手机号。',
+    '你填写的档案、饮食、体重、睡眠、运动、生理周期、聊天及计划保存在服务端，按账号隔离。',
+    '运行日志不记录健康原文或模型提示词，总大小最多 30 MiB，保留最近 7 个 UTC 自然日。',
+    '你可以删除记录、导出本人数据、撤回模型授权或注销账号。',
+    '注销后仅保留内部随机账号 ID 和注销时间组成的最小清单。备份最长保留 30 天。'];
+  $('policy-list').innerHTML=pol.map(p=>`<p style="margin-bottom:8px">· ${p}</p>`).join('');
+  $('consent-state').textContent=state.modelConsent?'已同意':'已撤回（local_only）';
+  $('consent-state').className='pill '+(state.modelConsent?'ok':'gray');
+  $('btn-revoke').textContent=state.modelConsent?'撤回模型授权':'重新同意模型授权';
+  $('btn-revoke').className='btn '+(state.modelConsent?'danger':'primary');
+};
+function revokeModel(){
+  if(state.modelConsent){
+    openDialog('撤回模型授权？','撤回后请求携带 processing_mode=local_only：规划、纠错、营养估算、建议生成全部禁用，缺失营养保持未知。该限制随流程保存，重启后不会自动放宽。基础记录不受影响。','确认撤回',()=>{
+      state.modelConsent=false; $('mode-tag').textContent='纯本地模式 local_only'; $('mode-tag').classList.add('local');
+      RENDERERS.consent(); toast('已撤回 · 服务端强制本地处理');
+    },true);
+  }else{
+    state.modelConsent=true; $('mode-tag').textContent='模型模式 · Qwen3.8-Max'; $('mode-tag').classList.remove('local');
+    RENDERERS.consent(); toast('已重新同意 · 发送前仍会展示数据类别');
+  }
+}
+function exportData(){
+  toast('正在生成导出文件…');
+  setTimeout(()=>toast('health-records.json 已生成 · 不含 API 密钥 · 可通过微信分享'),1200);
+}
+/* ══════════════════ 隐私删除 ══════════════════ */
+function delGoStep(n){
+  [1,2,3].forEach(i=>$('del-step'+i).style.display=i===n?'':'none');
+  $('del-steps').innerHTML=[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('');
+  if(n===1) renderDelTargets();
+}
+function renderDelTargets(){
+  const opts=[{type:'event',id:'e6',title:'11-03 午餐 · 麻辣烫（含反馈）'},
+    {type:'event',id:'e1',title:'11-04 午餐 · 牛肉面+卤蛋'},
+    {type:'fact',id:'f5',title:'临时偏好：本周想吃清淡'}];
+  $('del-targets').innerHTML=(state.delTarget?`
+    <div class="kv"><span class="k">已选择对象</span><span class="v">${state.delTarget.title}</span></div>
+    <button class="btn primary" style="margin-top:12px" onclick="delPreview()">预览影响范围</button>`:'')+`
+    <p class="muted" style="margin:10px 0 4px">或从列表选择：</p>`+
+    opts.map(o=>`<div class="cell" onclick="pickDel(${JSON.stringify(o).replace(/"/g,'&quot;')})">
+      <div class="ic" style="background:${o.type==='fact'?'rgba(147,112,219,.13)':'rgba(232,163,61,.13)'}">${o.type==='fact'?'🧠':'🍜'}</div>
+      <div class="tt"><b>${o.title}</b><small>${o.type==='fact'?'长期信息':'健康记录'}</small></div><span class="arw">›</span></div>`).join('');
+}
+function pickDel(o){ state.delTarget=o; delGoStep(1); }
+function delPreview(){
+  const isFact=state.delTarget.type==='fact';
+  $('del-scope').innerHTML=`
+    <div class="kv" style="border-bottom:none;padding-bottom:2px"><span class="k" style="font-weight:700">将删除</span></div>
+    <div class="scope-row"><span>健康记录本体（含全部修订）</span><b>1 条</b></div>
+    <div class="scope-row"><span>关联聊天回执与流程进度</span><b>${isFact?'2':'3'} 个</b></div>
+    <div class="scope-row"><span>引用该记录的规律/复盘</span><b>${isFact?'0':'1'} 个（重新计算）</b></div>
+    <div class="kv" style="border-bottom:none;padding:10px 2px 2px"><span class="k" style="font-weight:700">清除共享原文</span></div>
+    <div class="scope-row"><span>共享证据原文副本（片段重新绑定）</span><b>2 段</b></div>
+    <div class="kv" style="border-bottom:none;padding:10px 2px 2px"><span class="k" style="font-weight:700">保留</span></div>
+    <div class="scope-row"><span>可独立验证的其他记录</span><b>127 条</b></div>
+    <div class="scope-row"><span>独立生效的计划目标</span><b>1 份</b></div>
+    <div class="divider"></div>
+    <button class="btn danger" style="margin-top:6px" onclick="delConfirm()">确认删除 · POST /api/deletions</button>
+    <button class="btn plain" style="margin-top:10px" onclick="delGoStep(1)">重新选择</button>`;
+  delGoStep(2);
+}
+function delConfirm(){
+  openDialog('最终确认','⚠️ 此操作不可逆。删除后将清理 SQLite 页与 WAL，旧请求不能重新生成已删除内容。正在运行的相关模型结果也不会写回。','确认删除',()=>{
+    toast('删除作业执行中…');
+    setTimeout(()=>{
+      delGoStep(3);
+      const idx=EVENTS.findIndex(e=>e.id===(state.delTarget&&state.delTarget.id));
+      if(state.delTarget&&state.delTarget.type==='event'&&idx>=0) EVENTS.splice(idx,1);
+      if(state.delTarget&&state.delTarget.type==='fact'){
+        const fi=FACTS.findIndex(f=>f.id===state.delTarget.id); if(fi>=0) FACTS.splice(fi,1);
+      }
+    },1100);
+  },true);
+}
+function delReset(){ state.delTarget=null; delGoStep(1); }
+RENDERERS.deletion=function(){ if(!state.delTarget) delGoStep(1); };
+/* ══════════════════ 评审壳控制 ══════════════════ */
+document.querySelectorAll('.review-bar [data-w]').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('.review-bar [data-w]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); document.documentElement.style.setProperty('--shell-w',b.dataset.w+'px'); };
+});
+$('btn-shell').onclick=function(){ document.body.classList.toggle('no-shell');
+  this.textContent=document.body.classList.contains('no-shell')?'加手机壳':'去手机壳'; };
+$('btn-offline').onclick=function(){
+  state.offline=!state.offline;
+  this.classList.toggle('on',state.offline);
+  this.textContent=state.offline?'模拟：已离线':'模拟：离线';
+  $('chat-offline').classList.toggle('show',state.offline);
+  $('sb-net').textContent=state.offline?'✈️ 离线':'●●● ᯤ 🔋';
+  toast(state.offline?'已进入离线模拟：写入将本地排队':'已恢复在线');
+};
+setInterval(()=>{ const d=new Date();
+  $('sb-time').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); },10000);
+/* ══════════════════ 启动 ══════════════════ */
+buildNavs();
+show('login');
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+/* skeleton · 玻璃弱存在占位：gradient=扫光，flush=呼吸 */
+
+.py-skeleton {
+    display: flex;
+    gap: 24rpx;
+    padding: 8rpx 0;
+}
+
+.py-skeleton-avatar {
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+}
+
+.py-skeleton-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+}
+
+.py-skeleton-title {
+    width: 40%;
+    height: 32rpx;
+    border-radius: 8rpx;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.py-skeleton-row {
+    display: flex;
+    gap: 16rpx;
+}
+
+.py-skeleton-cell {
+    flex: 1;
+    height: 28rpx;
+    border-radius: 8rpx;
+    background: rgba(255, 255, 255, 0.65);
+}
+
+.py-skeleton-row:last-child .py-skeleton-cell {
+    max-width: 70%;
+}
+
+.py-skeleton-gradient .py-skeleton-avatar,
+.py-skeleton-gradient .py-skeleton-title,
+.py-skeleton-gradient .py-skeleton-cell {
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0.5) 40%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0.5) 60%);
+    background-size: 200% 100%;
+    animation: py-skeleton-sweep 1.4s linear infinite;
+}
+
+@keyframes py-skeleton-sweep {
+    to { background-position: -200% 0; }
+}
+
+.py-skeleton-flush .py-skeleton-avatar,
+.py-skeleton-flush .py-skeleton-title,
+.py-skeleton-flush .py-skeleton-cell {
+    animation: py-skeleton-flush 1.2s ease-in-out infinite;
+}
+
+@keyframes py-skeleton-flush {
+    50% { opacity: 0.5; }
+}

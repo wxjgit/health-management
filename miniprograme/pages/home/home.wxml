@@ -1,0 +1,20 @@
+<!-- pages/home：Root 宿主页 · 虚拟页面切换
+     5 个面板常驻（hidden 切换，保留各自状态/滚动位置），tabbar 实例常驻：
+     切换只 setData tab，透镜弹簧动画跟手，无 reLaunch 白屏/闪屏。 -->
+<view class="home-page">
+  <pyui-navbar title="{{navTitle}}"></pyui-navbar>
+
+  <view class="home-body" style="padding-top:{{navH}}px;padding-bottom:{{tabPad}}px">
+    <!-- 懒挂载：首帧只建当前 tab 面板（降低首屏渲染成本、缩短白屏），
+         onReady 后 mounted=true 全量挂载；此后常驻，hidden 切换保留状态不闪屏 -->
+    <view wx:if="{{mounted || tab === 0}}" hidden="{{tab !== 0}}" class="home-panel"><panel-chat active="{{tab === 0}}" bind:goto="onGotoTab"></panel-chat></view>
+    <view wx:if="{{mounted || tab === 1}}" hidden="{{tab !== 1}}" class="home-panel"><panel-history active="{{tab === 1}}"></panel-history></view>
+    <view wx:if="{{mounted || tab === 2}}" hidden="{{tab !== 2}}" class="home-panel"><panel-plan active="{{tab === 2}}"></panel-plan></view>
+    <view wx:if="{{mounted || tab === 3}}" hidden="{{tab !== 3}}" class="home-panel"><panel-discover active="{{tab === 3}}"></panel-discover></view>
+    <view wx:if="{{mounted || tab === 4}}" hidden="{{tab !== 4}}" class="home-panel"><panel-mine active="{{tab === 4}}"></panel-mine></view>
+  </view>
+
+  <pyui-tab-bar tab="{{tab}}" slots="{{tabSlots}}" bind:change="onTabChange" bind:settle="onTabSettle"></pyui-tab-bar>
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

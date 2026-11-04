@@ -1,0 +1,84 @@
+/* py-segmented · 玻璃凹槽 + 透镜 + 裁剪窗渐亮（品牌蓝）
+   透镜/裁剪窗位移由 JS 帧循环驱动（跟手/弹簧），不用 CSS transition 防双重弹簧 */
+
+.seg {
+    position: relative;
+    display: flex;
+    padding: 8rpx;
+    border-radius: 999rpx;
+    background: rgba(15, 23, 42, 0.06);
+    box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+/* 透镜定位层（JS translateX）+ 内层 glass 体（CSS 按压缩放） */
+.seg-lens {
+    position: absolute;
+    top: 8rpx;
+    bottom: 8rpx;
+    left: 8rpx;
+}
+
+.seg-lens-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 999rpx;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.10),
+                inset 0 0 0 1rpx rgba(255, 255, 255, 0.85);
+    transition: box-shadow 0.2s;
+}
+
+/* 透镜顶高光弧 */
+.seg-lens-body::after {
+    content: '';
+    position: absolute;
+    top: 3rpx;
+    left: 12%;
+    right: 12%;
+    height: 38%;
+    border-radius: 999rpx;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+}
+
+/* 按压/拖拽中：投影加深（放大由 JS pressScale 驱动透镜层，不在这里 scale） */
+.is-dragging .seg-lens-body {
+    box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.16),
+                inset 0 0 0 1rpx rgba(255, 255, 255, 0.9);
+}
+
+/* 槽位：灰底文字 + 裁剪窗亮字；overflow hidden 把裁剪窗限制在本槽内，
+   于是「透镜罩住哪部分、哪部分亮」 */
+.seg-item {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 999rpx;
+    z-index: 1;
+}
+
+.seg-txt {
+    display: block;
+    text-align: center;
+    padding: 16rpx 0;
+    font-size: 26rpx;
+    color: #475569;
+}
+
+/* 裁剪窗：跟随透镜位置；内部亮字等量反移保持原位 */
+.seg-clip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 999rpx;
+}
+
+/* 亮字：裁剪窗内绝对定位（left/width/transform 由 wxml 内联按 pressScale 数学给） */
+.seg-lit {
+    position: absolute;
+    top: 0;
+    color: var(--fui-color-primary, #015293);
+    font-weight: 600;
+}

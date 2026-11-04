@@ -1,0 +1,5 @@
+/* pages/messages/messages.wxss */
+.read-all { text-align: right; font-size: 24rpx; color: var(--fui-color-primary); padding: 4rpx 8rpx 12rpx; }
+.qj-row.is-unread .qj-row__tt { color: var(--c-text); }
+.unread-dot { display: inline-block; width: 14rpx; height: 14rpx; border-radius: 50%; background: var(--fui-color-danger); margin-left: 10rpx; vertical-align: middle; }
+.ntf-body { font-size: 24rpx; color: var(--c-sub); line-height: 1.55; margin-top: 6rpx; white-space: normal; }

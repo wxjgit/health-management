@@ -1,0 +1,75 @@
+<view class="qj-page">
+  <pyui-navbar title="长期信息"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+
+    <view class="qj-flex" style="justify-content:space-between;margin-bottom:16rpx">
+      <pyui-segmented items="{{segTabs}}" current="{{seg}}" bind:change="onSeg" style="flex:1"></pyui-segmented>
+      <view class="add-btn" bindtap="openAdd"><pyui-icon name="plus" size="30rpx" color="#ffffff"></pyui-icon></view>
+    </view>
+
+    <pyui-skeleton wx:if="{{loading}}" theme="paragraph" row="{{4}}" loading="{{true}}"></pyui-skeleton>
+
+    <block wx:if="{{!loading}}">
+      <pyui-empty wx:if="{{!list.length}}" text="{{emptyText}}" size="{{200}}"></pyui-empty>
+
+      <view wx:for="{{list}}" wx:key="id" class="qj-card fact {{item.conflict ? 'is-conflict' : ''}}">
+        <view class="qj-card__hd">
+          <pyui-icon name="{{item.typeIcon}}" size="30rpx" color="#015293"></pyui-icon><text class="qj-card__title">{{item.title}}</text>
+          <view class="qj-chip {{item.conflict ? '' : 'is-on'}}" style="pointer-events:none">v{{item.version}}</view>
+        </view>
+        <view class="qj-t3">{{item.content}}</view>
+        <view class="qj-t5" style="margin-top:10rpx">状态：{{item.statusLabel}} · 来源：{{item.sourceLabel}}</view>
+
+        <!-- 冲突：不静默覆盖，需用户选择 -->
+        <block wx:if="{{item.conflict}}">
+          <view class="qj-flex qj-gap" style="margin-top:16rpx">
+            <pyui-button type="primary" text="以新说法为准" size="26" height="72rpx" style="flex:1" bind:click="decide" data-id="{{item.id}}" data-ver="{{item.version}}" data-action="confirm"></pyui-button>
+            <pyui-button type="primary" plain="{{true}}" text="保留原有" size="26" height="72rpx" style="flex:1" bind:click="decide" data-id="{{item.id}}" data-ver="{{item.version}}" data-action="retract"></pyui-button>
+          </view>
+          <view class="qj-t5" style="margin-top:12rpx">冲突不会静默覆盖：确认将替代旧偏好并保留替代历史；撤回则保留原有信息。</view>
+        </block>
+
+        <block wx:else>
+          <view class="qj-flex qj-gap" style="margin-top:16rpx">
+            <pyui-button type="primary" plain="{{true}}" text="修订" size="26" height="72rpx" style="flex:1" bind:click="showRevisions" data-id="{{item.id}}"></pyui-button>
+            <pyui-button type="danger" plain="{{true}}" text="删除" size="26" height="72rpx" style="flex:1" bind:click="onDelete" data-id="{{item.id}}" data-title="{{item.title}}"></pyui-button>
+          </view>
+        </block>
+      </view>
+    </block>
+  </view>
+
+  <!-- 新增长期信息（legacy_text，最宽松契约） -->
+  <pyui-popup show="{{addShow}}" title="新增长期信息" bind:close="closeAdd">
+    <view style="padding:8rpx 0 24rpx">
+      <view class="qj-note">结构化偏好/过敏/限制建议在「记录」页用自然语言表达（如「我不吃香菜」），系统会自动归类。此处手动新增以自由文本保存。</view>
+      <view class="qj-field {{addErr ? 'is-invalid' : ''}}" style="margin-top:20rpx">
+        <view class="qj-field__lb">内容 <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-textarea value="{{addText}}" placeholder="例如：不吃香菜" autoHeight="{{true}}" maxlength="500" bind:input="onAddInput"></pyui-textarea></view>
+        <view class="qj-field__err">内容不能为空</view>
+      </view>
+      <pyui-button type="primary" text="保存" loading="{{adding}}" bind:click="submitAdd"></pyui-button>
+    </view>
+  </pyui-popup>
+
+  <!-- 修订历史 -->
+  <pyui-popup show="{{revShow}}" title="修订历史" bind:close="closeRev">
+    <view style="padding:8rpx 0 24rpx">
+      <view wx:if="{{revLoading}}" class="qj-t4 qj-center" style="padding:40rpx">加载中…</view>
+      <block wx:else>
+        <view wx:for="{{revList}}" wx:key="version" class="rev-item">
+          <view class="rev-rail"><view class="rev-dot"></view><view class="rev-line"></view></view>
+          <view class="rev-bd">
+            <view class="qj-t3"><text class="rev-ver">v{{item.version}}</text> {{item.title}}</view>
+            <view class="qj-t4" style="margin-top:4rpx">{{item.content}}</view>
+            <view class="qj-t5" style="margin-top:4rpx">{{item.time}}</view>
+          </view>
+        </view>
+        <pyui-empty wx:if="{{!revList.length}}" text="暂无修订记录" size="{{140}}"></pyui-empty>
+      </block>
+    </view>
+  </pyui-popup>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

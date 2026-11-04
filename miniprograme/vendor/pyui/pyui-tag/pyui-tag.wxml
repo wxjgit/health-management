@@ -1,0 +1,6 @@
+<view class="py-tag py-tag-{{theme}} py-tag-{{variant}} py-tag-{{size}} py-tag-{{shape}} {{disabled ? 'py-tag-disabled' : ''}}"
+    style="{{maxWidth ? 'max-width:' + maxWidth + ';' : ''}}" bindtap="onClick">
+    <text class="py-tag-text">{{content}}</text>
+    <slot></slot>
+    <view wx:if="{{closable}}" class="py-tag-close" catchtap="onClose">×</view>
+</view>

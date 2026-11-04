@@ -1,0 +1,98 @@
+<!-- panel-plan：计划面板 · 虚拟页 -->
+<scroll-view class="plan-scroll" scroll-y>
+  <pyui-skeleton wx:if="{{loading}}" theme="paragraph" row="{{5}}" loading="{{true}}"></pyui-skeleton>
+  <block wx:if="{{!loading}}">
+    <view wx:if="{{!planVM && !draft}}" class="qj-card qj-center" style="padding:48rpx 24rpx">
+      <view class="plan-empty-ic"><pyui-icon name="target" size="72rpx" color="#015293"></pyui-icon></view>
+      <view class="qj-t2" style="margin-top:16rpx">还没有生效的目标</view>
+      <view class="qj-t4" style="margin-top:10rpx">先完善个人档案，系统会用 Mifflin–St Jeor 公式本地估算默认目标，你也可以手动填写。</view>
+      <pyui-button type="primary" text="去完善档案" height="88rpx" style="margin-top:24rpx" bind:click="goProfile"></pyui-button>
+      <pyui-button type="primary" plain="{{true}}" text="采用系统默认目标" height="88rpx" style="margin-top:16rpx" loading="{{proposing}}" bind:click="useDefault"></pyui-button>
+    </view>
+
+    <view wx:if="{{planVM}}" class="plan-hero">
+      <view class="plan-hero-top">
+        <text class="plan-kcal qj-num">{{planVM.targets.kcal}}</text>
+        <text class="plan-unit">kcal / 天 · 目标热量</text>
+        <view class="qj-chip is-on" style="margin-left:auto;pointer-events:none">{{planVM.sourceLabel}}</view>
+      </view>
+      <view class="plan-macros">
+        <view class="pm"><text class="pm-n qj-num">{{planVM.targets.protein_g}}g</text><text class="pm-l">蛋白质</text></view>
+        <view class="pm"><text class="pm-n qj-num">{{planVM.targets.carbs_g}}g</text><text class="pm-l">碳水</text></view>
+        <view class="pm"><text class="pm-n qj-num">{{planVM.targets.fat_g}}g</text><text class="pm-l">脂肪</text></view>
+        <view class="pm"><text class="pm-n qj-num">{{planVM.targets.exercise_minutes}}min</text><text class="pm-l">每周运动</text></view>
+      </view>
+      <view class="qj-t5" style="margin-top:16rpx;color:rgba(15,23,42,.5)">确认于 {{planVM.confirmedLabel}} · {{planVM.formula}}</view>
+    </view>
+
+    <view wx:if="{{draft}}" class="qj-card" style="border:2rpx solid rgba(1,82,147,.35)">
+      <view class="qj-card__hd"><text class="qj-card__title">草案待确认</text><view class="qj-chip is-on" style="pointer-events:none">需你确认</view></view>
+      <view class="qj-t3">{{draft.summary}}</view>
+      <view wx:if="{{draft.changes.length}}" class="qj-mt">
+        <view class="qj-t4" style="font-weight:600;margin-bottom:8rpx">本次变化</view>
+        <view wx:for="{{draft.changes}}" wx:key="*this" class="qj-t4">· {{item}}</view>
+      </view>
+      <view wx:if="{{draft.warnings.length}}" class="qj-warn" style="margin:16rpx 0 0">
+        <view wx:for="{{draft.warnings}}" wx:key="*this"><pyui-icon name="warning" size="22rpx" color="#8f6420"></pyui-icon> {{item}}</view>
+      </view>
+      <view class="qj-note" style="margin:16rpx 0 0">小幅变化自动生效；单次或累计超过 5% 需确认。过时草案不会生效——档案再次变化后本草案作废。</view>
+      <view class="qj-flex qj-gap" style="margin-top:20rpx">
+        <pyui-button type="primary" text="确认生效" style="flex:1" loading="{{confirming}}" bind:click="confirmDraft"></pyui-button>
+        <pyui-button type="primary" plain="{{true}}" text="拒绝草案" style="flex:1" loading="{{confirming}}" bind:click="cancelDraft"></pyui-button>
+      </view>
+    </view>
+
+    <view wx:if="{{planVM && planVM.schedule.length}}" class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">一周安排</text></view>
+      <view wx:for="{{planVM.schedule}}" wx:key="day" class="week-row">
+        <text class="week-day">{{item.day}}</text>
+        <text class="week-text">{{item.text}}</text>
+      </view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">目标管理</text></view>
+      <view class="qj-list" style="padding:0">
+        <view class="qj-row qj-row--tap" bindtap="editTarget">
+          <view class="qj-row__ic qj-ic--meal"><pyui-icon name="edit" size="34rpx" color="#e8a33d"></pyui-icon></view>
+          <view class="qj-row__bd"><text class="qj-row__tt">修改目标</text><text class="qj-row__desc">手动填写热量与运动目标</text></view>
+          <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+        </view>
+        <view class="qj-row qj-row--tap" bindtap="useDefault">
+          <view class="qj-row__ic qj-ic--weight"><pyui-icon name="refresh" size="34rpx" color="#4b9fe1"></pyui-icon></view>
+          <view class="qj-row__bd"><text class="qj-row__tt">恢复系统默认</text><text class="qj-row__desc">按当前档案重新估算（本地计算）</text></view>
+          <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+        </view>
+      </view>
+      <view class="qj-fold" bindtap="toggleBasis">
+        <pyui-icon name="{{basisOpen ? 'chevron-down' : 'chevron-right'}}" size="24rpx" color="#015293"></pyui-icon>
+        <text>查看计算依据与参考</text>
+      </view>
+      <view wx:if="{{basisOpen}}" class="qj-t5" style="line-height:1.8;margin-top:12rpx">{{basisText}}</view>
+    </view>
+
+    <view class="qj-t5 qj-center" style="margin:8rpx 0 24rpx">默认值不是精确测量或医疗处方。处理区间 1500–3500 kcal/天属于产品边界。</view>
+  </block>
+</scroll-view>
+
+<!-- 修改目标 sheet -->
+<pyui-popup show="{{editShow}}" title="修改目标" bind:close="closeEdit">
+  <view style="padding:8rpx 0 24rpx">
+    <view class="qj-field {{editErr.kcal ? 'is-invalid' : ''}}">
+      <view class="qj-field__lb">每日热量 kcal <text class="req">*</text></view>
+      <view class="qj-input-wrap"><pyui-input value="{{editForm.kcal}}" type="number" placeholder="1500–3500" bind:input="onEditField" data-k="kcal"></pyui-input></view>
+      <view class="qj-field__err">支持范围 1500–3500 kcal/天（产品边界）</view>
+    </view>
+    <view class="qj-field {{editErr.exercise ? 'is-invalid' : ''}}">
+      <view class="qj-field__lb">每周运动分钟</view>
+      <view class="qj-input-wrap"><pyui-input value="{{editForm.exercise_minutes}}" type="number" placeholder="0–300" bind:input="onEditField" data-k="exercise_minutes"></pyui-input></view>
+      <view class="qj-field__err">每周运动不超过 300 分钟</view>
+    </view>
+    <view class="qj-field">
+      <view class="qj-field__lb">备注（可选，需通过安全检查）</view>
+      <view class="qj-input-wrap"><pyui-textarea value="{{editForm.note}}" placeholder="期望春节前到 58kg（不会倒推节食强度）" autoHeight="{{true}}" maxlength="500" bind:input="onEditNote"></pyui-textarea></view>
+    </view>
+    <view class="qj-t5" style="margin-bottom:16rpx">宏量营养素按 20/50/30 自动折算并校验（与总热量差 ≤15%）。</view>
+    <pyui-button type="primary" text="提交草案" loading="{{proposing}}" bind:click="submitTarget"></pyui-button>
+  </view>
+</pyui-popup>

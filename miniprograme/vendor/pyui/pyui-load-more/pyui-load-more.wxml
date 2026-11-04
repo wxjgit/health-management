@@ -1,0 +1,8 @@
+<view class="py-loadmore" bindtap="handleClick">
+    <view wx:if="{{status === 'loading'}}" class="py-loadmore-balls">
+        <view class="lm-ball lm-ball-1"></view>
+        <view class="lm-ball lm-ball-2"></view>
+        <view class="lm-ball lm-ball-3"></view>
+    </view>
+    <text class="py-loadmore-text" style="color:{{color === '#B2B2B2' ? 'var(--c-sub)' : color}};font-size:{{size}}rpx;">{{showText}}</text>
+</view>

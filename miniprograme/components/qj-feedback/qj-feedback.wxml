@@ -1,0 +1,5 @@
+<!-- qj-feedback：PyUI 命令式反馈实体载体（薄壳）。
+     pyui-overlay attached 时注册进 common/pyui.js 实例栈（栈顶分发）；
+     runtime/feedback.ts 经 pyui.showToast / pyui.showModal / pyui.showLoading 调用。
+     形态：暗玻璃胶囊 toast / 三彩球 loading / 玻璃卡 modal（iOS 26 解剖）。 -->
+<pyui-overlay></pyui-overlay>

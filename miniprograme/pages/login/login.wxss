@@ -1,0 +1,44 @@
+/* pages/login/login.wxss */
+.lg-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(165deg, #d9f2e5 0%, #dcecfb 46%, #fdf6e8 100%);
+  padding: 0 48rpx;
+  box-sizing: border-box;
+}
+.lg-hero { text-align: center; padding: 160rpx 0 48rpx; }
+.lg-logo {
+  width: 160rpx; height: 160rpx; margin: 0 auto 32rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #7ed8b5, #4b9fe1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 80rpx;
+  box-shadow: 0 20rpx 52rpx rgba(75,159,225,.35);
+}
+.lg-title { font-size: 52rpx; font-weight: 800; letter-spacing: 8rpx; color: var(--c-text); }
+.lg-slogan { font-size: 26rpx; color: var(--c-sub); margin-top: 20rpx; }
+.lg-slogan2 { font-size: 26rpx; color: var(--c-sub); margin-top: 6rpx; }
+
+.lg-consent-scroll { max-height: 400rpx; margin-top: 40rpx; }
+.lg-consent { padding: 28rpx; }
+.lg-consent-hd { font-size: 26rpx; font-weight: 700; color: var(--c-text); line-height: 1.6; margin-bottom: 16rpx; }
+.lg-policy-item { font-size: 24rpx; color: var(--c-sub); line-height: 1.8; }
+.lg-model-hint { margin-top: 16rpx; font-size: 22rpx; color: var(--c-minor); }
+
+.lg-checks { margin-top: 32rpx; }
+.lg-check-row { display: flex; gap: 16rpx; align-items: flex-start; padding: 12rpx 0; }
+.lg-check {
+  width: 40rpx; height: 40rpx; border-radius: 12rpx; flex: none; margin-top: 4rpx;
+  border: 2rpx solid #b9c4d2; background: rgba(255,255,255,.8);
+  display: flex; align-items: center; justify-content: center;
+  transition: .15s;
+}
+.lg-check.is-on { background: var(--fui-color-primary); border-color: var(--fui-color-primary); }
+.lg-check-tx { flex: 1; font-size: 24rpx; color: var(--c-sub); line-height: 1.6; }
+.lg-link { color: var(--fui-color-primary); }
+.lg-strong { color: var(--c-text); font-weight: 600; }
+.lg-ver { color: var(--c-minor); }
+
+.lg-bottom { margin-top: auto; padding: 48rpx 0 40rpx; }
+.lg-foot { text-align: center; font-size: 22rpx; color: var(--c-minor); margin-top: 20rpx; }

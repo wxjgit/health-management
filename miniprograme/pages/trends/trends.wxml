@@ -1,0 +1,57 @@
+<view class="qj-page">
+  <pyui-navbar title="历史趋势"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+
+    <pyui-segmented items="{{rangeTabs}}" current="{{rangeKey}}" bind:change="onRange" style="margin-bottom:20rpx"></pyui-segmented>
+
+    <pyui-skeleton wx:if="{{loading}}" theme="paragraph" row="{{6}}" loading="{{true}}"></pyui-skeleton>
+
+    <block wx:if="{{!loading}}">
+      <view class="qj-card">
+        <view class="qj-card__hd"><text class="qj-card__title">每日摄入热量</text><text class="qj-card__sub">kcal · 缺失日不计零</text></view>
+        <view class="bars">
+          <view wx:for="{{kcalBars}}" wx:key="idx" class="bar {{item.miss ? 'is-miss' : ''}}" style="height:180rpx">
+            <view class="bar-fill" style="height:{{item.h}}%"></view>
+            <text class="bar-lb">{{item.lb}}</text>
+          </view>
+        </view>
+        <view class="bar-legend">
+          <view class="lg"><view class="lg-dot" style="background:linear-gradient(180deg,#4b9fe1,#7ed8b5)"></view>已记录</view>
+          <view class="lg"><view class="lg-dot" style="background:#e3e8ef"></view>无记录</view>
+          <view class="lg" wx:if="{{targetKcal}}">目标线 {{targetKcal}} kcal</view>
+        </view>
+      </view>
+
+      <view class="qj-card">
+        <view class="qj-card__hd"><text class="qj-card__title">体重变化</text><text class="qj-card__sub">kg</text></view>
+        <view class="weight-summary" wx:if="{{weightChange !== null}}">
+          <text class="ws-num qj-num {{weightChange <= 0 ? 'is-down' : 'is-up'}}">{{weightChange > 0 ? '+' : ''}}{{weightChange}}</text>
+          <text class="ws-lb">kg · 近{{days}}天</text>
+        </view>
+        <view wx:if="{{weightPoints.length}}" class="qj-list" style="padding:0">
+          <view wx:for="{{weightPoints}}" wx:key="date" class="qj-kv">
+            <text class="qj-kv__k">{{item.dateLabel}}</text>
+            <text class="qj-kv__v">{{item.value}} kg</text>
+          </view>
+        </view>
+        <pyui-empty wx:else text="该时间段暂无体重记录" size="{{160}}"></pyui-empty>
+      </view>
+
+      <view class="qj-card">
+        <view class="qj-card__hd"><text class="qj-card__title">月度摘要</text><text class="qj-card__sub">归档 · 不可重算</text></view>
+        <view wx:if="{{summaries.length}}" class="qj-list" style="padding:0">
+          <view wx:for="{{summaries}}" wx:key="month" class="qj-row qj-row--tap" bindtap="onSummary" data-m="{{item.month}}">
+            <view class="qj-row__ic qj-ic--sleep"><pyui-icon name="archive" size="34rpx" color="#9370db"></pyui-icon></view>
+            <view class="qj-row__bd"><text class="qj-row__tt">{{item.monthLabel}}</text><text class="qj-row__desc">{{item.summary}}</text></view>
+            <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+          </view>
+        </view>
+        <pyui-empty wx:else text="暂无归档摘要" size="{{160}}"></pyui-empty>
+        <view class="qj-t5" style="margin-top:12rpx">超过一年的逐餐细节不再保留；摘要附带来源版本与方法版本，不能承诺重新计算。</view>
+      </view>
+    </block>
+  </view>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

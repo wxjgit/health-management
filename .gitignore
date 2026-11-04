@@ -21,3 +21,8 @@ output/observability-*
 
 # Runtime accounts, health data and workflow state are never source files.
 /data/
+
+# OS / agent workspace / prototype tooling
+.DS_Store
+.workbuddy/
+prototype/node_modules/

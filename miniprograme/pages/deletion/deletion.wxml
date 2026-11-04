@@ -1,0 +1,71 @@
+<view class="qj-page">
+  <pyui-navbar title="隐私删除"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+
+    <!-- 步骤指示 -->
+    <view class="steps">
+      <view class="step-dot {{step >= 1 ? 'is-on' : ''}}"></view>
+      <view class="step-dot {{step >= 2 ? 'is-on' : ''}}"></view>
+      <view class="step-dot {{step >= 3 ? 'is-on' : ''}}"></view>
+    </view>
+
+    <!-- 步骤 1：选择对象 -->
+    <block wx:if="{{step === 1}}">
+      <view class="qj-card">
+        <view class="qj-card__hd"><text class="qj-card__title">选择删除对象</text></view>
+        <view class="qj-t4">删除前先预览实际影响范围：需要删除、清除共享原文和保留独立目标的对象数量。程序按已验证的血缘计算范围，不静默删除。</view>
+
+        <view wx:if="{{targetTitle}}" class="qj-kv" style="margin-top:16rpx">
+          <text class="qj-kv__k">已选择对象</text>
+          <view class="qj-kv__v">{{targetType === 'fact' ? '长期信息' : '健康记录'}}<small>{{targetTitle}}</small></view>
+        </view>
+        <pyui-button wx:if="{{targetId}}" type="primary" text="预览影响范围" style="margin-top:20rpx" loading="{{previewing}}" bind:click="doPreview"></pyui-button>
+
+        <view wx:if="{{!targetId}}" class="qj-t5" style="margin-top:16rpx">请从「历史」页的记录详情，或「长期信息」页选择要删除的对象后进入此流程。</view>
+      </view>
+    </block>
+
+    <!-- 步骤 2：范围预览 -->
+    <block wx:if="{{step === 2}}">
+      <view class="qj-card">
+        <view class="qj-card__hd"><text class="qj-card__title">影响范围预览</text><view class="qj-chip is-on" style="pointer-events:none">scope: {{preview.scopeLabel}}</view></view>
+
+        <view class="qj-section" style="padding-left:0">将删除</view>
+        <view wx:for="{{preview.del}}" wx:key="label" class="qj-kv">
+          <text class="qj-kv__k">{{item.label}}</text><text class="qj-kv__v qj-num">{{item.count}}</text>
+        </view>
+
+        <view class="qj-section" style="padding-left:0">清除共享原文</view>
+        <view wx:for="{{preview.clear}}" wx:key="label" class="qj-kv">
+          <text class="qj-kv__k">{{item.label}}</text><text class="qj-kv__v qj-num">{{item.count}}</text>
+        </view>
+
+        <view class="qj-section" style="padding-left:0">保留</view>
+        <view wx:for="{{preview.keep}}" wx:key="label" class="qj-kv">
+          <text class="qj-kv__k">{{item.label}}</text><text class="qj-kv__v qj-num">{{item.count}}</text>
+        </view>
+
+        <view class="qj-warn" style="margin-top:16rpx">范围如有变化需要重新确认。清理只影响可证明相关的聊天、复盘、规律、通知与流程进度；独立记录继续保留。</view>
+
+        <view class="qj-flex qj-gap" style="margin-top:20rpx">
+          <pyui-button type="primary" plain="{{true}}" text="重新选择" style="flex:1" bind:click="backToStep1"></pyui-button>
+          <pyui-button type="danger" text="确认删除" style="flex:1" loading="{{deleting}}" bind:click="doDelete"></pyui-button>
+        </view>
+      </view>
+    </block>
+
+    <!-- 步骤 3：完成 -->
+    <block wx:if="{{step === 3}}">
+      <view class="qj-card qj-center" style="padding:56rpx 24rpx">
+        <view class="del-done-ic"><pyui-icon name="{{jobState === 'completed' ? 'success' : 'clock'}}" size="80rpx" color="{{jobState === 'completed' ? '#09be4f' : '#e8a33d'}}"></pyui-icon></view>
+        <view class="qj-t1" style="margin-top:16rpx">{{jobState === 'completed' ? '删除作业已完成' : '删除作业进行中'}}</view>
+        <view class="qj-t4" style="margin-top:12rpx">{{jobState === 'completed' ? '已清理 SQLite 页与 WAL。你自己导出的文件不在应用清理范围内，需要自行删除。' : '数据库忙或 checkpoint 清理未完成，可继续清理；服务重启会先恢复作业再开放数据。'}}</view>
+        <pyui-button wx:if="{{jobState !== 'completed'}}" type="primary" text="继续清理" style="margin-top:24rpx" loading="{{retrying}}" bind:click="retryJob"></pyui-button>
+        <pyui-button wx:else type="primary" plain="{{true}}" text="完成" style="margin-top:24rpx" bind:click="goBack"></pyui-button>
+      </view>
+    </block>
+  </view>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

@@ -1,0 +1,20 @@
+<!-- 按压链路全逻辑层自管（wxs 事件绑定两次实测不可靠，弃）：
+     亮斑 = 独立节点 + translate3d 走合成器通道（tab-bar 透镜同款跟手原理；
+     background-image 渐变每帧重绘是上一版卡顿根因）；catchtouchmove 吞滚动（钮上滑动不滚页面） -->
+<button class="py-btn py-btn-{{type}} {{plain ? 'is-plain' : ''}} {{disabled ? 'disabled' : ''}} {{bold ? 'bold' : ''}} {{pressing ? 'py-btn-hover' : ''}} {{virtualHostClass}}"
+    style="width:{{width}};height:{{height}};{{radius ? 'border-radius:' + radius + ';' : ''}}font-size:{{size}}rpx;{{btnStyle}};{{customStyle}};{{virtualHostStyle}}"
+    disabled="{{disabled}}" open-type="{{openType}}"
+    hover-class="none"
+    bindtouchstart="onPressStart" catchtouchmove="onPressMove" bindtouchend="onPressEnd" bindtouchcancel="onPressEnd"
+    bindtap="handleClick" bindgetphonenumber="onGetPhoneNumber" bindgetrealtimephonenumber="onGetRealtimePhoneNumber" bindchooseavatar="onChooseAvatar"
+    bindcontact="onContact" bindopensetting="onOpenSetting" bindlaunchapp="onLaunchApp" binderror="onError">
+    <!-- 手指亮斑：transform 定位（合成器层）；pressing 时挂载 -->
+    <view wx:if="{{pressing}}" class="py-btn-spot"
+        style="transform: translate3d({{pressX || '50%'}}, {{pressY || '50%'}}, 0) translate(-50%, -50%);"></view>
+    <!-- 不用 <slot>{{text}}</slot> 兜底写法：slot 默认内容非官方支持，
+         渲染层可能不注册兜底文本节点，setData 更新 text 时写已丢弃节点
+         → "Cannot set properties of undefined (setting 'textContent')" 整页白屏 -->
+    <view wx:if="{{loading}}" class="py-btn-ring"></view>
+    <text wx:if="{{text}}" class="py-btn-text">{{text}}</text>
+    <slot></slot>
+</button>

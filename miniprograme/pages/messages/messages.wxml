@@ -1,0 +1,25 @@
+<view class="qj-page">
+  <pyui-navbar title="站内消息"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+    <view wx:if="{{list.length}}" class="read-all" bindtap="readAll">全部标记已读</view>
+
+    <pyui-skeleton wx:if="{{loading}}" theme="paragraph" row="{{4}}" loading="{{true}}"></pyui-skeleton>
+
+    <block wx:if="{{!loading}}">
+      <pyui-empty wx:if="{{!list.length}}" text="暂无站内消息" size="{{200}}"></pyui-empty>
+      <view class="qj-card qj-list" style="padding:0 24rpx" wx:if="{{list.length}}">
+        <view wx:for="{{list}}" wx:key="id" class="qj-row qj-row--tap {{item.read ? '' : 'is-unread'}}" bindtap="onTap" data-id="{{item.id}}">
+          <view class="qj-row__ic" style="background:rgba(1,82,147,.08)"><pyui-icon name="{{item.icon}}" size="34rpx" color="#015293"></pyui-icon></view>
+          <view class="qj-row__bd">
+            <view class="qj-row__tt">{{item.title}}<text wx:if="{{!item.read}}" class="unread-dot"></text></view>
+            <view class="ntf-body">{{item.body}}</view>
+            <view class="qj-t5" style="margin-top:6rpx">{{item.relTime}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="qj-t5 qj-center" style="margin:24rpx">小程序关闭时服务仍会生成消息，下次打开后查看；当前没有设备级推送。</view>
+    </block>
+  </view>
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

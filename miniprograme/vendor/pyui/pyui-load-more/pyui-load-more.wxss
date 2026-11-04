@@ -1,0 +1,64 @@
+/* py-loadmore — token 化（批次 G0）：转圈 var(--c-minor)、文字 var(--c-sub) */
+
+.py-loadmore {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30rpx 0;
+}
+
+.py-loadmore-spinner {
+    width: 34rpx;
+    height: 34rpx;
+    margin-right: 14rpx;
+    border: 4rpx solid var(--c-minor);
+    border-left-color: transparent;
+    border-radius: 50%;
+    animation: py-loadmore-rotate 0.8s linear infinite;
+}
+
+.py-loadmore-text {
+    color: var(--c-sub);
+}
+
+@keyframes py-loadmore-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* loading 态三彩球（与 py-loading / py-overlay 同源淡彩，小尺寸） */
+.py-loadmore-balls {
+    display: flex;
+    gap: 8rpx;
+    align-items: center;
+    height: 26rpx;
+    margin-right: 12rpx;
+}
+
+.lm-ball {
+    width: 14rpx;
+    height: 14rpx;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.5);
+    animation: lm-bounce 1.3s infinite ease-in-out both;
+}
+
+.lm-ball-1 {
+    background: radial-gradient(circle at 34% 30%, #f5f3ff, #c4b5fd 58%, #a78bfa);
+    animation-delay: -0.32s;
+}
+
+.lm-ball-2 {
+    background: radial-gradient(circle at 34% 30%, #ecfdf5, #a7f3d0 58%, #6ee7b7);
+    animation-delay: -0.16s;
+}
+
+.lm-ball-3 {
+    background: radial-gradient(circle at 34% 30%, #fffbeb, #fde68a 58%, #fcd34d);
+}
+
+@keyframes lm-bounce {
+    0%, 80%, 100% { transform: translateY(0) scale(0.9); opacity: 0.55; }
+    40% { transform: translateY(-10rpx) scale(1.05); opacity: 1; }
+}

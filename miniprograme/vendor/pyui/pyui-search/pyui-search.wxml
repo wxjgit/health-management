@@ -1,0 +1,15 @@
+<view class="py-search" style="{{background === '#FFFFFF' ? '' : 'background:' + background + ';'}}border-radius:{{radius}}rpx;" bindtap="onWrapTap">
+    <view class="py-search-box glass-field" style="{{boxBackground === '#F5F6F7' ? '' : 'background:' + boxBackground + ';'}}">
+        <image class="py-search-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxwYXRoIGZpbGw9IiNCMkIyQjIiIGQ9Ik00NjkuMyAxMjhsMjQ1LjQgMjQ1LjNjNDIgNDIgNjUuMyA5Ny43IDY1LjMgMTU2LjkgMCA1OS4xLTIzIDExNC45LTY1LjMgMTU3LjJsLTE2LjUgMTYuNSAxNTMuMSAxNTMuMWMxMi41IDEyLjUgMTIuNSAzMi44IDAgNDUuM2wtNDUuMyA0NS4zYy0xMi41IDEyLjUtMzIuOCAxMi41LTQ1LjMgMEw2MDcuNiA3OTQuNWwtMTYuNSAxNi41Yy00MiA0Mi05Ny43IDY1LjMtMTU2LjkgNjUuMy01OS4xIDAtMTE0LjktMjMtMTU3LjItNjUuM2wtMjQ1LjMtMjQ1LjRjLTQyLTQyLTY1LjMtOTcuNy02NS4zLTE1Ni45czIzLTExNC45IDY1LjMtMTU3LjJsMTYuNS0xNi41YzQyLTQyIDk3LjctNjUuMyAxNTYuOS02NS4zczExNC45IDIzIDE1Ny4yIDY1LjNsMTYuNSAxNi41IDY1LjMtNjUuM2M0Mi00MiA5Ny43LTY1LjMgMTU2LjktNjUuM3MxMTQuOSAyMyAxNTcuMiA2NS4zem0tOTAuNiAyMTIuN2wtNjUuMy02NS4zYy0xNy4zLTE3LjMtNDUuMy0xNy4zLTYyLjYgMGwtMTYuNSAxNi41Yy0xNy4zIDE3LjMtMTcuMyA0NS4zIDAgNjIuNmw2NS4zIDY1LjMtNjUuMyA2NS4zYy0xNy4zIDE3LjMtMTcuMyA0NS4zIDAgNjIuNmw4MS44IDgxLjhjMTcuMyAxNy4zIDQ1LjMgMTcuMyA2Mi42IDBsNjUuMy02NS4zIDY1LjMgNjUuM2MxNy4zIDE3LjMgNDUuMyAxNy4zIDYyLjYgMGwxNi41LTE2LjVjMTcuMy0xNy4zIDE3LjMtNDUuMyAwLTYyLjZsLTY1LjMtNjUuMyA2NS4zLTY1LjNjMTcuMy0xNy4zIDE3LjMtNDUuMyAwLTYyLjZsLTgxLjgtODEuOGMtMTcuMy0xNy4zLTQ1LjMtMTcuMy02Mi42IDBsLTY1LjMgNjUuM3oiLz48L3N2Zz4="></image>
+        <input wx:if="{{!disabled}}" class="py-search-input" style="font-size:{{size}}rpx;{{color ? 'color:' + color + ';' : ''}}"
+            value="{{value}}" type="{{type}}" placeholder="{{placeholder}}"
+            placeholder-style="color:{{placeholderColor === '#B2B2B2' ? '#94a3b8' : placeholderColor}};font-size:{{size}}rpx;"
+            focus="{{focus}}" maxlength="{{maxlength}}" confirm-type="search"
+            bindinput="onInput" bindfocus="onFocus" bindblur="onBlur" bindconfirm="onConfirm" />
+        <view wx:if="{{!disabled && value}}" class="py-search-clear" catchtap="onClear">
+            <text class="py-search-clear-icon">✕</text>
+        </view>
+        <text wx:if="{{disabled}}" class="py-search-placeholder" style="font-size:{{size}}rpx;color:{{placeholderColor === '#B2B2B2' ? '#94a3b8' : placeholderColor}};">{{placeholder}}</text>
+    </view>
+    <view wx:if="{{showAction}}" class="py-search-action" style="color:{{actionColor}};" bindtap="onActionTap">{{actionText}}</view>
+</view>

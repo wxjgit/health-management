@@ -1,0 +1,170 @@
+/* 毛玻璃导航（Liquid Glass）：磨砂外壳 + 底部羽化渐隐 + 折射环胶囊 + 按压透镜斑 */
+.glass-nav-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    z-index: 60; /* overlay 几何下必须高于 pyui-container（fixed 顶到屏顶），否则胶囊点不到 */
+    display: flex;
+    flex-direction: column;
+    background: var(--nav-bg, rgba(255, 255, 255, 0));
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+    backdrop-filter: blur(14px) saturate(145%);
+    pointer-events: none; /* 磨砂外壳不阻断底层滚动手势 */
+    -webkit-mask-image: linear-gradient(to bottom,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 1) calc(100% - 14px),
+        rgba(0, 0, 0, 0.4) calc(100% - 6px),
+        rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to bottom,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 1) calc(100% - 14px),
+        rgba(0, 0, 0, 0.4) calc(100% - 6px),
+        rgba(0, 0, 0, 0) 100%);
+}
+
+.glass-nav-inner {
+    width: 100vw;
+    position: absolute;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.glass-nav-title {
+    animation: py-nav-title-in 0.4s cubic-bezier(0.32, 0.72, 0.28, 1.1) both;
+    letter-spacing: 1rpx;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--c-text, #0f172a);
+    flex: 1;
+    text-align: center;
+    z-index: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 96px; /* 避让左右胶囊对称区 */
+    pointer-events: auto;
+    animation: fadeInTitle 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInTitle {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 磨砂胶囊（折射环配方与 tabbar lens 一致） ── */
+.nav-capsule {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 32px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.45);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1.5px 0 rgba(255, 255, 255, 0.4),
+        inset 0 0 12px rgba(255, 255, 255, 0.28),
+        0 4px 16px rgba(15, 23, 42, 0.1);
+    overflow: hidden;
+    pointer-events: auto;
+    z-index: 3;
+    box-sizing: border-box;
+}
+
+.capsule-single { width: 60px; }
+.capsule-double { width: 84px; }
+.capsule-triple { width: 106px; }
+
+.nav-capsule-seg {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;   /* 亮斑裁在本 seg 内 */
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.seg-single { width: 58px; }
+.seg-double { width: 41px; }
+.seg-triple { width: 34px; }
+
+/* 手指亮斑节点：translate3d 合成器通道跟手（与 py-button 同款物理）；
+   旧 ::after 中心圆斑方案作废（与跟手亮斑重叠双斑） */
+.py-nav-spot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 45%, rgba(255, 255, 255, 0) 72%);
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* 按压放大方向（批 H 物理 v3）：图标微放大；:active 首帧零延时覆盖 class 到达前 ~30ms */
+.nav-capsule-seg.active .navigation-icon {
+    transform: scale(1.12);
+}
+
+.nav-capsule-seg:active .navigation-icon {
+    transform: scale(1.12);
+}
+
+.nav-capsule-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(15, 23, 42, 0.14);
+    flex-shrink: 0;
+}
+
+.navigation-button {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border: none;
+    line-height: normal;
+}
+
+.capsule-share-button::after {
+    border: none;
+}
+
+.navigation-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s ease;
+}
+
+.nav-slot {
+    position: absolute;
+    right: 100px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+@keyframes py-nav-title-in {
+    from { opacity: 0; transform: translateY(8rpx); }
+    to { opacity: 1; transform: none; }
+}

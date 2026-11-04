@@ -1,0 +1,23 @@
+/* components/panel-plan/panel-plan.wxss */
+.plan-scroll { height: 100%; padding: 12rpx 24rpx 24rpx; box-sizing: border-box; }
+.plan-empty-ic {
+  width: 140rpx; height: 140rpx; margin: 0 auto; border-radius: 40rpx;
+  background: rgba(1,82,147,.08); display: flex; align-items: center; justify-content: center;
+}
+.plan-hero {
+  background: linear-gradient(135deg, rgba(126,216,181,.32), rgba(168,212,240,.36));
+  border: 1px solid rgba(255,255,255,.7); border-radius: var(--r-card);
+  padding: 28rpx; margin-bottom: 24rpx; box-shadow: var(--glass-ring);
+}
+.plan-hero-top { display: flex; align-items: baseline; gap: 12rpx; }
+.plan-kcal { font-size: 60rpx; font-weight: 800; color: var(--c-text); line-height: 1; }
+.plan-unit { font-size: 24rpx; color: var(--c-sub); }
+.plan-macros { display: flex; gap: 12rpx; margin-top: 24rpx; }
+.pm { flex: 1; background: rgba(255,255,255,.7); border-radius: var(--qj-r-lg); padding: 16rpx 4rpx; text-align: center; }
+.pm-n { font-size: 28rpx; font-weight: 700; color: var(--c-text); display: block; }
+.pm-l { font-size: 20rpx; color: var(--c-sub); margin-top: 4rpx; display: block; }
+.week-row { display: flex; gap: 16rpx; padding: 16rpx 0; border-bottom: 1px solid var(--hairline); align-items: flex-start; }
+.week-row:last-child { border-bottom: none; }
+.week-day { flex: none; width: 88rpx; font-size: 24rpx; color: var(--c-sub); font-weight: 600; }
+.week-text { flex: 1; font-size: 26rpx; color: var(--c-text); line-height: 1.5; }
+.qj-fold { display: flex; align-items: center; gap: 8rpx; font-size: 24rpx; color: var(--fui-color-primary); padding: 16rpx 0 4rpx; }

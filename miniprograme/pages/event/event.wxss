@@ -1,0 +1,17 @@
+/* pages/event/event.wxss */
+.evt-hero-ic {
+  width: 120rpx; height: 120rpx; border-radius: 32rpx; margin: 0 auto;
+  display: flex; align-items: center; justify-content: center; font-size: 60rpx;
+}
+.rev-timeline { padding-top: 4rpx; }
+.rev-item { display: flex; gap: 16rpx; }
+.rev-rail { display: flex; flex-direction: column; align-items: center; flex: none; }
+.rev-dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: var(--fui-color-primary); margin-top: 8rpx; flex: none; }
+.rev-line { width: 2rpx; flex: 1; background: var(--hairline); margin-top: 4rpx; }
+.rev-item:last-child .rev-line { display: none; }
+.rev-bd { flex: 1; padding-bottom: 24rpx; }
+.rev-ver { font-weight: 700; color: var(--fui-color-primary); margin-right: 8rpx; }
+.rev-diff { font-size: 24rpx; color: var(--c-sub); margin-top: 6rpx; line-height: 1.6; }
+.diff-del { color: var(--fui-color-danger); text-decoration: line-through; }
+.diff-add { color: var(--fui-color-success); font-weight: 600; }
+.rev-field { color: var(--c-sub); font-weight: 600; margin-right: 6rpx; }

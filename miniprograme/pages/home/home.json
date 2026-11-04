@@ -1,0 +1,1 @@
+{"usingComponents": {"panel-chat": "/components/panel-chat/panel-chat", "panel-history": "/components/panel-history/panel-history", "panel-plan": "/components/panel-plan/panel-plan", "panel-discover": "/components/panel-discover/panel-discover", "panel-mine": "/components/panel-mine/panel-mine"}, "navigationStyle": "custom"}

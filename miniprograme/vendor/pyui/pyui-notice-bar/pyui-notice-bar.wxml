@@ -1,0 +1,7 @@
+<view wx:if="{{!closed}}" class="py-noticebar py-noticebar-{{theme}}" bindtap="onClick">
+    <pyui-icon name="{{icon}}" size="32rpx"></pyui-icon>
+    <text class="py-noticebar-text">{{content}}</text>
+    <view wx:if="{{closable}}" class="py-noticebar-close" catchtap="onClose">
+        <pyui-icon name="close" size="28rpx"></pyui-icon>
+    </view>
+</view>

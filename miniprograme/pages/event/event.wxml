@@ -1,0 +1,82 @@
+<view class="qj-page">
+  <pyui-navbar title="记录详情"></pyui-navbar>
+  <view class="qj-body qj-body--action" style="padding-top:{{navH}}px" wx:if="{{vm}}">
+
+    <view class="qj-card qj-center" style="padding:32rpx 24rpx">
+      <view class="evt-hero-ic {{vm.cls}}"><pyui-icon name="{{vm.icon}}" size="60rpx" color="{{vm.iconColor}}"></pyui-icon></view>
+      <view class="qj-t1" style="margin-top:12rpx">{{vm.title}}</view>
+      <view class="qj-t5" style="margin-top:8rpx">{{vm.dayLabel}} {{vm.time}} · {{vm.label}}</view>
+      <view class="qj-flex" style="justify-content:center;gap:12rpx;margin-top:16rpx">
+        <view class="qj-chip is-on" style="pointer-events:none">已保存 v{{vm.rev}}</view>
+      </view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">原文</text></view>
+      <view class="qj-t3">「{{vm.detail}}」</view>
+      <view class="qj-t5" style="margin-top:10rpx">证据片段随记录保存，用于纠错与血缘追溯。</view>
+    </view>
+
+    <view class="qj-card" wx:if="{{vm.kind === 'meal'}}">
+      <view class="qj-card__hd"><text class="qj-card__title">营养构成</text><text class="qj-card__sub">按来源标注</text></view>
+      <view class="qj-stats">
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{vm.kcal != null ? vm.kcal : '?'}}</text><text class="qj-stat__lb">kcal</text></view>
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{vm.protein != null ? vm.protein : '?'}}</text><text class="qj-stat__lb">蛋白 g</text></view>
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{vm.carbs != null ? vm.carbs : '?'}}</text><text class="qj-stat__lb">碳水 g</text></view>
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{vm.fat != null ? vm.fat : '?'}}</text><text class="qj-stat__lb">脂肪 g</text></view>
+      </view>
+      <view class="qj-hairline" wx:if="{{vm.foods.length}}"></view>
+      <view wx:for="{{vm.foods}}" wx:key="name" class="qj-kv">
+        <text class="qj-kv__k">{{item.name}}<text style="color:var(--c-minor);font-weight:400"> {{item.amount}}</text></text>
+        <view class="qj-kv__v">{{item.kcal != null ? item.kcal + ' kcal' : '未知'}}<small>{{item.source}}</small></view>
+      </view>
+      <view class="qj-note">模型粗估 ±25% 只是示意误差带；未知营养不会按零计算。</view>
+    </view>
+
+    <view class="qj-card" wx:if="{{vm.feedback.length}}">
+      <view class="qj-card__hd"><text class="qj-card__title">饮食反馈</text></view>
+      <view wx:for="{{vm.feedback}}" wx:key="label" class="qj-kv">
+        <text class="qj-kv__k">{{item.label}}</text>
+        <view class="qj-kv__v"><view class="qj-chip is-on" style="pointer-events:none;min-height:auto;padding:4rpx 16rpx">{{item.tag}}</view></view>
+      </view>
+      <view class="qj-t5" style="margin-top:8rpx">主观反馈，不是钠或热量已超标结论。</view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">修订历史</text><text class="qj-card__sub" wx:if="{{revLoading}}">加载中…</text></view>
+      <view wx:if="{{revisions.length}}" class="rev-timeline">
+        <view wx:for="{{revisions}}" wx:key="version" class="rev-item">
+          <view class="rev-rail"><view class="rev-dot"></view><view class="rev-line"></view></view>
+          <view class="rev-bd">
+            <view class="qj-t3"><text class="rev-ver">v{{item.version}}</text> {{item.title}}</view>
+            <view class="qj-t5" style="margin-top:4rpx">{{item.time}}</view>
+            <view wx:for="{{item.changes}}" wx:for-item="c" wx:key="field" class="rev-diff">
+              <text class="rev-field">{{c.field}}</text> <text class="diff-del">{{c.from}}</text> <pyui-icon name="chevron-right" size="20rpx" color="#94a3b8"></pyui-icon> <text class="diff-add">{{c.to}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view wx:elif="{{!revLoading}}" class="qj-t5">当前为首个版本，暂无修订记录。</view>
+    </view>
+  </view>
+
+  <view class="qj-actionbar" wx:if="{{vm}}">
+    <pyui-button type="primary" plain="{{true}}" text="纠正记录" style="flex:1" bind:click="onCorrect"></pyui-button>
+    <pyui-button type="danger" plain="{{true}}" text="删除" style="flex:1" bind:click="onDelete"></pyui-button>
+  </view>
+
+  <!-- 纠正记录 sheet -->
+  <pyui-popup show="{{corrShow}}" title="纠正记录" bind:close="closeCorr">
+    <view style="padding:8rpx 0 24rpx">
+      <view class="qj-t4">用自然语言说明要改什么，例如「不是大碗，是小碗」。纠正会生成新修订版本，营养按新分量重新估算。</view>
+      <view class="qj-field" style="margin-top:20rpx">
+        <view class="qj-field__lb">纠正说明 <text class="req">*</text></view>
+        <view class="qj-input-wrap"><pyui-textarea value="{{corrText}}" placeholder="不是大碗，是小碗" autoHeight="{{true}}" maxlength="500" bind:change="onCorrInput"></pyui-textarea></view>
+      </view>
+      <pyui-button type="primary" text="提交纠正" loading="{{corrLoading}}" bind:click="submitCorrect"></pyui-button>
+    </view>
+  </pyui-popup>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

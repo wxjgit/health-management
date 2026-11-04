@@ -1,0 +1,47 @@
+<view class="qj-page">
+  <pyui-navbar title="隐私与模型授权"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+
+    <view class="qj-card">
+      <view class="qj-card__hd">
+        <text class="qj-card__title">模型处理授权</text>
+        <view class="qj-chip {{modelConsent ? 'is-on' : ''}}" style="pointer-events:none">{{modelConsent ? '已同意' : '未同意'}}</view>
+      </view>
+      <view class="qj-kv"><text class="qj-kv__k">供应商</text><text class="qj-kv__v">{{policies.model_provider || '未配置'}}</text></view>
+      <view class="qj-kv"><text class="qj-kv__k">模型</text><text class="qj-kv__v">{{policies.model_name || '未配置'}}</text></view>
+      <view class="qj-kv"><text class="qj-kv__k">用途</text><view class="qj-kv__v"><small>安全判断 · 输入理解 · 营养粗估 · 建议表达</small></view></view>
+      <view class="qj-kv"><text class="qj-kv__k">数据类别</text><view class="qj-kv__v"><small>本次输入 · 必要档案 · 相关记录片段（不发送完整历史）</small></view></view>
+
+      <pyui-button wx:if="{{!readonly}}" type="{{modelConsent ? 'danger' : 'primary'}}" plain="{{modelConsent}}"
+        text="{{modelConsent ? '撤回模型授权' : '同意模型处理'}}" height="88rpx" style="margin-top:24rpx"
+        loading="{{saving}}" bind:click="onToggleModel"></pyui-button>
+
+      <view class="qj-warn" style="margin-top:20rpx">撤回后请求携带 processing_mode=local_only：规划、纠错、营养估算、建议生成受限，缺失营养保持未知。该限制随流程保存，重启后不会自动放宽。基础记录不受影响。</view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">隐私说明</text><text class="qj-card__sub">{{versionShort}}</text></view>
+      <view wx:for="{{policies.privacy}}" wx:key="index" class="policy-item">· {{item}}</view>
+    </view>
+
+    <view class="qj-card" wx:if="{{policies.model_notice && policies.model_notice.length}}">
+      <view class="qj-card__hd"><text class="qj-card__title">模型服务说明</text></view>
+      <view wx:for="{{policies.model_notice}}" wx:key="index" class="policy-item">· {{item}}</view>
+    </view>
+
+    <view class="qj-card" wx:if="{{policies.terms && policies.terms.length}}">
+      <view class="qj-card__hd"><text class="qj-card__title">使用条款</text></view>
+      <view wx:for="{{policies.terms}}" wx:key="index" class="policy-item">· {{item}}</view>
+    </view>
+
+    <view class="qj-card" wx:if="{{!readonly}}">
+      <view class="qj-card__hd"><text class="qj-card__title" style="color:var(--fui-color-danger)">注销账号</text></view>
+      <view class="qj-t5">立即撤销所有登录凭证，清理服务端数据，仅保留最小注销清单防止备份恢复重新引入。备份最长保留 {{policies.backup_retention_days || 30}} 天。</view>
+      <pyui-button type="danger" text="申请注销账号" height="88rpx" style="margin-top:20rpx" bind:click="onCloseAccount"></pyui-button>
+    </view>
+
+    <view wx:if="{{!readonly}}" class="qj-t5 qj-center" style="margin:24rpx">联系渠道：{{policies.contact || '—'}} · 运营方：{{policies.operator || '—'}}</view>
+  </view>
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

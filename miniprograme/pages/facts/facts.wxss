@@ -1,0 +1,15 @@
+/* pages/facts/facts.wxss */
+.add-btn {
+  width: 64rpx; height: 64rpx; border-radius: 50%; flex: none; margin-left: 16rpx;
+  background: linear-gradient(135deg, var(--fui-color-primary), #2f7fc4);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6rpx 16rpx rgba(1,82,147,.3);
+}
+.fact.is-conflict { border: 2rpx solid rgba(232,163,61,.5); background: rgba(232,163,61,.06); }
+.rev-item { display: flex; gap: 16rpx; }
+.rev-rail { display: flex; flex-direction: column; align-items: center; flex: none; }
+.rev-dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: var(--fui-color-primary); margin-top: 8rpx; flex: none; }
+.rev-line { width: 2rpx; flex: 1; background: var(--hairline); margin-top: 4rpx; }
+.rev-item:last-child .rev-line { display: none; }
+.rev-bd { flex: 1; padding-bottom: 24rpx; }
+.rev-ver { font-weight: 700; color: var(--fui-color-primary); margin-right: 8rpx; }

@@ -1,0 +1,11 @@
+/* pages/deletion/deletion.wxss */
+.steps { display: flex; gap: 12rpx; align-items: center; justify-content: center; padding: 16rpx 0 8rpx; }
+.step-dot { width: 44rpx; height: 8rpx; border-radius: 4rpx; background: #dfe5ec; transition: .2s; }
+.step-dot.is-on { background: var(--fui-color-primary); }
+
+.del-done-ic {
+  width: 160rpx; height: 160rpx; margin: 0 auto; border-radius: 50%;
+  background: rgba(255,255,255,.7); border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--glass-ring);
+}

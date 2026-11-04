@@ -1,0 +1,6 @@
+<view hover-class="py-switch-hover" class="py-switch py-switch-{{size}} {{value ? 'py-switch-on' : ''}} {{disabled ? 'py-switch-disabled' : ''}}"
+    style="{{value && customColor ? 'background:' + customColor + ';' : ''}}" bindtap="onTap">
+    <view class="py-switch-knob">
+        <view wx:if="{{loading}}" class="py-switch-spin"></view>
+    </view>
+</view>

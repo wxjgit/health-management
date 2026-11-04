@@ -1,0 +1,2 @@
+/* pages/consent/consent.wxss */
+.policy-item { font-size: 24rpx; color: var(--c-sub); line-height: 1.75; margin-bottom: 10rpx; }

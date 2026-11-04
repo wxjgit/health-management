@@ -1,0 +1,305 @@
+/* py-overlay · 玻璃设计语言全局弹层（toast/loading/modal） */
+
+.ov-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none; /* 根不挡交互；各弹层自行开启 */
+    z-index: 9999;
+}
+
+/* ── 遮罩 ── */
+.ov-mask {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.35);
+    pointer-events: auto;
+    animation: ov-fade 0.2s ease both;
+}
+
+.ov-mask-blur {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── toast：暗玻璃胶囊 ── */
+.ov-toast {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16rpx;
+    max-width: 480rpx;
+    padding: 32rpx 40rpx;
+    border-radius: 24rpx;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 12rpx 40rpx rgba(15, 23, 42, 0.28),
+                inset 0 0 0 1rpx rgba(255, 255, 255, 0.14);
+    pointer-events: auto;
+    animation: ov-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.ov-toast-text-only {
+    padding: 24rpx 40rpx;
+}
+
+.ov-toast-text {
+    font-size: 28rpx;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ✓ / ✕ 纯 CSS glyph */
+/* glyph 用 base64 SVG background：居中由 background-position 保证，免手摆坐标 */
+.ov-glyph {
+    animation: py-ov-glyph-pop 0.35s var(--ease-spring, cubic-bezier(0.32, 0.72, 0.28, 1.1)) both;
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 62% 62%;
+}
+
+.ov-glyph-success {
+    background-color: rgba(52, 211, 153, 0.22);
+    box-shadow: inset 0 0 0 1rpx rgba(52, 211, 153, 0.5);
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTUuNSAxMi41bDQuNSA0LjUgOC41LTkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM0ZDM5OSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==");
+}
+
+.ov-glyph-error {
+    background-color: rgba(248, 113, 113, 0.22);
+    box-shadow: inset 0 0 0 1rpx rgba(248, 113, 113, 0.5);
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTcgN2wxMCAxME0xNyA3TDcgMTciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y4NzE3MSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==");
+}
+
+.ov-glyph-warning {
+    background-color: rgba(251, 191, 36, 0.22);
+    box-shadow: inset 0 0 0 1rpx rgba(251, 191, 36, 0.55);
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDYuNXY3IiBmaWxsPSJub25lIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMi42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjE3LjUiIHI9IjEuNyIgZmlsbD0iI2ZiYmYyNCIvPjwvc3ZnPg==");
+}
+
+/* ── 三彩球（与 py-loading 同源淡彩；暗 HUD 上软影改深色）── */
+.ov-bounce {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    height: 56px;
+}
+
+.ov-ball {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    animation: ov-bounce 1.3s infinite ease-in-out both;
+}
+
+.ov-ball:nth-child(1) {
+    background: radial-gradient(circle at 32% 30%, #f5f3ff, #c4b5fd 58%, #a78bfa);
+    animation-delay: -0.32s;
+}
+
+.ov-ball:nth-child(2) {
+    background: radial-gradient(circle at 32% 30%, #ecfdf5, #a7f3d0 58%, #6ee7b7);
+    animation-delay: -0.16s;
+}
+
+.ov-ball:nth-child(3) {
+    background: radial-gradient(circle at 32% 30%, #fffbeb, #fde68a 58%, #fcd34d);
+}
+
+@keyframes ov-bounce {
+    0%, 80%, 100% { transform: translateY(0) scale(0.9); opacity: 0.6; }
+    40% { transform: translateY(-22px) scale(1.05); opacity: 1; }
+}
+
+/* iOS 原生环弧（UIActivityIndicatorView 同构）：conic 渐隐尾 + 圆环 mask；toast 的 loading 图标在用 */
+.ov-ring {
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7rpx), #000 calc(100% - 6rpx));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 7rpx), #000 calc(100% - 6rpx));
+    animation: ov-spin 0.9s linear infinite;
+}
+
+.ov-ring-sm {
+    width: 32rpx;
+    height: 32rpx;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5rpx), #000 calc(100% - 4rpx));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5rpx), #000 calc(100% - 4rpx));
+}
+
+@keyframes ov-spin {
+    to { transform: rotate(360deg); }
+}
+.ov-loading {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20rpx;
+    padding: 48rpx 56rpx;
+    border-radius: 32rpx;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 12rpx 40rpx rgba(15, 23, 42, 0.28),
+                inset 0 0 0 1rpx rgba(255, 255, 255, 0.14);
+    pointer-events: auto;
+    animation: ov-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.ov-loading-text {
+    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── modal：白玻璃卡 ── */
+.ov-modal-wrap {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+/* modal：iOS 26 alert 解剖（DESIGN.md §6.2）——玻璃卡 + 发丝线动作区，不再用实心渐变钮 */
+.ov-modal {
+    width: 560rpx;
+    border-radius: var(--r-alert, 68rpx);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: var(--glass-ring);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    animation: ov-pop-center var(--dur-spring, 0.45s) var(--ease-spring, cubic-bezier(0.32, 0.72, 0.28, 1.1)) both;
+}
+
+.ov-modal-title {
+    padding: 40rpx 32rpx 8rpx;
+    font-size: 34rpx;
+    font-weight: 700;
+    color: var(--c-text, #0f172a);
+    text-align: left;
+}
+
+.ov-modal-content {
+    padding: 8rpx 32rpx 32rpx;
+    font-size: 26rpx;
+    color: var(--c-sub, #64748b);
+    line-height: 1.5;
+    text-align: left;
+    white-space: pre-wrap;
+}
+
+.ov-modal-content.no-title {
+    padding-top: 40rpx;
+}
+
+/* 动作区（iOS 26 真容 v2）：并排灰色玻璃胶囊钮；按压提亮+缩放 */
+.ov-modal-btns {
+    display: flex;
+    gap: 24rpx;
+    padding: 0 32rpx 32rpx;
+}
+
+.ov-btn {
+    flex: 1;
+    height: 88rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999rpx;
+    background: rgba(120, 120, 128, 0.16);
+    font-size: 30rpx;
+    font-weight: 500;
+    color: var(--fui-color-primary, #015293);
+    transition: background 0.3s cubic-bezier(0.32, 0.72, 0.28, 1.1),
+        transform 0.45s cubic-bezier(0.32, 0.72, 0.28, 1.1);
+}
+
+.ov-btn-confirm {
+    font-weight: 600;
+}
+
+.ov-btn-confirm.ov-btn-destructive {
+    color: var(--fui-color-danger, #ff3b30);
+}
+
+.ov-btn-hover {
+    background: rgba(120, 120, 128, 0.3);
+    transform: scale(var(--press-scale, 1.04)); filter: brightness(1.08);
+    transition: background 0.12s cubic-bezier(0.2, 0, 0, 1),
+        transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── 动画 ── */
+@keyframes ov-pop {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.88); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* modal 不用 -50% 位移（flex 居中），入场弹簧已在 .ov-modal 声明 */
+
+@keyframes ov-pop-center {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ov-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+
+/* ── 退场动画（180ms，与 js 摘节点时序对齐） ── */
+.ov-leave {
+    animation: ov-pop-out 0.18s ease both;
+}
+
+.ov-leave-flat {
+    animation: ov-pop-center-out 0.18s ease both;
+}
+
+.ov-mask-leave {
+    animation: ov-fade-out 0.18s ease both;
+}
+
+@keyframes ov-pop-out {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to   { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+}
+
+@keyframes ov-pop-center-out {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(0.94); }
+}
+
+@keyframes ov-fade-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@keyframes py-ov-glyph-pop {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: none; }
+}

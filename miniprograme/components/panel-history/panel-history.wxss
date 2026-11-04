@@ -1,0 +1,20 @@
+/* components/panel-history/panel-history.wxss */
+.hist-panel { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.hist-filter { flex: none; padding: 12rpx 24rpx; }
+.hist-meta { display: flex; align-items: center; gap: 16rpx; margin-top: 16rpx; }
+.hist-scroll { flex: 1; padding: 0 24rpx 24rpx; box-sizing: border-box; }
+.qj-chip { gap: 8rpx; }
+.day-hd {
+  display: flex; align-items: center; gap: 16rpx;
+  font-size: 26rpx; font-weight: 700; color: var(--c-sub);
+  padding: 20rpx 8rpx 8rpx;
+}
+.day-kcal {
+  margin-left: auto; font-size: 22rpx; font-weight: 600; color: var(--fui-color-primary);
+  background: rgba(1,82,147,.08); padding: 4rpx 16rpx; border-radius: var(--qj-r-pill);
+}
+.rev-tag {
+  font-size: 20rpx; color: var(--c-minor); font-weight: 400;
+  background: rgba(120,120,128,.1); padding: 2rpx 12rpx; border-radius: var(--qj-r-pill); margin-left: 8rpx;
+}
+.evt-meta { display: flex; gap: 16rpx; font-size: 20rpx; color: var(--c-minor); margin-top: 6rpx; }

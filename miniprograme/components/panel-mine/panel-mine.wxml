@@ -1,0 +1,85 @@
+<!-- panel-mine：我的面板 · 虚拟页 -->
+<scroll-view class="mine-scroll" scroll-y>
+  <view class="mine-hd">
+    <view class="mine-avatar"><pyui-icon name="leaf" size="52rpx" color="#ffffff"></pyui-icon></view>
+    <view class="qj-flex-1">
+      <view class="qj-t1">微信用户</view>
+      <view class="qj-t5" style="margin-top:6rpx">账号 {{userIdShort}} · 已陪伴 {{days}} 天</view>
+    </view>
+    <view class="qj-chip is-on" style="pointer-events:none">已登录</view>
+  </view>
+
+  <view class="qj-stats" style="margin-bottom:24rpx">
+    <view class="qj-stat"><text class="qj-stat__num qj-num">{{totalRecords}}</text><text class="qj-stat__lb">总记录</text></view>
+    <view class="qj-stat"><text class="qj-stat__num qj-num">{{usage.modelAttempts}}</text><text class="qj-stat__lb">今日模型调用</text></view>
+    <view class="qj-stat"><text class="qj-stat__num qj-num">{{usage.remaining}}</text><text class="qj-stat__lb">剩余额度 / {{usage.dailyLimit}}</text></view>
+  </view>
+
+  <view class="qj-section">今日</view>
+  <view class="qj-card qj-list" style="padding:0 24rpx">
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/today/today">
+      <view class="qj-row__ic qj-ic--meal"><pyui-icon name="chart" size="34rpx" color="#e8a33d"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">今日汇总</text><text class="qj-row__desc">热量、身体状态与完整性确认</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/trends/trends">
+      <view class="qj-row__ic qj-ic--weight"><pyui-icon name="trend" size="34rpx" color="#4b9fe1"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">历史趋势</text><text class="qj-row__desc">摄入、体重变化与月度摘要</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+  </view>
+
+  <view class="qj-section">数据与档案</view>
+  <view class="qj-card qj-list" style="padding:0 24rpx">
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/profile/profile">
+      <view class="qj-row__ic qj-ic--exercise"><pyui-icon name="list" size="34rpx" color="#09be4f"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">个人档案</text><text class="qj-row__desc">{{profileSummary}}</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/facts/facts">
+      <view class="qj-row__ic qj-ic--weight"><pyui-icon name="pin" size="34rpx" color="#4b9fe1"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">长期信息</text><text class="qj-row__desc">偏好 · 过敏 · 限制{{conflictCount ? ' · 冲突 ' + conflictCount + ' 条' : ''}}</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/prefs/prefs">
+      <view class="qj-row__ic qj-ic--meal"><pyui-icon name="settings" size="34rpx" color="#e8a33d"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">评分权重与提醒</text><text class="qj-row__desc">{{prefsSummary}}</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+  </view>
+
+  <view class="qj-section">消息与数据</view>
+  <view class="qj-card qj-list" style="padding:0 24rpx">
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/messages/messages">
+      <view class="qj-row__ic qj-ic--cycle"><pyui-icon name="bell" size="34rpx" color="#ff6b8a"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">站内消息</text><text class="qj-row__desc">{{unread ? unread + ' 条未读 · 日报 / 周报 / 提醒' : '暂无未读消息'}}</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="onExport">
+      <view class="qj-row__ic qj-ic--exercise"><pyui-icon name="upload" size="34rpx" color="#09be4f"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">导出我的数据</text><text class="qj-row__desc">JSON · 含全部记录与血缘说明</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+  </view>
+
+  <view class="qj-section">隐私与安全</view>
+  <view class="qj-card qj-list" style="padding:0 24rpx">
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/consent/consent">
+      <view class="qj-row__ic qj-ic--weight"><pyui-icon name="shield" size="34rpx" color="#4b9fe1"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">隐私政策与模型授权</text><text class="qj-row__desc">模型授权：{{modelConsent ? '已同意 · 可撤回' : '未同意（本地模式）'}}</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/deletion/deletion">
+      <view class="qj-row__ic qj-ic--cycle"><pyui-icon name="trash" size="34rpx" color="#ff6b8a"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">隐私删除</text><text class="qj-row__desc">预览影响范围后精准删除</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+    <view class="qj-row qj-row--tap" bindtap="onLogout">
+      <view class="qj-row__ic" style="background:rgba(120,120,128,.1)"><pyui-icon name="logout" size="34rpx" color="#64748b"></pyui-icon></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">退出登录</text><text class="qj-row__desc">撤销当前登录凭证</text></view>
+      <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+    </view>
+  </view>
+
+  <view class="qj-t5 qj-center" style="margin:24rpx 0">轻记 v0.1.0 · Asia/Shanghai</view>
+</scroll-view>

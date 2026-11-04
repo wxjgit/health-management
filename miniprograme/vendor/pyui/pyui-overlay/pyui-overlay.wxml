@@ -1,0 +1,38 @@
+<!-- py-overlay · 全局自定义 toast/loading/modal（玻璃设计语言）
+     经 pyui-container 内嵌每页；utils/pyui.js 栈顶实例分发 -->
+<view class="ov-root">
+    <!-- 遮罩：loading 默认挡交互 / modal 挡交互；toast 不挡 -->
+    <view wx:if="{{loading.show || modal.show}}" class="ov-mask {{modal.show ? 'ov-mask-blur' : ''}} {{loading.leaving || modal.leaving ? 'ov-mask-leave' : ''}}"
+        catchtouchmove="noop" catchtap="noop"></view>
+
+    <!-- toast：暗玻璃胶囊 -->
+    <view wx:if="{{toast.show}}" class="ov-toast {{toast.icon === 'none' ? 'ov-toast-text-only' : ''}} {{toast.leaving ? 'ov-leave' : ''}}" catchtouchmove="noop">
+        <view wx:if="{{toast.icon === 'success'}}" class="ov-glyph ov-glyph-success"></view>
+        <view wx:if="{{toast.icon === 'error'}}" class="ov-glyph ov-glyph-error"></view>
+        <view wx:if="{{toast.icon === 'warning'}}" class="ov-glyph ov-glyph-warning"></view>
+        <view wx:if="{{toast.icon === 'loading'}}" class="ov-ring ov-ring-sm"></view>
+        <text wx:if="{{toast.title}}" class="ov-toast-text">{{toast.title}}</text>
+    </view>
+
+    <!-- loading：暗玻璃圆卡 + 品牌三彩球（经典回归；环弧让位给 pyui-loading 组件默认态） -->
+    <view wx:if="{{loading.show}}" class="ov-loading {{loading.leaving ? 'ov-leave' : ''}}" catchtouchmove="noop">
+        <view class="ov-bounce">
+            <view class="ov-ball"></view>
+            <view class="ov-ball"></view>
+            <view class="ov-ball"></view>
+        </view>
+        <text class="ov-loading-text">{{loading.title || '加载中…'}}</text>
+    </view>
+
+    <!-- modal：iOS 26 alert 解剖（DESIGN.md §6.2）：玻璃卡 + 发丝线动作区 -->
+    <view wx:if="{{modal.show}}" class="ov-modal-wrap" catchtouchmove="noop">
+        <view class="ov-modal {{modal.leaving ? 'ov-leave-flat' : ''}}">
+            <text wx:if="{{modal.title}}" class="ov-modal-title">{{modal.title}}</text>
+            <text wx:if="{{modal.content}}" class="ov-modal-content {{modal.title ? '' : 'no-title'}}">{{modal.content}}</text>
+            <view class="ov-modal-btns">
+                <view wx:if="{{modal.showCancel}}" class="ov-btn ov-btn-cancel" hover-class="ov-btn-hover" hover-stay-time="80" bindtap="onCancel">{{modal.cancelText}}</view>
+                <view class="ov-btn ov-btn-confirm {{modal.destructive ? 'ov-btn-destructive' : ''}}" hover-class="ov-btn-hover" hover-stay-time="80" bindtap="onConfirm">{{modal.confirmText}}</view>
+            </view>
+        </view>
+    </view>
+</view>

@@ -1,0 +1,7 @@
+<view class="py-slider {{dragging ? 'py-slider-drag' : ''}} {{disabled ? 'py-slider-disabled' : ''}}">
+    <view class="py-slider-track" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd">
+        <view class="py-slider-bar" style="width:{{pct}}%;"></view>
+        <view class="py-slider-knob" style="left:{{pct}}%;"></view>
+    </view>
+    <text wx:if="{{label}}" class="py-slider-label">{{value}}</text>
+</view>

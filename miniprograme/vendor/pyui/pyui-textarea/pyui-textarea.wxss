@@ -1,0 +1,17 @@
+/* py-textarea — .glass-field 玻璃输入域（批次 G0）
+   外壳套用全局 glass-field 工具类；内联灰底/文字色默认值由此处 !important 接管。 */
+
+.py-textarea-wrap {
+    width: 100%;
+    box-sizing: border-box;
+    /* 去灰底：内联 background 默认灰底被玻璃底覆盖 */
+    background: var(--glass-field-bg) !important;
+}
+
+.py-textarea {
+    width: 100%;
+    min-height: 120rpx;
+    line-height: 1.5;
+    box-sizing: border-box;
+    color: var(--c-text) !important;
+}

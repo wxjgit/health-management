@@ -1,0 +1,20 @@
+/* py-divider — 线色 rgba(15,23,42,.08)（批次 G0）；渐变等自定义 lineColor 入参仍优先（wxml 条件映射） */
+
+.py-divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.py-divider-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(15, 23, 42, 0.08);
+}
+
+.py-divider-text {
+    padding: 0 24rpx;
+    white-space: nowrap;
+}

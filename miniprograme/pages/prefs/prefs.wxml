@@ -1,0 +1,83 @@
+<view class="qj-page">
+  <pyui-navbar title="评分权重与提醒"></pyui-navbar>
+  <view class="qj-body qj-body--action" style="padding-top:{{navH}}px">
+
+    <!-- 系统权重建议 -->
+    <view class="qj-card" wx:if="{{suggestion}}">
+      <view class="qj-card__hd"><text class="qj-card__title">系统权重建议</text><view class="qj-chip is-on" style="pointer-events:none">待确认</view></view>
+      <view class="qj-t4">{{suggestion.reason}}</view>
+      <view class="qj-hairline"></view>
+      <view wx:for="{{suggestion.rows}}" wx:key="key" class="qj-kv">
+        <text class="qj-kv__k">{{item.label}}</text>
+        <view class="qj-kv__v">
+          <block wx:if="{{item.from !== item.to}}" class="qj-flex"><text style="color:var(--c-minor);text-decoration:line-through">{{item.from}}%</text><pyui-icon name="chevron-right" size="22rpx" color="#94a3b8"></pyui-icon><text style="color:var(--fui-color-primary);font-weight:700">{{item.to}}%</text></block>
+          <block wx:else>{{item.from}}%（不变）</block>
+        </view>
+      </view>
+      <view class="qj-warn" wx:if="{{suggestion.limitations}}" style="margin:16rpx 0 0">{{suggestion.limitations}}</view>
+      <view class="qj-flex qj-gap" style="margin-top:20rpx">
+        <pyui-button type="primary" text="采纳建议" style="flex:1" bind:click="acceptSuggestion"></pyui-button>
+        <pyui-button type="primary" plain="{{true}}" text="不采纳" style="flex:1" bind:click="rejectSuggestion"></pyui-button>
+      </view>
+    </view>
+
+    <!-- 手动权重 -->
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">评分权重</text><text class="qj-card__sub">合计 {{weightSum}}%</text></view>
+      <view wx:for="{{weights}}" wx:key="key" class="w-row">
+        <view class="w-hd">
+          <text class="qj-t3">{{item.label}}</text>
+          <text class="qj-t2 qj-num" style="color:var(--fui-color-primary)">{{item.value}}%</text>
+        </view>
+        <pyui-slider value="{{item.value}}" min="0" max="100" step="5" bind:change="onWeight" data-key="{{item.key}}"></pyui-slider>
+      </view>
+      <view class="qj-t5" style="margin-top:8rpx">五项之和须为 100%。保存时记录变更历史（before/after/source）。</view>
+    </view>
+
+    <!-- 提醒设置 -->
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">记录提醒</text></view>
+      <view class="qj-kv"><text class="qj-kv__k">开启站内提醒</text><pyui-switch value="{{prefs.notifications_enabled}}" bind:change="onNotifyToggle"></pyui-switch></view>
+      <view class="qj-kv qj-tap" bindtap="pickSummaryTime">
+        <text class="qj-kv__k">日报时间</text>
+        <view class="qj-kv__v" style="color:var(--fui-color-primary)">{{prefs.summary_time}} ›</view>
+      </view>
+      <view class="qj-kv qj-tap" bindtap="pickCheckinTime">
+        <text class="qj-kv__k">记录提醒时间</text>
+        <view class="qj-kv__v" style="color:var(--fui-color-primary)">{{prefs.checkin_time}} ›</view>
+      </view>
+      <view class="qj-kv qj-tap" bindtap="pickWeeklyDay">
+        <text class="qj-kv__k">周复盘日</text>
+        <view class="qj-kv__v" style="color:var(--fui-color-primary)">{{weeklyDayLabel}} ›</view>
+      </view>
+      <view class="qj-t5" style="margin-top:10rpx">小程序关闭时服务仍会生成消息，下次打开后查看；当前没有设备级推送。</view>
+    </view>
+  </view>
+
+  <view class="qj-actionbar">
+    <pyui-button type="primary" text="保存设置" loading="{{saving}}" bind:click="onSave"></pyui-button>
+  </view>
+
+  <!-- 时间 / 周复盘日选择 -->
+  <pyui-popup show="{{timeShow}}" title="{{timeTitle}}" bind:close="closeTime">
+    <view style="padding:8rpx 0 24rpx">
+      <picker-view wx:if="{{timeMode !== 'weekly'}}" class="time-picker" value="{{timePickerVal}}" bindchange="onTimePick" indicator-style="height:88rpx">
+        <picker-view-column>
+          <view wx:for="{{hours}}" wx:key="*this" class="tp-item">{{item}} 时</view>
+        </picker-view-column>
+        <picker-view-column>
+          <view wx:for="{{minutes}}" wx:key="*this" class="tp-item">{{item}} 分</view>
+        </picker-view-column>
+      </picker-view>
+      <picker-view wx:else class="time-picker" value="{{weeklyPickerVal}}" bindchange="onWeeklyPick" indicator-style="height:88rpx">
+        <picker-view-column>
+          <view wx:for="{{weekOptions}}" wx:key="value" class="tp-item">{{item.label}}</view>
+        </picker-view-column>
+      </picker-view>
+      <pyui-button type="primary" text="确定" style="margin-top:20rpx" bind:click="confirmTime"></pyui-button>
+    </view>
+  </pyui-popup>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

@@ -1,0 +1,8 @@
+<view class="py-progress py-progress-{{theme}}">
+    <view class="py-progress-track" style="height:{{strokeWidth}}rpx;{{trackColor ? 'background:' + trackColor + ';' : ''}}">
+        <view class="py-progress-bar" style="width:{{pct}}%;{{barColor ? 'background:' + barColor + ';' : ''}}">
+            <text wx:if="{{theme === 'plump' && label && pct >= 10}}" class="py-progress-inlabel">{{pct}}%</text>
+        </view>
+    </view>
+    <text wx:if="{{label && theme === 'line'}}" class="py-progress-label">{{pct}}%</text>
+</view>

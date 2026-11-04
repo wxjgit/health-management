@@ -1,0 +1,8 @@
+<view class="py-textarea-wrap glass-field" style="{{radius === 12 ? '' : 'border-radius:' + radius + 'rpx;'}}background:{{background}};padding:{{padding}};{{border === 'none' ? '' : 'border:' + border + ';'}}">
+    <textarea class="py-textarea" style="color:{{color}};font-size:{{size}}rpx;{{autoHeight ? '' : 'height:' + height + 'rpx;'}}"
+        value="{{value}}" placeholder="{{placeholder}}"
+        placeholder-style="color:{{placeholderColor === '#B2B2B2' ? 'var(--c-minor)' : placeholderColor}};font-size:{{size}}rpx;"
+        disabled="{{disabled || formDisabled}}" focus="{{focus}}" maxlength="{{maxlength}}"
+        auto-height="{{autoHeight}}" show-confirm-bar="{{false}}" adjust-position="{{true}}"
+        bindinput="onInput" bindfocus="onFocus" bindblur="onBlur" bindconfirm="onConfirm" bindlinechange="onLineChange"></textarea>
+</view>

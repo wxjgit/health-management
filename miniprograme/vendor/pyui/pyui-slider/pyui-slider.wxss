@@ -1,0 +1,49 @@
+/* slider · 玻璃轨道 + 品牌 bar + 白玻璃旋钮 */
+
+.py-slider {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    width: 100%;
+    padding: 16rpx 0;
+}
+
+.py-slider-track {
+    position: relative;
+    flex: 1;
+    height: 8rpx;
+    border-radius: var(--r-full);
+    background: rgba(15, 23, 42, 0.1);
+}
+
+.py-slider-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: var(--r-full);
+    background: linear-gradient(90deg, #2563eb, var(--fui-color-primary, #015293));
+}
+
+.py-slider-drag .py-slider-knob { transform: translate(-50%, -50%) scale(1.18); box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.3); }
+
+.py-slider-knob {
+    transition: transform 0.15s cubic-bezier(0.32, 0.72, 0.28, 1.1), box-shadow 0.15s;
+    position: absolute;
+    top: 50%;
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2rpx 10rpx rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.py-slider-label {
+    font-size: 24rpx;
+    color: var(--c-sub);
+    min-width: 56rpx;
+    text-align: right;
+}
+
+.py-slider-disabled { opacity: 0.4; }

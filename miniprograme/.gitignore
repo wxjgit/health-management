@@ -1,0 +1,11 @@
+# 依赖与构建产物（微信开发者工具编译 TS 无需 npm 依赖进包）
+node_modules/
+package-lock.json
+
+# vendor 裁剪备份与临时清单
+scripts/.vendor-backup/
+scripts/.used-vendor.json
+
+# TS 增量编译缓存
+*.tsbuildinfo
+.DS_Store

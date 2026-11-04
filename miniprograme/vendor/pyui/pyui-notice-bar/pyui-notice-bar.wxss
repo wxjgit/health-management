@@ -1,0 +1,30 @@
+/* notice-bar · theme tint 玻璃条 */
+
+.py-noticebar {
+    display: flex;
+    animation: py-notice-in 0.35s cubic-bezier(0.32, 0.72, 0.28, 1.1) both;
+    align-items: center;
+    gap: 12rpx;
+    padding: 20rpx 24rpx;
+    border-radius: 16rpx;
+    -webkit-backdrop-filter: var(--glass-blur-sm);
+    backdrop-filter: var(--glass-blur-sm);
+}
+
+.py-noticebar-info { background: rgba(1, 82, 147, 0.1); color: var(--fui-color-primary, #015293); }
+.py-noticebar-success { background: rgba(9, 190, 79, 0.1); color: var(--fui-color-success, #09BE4F); }
+.py-noticebar-warning { background: rgba(255, 183, 3, 0.12); color: #b45309; }
+.py-noticebar-error { background: rgba(255, 43, 43, 0.1); color: var(--fui-color-danger, #FF2B2B); }
+
+.py-noticebar-text {
+    flex: 1;
+    font-size: 26rpx;
+    line-height: 1.5;
+}
+
+.py-noticebar-close { opacity: 0.7; padding: 4rpx; }
+
+@keyframes py-notice-in {
+    from { opacity: 0; transform: translateY(-16rpx); }
+    to { opacity: 1; transform: none; }
+}

@@ -1,0 +1,49 @@
+<view class="qj-page lg-page">
+  <view class="lg-hero">
+    <view class="lg-logo"><pyui-icon name="leaf" size="80rpx" color="#ffffff"></pyui-icon></view>
+    <view class="lg-title">轻记</view>
+    <view class="lg-slogan">用一句话记录饮食、体重、睡眠、运动</view>
+    <view class="lg-slogan2">让数据自己讲出规律</view>
+  </view>
+
+  <scroll-view class="lg-consent-scroll" scroll-y>
+    <view class="lg-consent glass-card">
+      <view class="lg-consent-hd">微信登录仅用于建立账号，不读取头像、昵称或手机号</view>
+      <view class="lg-policy-list">
+        <view wx:for="{{policies.privacy}}" wx:key="index" class="lg-policy-item">· {{item}}</view>
+      </view>
+      <view wx:if="{{policies.model_provider}}" class="lg-model-hint">
+        可选模型服务：{{policies.model_provider}} · {{policies.model_name || '未配置'}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="lg-checks">
+    <view class="lg-check-row" bindtap="togglePrivacy">
+      <view class="lg-check {{privacyAgreed ? 'is-on' : ''}}">
+        <pyui-icon wx:if="{{privacyAgreed}}" name="check" size="24rpx" color="#ffffff"></pyui-icon>
+      </view>
+      <view class="lg-check-tx">我已阅读并同意
+        <text class="lg-link" catchtap="goConsent">《隐私政策》</text>与
+        <text class="lg-link" catchtap="goConsent">《健康数据处理说明》</text>
+        <text wx:if="{{versionShort}}" class="lg-ver">（{{versionShort}}）</text>
+      </view>
+    </view>
+    <view class="lg-check-row" bindtap="toggleModel">
+      <view class="lg-check {{modelAgreed ? 'is-on' : ''}}">
+        <pyui-icon wx:if="{{modelAgreed}}" name="check" size="24rpx" color="#ffffff"></pyui-icon>
+      </view>
+      <view class="lg-check-tx">可选：同意将本次输入与必要档案片段发送给模型服务，用于理解、营养粗估与建议表达。
+        <text class="lg-strong">拒绝不影响基础记录功能。</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="lg-bottom">
+    <pyui-button type="primary" text="微信一键登录" loading="{{loading}}" height="96rpx" bind:click="onLogin"></pyui-button>
+    <view class="lg-foot">登录即代表你已阅读并同意上述条款</view>
+  </view>
+
+  <qj-feedback id="qjfb"></qj-feedback>
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+</view>

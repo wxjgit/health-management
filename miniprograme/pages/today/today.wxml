@@ -1,0 +1,57 @@
+<view class="qj-page">
+  <pyui-navbar title="今日汇总"></pyui-navbar>
+  <view class="qj-body" style="padding-top:{{navH}}px">
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">热量与目标</text><text class="qj-card__sub">{{dateLabel}}</text></view>
+      <view class="ring-row">
+        <view class="ring" wx:for="{{rings}}" wx:key="label">
+          <view class="ring-svg" style="background:conic-gradient({{item.color}} {{item.pct}}deg, #eef1f5 0deg)">
+            <view class="ring-hole">
+              <text class="ring-num qj-num">{{item.val}}</text>
+              <text class="ring-sub">{{item.sub}}</text>
+            </view>
+          </view>
+          <text class="ring-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="qj-kv" style="margin-top:12rpx">
+        <text class="qj-kv__k">目标热量</text>
+        <view class="qj-kv__v">{{targetKcal}} kcal<small>{{targetSource}}</small></view>
+      </view>
+      <view wx:if="{{remainingNote}}" class="qj-note" style="margin:12rpx 0 0">{{remainingNote}}</view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">身体状态</text></view>
+      <view class="qj-stats">
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{weight != null ? weight : '—'}}<small wx:if="{{weight != null}}">kg</small></text><text class="qj-stat__lb">今晨体重</text></view>
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{sleepH != null ? sleepH : '—'}}<small wx:if="{{sleepH != null}}">h</small></text><text class="qj-stat__lb">昨晚睡眠</text></view>
+        <view class="qj-stat"><text class="qj-stat__num qj-num">{{exercise}}<small>min</small></text><text class="qj-stat__lb">今日运动</text></view>
+      </view>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">今日记录</text><text class="qj-card__sub">{{events.length}} 条</text></view>
+      <view class="qj-list" style="padding:0" wx:if="{{events.length}}">
+        <view wx:for="{{events}}" wx:key="id" class="qj-row qj-row--tap" bindtap="openEvent" data-id="{{item.id}}">
+          <view class="qj-row__ic {{item.cls}}"><pyui-icon name="{{item.icon}}" size="34rpx" color="{{item.iconColor}}"></pyui-icon></view>
+          <view class="qj-row__bd"><text class="qj-row__tt">{{item.title}}</text><text class="qj-row__desc">{{item.time}}{{item.kcal != null ? ' · ' + item.kcal + ' kcal' : ''}}</text></view>
+          <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
+        </view>
+      </view>
+      <pyui-empty wx:else text="今天还没有记录" size="{{180}}"></pyui-empty>
+    </view>
+
+    <view class="qj-card">
+      <view class="qj-card__hd"><text class="qj-card__title">饮食完整性确认</text></view>
+      <view class="qj-t4">只有标记完整且营养齐全的日期，才会用于摄入规律分析与周复盘。</view>
+      <pyui-button wx:if="{{!dietComplete}}" type="primary" plain="{{true}}" text="确认今日饮食已记录完整" height="88rpx" style="margin-top:20rpx" loading="{{saving}}" bind:click="toggleComplete"></pyui-button>
+      <pyui-button wx:else type="primary" text="撤销完整标记" height="88rpx" style="margin-top:20rpx" loading="{{saving}}" bind:click="toggleComplete"></pyui-button>
+      <view class="qj-t5 qj-center" style="margin-top:16rpx">{{dietComplete ? '已标记完整 · 将纳入规律分析' : '今日尚未标记完整'}}</view>
+    </view>
+  </view>
+
+  <pyui-safe-area color="transparent"></pyui-safe-area>
+  <qj-feedback id="qjfb"></qj-feedback>
+</view>

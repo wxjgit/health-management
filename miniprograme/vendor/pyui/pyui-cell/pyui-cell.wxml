@@ -1,0 +1,11 @@
+<view hover-class="pyui-press-hover" class="pyui-press py-cell {{last ? 'last' : ''}}" hover-class="{{disabled ? 'none' : 'py-cell-hover'}}" bindtap="handleClick" style="{{background === '#FFFFFF' ? '' : 'background:' + background + ';'}}padding:{{padding}};">
+    <view class="py-cell-left">
+        <text class="py-cell-title" style="color:{{titleColor}};font-size:{{titleSize}}rpx;">{{title}}</text>
+        <text wx:if="{{desc}}" class="py-cell-desc">{{desc}}</text>
+    </view>
+    <view class="py-cell-right">
+        <slot></slot>
+        <text wx:if="{{value}}" class="py-cell-value" style="color:{{valueColor === '#7F7F7F' ? 'var(--c-sub)' : valueColor}};">{{value}}</text>
+        <text wx:if="{{arrow}}" class="py-cell-arrow">›</text>
+    </view>
+</view>

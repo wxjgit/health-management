@@ -1,0 +1,5 @@
+<view class="py-divider" style="padding:{{padding}}rpx 0;">
+    <view class="py-divider-line" style="background:{{lineColor === '#EEEEEE' ? 'rgba(15,23,42,0.08)' : lineColor}};"></view>
+    <text wx:if="{{text}}" class="py-divider-text" style="color:{{color === '#B2B2B2' ? 'var(--c-minor)' : color}};font-size:{{size}}rpx;">{{text}}</text>
+    <view wx:if="{{text}}" class="py-divider-line" style="background:{{lineColor === '#EEEEEE' ? 'rgba(15,23,42,0.08)' : lineColor}};"></view>
+</view>

@@ -1,0 +1,15 @@
+/* pages/today/today.wxss */
+.ring-row { display: flex; gap: 16rpx; margin-top: 8rpx; }
+.ring { flex: 1; text-align: center; }
+.ring-svg {
+  width: 130rpx; height: 130rpx; margin: 0 auto; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.ring-hole {
+  width: 100rpx; height: 100rpx; border-radius: 50%;
+  background: rgba(255,255,255,.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ring-num { font-size: 30rpx; font-weight: 700; color: var(--c-text); line-height: 1.1; }
+.ring-sub { font-size: 18rpx; color: var(--c-minor); }
+.ring-label { font-size: 22rpx; color: var(--c-sub); margin-top: 10rpx; display: block; }

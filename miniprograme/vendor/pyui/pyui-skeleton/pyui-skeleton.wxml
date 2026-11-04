@@ -1,0 +1,10 @@
+<view wx:if="{{loading}}" class="py-skeleton py-skeleton-{{animation}}">
+    <view wx:if="{{showAvatar}}" class="py-skeleton-avatar"></view>
+    <view class="py-skeleton-body">
+        <view wx:if="{{showText}}" class="py-skeleton-title"></view>
+        <view wx:for="{{rows}}" wx:key="*this" class="py-skeleton-row">
+            <view wx:for="{{cols}}" wx:for-item="c" wx:key="*this" class="py-skeleton-cell"></view>
+        </view>
+    </view>
+</view>
+<slot wx:else></slot>

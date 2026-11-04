@@ -1,4 +1,5 @@
 """WeChat identities and revocable opaque sessions, separate from legacy health data."""
+import asyncio
 from collections import deque
 from threading import Lock
 import os
@@ -206,16 +207,26 @@ def require_user(request: Request):
 async def exchange_code(settings, code):
     # No environment proxy or redirects: never forward AppSecret to another host.
     proxy = settings.model_egress_proxy if settings.runtime_profile == 'hardened' else None
-    try:
-        async with httpx.AsyncClient(timeout=8, trust_env=False, proxy=proxy) as client:
-            response = await client.get('https://api.weixin.qq.com/sns/jscode2session', params={
-                'appid': settings.wechat_app_id, 'secret': settings.wechat_app_secret,
-                'js_code': code, 'grant_type': 'authorization_code',
-            })
-            response.raise_for_status()
-            payload = response.json()
-    except (httpx.HTTPError, ValueError):
-        raise AuthError(502, 'wechat_unavailable', '微信登录暂时不可用，请重新登录。') from None
+    payload = None
+    # 传输层瞬时故障（连接重置/超时/5xx/非 JSON）自动重试一次：
+    # 失败的交换不消费 code（微信仅对成功交换作废 code），重试安全；
+    # 业务 errcode（40029/40125 等）不重试，直接走原有分支。
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=8, trust_env=False, proxy=proxy) as client:
+                response = await client.get('https://api.weixin.qq.com/sns/jscode2session', params={
+                    'appid': settings.wechat_app_id, 'secret': settings.wechat_app_secret,
+                    'js_code': code, 'grant_type': 'authorization_code',
+                })
+                response.raise_for_status()
+                payload = response.json()
+            break
+        except (httpx.HTTPError, ValueError):
+            if attempt == 0:
+                logging.getLogger(__name__).warning('wechat code2session transient failure, retrying')
+                await asyncio.sleep(0.6)
+                continue
+            raise AuthError(502, 'wechat_unavailable', '微信登录暂时不可用，请重新登录。') from None
     if not isinstance(payload, dict):
         raise AuthError(502, 'wechat_unavailable', '微信登录暂时不可用，请重新登录。')
     if payload.get('errcode'):

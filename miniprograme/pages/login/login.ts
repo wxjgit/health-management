@@ -2,6 +2,7 @@
 import { fetchPolicies, wechatLogin, isLoggedIn } from '../../runtime/auth';
 import { notify, showApiError } from '../../runtime/feedback';
 import { homeTabUrl } from '../../runtime/routes';
+import { ENV } from '../../runtime/environment';
 
 Page({
   data: {
@@ -10,9 +11,11 @@ Page({
     privacyAgreed: false,
     modelAgreed: false,
     loading: false,
+    auditMode: false,
   },
 
   onLoad() {
+    this.setData({ auditMode: ENV.auditMode });
     // 已登录直接进入记录页
     if (isLoggedIn()) {
       wx.reLaunch({ url: homeTabUrl(0) });
@@ -60,7 +63,9 @@ Page({
     }
     this.setData({ loading: true });
     try {
-      await wechatLogin({ privacyVersion: version, modelConsent: this.data.modelAgreed });
+      await wechatLogin({ privacyVersion: version, modelConsent: ENV.auditMode ? false : this.data.modelAgreed });
+      // 显式同意标记：会话过期时允许静默续期（新设备无此标记则必须走显式同意）
+      try { wx.setStorageSync('qj_consented', '1'); } catch (e) {}
       notify.success('登录成功');
       wx.reLaunch({ url: homeTabUrl(0) });
     } catch (e: any) {

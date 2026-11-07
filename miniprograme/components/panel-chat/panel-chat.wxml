@@ -1,7 +1,7 @@
 <!-- panel-chat：记录（对话）面板 · 虚拟页（宿主 pages/home 切换，无 reLaunch 闪屏） -->
 <view class="chat-panel" style="height:{{panelH}}px">
   <view class="chat-mode">
-    <view class="chat-mode-tag {{mode === 'model_allowed' ? '' : 'is-local'}}">
+    <view wx:if="{{!auditMode}}" class="chat-mode-tag {{mode === 'model_allowed' ? '' : 'is-local'}}">
       <view class="dot"></view>{{mode === 'model_allowed' ? '模型模式' : '纯本地 local_only'}}
     </view>
     <view class="chat-bell" bindtap="goMessages">
@@ -22,7 +22,7 @@
 
   <scroll-view class="chat-scroll" scroll-y scroll-into-view="{{scrollTo}}" scroll-with-animation>
     <view wx:for="{{messages}}" wx:key="id" id="m{{item.id}}" class="msg-row {{item.role === 'user' ? 'is-user' : 'is-bot'}}">
-      <view wx:if="{{item.role === 'bot'}}" class="avatar-bot"><pyui-icon name="leaf" size="34rpx" color="#ffffff"></pyui-icon></view>
+      <image wx:if="{{item.role === 'bot'}}" class="avatar-bot" src="/assets/logo.png" mode="aspectFill"></image>
       <view class="msg-col">
         <view class="bub {{item.role === 'user' ? 'bub-user' : 'bub-bot'}}">
           <text user-select>{{item.text}}</text>
@@ -31,7 +31,7 @@
           <pyui-icon name="success" size="24rpx" color="#09be4f"></pyui-icon>
           <text>已保存 {{item.savedCount}} 条记录 · 查看</text>
         </view>
-        <view wx:if="{{item.trace && item.trace.length}}" class="msg-trace">
+        <view wx:if="{{!auditMode && item.trace && item.trace.length}}" class="msg-trace">
           <view class="trace-hd" bindtap="toggleTrace" data-id="{{item.id}}">
             <pyui-icon name="{{item.traceOpen ? 'chevron-down' : 'chevron-right'}}" size="22rpx" color="#94a3b8"></pyui-icon>
             <text>处理过程 · {{item.trace.length}} 步</text>
@@ -48,7 +48,7 @@
     </view>
 
     <view wx:if="{{sending}}" class="msg-row is-bot">
-      <view class="avatar-bot"><pyui-icon name="leaf" size="34rpx" color="#ffffff"></pyui-icon></view>
+      <image class="avatar-bot" src="/assets/logo.png" mode="aspectFill"></image>
       <view class="bub bub-bot typing"><view class="tdot"></view><view class="tdot"></view><view class="tdot"></view></view>
     </view>
     <view id="chat-bottom" style="height:20rpx"></view>
@@ -56,7 +56,8 @@
 
   <scroll-view class="chat-quick" scroll-x wx:if="{{!sending}}">
     <view class="qj-chips qj-chips--scroll">
-      <view wx:for="{{quick}}" wx:key="text" class="qj-chip" bindtap="fillQuick" data-text="{{item.text}}">
+      <view wx:for="{{quick}}" wx:key="text" class="qj-chip" hover-class="qj-chip--press" hover-stay-time="80"
+        bindtap="fillQuick" data-text="{{item.text}}">
         <pyui-icon name="{{item.icon}}" size="26rpx" color="#015293"></pyui-icon>
         <text>{{item.text}}</text>
       </view>
@@ -67,7 +68,7 @@
     <view class="ci-box">
       <input class="ci-field" value="{{draft}}" focus="{{focus}}" placeholder="{{recording ? '正在听…' : '说说你吃了什么、睡得怎么样…'}}"
         confirm-type="send" bindinput="onInput" bindconfirm="onSend" adjust-position="{{false}}" cursor-spacing="20"
-        bindlongpress="onMicDown" />
+        bindlongpress="onMicDown" bindtouchmove="onMicMove" bindtouchend="onMicUp" bindtouchcancel="onMicUp" />
       <view class="ci-mic {{recording ? 'is-rec' : ''}}" catchtouchstart="onMicDown" catchtouchend="onMicUp" catchtouchcancel="onMicUp">
         <pyui-icon name="mic" size="34rpx" color="{{recording ? '#ffffff' : '#64748b'}}"></pyui-icon>
       </view>
@@ -77,12 +78,15 @@
     </view>
   </view>
 
-  <!-- 录音浮层：实时识别文本 + 松手提示 -->
-  <view wx:if="{{recording}}" class="voice-mask" catchtouchmove="noop">
-    <view class="voice-card">
-      <view class="voice-wave"><view class="vw-bar"></view><view class="vw-bar"></view><view class="vw-bar"></view><view class="vw-bar"></view><view class="vw-bar"></view></view>
-      <view class="voice-text">{{voiceText || '正在聆听…'}}</view>
-      <view class="voice-hint">松开结束并填入输入框</view>
+  <!-- 语音输入浮层：长按输入框/按住麦克风触发；松手结束、上滑取消（移植自 chengshichuxing 语音态） -->
+  <view wx:if="{{recording}}" class="voice-mask"
+    catchtouchmove="onMicMove" catchtouchend="onMicUp" catchtouchcancel="onMicUp">
+    <view class="voice-panel {{voiceCancel ? 'voice-cancel' : ''}}">
+      <view class="voice-wave">
+        <view wx:for="{{waveBars}}" wx:key="*this" class="voice-bar" style="animation-delay: {{index * 0.07}}s;"></view>
+      </view>
+      <text class="voice-text">{{voiceCancel ? '松手取消' : (voiceText || '聆听中…')}}</text>
+      <text class="voice-hint">{{voiceCancel ? '已标记取消，松手即丢弃' : '松手填入输入框，上滑取消'}}</text>
     </view>
   </view>
 </view>

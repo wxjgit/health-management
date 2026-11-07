@@ -6,6 +6,7 @@ import { confirm } from './feedback';
 let manager: any = null;
 let bound = false;
 let recording = false;
+let stopRequested = false;   // 权限弹窗期间松手：start 尚未 onStart，stop 意图缓存在此
 
 interface Handlers {
   onPartial?: (text: string) => void;
@@ -38,7 +39,11 @@ function mgr(): any {
   }
   if (!bound) {
     bound = true;
-    manager.onStart = () => { recording = true; };
+    manager.onStart = () => {
+      recording = true;
+      // 权限确认期间用户已松手：onStart 后立即兑现停止意图，避免后台残留录音
+      if (stopRequested) { stopRequested = false; manager.stop(); }
+    };
     manager.onRecognize = (res: any) => { if (H.onPartial) H.onPartial(res.result || ''); };
     manager.onStop = (res: any) => {
       recording = false;
@@ -91,15 +96,24 @@ function ensurePermission(): Promise<boolean> {
 
 export function isRecording(): boolean { return recording; }
 
-// 开始录音识别；返回是否成功启动（权限被拒/已在录音时为 false）
+// 开始录音识别；返回是否成功启动（权限被拒/已在录音/窗口期被取消时为 false）
 export async function start(handlers: Handlers): Promise<boolean> {
   if (recording) return false;
+  stopRequested = false;   // 入口处重置，避免上次残留意图误杀本次
+  H = handlers;
   const ok = await ensurePermission();
   if (!ok) {
-    if (handlers.onError) handlers.onError('未获得麦克风权限');
+    const err = H.onError;
+    H = {};
+    if (err) err('未获得麦克风权限');
     return false;
   }
-  H = handlers;
+  // 权限确认期间用户已松手（cancel 置位）：放弃本次录音，不真正起录
+  if (stopRequested) {
+    stopRequested = false;
+    H = {};
+    return false;
+  }
   try {
     mgr().start({ lang: 'zh_CN', duration: 60000 });
   } catch (e) {
@@ -110,13 +124,16 @@ export async function start(handlers: Handlers): Promise<boolean> {
   return true;
 }
 
-// 正常结束：onStop 回调带回最终识别文本
+// 正常结束：onStop 回调带回最终识别文本。
+// 若录音尚未真正开始（权限弹窗期间松手），缓存停止意图由 onStart 兑现。
 export function stop(): void {
   if (recording) mgr().stop();
+  else stopRequested = true;
 }
 
 // 取消：清空回调后再 stop，onEnd 不会触发
 export function cancel(): void {
   H = {};
   if (recording) mgr().stop();
+  else stopRequested = true;
 }

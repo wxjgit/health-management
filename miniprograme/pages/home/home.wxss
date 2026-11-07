@@ -1,4 +1,17 @@
-/* pages/home/home.wxss — 高度链：page(100vh) → home-body(flex:1) → home-panel(100%) → 面板内部 */
+/* pages/home/home.wxss — 高度链：page(100vh) → home-body(flex:1) → home-panel(flex:1) → 组件包装节点(100%) → 面板内部 */
 .home-page { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 .home-body { flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; }
-.home-panel { flex: 1; min-height: 0; height: 100%; }
+.home-panel { flex: 1; min-height: 0; }
+
+/* 关键：自定义组件标签（包装节点）默认高度 auto，会掐断面板内部 height:100% 链——
+   表现为 scroll-view 无约束（历史滑不动）+ 输入框被内容顶出可视区（不贴底）。
+   显式给包装节点 100% 高，五个面板同修。 */
+.home-panel > panel-chat,
+.home-panel > panel-history,
+.home-panel > panel-plan,
+.home-panel > panel-discover,
+.home-panel > panel-mine {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

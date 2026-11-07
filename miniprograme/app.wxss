@@ -165,6 +165,8 @@ page {
 /* ══════════ 胶囊/筛选 chips（历史筛选、快捷入口统一） ══════════ */
 .qj-chips { display: flex; gap: var(--qj-gap-sm); flex-wrap: wrap; }
 .qj-chips--scroll { flex-wrap: nowrap; overflow-x: auto; }
+/* 微信式按压反馈：hover-class 用，按下微缩+加深 */
+.qj-chip--press { transform: scale(.94); background: rgba(1,82,147,.14); }
 .qj-chip {
   padding: 12rpx 28rpx; border-radius: var(--qj-r-pill);
   background: rgba(255,255,255,.6); border: 1px solid var(--glass-border);

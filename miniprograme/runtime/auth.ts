@@ -1,7 +1,8 @@
 // runtime/auth.ts — 登录态与授权管理
 // 封装 wx.login → code2session（POST /api/auth/wechat/login），token 持久化，
 // 隐私/模型授权（GET/PUT /api/auth/consent），当前用户与用量。
-import { http, setToken, clearToken, ApiError } from './request';
+import { http, setToken, clearToken, getToken, ApiError } from './request';
+import { ENV } from './environment';
 
 export interface LoginResult {
   // 后端 issue() 真实字段：access_token（非 token）
@@ -62,10 +63,14 @@ export function wechatLogin(params: {
 }
 
 export function isLoggedIn(): boolean {
-  return !!app().globalData.token;
+  // 以持久化 token 为准：globalData 可能残留已失效值（401 清理时序），
+  // 若只看 globalData 会让登录页误判"已登录"reLaunch 回主页形成乒乓循环
+  return !!getToken();
 }
 
 export function currentMode(): 'model_allowed' | 'local_only' {
+  // 审核马甲包：构建期开关强制本地规则模式（合规：包内无 AI 能力，非运行时隐藏）
+  if (ENV.auditMode) return 'local_only';
   return app().globalData.processingMode || 'local_only';
 }
 
@@ -74,6 +79,7 @@ export async function logout(): Promise<void> {
   clearToken();
   const g = app().globalData;
   g.token = ''; g.userId = ''; g.modelConsent = false; g.processingMode = 'local_only';
+  try { wx.removeStorageSync('qj_consented'); } catch (e) {}
 }
 
 export function getConsent(): Promise<ConsentState> {

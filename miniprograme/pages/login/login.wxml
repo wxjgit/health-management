@@ -1,6 +1,6 @@
 <view class="qj-page lg-page">
   <view class="lg-hero">
-    <view class="lg-logo"><pyui-icon name="leaf" size="80rpx" color="#ffffff"></pyui-icon></view>
+    <image class="lg-logo" src="/assets/logo.png" mode="aspectFill"></image>
     <view class="lg-title">轻记</view>
     <view class="lg-slogan">用一句话记录饮食、体重、睡眠、运动</view>
     <view class="lg-slogan2">让数据自己讲出规律</view>
@@ -29,7 +29,7 @@
         <text wx:if="{{versionShort}}" class="lg-ver">（{{versionShort}}）</text>
       </view>
     </view>
-    <view class="lg-check-row" bindtap="toggleModel">
+    <view wx:if="{{!auditMode}}" class="lg-check-row" bindtap="toggleModel">
       <view class="lg-check {{modelAgreed ? 'is-on' : ''}}">
         <pyui-icon wx:if="{{modelAgreed}}" name="check" size="24rpx" color="#ffffff"></pyui-icon>
       </view>

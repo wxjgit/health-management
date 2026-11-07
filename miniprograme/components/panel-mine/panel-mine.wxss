@@ -2,9 +2,7 @@
 .mine-scroll { height: 100%; padding: 0 24rpx 24rpx; box-sizing: border-box; }
 .mine-hd { display: flex; align-items: center; gap: 24rpx; padding: 32rpx 8rpx 24rpx; }
 .mine-avatar {
-  width: 116rpx; height: 116rpx; border-radius: 50%; flex: none;
-  background: linear-gradient(135deg, #7ed8b5, #4b9fe1);
-  display: flex; align-items: center; justify-content: center;
+  width: 116rpx; height: 116rpx; border-radius: 50%; flex: none; display: block;
   border: 4rpx solid rgba(255,255,255,.65);
   box-shadow: 0 8rpx 24rpx rgba(75,159,225,.3);
 }

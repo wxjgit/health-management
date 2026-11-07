@@ -1,8 +1,8 @@
 <view class="qj-page">
-  <pyui-navbar title="隐私与模型授权"></pyui-navbar>
+  <pyui-navbar title="{{auditMode ? '隐私政策' : '隐私与模型授权'}}"></pyui-navbar>
   <view class="qj-body" style="padding-top:{{navH}}px">
 
-    <view class="qj-card">
+    <view wx:if="{{!auditMode}}" class="qj-card">
       <view class="qj-card__hd">
         <text class="qj-card__title">模型处理授权</text>
         <view class="qj-chip {{modelConsent ? 'is-on' : ''}}" style="pointer-events:none">{{modelConsent ? '已同意' : '未同意'}}</view>
@@ -24,7 +24,7 @@
       <view wx:for="{{policies.privacy}}" wx:key="index" class="policy-item">· {{item}}</view>
     </view>
 
-    <view class="qj-card" wx:if="{{policies.model_notice && policies.model_notice.length}}">
+    <view class="qj-card" wx:if="{{!auditMode && policies.model_notice && policies.model_notice.length}}">
       <view class="qj-card__hd"><text class="qj-card__title">模型服务说明</text></view>
       <view wx:for="{{policies.model_notice}}" wx:key="index" class="policy-item">· {{item}}</view>
     </view>

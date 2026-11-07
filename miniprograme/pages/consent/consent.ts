@@ -1,9 +1,11 @@
 // pages/consent/consent.ts — 隐私政策与模型授权 · Task
 import { fetchPolicies, updateConsent, closeAccount, getConsent } from '../../runtime/auth';
 import { notify, confirm, showApiError } from '../../runtime/feedback';
+import { ENV } from '../../runtime/environment';
 
 Page({
   data: {
+    auditMode: ENV.auditMode,
     navH: 88,
     readonly: false,
     saving: false,

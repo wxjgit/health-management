@@ -6,6 +6,7 @@ import { genRequestId } from '../../runtime/request';
 import { notify, showApiError } from '../../runtime/feedback';
 import { fmtTime } from '../../runtime/format';
 import * as voice from '../../runtime/voice';
+import { ENV } from '../../runtime/environment';
 
 interface Msg {
   id: number; role: 'user' | 'bot'; text: string; time: string;
@@ -25,7 +26,9 @@ Component({
     messages: [] as Msg[],
     draft: '', sending: false, focus: false, scrollTo: '',
     mode: 'local_only', unread: 0, offline: false,
-    recording: false, voiceText: '',
+    recording: false, voiceText: '', voiceCancel: false,
+    waveBars: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    auditMode: ENV.auditMode,
     pendingThread: '', pendingInterrupt: '', pendingQuestion: '', pendingRequired: true,
     quick: [
       { icon: 'bowl', text: '记一餐' },
@@ -113,14 +116,20 @@ Component({
 
     noop() {},
 
-    // 语音输入：长按输入框或按住麦克风键开始，松手结束并把识别文本填入输入框
+    // 语音输入：长按输入框或按住麦克风键开始；松手结束填入、上滑 60px 取消（仿微信语音态）
     async onMicDown() {
       if (this.data.recording || this.data.sending) return;
-      this.setData({ recording: true, voiceText: '' });
+      // 模拟器没有真实麦克风管道，WechatSI 必报 internal voice data failed：引导真机
+      try {
+        const sys: any = (wx as any).getWindowInfo ? (wx as any).getWindowInfo() : (wx as any).getSystemInfoSync();
+        if (sys && sys.platform === 'devtools') { notify.warn('语音识别请用真机调试'); return; }
+      } catch (e) {}
+      (this as any)._voiceY0 = null;
+      this.setData({ recording: true, voiceCancel: false, voiceText: '' });
       const started = await voice.start({
         onPartial: (text) => this.setData({ voiceText: text }),
         onEnd: (text) => {
-          this.setData({ recording: false, voiceText: '' });
+          this.setData({ recording: false, voiceText: '', voiceCancel: false });
           if (text) {
             this.setData({ draft: (this.data.draft ? this.data.draft + ' ' : '') + text, focus: true });
             notify.success('语音已填入，可直接发送或编辑');
@@ -129,16 +138,40 @@ Component({
           }
         },
         onError: (msg) => {
-          this.setData({ recording: false, voiceText: '' });
+          this.setData({ recording: false, voiceText: '', voiceCancel: false });
           notify.error(msg);
         },
       });
-      if (!started && this.data.recording) this.setData({ recording: false });
+      if (!started) this.setData({ recording: false, voiceCancel: false });
+      else { try { wx.vibrateShort({ type: 'light' }); } catch (e) {} }   // 起录触觉反馈
+    },
+
+    onMicMove(e: any) {
+      if (!this.data.recording) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      if ((this as any)._voiceY0 == null) (this as any)._voiceY0 = t.clientY;
+      const cancel = (this as any)._voiceY0 - t.clientY > 60;
+      if (cancel !== this.data.voiceCancel) this.setData({ voiceCancel: cancel });
     },
 
     onMicUp() {
       if (!this.data.recording) return;
-      voice.stop();   // onStop 回调里收尾（填文本/提示）
+      const cancel = this.data.voiceCancel;
+      this.setData({ voiceCancel: false });
+      if (!voice.isRecording()) {
+        // 权限确认/启动窗口期松手：录音未真正开始，直接收尾（stop 意图由 voice 层缓存兑现）
+        voice.cancel();
+        this.setData({ recording: false, voiceText: '' });
+        return;
+      }
+      if (cancel) {
+        voice.cancel();   // 丢弃本次识别，onEnd 不触发
+        this.setData({ recording: false, voiceText: '' });
+        notify.info('已取消语音输入');
+      } else {
+        voice.stop();     // onStop 回调里收尾（填文本/提示）
+      }
     },
 
     async onSend() {

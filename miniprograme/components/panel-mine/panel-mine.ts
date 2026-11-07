@@ -2,6 +2,7 @@
 import { profile, insights, system, records } from '../../runtime/api';
 import { getUsage, logout } from '../../runtime/auth';
 import { notify, confirm, showApiError } from '../../runtime/feedback';
+import { ENV } from '../../runtime/environment';
 
 Component({
   options: { addGlobalClass: true },
@@ -16,6 +17,7 @@ Component({
     profileSummary: '尚未建档',
     prefsSummary: '评分权重与提醒时间',
     conflictCount: 0, unread: 0,
+    auditMode: ENV.auditMode,
   },
   methods: {
     loadAll() {

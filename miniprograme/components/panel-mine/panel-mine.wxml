@@ -1,7 +1,7 @@
 <!-- panel-mine：我的面板 · 虚拟页 -->
 <scroll-view class="mine-scroll" scroll-y>
   <view class="mine-hd">
-    <view class="mine-avatar"><pyui-icon name="leaf" size="52rpx" color="#ffffff"></pyui-icon></view>
+    <image class="mine-avatar" src="/assets/logo.png" mode="aspectFill"></image>
     <view class="qj-flex-1">
       <view class="qj-t1">微信用户</view>
       <view class="qj-t5" style="margin-top:6rpx">账号 {{userIdShort}} · 已陪伴 {{days}} 天</view>
@@ -11,7 +11,7 @@
 
   <view class="qj-stats" style="margin-bottom:24rpx">
     <view class="qj-stat"><text class="qj-stat__num qj-num">{{totalRecords}}</text><text class="qj-stat__lb">总记录</text></view>
-    <view class="qj-stat"><text class="qj-stat__num qj-num">{{usage.modelAttempts}}</text><text class="qj-stat__lb">今日模型调用</text></view>
+    <view wx:if="{{!auditMode}}" class="qj-stat"><text class="qj-stat__num qj-num">{{usage.modelAttempts}}</text><text class="qj-stat__lb">今日模型调用</text></view>
     <view class="qj-stat"><text class="qj-stat__num qj-num">{{usage.remaining}}</text><text class="qj-stat__lb">剩余额度 / {{usage.dailyLimit}}</text></view>
   </view>
 
@@ -66,7 +66,7 @@
   <view class="qj-card qj-list" style="padding:0 24rpx">
     <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/consent/consent">
       <view class="qj-row__ic qj-ic--weight"><pyui-icon name="shield" size="34rpx" color="#4b9fe1"></pyui-icon></view>
-      <view class="qj-row__bd"><text class="qj-row__tt">隐私政策与模型授权</text><text class="qj-row__desc">模型授权：{{modelConsent ? '已同意 · 可撤回' : '未同意（本地模式）'}}</text></view>
+      <view class="qj-row__bd"><text class="qj-row__tt">{{auditMode ? '隐私政策' : '隐私政策与模型授权'}}</text><text class="qj-row__desc">{{auditMode ? '查看隐私政策与数据处理说明' : (modelConsent ? '模型授权：已同意 · 可撤回' : '模型授权：未同意（本地模式）')}}</text></view>
       <pyui-icon name="chevron-right" size="28rpx" color="#94a3b8"></pyui-icon>
     </view>
     <view class="qj-row qj-row--tap" bindtap="go" data-url="/pages/deletion/deletion">

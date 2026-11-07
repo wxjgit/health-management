@@ -4,6 +4,15 @@
 import { TAB_SLOTS } from '../../runtime/routes';
 
 const NAV_TITLES = ['记录', '历史', '计划', '发现', '我的'];
+// 分享文案：按落点 tab 定制（标题即卡片第一行，突出价值而非功能罗列）
+const SHARE_TITLES = [
+  '轻记 · 一句话说清吃了什么、睡得怎样',
+  '轻记 · 把每天的摄入和体重看成一条线',
+  '轻记 · 给减脂定一个够得着的目标',
+  '轻记 · 从记录里看见自己的规律',
+  '轻记 · 你的健康数据只属于你',
+];
+const SHARE_SLOGAN = '轻记 · 一句话说清吃了什么、睡得怎样';
 
 Page({
   data: {
@@ -48,6 +57,15 @@ Page({
 
   onTabSettle() { /* 透镜落位；虚拟页无需额外动作 */ },
 
+  // 分享：仅公开落点页开启；路径带 tab 直达对应面板，分享图 5:4
+  onShareAppMessage() {
+    const t = this.data.tab;
+    return {
+      title: SHARE_TITLES[t] || SHARE_SLOGAN,
+      path: '/pages/home/home?tab=' + t,
+      imageUrl: '/assets/share.png',
+    };
+  },
   // 面板请求跳转其它 tab（如 chat 的"查看历史"）
   onGotoTab(e: any) {
     const idx = e && e.detail ? e.detail.tab : 0;

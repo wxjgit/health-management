@@ -26,6 +26,8 @@ export interface RequestOptions {
   // 是否需要登录态（默认 true；/api/auth/* 与 /api/policies 传 false）
   auth?: boolean;
   timeout?: number;
+  // 内部：401 静默重登后的重试标记（防无限重试）
+  _retried?: boolean;
 }
 
 let cachedToken = '';
@@ -38,6 +40,12 @@ export function getToken(): string {
 export function clearToken() {
   cachedToken = '';
   try { wx.removeStorageSync('qj_token'); wx.removeStorageSync('qj_user_id'); } catch (e) {}
+  // 同步清 globalData：否则登录页 isLoggedIn() 读到残留 token 会 reLaunch 回主页，
+  // 与 401→toLogin 形成 login⇄home 乒乓循环（请求风暴）
+  try {
+    const g: any = getApp().globalData;
+    g.token = ''; g.userId = '';
+  } catch (e) {}
 }
 
 // 生成符合后端约束的 request_id（min_length=8）
@@ -55,6 +63,10 @@ export function isOnline(): Promise<boolean> {
 }
 
 function toLogin() {
+  // 防抖：并发 401 风暴只跳一次，避免重复 reLaunch 打断页面栈
+  const now = Date.now();
+  if (now - lastLoginJump < 3000) return;
+  lastLoginJump = now;
   try {
     clearToken();
     const pages = getCurrentPages();
@@ -63,6 +75,65 @@ function toLogin() {
       wx.reLaunch({ url: '/pages/login/login' });
     }
   } catch (e) {}
+}
+let lastLoginJump = 0;
+
+// 静默重登：wx.login 换 code → 后端换新 token（沿用既有授权状态）。
+// 成功返回新 token；任何环节失败返回 null（调用方回落到跳登录页）。
+let relogging: Promise<string | null> | null = null;
+function silentRelogin(): Promise<string | null> {
+  if (relogging) return relogging;   // 并发 401 共用同一次重登
+  relogging = new Promise<string | null>((resolve) => {
+    // 合规闸：静默续期仅限"本机曾显式同意隐私政策"的用户（会话过期场景）。
+    // 分享链接在新设备打开时没有该标记 → 必须走登录页显式同意，不能代用户静默同意。
+    // 会话闸：当前须确有凭据（冷启动带 token 或本会话登录过）；退出登录后凭据已清 → 不静默登回。
+    let consented = false;
+    try { consented = wx.getStorageSync('qj_consented') === '1'; } catch (e) {}
+    if (!consented || !getToken()) { resolve(null); return; }
+    const g: any = getApp().globalData;
+    const doLogin = (version: string) => {
+      if (!version) { resolve(null); return; }
+      g.privacyVersion = version;
+      wx.login({
+        success: (r) => {
+          if (!r.code) { resolve(null); return; }
+          wx.request({
+            url: ENV.apiOrigin + '/api/auth/wechat/login',
+            method: 'POST',
+            header: { 'Content-Type': 'application/json' },
+            data: {
+              privacy_version: version, privacy_consent: true,
+              health_consent: true, model_consent: !!g.modelConsent, code: r.code,
+            },
+            success: (res: any) => {
+              const tok = res && res.statusCode === 200 && res.data && res.data.access_token;
+              if (tok) {
+                setToken(tok);
+                try {
+                  g.userId = (res.data.user && res.data.user.id) || '';
+                  wx.setStorageSync('qj_user_id', g.userId);
+                } catch (e) {}
+                resolve(tok);
+              } else resolve(null);
+            },
+            fail: () => resolve(null),
+          });
+        },
+        fail: () => resolve(null),
+      });
+    };
+    try {
+      if (g.privacyVersion) { doLogin(g.privacyVersion); return; }
+      // 冷启动带 token 直入主页时 privacyVersion 未加载：先取政策版本（无需登录）
+      wx.request({
+        url: ENV.apiOrigin + '/api/policies', method: 'GET',
+        success: (res: any) => doLogin(res && res.statusCode === 200 && res.data ? res.data.version : ''),
+        fail: () => resolve(null),
+      });
+    } catch (e) { resolve(null); }
+  });
+  relogging.then(() => { relogging = null; });
+  return relogging;
 }
 
 export function request<T = any>(opt: RequestOptions): Promise<T> {
@@ -99,9 +170,30 @@ export function request<T = any>(opt: RequestOptions): Promise<T> {
           resolve(res.data as T);
           return;
         }
-        if (sc === 401 || sc === 403) {
+        if (sc === 401) {
+          // 会话过期：静默重登一次并重试原请求；失败才跳登录页。
+          // 403 不重登（权限/同意问题，重登无意义）。
+          if (auth && !opt._retried) {
+            silentRelogin().then((tok) => {
+              if (tok) {
+                request<T>({ ...opt, _retried: true }).then(resolve, reject);
+              } else {
+                toLogin();
+                reject(new ApiError(sc, 'unauthorized', '登录状态已失效，请重新登录', res.data));
+              }
+            });
+            return;
+          }
           toLogin();
           reject(new ApiError(sc, 'unauthorized', '登录状态已失效，请重新登录', res.data));
+          return;
+        }
+        if (sc === 403) {
+          // 403 = 权限/同意问题（如 model_consent_required），非会话过期：不重登不跳页，
+          // 交由调用方按业务错误提示
+          const body3: any = res.data || {};
+          reject(new ApiError(sc, String(body3.code || 'forbidden'),
+            typeof body3.detail === 'string' ? body3.detail : '权限不足', body3));
           return;
         }
         const body: any = res.data || {};

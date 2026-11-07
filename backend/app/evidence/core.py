@@ -14,8 +14,9 @@ NUMBER = r'(?:\d+(?:\.\d+)?|一|二|两|三|四|五|六|七|八|九|十|半)'
 NUMBERS = {'一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6,
            '七': 7, '八': 8, '九': 9, '十': 10, '半': .5}
 WEIGHT_RE = re.compile(rf'(?:(?:体重|称重)\s*)?({NUMBER})\s*(公斤|千克|kg|KG|斤)')
-DURATION_RE = re.compile(rf'({NUMBER})\s*(小时|分钟|分)')
-QUANTITY_RE = re.compile(rf'({NUMBER})\s*(?:大|小|中)?\s*(碗|份|个|杯|片|克|g|G|毫升|ml|ML|块)')
+# 口语量词"个"可选：「6个小时」「3个分钟(罕见但无害)」；量词缺失时单位组回退匹配
+DURATION_RE = re.compile(rf'({NUMBER})\s*个?\s*(小时|分钟|分)')
+QUANTITY_RE = re.compile(rf'({NUMBER})\s*(?:大|小|中|个)?\s*(碗|份|个|杯|片|克|g|G|毫升|ml|ML|块)')
 DATE_RE = re.compile(r'20\d{2}-\d{2}-\d{2}|前天|昨天|昨晚|今天|今日|今晚|今早')
 TIME_RE = re.compile(r'(?<!\d)([01]?\d|2[0-3])(?::([0-5]\d)|点(半|[0-5]?\d分?)?)')
 EXERCISES = {'跑步': '跑步', '跑了': '跑步', '步行': '步行', '走路': '步行', '走了': '步行',
@@ -49,6 +50,12 @@ class GroundingError(ValueError):
 
 def _number(raw):
     return float(NUMBERS[raw] if raw in NUMBERS else raw)
+
+
+def _bare_number(text):
+    """追问答案常为裸数字（问句已含单位）：整串即一个数时提取，避免误抓句子中的无关数字。"""
+    match = re.fullmatch(rf'\s*({NUMBER})\s*(?:小时|分钟|天|个|条|次)?$', text or '')
+    return _number(match.group(1)) if match else None
 
 
 def _unit(raw):

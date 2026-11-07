@@ -24,6 +24,41 @@ from .boundary import ModelBoundary
 from .projections import record_projection
 from ..policy.output import advice_plan, feedback_options
 
+# 模型可提议 quote/field，但"已验证"的来源与字符范围只能由本地 ground 代码赋值
+# （见 FieldEvidence 契约注释）。模型偶发越权自赋 source='user_text' 却不带范围，
+# 会在 schema 校验门口摔倒（本地随后会整体重建 evidence，模型的 evidence 本就被丢弃）。
+# 此处在校验前把模型提议降级为纯提议：剥离本地专属字段，来源一律 unverified。
+_LOCAL_ONLY_EVIDENCE_KEYS = ('source_message_id', 'source_text_hash', 'normalization', 'policy_version')
+
+
+def sanitize_model_proposal(payload):
+    if not isinstance(payload, dict):
+        return payload
+    for entries in _proposal_evidence_lists(payload):
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            for key in _LOCAL_ONLY_EVIDENCE_KEYS:
+                entry.pop(key, None)
+            if entry.get('source') != 'unverified':
+                entry['source'] = 'unverified'
+    return payload
+
+
+def _proposal_evidence_lists(payload):
+    lists = []
+    for key in ('evidence', 'events', 'findings'):
+        value = payload.get(key)
+        if not isinstance(value, list):
+            continue
+        if key == 'evidence':
+            lists.append(value)
+        else:
+            for item in value:
+                if isinstance(item, dict) and isinstance(item.get('evidence'), list):
+                    lists.append(item['evidence'])
+    return lists
+
 
 class Parser:
     def __init__(self, settings, network_context=None):
@@ -172,8 +207,9 @@ class Parser:
             content = re.sub(r'^```(?:json)?\s*|\s*```$', '', content.strip())
             try:
                 observation['outcome'] = 'schema_invalid'
-                return output_type.model_validate_json(content)
-            except ValidationError as error:
+                payload = json.loads(content)
+                return output_type.model_validate(sanitize_model_proposal(payload))
+            except (ValidationError, ValueError) as error:
                 raise UpstreamModelError(code='model_response_invalid') from error
 
     def patch(self, text, draft, fields, item_index=None):

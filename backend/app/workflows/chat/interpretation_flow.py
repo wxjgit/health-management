@@ -147,6 +147,7 @@ class ChatInterpretation(ChatComponent):
                 task.requested_fields,
                 task.item_index,
                 state.get('source_message_id'),
+                unit_context=task.question,
             )
             supplied_feedback = patch.feedback
             extraction['events'][index] = merge_patch(

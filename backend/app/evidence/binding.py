@@ -5,6 +5,7 @@ from .core import (
     CYCLE_ACTIONS,
     DATE_RE,
     INTENSITIES,
+    _bare_number,
     _durations,
     _evidence,
     _ground_adjacent_nutrition,
@@ -43,7 +44,22 @@ def ground_event(event, source_text, source_message_id=None, scope_text=None, al
     return ExtractionEvent.model_validate(data)
 
 
-def ground_patch(patch, answer, event_kind, requested_fields, item_index=None, source_message_id=None):
+def _context_rule(kind, context):
+    """追问问句提供的单位上下文 → 裸数字答案的换算规则（规则名编码换算，供重放）。"""
+    context = context or ''
+    if kind == 'weight':
+        # 斤=0.5kg 需额外换算，不在本规则覆盖内：宁可不落值也不错记
+        return 'context-kg-v1' if any(word in context for word in ('公斤', '千克', 'kg', 'KG')) else None
+    if kind in ('sleep', 'exercise'):
+        if '小时' in context:
+            return 'context-hour-v1'
+        if '分钟' in context or '分' in context:
+            return 'context-minute-v1'
+    return None
+
+
+def ground_patch(patch, answer, event_kind, requested_fields, item_index=None,
+                 source_message_id=None, unit_context=''):
     proposed = EventPatch.model_validate(patch)
     data = proposed.model_dump(mode='json', exclude_none=True, exclude_unset=True)
     source = _make_source(answer, source_message_id)
@@ -57,7 +73,18 @@ def ground_patch(patch, answer, event_kind, requested_fields, item_index=None, s
                 output_unit='kg' if event_kind == 'weight' else 'min',
                 rule='weight-unit-v1' if event_kind == 'weight' else 'duration-minute-v1'))
         else:
-            data.pop('value', None)
+            # 裸数字答案（"6"）：答案文本无单位，单位来自追问问句上下文；
+            # 仅当整串即一个数且问句单位明确时落值，避免猜测
+            rule = _context_rule(event_kind, unit_context)
+            bare = _bare_number(answer) if rule else None
+            if bare is not None:
+                value = bare * 60 if rule == 'context-hour-v1' else bare
+                data['value'] = value
+                data['evidence'].append(_evidence('value', source, answer, answer.strip(),
+                    output_value=value, output_unit='kg' if event_kind == 'weight' else 'min',
+                    rule=rule))
+            else:
+                data.pop('value', None)
     if 'items' in requested_fields:
         shell = {'items': data.get('items', []), 'evidence': []}; _ground_items(shell, source, answer, 0)
         if item_index is not None:

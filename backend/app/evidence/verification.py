@@ -14,6 +14,7 @@ from .core import (
     NUTRIENTS,
     POLICY_VERSION,
     GroundingError,
+    _bare_number,
     _durations,
     _explicit_time,
     _nutrition,
@@ -36,6 +37,14 @@ def _replay(evidence, source):
         match = _single(_weights(quote)); return (match['value'], 'kg') if match else (None, None)
     if rule == 'duration-minute-v1':
         match = _single(_durations(quote)); return (match['value'], 'min') if match else (None, None)
+    if rule in ('context-hour-v1', 'context-minute-v1', 'context-kg-v1'):
+        # 追问答案裸数字：单位由问句上下文提供（规则名编码换算），重放 = 数字 × 换算
+        value = _bare_number(quote)
+        if value is None:
+            return None, None
+        if rule == 'context-hour-v1':
+            return value * 60, 'min'
+        return value, ('min' if rule == 'context-minute-v1' else 'kg')
     if rule == 'portion-unit-v1':
         match = _single(_quantities(quote))
         return ((match['unit'] if evidence.field == 'item_unit' else match['value']),

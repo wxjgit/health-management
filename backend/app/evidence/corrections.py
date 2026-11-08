@@ -7,6 +7,7 @@ from ..contracts import ExtractionEvent, FieldEvidence
 from .core import (
     BASIS_RE,
     CYCLE_ACTIONS,
+    DURATION_RULE,
     EXERCISES,
     INTENSITIES,
     MEAL_SLOTS,
@@ -43,7 +44,7 @@ def ground_correction(event, prior, correction_text, source_message_id=None):
             data['evidence'].append(_evidence('value', source, correction_text, selected['quote'],
                 start=selected['start'], end=selected['end'], output_value=selected['value'],
                 output_unit='kg' if data['kind'] == 'weight' else 'min',
-                rule='weight-unit-v1' if data['kind'] == 'weight' else 'duration-minute-v1'))
+                rule='weight-unit-v1' if data['kind'] == 'weight' else DURATION_RULE))
         else:
             data['value'] = None
     elif data.get('value') is not None:

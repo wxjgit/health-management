@@ -4,9 +4,9 @@ from ..contracts import EventPatch, ExtractionEvent
 from .core import (
     CYCLE_ACTIONS,
     DATE_RE,
+    DURATION_RULE,
     INTENSITIES,
     _bare_number,
-    _durations,
     _evidence,
     _ground_adjacent_nutrition,
     _ground_date,
@@ -32,9 +32,7 @@ def ground_event(event, source_text, source_message_id=None, scope_text=None, al
     _ground_simple_fields(data, source, text, offset)
     date_text, date_offset = _scope(text, data.get('raw_text'), lambda value: bool(DATE_RE.search(value)))
     _ground_date(data, source, date_text, offset + date_offset)
-    value_text, value_offset = _scope(text, data.get('raw_text'),
-        lambda value: bool(_weights(value) if data['kind'] == 'weight' else _durations(value)))
-    _ground_value(data, source, value_text, offset + value_offset)
+    _ground_value(data, source, text, offset)
     if data['kind'] == 'meal':
         _ground_items(data, source, text, offset)
         if text != outer:
@@ -71,7 +69,7 @@ def ground_patch(patch, answer, event_kind, requested_fields, item_index=None,
             data['evidence'].append(_evidence('value', source, answer, selected['quote'],
                 start=selected['start'], end=selected['end'], output_value=selected['value'],
                 output_unit='kg' if event_kind == 'weight' else 'min',
-                rule='weight-unit-v1' if event_kind == 'weight' else 'duration-minute-v1'))
+                rule='weight-unit-v1' if event_kind == 'weight' else DURATION_RULE))
         else:
             # 裸数字答案（"6"）：答案文本无单位，单位来自追问问句上下文；
             # 仅当整串即一个数且问句单位明确时落值，避免猜测

@@ -14,8 +14,23 @@ NUMBER = r'(?:\d+(?:\.\d+)?|一|二|两|三|四|五|六|七|八|九|十|半)'
 NUMBERS = {'一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6,
            '七': 7, '八': 8, '九': 9, '十': 10, '半': .5}
 WEIGHT_RE = re.compile(rf'(?:(?:体重|称重)\s*)?({NUMBER})\s*(公斤|千克|kg|KG|斤)')
-# 口语量词"个"可选：「6个小时」「3个分钟(罕见但无害)」；量词缺失时单位组回退匹配
-DURATION_RE = re.compile(rf'({NUMBER})\s*个?\s*(小时|分钟|分)')
+LEGACY_DURATION_RE = re.compile(rf'({NUMBER})\s*个?\s*(小时|分钟|分)')
+DURATION_RULE = 'duration-minute-v2'
+# Capture the whole number even when it is unsupported, so 六七 cannot become 七.
+_DURATION_DIGITS = r'\d零〇一二两三四五六七八九十百千万亿半'
+_DURATION_NUMBER = rf'[{_DURATION_DIGITS}]+(?:\.\d+)?'
+# Include seconds and days when scanning so unsupported mixtures are not clipped.
+_DURATION_UNIT = r'小时|分钟|分(?!钟)|秒钟?|天'
+_DURATION_PART = rf'{_DURATION_NUMBER}\s*(?:个\s*(?:半\s*)?)?(?:{_DURATION_UNIT})'
+_DURATION_RANGE = r'(?:到|至|或者?|[-~～—])'
+_DURATION_PHRASE_RE = re.compile(
+    rf'(?<![{_DURATION_DIGITS}.:：点])(?P<range_start>{_DURATION_NUMBER}\s*{_DURATION_RANGE}\s*)?'
+    rf'{_DURATION_PART}(?:\s*(?P<range_sep>{_DURATION_RANGE})?\s*{_DURATION_PART})*'
+)
+_DURATION_PART_RE = re.compile(
+    rf'(?P<number>{_DURATION_NUMBER})\s*(?:个\s*(?P<half>半\s*)?)?'
+    rf'(?P<unit>{_DURATION_UNIT})'
+)
 QUANTITY_RE = re.compile(rf'({NUMBER})\s*(?:大|小|中|个)?\s*(碗|份|个|杯|片|克|g|G|毫升|ml|ML|块)')
 DATE_RE = re.compile(r'20\d{2}-\d{2}-\d{2}|前天|昨天|昨晚|今天|今日|今晚|今早')
 TIME_RE = re.compile(r'(?<!\d)([01]?\d|2[0-3])(?::([0-5]\d)|点(半|[0-5]?\d分?)?)')
@@ -52,9 +67,10 @@ def _number(raw):
     return float(NUMBERS[raw] if raw in NUMBERS else raw)
 
 
-def _bare_number(text):
+def _bare_number(text, *, legacy=False):
     """追问答案常为裸数字（问句已含单位）：整串即一个数时提取，避免误抓句子中的无关数字。"""
-    match = re.fullmatch(rf'\s*({NUMBER})\s*(?:小时|分钟|天|个|条|次)?$', text or '')
+    suffix = r'(?:小时|分钟|天|个|条|次)?' if legacy else ''
+    match = re.fullmatch(rf'\s*({NUMBER})\s*{suffix}', text or '')
     return _number(match.group(1)) if match else None
 
 
@@ -115,9 +131,44 @@ def _weights(text):
              'start': m.start(), 'end': m.end()} for m in WEIGHT_RE.finditer(text)]
 
 
-def _durations(text):
+def _legacy_durations(text):
     return [{'quote': m.group(0), 'value': _number(m.group(1)) * (60 if m.group(2) == '小时' else 1),
-             'start': m.start(), 'end': m.end()} for m in DURATION_RE.finditer(text)]
+             'start': m.start(), 'end': m.end()} for m in LEGACY_DURATION_RE.finditer(text)]
+
+
+def _duration_number(text):
+    if re.fullmatch(NUMBER, text):
+        return _number(text)
+    tens = re.fullmatch(r'([二两三四五六七八九])?十([一二三四五六七八九])?', text)
+    if tens:
+        return float(10 * NUMBERS.get(tens[1], 1) + NUMBERS.get(tens[2], 0))
+    return None
+
+
+def _durations(text):
+    matches = []
+    for phrase in _DURATION_PHRASE_RE.finditer(text):
+        if phrase['range_start'] or phrase['range_sep']:
+            continue
+        parts = list(_DURATION_PART_RE.finditer(phrase[0]))
+        units = ['分' if part['unit'] == '分钟' else part['unit'] for part in parts]
+        if units not in (['小时'], ['分'], ['小时', '分']):
+            continue
+        minutes = 0
+        for part, unit in zip(parts, units):
+            value = _duration_number(part['number'])
+            if value is None:
+                break
+            if part['half']:
+                if unit != '小时' or not value.is_integer():
+                    break
+                value += .5
+            minutes += value * (60 if unit == '小时' else 1)
+        else:
+            if math.isfinite(minutes):
+                matches.append({'quote': phrase[0], 'value': minutes,
+                                'start': phrase.start(), 'end': phrase.end()})
+    return matches
 
 
 def _quantities(text):
@@ -198,12 +249,13 @@ def _ground_date(data, source, text, offset):
             output_value=f'{hour:02d}:00', rule=f'default-time-{data["kind"]}-v1', origin='derived'))
 
 
-def _value_match(kind, text):
-    matches = _weights(text) if kind == 'weight' else _durations(text)
+def _value_match(kind, text, *, matches=None, offset=0):
+    if matches is None:
+        matches = _weights(text) if kind == 'weight' else _durations(text)
     if len(matches) <= 1:
         return _single(matches)
     anchors = ['体重', '称重'] if kind == 'weight' else ['睡', '失眠'] if kind == 'sleep' else [*EXERCISES, '运动']
-    positions = [text.index(anchor) for anchor in anchors if anchor in text]
+    positions = [offset + text.index(anchor) for anchor in anchors if anchor in text]
     if not positions:
         return None
     ranked = sorted((min(abs(m['start'] - pos) for pos in positions), index, m)
@@ -214,7 +266,15 @@ def _value_match(kind, text):
 def _ground_value(data, source, text, offset):
     if data['kind'] not in ('weight', 'sleep', 'exercise'):
         return
-    selected = _value_match(data['kind'], text)
+    if data['kind'] == 'weight':
+        selected = _value_match(data['kind'], text)
+    else:
+        # Model-proposed text may end or start inside a duration. Scan the original
+        # message first, then pick candidates that overlap this event's scope.
+        end = offset + len(text)
+        matches = [m for m in _durations(source.text) if m['start'] < end and offset < m['end']]
+        selected = _value_match(data['kind'], text, matches=matches, offset=offset)
+        text, offset = source.text, 0
     if not selected or not math.isfinite(selected['value']):
         data['value'] = None
         return
@@ -222,7 +282,7 @@ def _ground_value(data, source, text, offset):
     data['evidence'].append(_evidence('value', source, text, selected['quote'], offset=offset,
         start=selected['start'], end=selected['end'], output_value=selected['value'],
         output_unit='kg' if data['kind'] == 'weight' else 'min',
-        rule='weight-unit-v1' if data['kind'] == 'weight' else 'duration-minute-v1'))
+        rule='weight-unit-v1' if data['kind'] == 'weight' else DURATION_RULE))
 
 
 def _ground_simple_fields(data, source, text, offset):

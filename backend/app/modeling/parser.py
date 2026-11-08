@@ -249,7 +249,7 @@ class Parser:
                 if amount:
                     update['value'] = number(amount[1]) / (2 if amount[2] == '斤' else 1)
             else:
-                minutes = duration(text)
+                minutes = duration(text, draft['kind'])
                 if minutes is not None:
                     update['value'] = minutes
         if 'intensity' in fields:

@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from ..common.clock import date_from_text, now
 from ..contracts.events import ExtractionEvent, MealItem
 from ..contracts.workflows import ExtractionResult
+from ..evidence.core import _value_match
 
 
 NUMBERS = {
@@ -46,11 +47,9 @@ def at_slot(day, slot):
     )
 
 
-def duration(text):
-    if '半小时' in text:
-        return 30
-    match = re.search(NUMBER + r'\s*(小时|分钟|分)', text)
-    return number(match[1]) * (60 if match[2] == '小时' else 1) if match else None
+def duration(text, kind):
+    match = _value_match(kind, text)
+    return match['value'] if match else None
 
 
 def demo_parse(text, recent, selected_id=None, original=None):
@@ -178,7 +177,7 @@ def demo_parse(text, recent, selected_id=None, original=None):
             ))
             continue
         if any(word in segment for word in ['睡', '睡眠']):
-            minutes = duration(segment)
+            minutes = duration(segment, 'sleep')
             if minutes is not None:
                 quality = (
                     '较差' if any(word in segment for word in ['差', '失眠', '醒'])
@@ -205,7 +204,7 @@ def demo_parse(text, recent, selected_id=None, original=None):
             if word in segment
         ), None)
         if exercise:
-            minutes = duration(segment)
+            minutes = duration(segment, 'exercise')
             if minutes is not None:
                 intensity = (
                     'high' if any(word in segment for word in ['很累', '高强度', '剧烈'])

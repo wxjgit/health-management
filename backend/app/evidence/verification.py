@@ -8,6 +8,7 @@ from ..contracts import PreparedEvent
 from .core import (
     BASIS_RE,
     CYCLE_ACTIONS,
+    DURATION_RULE,
     EXERCISES,
     INTENSITIES,
     MEAL_SLOTS,
@@ -17,6 +18,7 @@ from .core import (
     _bare_number,
     _durations,
     _explicit_time,
+    _legacy_durations,
     _nutrition,
     _quantities,
     _single,
@@ -36,10 +38,15 @@ def _replay(evidence, source):
     if rule == 'weight-unit-v1':
         match = _single(_weights(quote)); return (match['value'], 'kg') if match else (None, None)
     if rule == 'duration-minute-v1':
-        match = _single(_durations(quote)); return (match['value'], 'min') if match else (None, None)
+        match = _single(_legacy_durations(quote))
+        return (match['value'], 'min') if match else (None, None)
+    if rule == DURATION_RULE:
+        match = next((match for match in _durations(source.text)
+                      if (match['start'], match['end']) == (evidence.start, evidence.end)), None)
+        return (match['value'], 'min') if match else (None, None)
     if rule in ('context-hour-v1', 'context-minute-v1', 'context-kg-v1'):
         # 追问答案裸数字：单位由问句上下文提供（规则名编码换算），重放 = 数字 × 换算
-        value = _bare_number(quote)
+        value = _bare_number(quote, legacy=True)
         if value is None:
             return None, None
         if rule == 'context-hour-v1':
